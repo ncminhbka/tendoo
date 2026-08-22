@@ -63,8 +63,6 @@
   User copy log / ảnh kết quả về máy local -> Agent đọc log và phân tích phản biện tiếp.
 ```
 
----
-
 ## 📋 3. NGUYÊN TẮC GIAO TIẾP VÀ KỸ THUẬT (COMMUNICATION & TECHNICAL PRINCIPLES)
 
 1. **Phong cách đồng nghiệp phản biện**:
@@ -76,3 +74,18 @@
    - LoRA DiT 4B Base (giải quyết Chất liệu & Ánh sáng).
    - Ba giải pháp này bổ trợ cho nhau, không thay thế nhau.
 3. **Mã nguồn thực thi**: Mọi script viết ra để chạy trên Server phải tự chứa (self-contained), có xử lý exception, hỗ trợ GPU CUDA, và tối ưu cho cấu hình 2x GPU A30 (Ampere architecture, BF16/FP16, DDP).
+
+---
+
+## 🎯 4. MÔ HÌNH MỤC TIÊU DUY NHẤT CỦA DỰ ÁN (SOLE TARGET MODEL)
+
+Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
+👉 **`FLUX.2-klein-base-4B`** (Không dùng bản Distilled 4-step, không dùng 9B, không dùng Dev 32B).
+
+- **Kiến trúc DiT**: `Klein4BParams` (5 DoubleStreamBlocks, 20 SingleStreamBlocks, $d_{\text{model}} = 3072$, 24 attention heads, 4D RoPE `axes_dim = [32, 32, 32, 32]`, $\theta = 2000$).
+- **Text Encoder**: `Qwen3-4B-FP8` (Trích xuất 3 tầng cố định: `[9, 18, 27]` $\rightarrow$ Context dimension = $2560 \times 3 = \mathbf{7680}$).
+- **AutoEncoder (VAE)**: 128 latent channels, nén $16\times$ không gian.
+- **Quy chuẩn suy luận (Inference Defaults)**:
+  + Euler ODE Flow Matching: `num_steps = 50`.
+  + Classifier-Free Guidance (CFG): `guidance = 4.0` (Do đây là bản Base, bắt buộc có CFG để chất lượng đạt đỉnh).
+- **Mọi code, script, LoRA fine-tuning và tối ưu hóa từ nay về sau**: Đều viết và cấu hình riêng cho `FLUX.2-klein-base-4B`.
