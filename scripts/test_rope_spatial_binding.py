@@ -148,9 +148,10 @@ def encode_glyph_with_custom_rope(
     expected_w = w_end - w_start
     assert expected_h > 0 and expected_w > 0, "Invalid target box dimensions"
 
-    # Preprocess glyph image to tensor [-1, 1]
+    # Preprocess glyph image to tensor [-1, 1] in bfloat16
     np_arr = np.array(glyph_img, dtype=np.float32) / 127.5 - 1.0
-    glyph_tensor = torch.from_numpy(np_arr).permute(2, 0, 1).unsqueeze(0).to(device)
+    glyph_dtype = next(ae.parameters()).dtype if hasattr(ae, "parameters") else torch.bfloat16
+    glyph_tensor = torch.from_numpy(np_arr).permute(2, 0, 1).unsqueeze(0).to(device=device, dtype=glyph_dtype)
 
     # Encode with VAE
     with torch.no_grad():
