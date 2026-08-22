@@ -168,7 +168,11 @@ def load_flow_model(model_name: str, debug_mode: bool = False, device: str | tor
             model = Flux2(FLUX2_MODEL_INFO[model_name.lower()]["params"]).to(torch.bfloat16)
         print(f"Loading {weight_path} for the FLUX.2 weights")
         sd = load_sft(weight_path, device=str(device))
-        model.load_state_dict(sd, strict=True, assign=True)
+        try:
+            model.load_state_dict(sd, strict=True, assign=True)
+        except Exception as e:
+            print(f"Warning: Strict state dict loading failed ({e}), fallback to non-strict...")
+            model.load_state_dict(sd, strict=False, assign=True)
         return model.to(device)
     else:
         with torch.device(device):
@@ -223,7 +227,13 @@ def load_ae(model_name: str, device: str | torch.device = "cuda") -> AutoEncoder
 
     print(f"Loading {weight_path} for the AutoEncoder weights")
     sd = load_sft(weight_path, device=str(device))
-    ae.load_state_dict(sd, strict=True, assign=True)
+    if any(k.startswith("vae.") for k in sd.keys()):
+        sd = {k.replace("vae.", ""): v for k, v in sd.items()}
+    try:
+        ae.load_state_dict(sd, strict=True, assign=True)
+    except Exception as e:
+        print(f"Warning: Strict AE loading failed ({e}), fallback to non-strict...")
+        ae.load_state_dict(sd, strict=False, assign=True)
 
     return ae.to(device)
 
