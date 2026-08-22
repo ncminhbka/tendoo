@@ -355,13 +355,41 @@ def denoise_cached(
     return img
 
 
-def vanilla_guidance(x: torch.Tensor, cfg_val: float) -> torch.Tensor:
-    x_u, x_c = x.chunk(2)
-    x = x_u + cfg_val * (x_c - x_u)
-    return x
-
-
 def denoise_cfg(
+    model: Flux2,
+    img: Tensor,
+    img_ids: Tensor,
+    txt: Tensor,  # Already cat([txt_empty, txt_prompt])
+    txt_ids: Tensor,
+    timesteps: list[float],
+    guidance: float,
+):
+    """Standard CFG denoising without reference sequence (for pure prompt baseline)."""
+    img = torch.cat([img, img], dim=0)
+    img_ids = torch.cat([img_ids, img_ids], dim=0)
+
+    for t_curr, t_prev in zip(timesteps[:-1], timesteps[1:]):
+        t_vec = torch.full((img.shape[0],), t_curr, dtype=img.dtype, device=img.device)
+
+        pred = model(
+            x=img,
+            x_ids=img_ids,
+            timesteps=t_vec,
+            ctx=txt,
+            ctx_ids=txt_ids,
+            guidance=None,
+        )
+
+        pred_uncond, pred_cond = pred.chunk(2)
+        pred = pred_uncond + guidance * (pred_cond - pred_uncond)
+        pred = torch.cat([pred, pred], dim=0)
+
+        img = img + (t_prev - t_curr) * pred
+
+    return img.chunk(2)[0]
+
+
+def denoise_cfg_cached(
     model: Flux2,
     img: Tensor,
     img_ids: Tensor,
@@ -371,35 +399,55 @@ def denoise_cfg(
     guidance: float,
     img_cond_seq: Tensor | None = None,
     img_cond_seq_ids: Tensor | None = None,
+    ref_fixed_timestep: float = 0.0,
 ):
+    """Denoise with Classifier-Free Guidance (CFG) and KV caching for reference tokens.
+
+    Step 0: model.forward_kv_extract() — full pass with ref tokens locked at ref_fixed_timestep=0.0.
+    Steps 1+: model.forward_kv_cached() — attends to cached ref KV, canvas tokens only.
+    """
+    if img_cond_seq is None:
+        return denoise_cfg(
+            model=model,
+            img=img,
+            img_ids=img_ids,
+            txt=txt,
+            txt_ids=txt_ids,
+            timesteps=timesteps,
+            guidance=guidance,
+        )
+
     img = torch.cat([img, img], dim=0)
     img_ids = torch.cat([img_ids, img_ids], dim=0)
 
-    if img_cond_seq is not None:
-        assert img_cond_seq_ids is not None
-        img_cond_seq = torch.cat([img_cond_seq, img_cond_seq], dim=0)
-        img_cond_seq_ids = torch.cat([img_cond_seq_ids, img_cond_seq_ids], dim=0)
+    img_cond_seq = torch.cat([img_cond_seq, img_cond_seq], dim=0)
+    img_cond_seq_ids = torch.cat([img_cond_seq_ids, img_cond_seq_ids], dim=0)
 
-    for t_curr, t_prev in zip(timesteps[:-1], timesteps[1:]):
+    for step_idx, (t_curr, t_prev) in enumerate(zip(timesteps[:-1], timesteps[1:])):
         t_vec = torch.full((img.shape[0],), t_curr, dtype=img.dtype, device=img.device)
 
-        img_input = img
-        img_input_ids = img_ids
-        if img_cond_seq is not None:
-            img_input = torch.cat((img_input, img_cond_seq), dim=1)
-            img_input_ids = torch.cat((img_input_ids, img_cond_seq_ids), dim=1)
-
-        pred = model(
-            x=img_input,
-            x_ids=img_input_ids,
-            timesteps=t_vec,
-            ctx=txt,
-            ctx_ids=txt_ids,
-            guidance=None,
-        )
-
-        if img_cond_seq is not None:
-            pred = pred[:, : img.shape[1]]
+        if step_idx == 0:
+            pred, kv_cache = model.forward_kv_extract(
+                x=img,
+                x_ids=img_ids,
+                timesteps=t_vec,
+                ctx=txt,
+                ctx_ids=txt_ids,
+                guidance=None,
+                x_seq_concat=img_cond_seq,
+                x_seq_concat_ids=img_cond_seq_ids,
+                ref_fixed_timestep=ref_fixed_timestep,
+            )
+        else:
+            pred = model.forward_kv_cached(
+                x=img,
+                x_ids=img_ids,
+                timesteps=t_vec,
+                ctx=txt,
+                ctx_ids=txt_ids,
+                guidance=None,
+                kv_cache=kv_cache,
+            )
 
         pred_uncond, pred_cond = pred.chunk(2)
         pred = pred_uncond + guidance * (pred_cond - pred_uncond)
