@@ -379,7 +379,10 @@ class Qwen3Embedder(nn.Module):
         self.max_length = MAX_LENGTH
 
     @torch.no_grad()
-    def forward(self, txt: list[str]):
+    def forward(self, txt: list[str] | str):
+        if isinstance(txt, str):
+            txt = [txt]
+
         all_input_ids = []
         all_attention_masks = []
 

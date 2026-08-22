@@ -271,28 +271,48 @@ def run_experiment(
     glyph_img.save(glyph_preview_path)
     print(f"  -> Saved glyph reference preview: {glyph_preview_path}")
 
-    # 2. Load Models
-    print("\n[Step 2/5] Loading FLUX.2 models to GPU...")
-    ae = load_ae(model_name, device=device)
-    model = load_flow_model(model_name, device=device)
-    text_encoder = load_text_encoder(model_name, device=device)
+    # 2. Setup Multi-GPU or Single-GPU Devices
+    num_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
+    if num_gpus >= 2:
+        device_dit = "cuda:0"
+        device_te = "cuda:1"
+        device_ae = "cuda:1"
+        print(f"\n[Step 2/5] Multi-GPU Mode Activated ({num_gpus}x GPUs detected):")
+        print(f"  -> GPU 0 (cuda:0): DiT Base 4B ({model_name})")
+        print(f"  -> GPU 1 (cuda:1): Qwen3-4B-FP8 Text Encoder & VAE AutoEncoder")
+    else:
+        device_dit = device
+        device_te = device
+        device_ae = device
+        print(f"\n[Step 2/5] Loading models to {device}...")
+
+    ae = load_ae(model_name, device=device_ae)
+    model = load_flow_model(model_name, device=device_dit)
+    text_encoder = load_text_encoder(model_name, device=device_te)
 
     # 3. Encode Text Prompt
     print("\n[Step 3/5] Extracting context from Qwen3 text encoder...")
     with torch.no_grad():
-        txt_emb = text_encoder(prompt)
-        txt_empty = text_encoder("")
+        txt_emb = text_encoder([prompt]).to(device_dit)
+        txt_empty = text_encoder([""]).to(device_dit)
         txt = torch.cat([txt_empty, txt_emb], dim=0)
         _, txt_ids = batched_prc_txt(txt)
+        txt_ids = txt_ids.to(device_dit)
+
+    # Optional memory cleanup if single GPU
+    if num_gpus < 2:
+        print("  -> Freeing Qwen3 Text Encoder from single GPU VRAM...")
+        del text_encoder
+        torch.cuda.empty_cache()
 
     # 4. Prepare Canvas & RoPE Bound Glyph
     print("\n[Step 4/5] Preparing Latent Canvas and RoPE Spatial Coordinates...")
     lat_h = height // 16
     lat_w = width // 16
-    z_init = torch.randn(1, 128, lat_h, lat_w, device=device, dtype=torch.bfloat16)
+    z_init = torch.randn(1, 128, lat_h, lat_w, device=device_dit, dtype=torch.bfloat16)
     img_tokens, img_ids = prc_img(z_init[0])
-    img_tokens = img_tokens.unsqueeze(0)
-    img_ids = img_ids.unsqueeze(0)
+    img_tokens = img_tokens.unsqueeze(0).to(device_dit)
+    img_ids = img_ids.unsqueeze(0).to(device_dit)
 
     # Encode Glyph with RoPE Coordinate Alignment
     ref_tokens, ref_ids = encode_glyph_with_custom_rope(
@@ -302,8 +322,10 @@ def run_experiment(
         canvas_width=width,
         box=(ymin, xmin, ymax, xmax),
         t_offset=10.0,
-        device=device,
+        device=device_ae,
     )
+    ref_tokens = ref_tokens.to(device_dit)
+    ref_ids = ref_ids.to(device_dit)
 
     print(f"  -> Canvas Tokens : {img_tokens.shape[1]} tokens (Grid: {lat_h}x{lat_w})")
     print(f"  -> Glyph Tokens  : {ref_tokens.shape[1]} tokens (Box: {box_h//16}x{box_w//16})")
@@ -332,7 +354,7 @@ def run_experiment(
 
         out_latent = rearrange(out_latent, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
         print("  -> Decoding RoPE bound output image via VAE...")
-        out_pixels = ae.decode(out_latent)
+        out_pixels = ae.decode(out_latent.to(device_ae))
         out_pixels = ((out_pixels[0].clamp(-1, 1) + 1.0) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
         result_rope = Image.fromarray(out_pixels)
         result_rope.save(output_path)
@@ -342,11 +364,11 @@ def run_experiment(
         baseline_path = Path(output_path).stem + "_baseline_default_coords.png"
         print(f"\n[Comparison] Running Baseline (Default ref coordinates at 0,0)...")
         # Default RoPE coordinates (unbound, starts at 0,0)
-        t_c = torch.tensor([10.0], dtype=torch.float32, device=device)
-        h_c = torch.arange(box_h // 16, dtype=torch.float32, device=device)
-        w_c = torch.arange(box_w // 16, dtype=torch.float32, device=device)
-        l_c = torch.arange(1, dtype=torch.float32, device=device)
-        baseline_ref_ids = torch.cartesian_prod(t_c, h_c, w_c, l_c).unsqueeze(0)
+        t_c = torch.tensor([10.0], dtype=torch.float32, device=device_dit)
+        h_c = torch.arange(box_h // 16, dtype=torch.float32, device=device_dit)
+        w_c = torch.arange(box_w // 16, dtype=torch.float32, device=device_dit)
+        l_c = torch.arange(1, dtype=torch.float32, device=device_dit)
+        baseline_ref_ids = torch.cartesian_prod(t_c, h_c, w_c, l_c).unsqueeze(0).to(device_dit)
 
         out_latent_base = denoise_cfg(
             model=model,
@@ -360,15 +382,14 @@ def run_experiment(
             img_cond_seq_ids=baseline_ref_ids,
         )
         out_latent_base = rearrange(out_latent_base, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
-        out_pixels_base = ae.decode(out_latent_base)
+        out_pixels_base = ae.decode(out_latent_base.to(device_ae))
         out_pixels_base = ((out_pixels_base[0].clamp(-1, 1) + 1.0) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
         result_base = Image.fromarray(out_pixels_base)
         result_base.save(baseline_path)
         print(f"  -> Saved Baseline result to: {baseline_path}")
 
-        # Create 3-panel Side-by-Side Comparison: [Glyph | Baseline (0,0) | RoPE Bound (target box)]
+        # Create 2-panel Side-by-Side Comparison: [Baseline (0,0) | RoPE Bound (target box)]
         comparison_path = Path(output_path).stem + "_COMPARISON.png"
-        comp_w = width * 2 + glyph_img.width
         comp_img = Image.new("RGB", (width * 2, height), color=(30, 30, 30))
         comp_img.paste(result_base, (0, 0))
         comp_img.paste(result_rope, (width, 0))
