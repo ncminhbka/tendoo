@@ -48,6 +48,7 @@ from flux2.util import (
     load_ae,
     load_flow_model,
     load_text_encoder,
+    find_persistent_data_root,
 )
 
 
@@ -64,10 +65,7 @@ def create_glyph_image(
     Renders a tight-crop Vietnamese glyph image with exact text and diacritics.
     Dimensions must be divisible by 16 (for 16x VAE patchification).
     """
-    # Ensure dimensions are divisible by 16
-    target_width = (target_width // 16) * 16
-    target_height = (target_height // 16) * 16
-    assert target_width > 0 and target_height > 0
+    assert target_width > 0 and target_height > 0 and target_width % 16 == 0 and target_height % 16 == 0
 
     img = Image.new("RGB", (target_width, target_height), color=bg_color)
     draw = ImageDraw.Draw(img)
@@ -76,7 +74,10 @@ def create_glyph_image(
     font = None
     candidate_fonts = [
         font_path,
+        "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
         "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
         "C:\\Windows\\Fonts\\arial.ttf",
@@ -86,12 +87,17 @@ def create_glyph_image(
         if fp and os.path.exists(fp):
             try:
                 font = ImageFont.truetype(fp, font_size)
+                print(f"  -> Using Unicode font: {fp}")
                 break
             except Exception:
                 continue
 
     if font is None:
-        font = ImageFont.load_default()
+        raise RuntimeError(
+            "❌ No valid Unicode font found with Vietnamese support! "
+            "Please specify a valid font using --font_path /path/to/font.ttf "
+            "(e.g. /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf)."
+        )
 
     # Calculate text bounding box to center it
     bbox = draw.textbbox((0, 0), text, font=font)
@@ -120,7 +126,7 @@ def encode_glyph_with_custom_rope(
     glyph_img: Image.Image,
     canvas_height: int,
     canvas_width: int,
-    box: tuple[int, int, int, int],  # (ymin, xmin, ymax, xmax) in pixels
+    box: tuple[int, int, int, int],  # (ymin, xmin, ymax, xmax) in pixels, already snapped to 16
     t_offset: float = 10.0,
     device: str = "cuda",
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -184,49 +190,27 @@ def encode_glyph_with_custom_rope(
 def resolve_model_paths(custom_dir: str | None = None):
     """
     Auto-detects model checkpoints in persistent-data directory structure:
-        - ~/persistent-data/FLUX.2-klein-base-4B/
-        - /home/jovyan/persistent-data/FLUX.2-klein-base-4B/
-        - ../../persistent-data/FLUX.2-klein-base-4B/
+    ~/persistent-data/FLUX.2-klein-base-4B/
     """
-    from flux2.util import find_persistent_data_root
+    p_root = custom_dir or find_persistent_data_root()
+    if p_root:
+        print(f"  -> Detected persistent checkpoint directory: {p_root}")
+        dit_path = os.path.join(p_root, "flux-2-klein-base-4b.safetensors")
+        if os.path.exists(dit_path):
+            os.environ["KLEIN_4B_BASE_MODEL_PATH"] = dit_path
+            print(f"     Found DiT weights: {dit_path}")
 
-    cdir = custom_dir or find_persistent_data_root()
+        ae_path = os.path.join(p_root, "vae", "diffusion_pytorch_model.safetensors")
+        if not os.path.exists(ae_path):
+            ae_path = os.path.join(p_root, "ae.safetensors")
+        if os.path.exists(ae_path):
+            os.environ["AE_MODEL_PATH"] = ae_path
+            print(f"     Found AE weights : {ae_path}")
 
-    if cdir and os.path.exists(cdir):
-        print(f"  -> Detected persistent checkpoint directory: {os.path.abspath(cdir)}")
-        # Check DiT weights
-        dit_candidates = [
-            os.path.join(cdir, "flux-2-klein-base-4b.safetensors"),
-            os.path.join(cdir, "transformer", "diffusion_pytorch_model.safetensors"),
-            os.path.join(cdir, "flux-2-klein-4b.safetensors"),
-        ]
-        for dit_path in dit_candidates:
-            if os.path.exists(dit_path):
-                os.environ["KLEIN_4B_BASE_MODEL_PATH"] = dit_path
-                os.environ["KLEIN_4B_MODEL_PATH"] = dit_path
-                print(f"     Found DiT weights: {dit_path}")
-                break
-
-        # Check VAE weights
-        ae_candidates = [
-            os.path.join(cdir, "vae", "diffusion_pytorch_model.safetensors"),
-            os.path.join(cdir, "ae.safetensors"),
-            os.path.join(cdir, "vae", "ae.safetensors"),
-        ]
-        for ae_path in ae_candidates:
-            if os.path.exists(ae_path):
-                os.environ["AE_MODEL_PATH"] = ae_path
-                print(f"     Found AE weights : {ae_path}")
-                break
-
-        # Check Text Encoder (Qwen3) directory
-        text_encoder_dir = os.path.join(cdir, "text_encoder")
-        if os.path.exists(text_encoder_dir):
-            os.environ["TEXT_ENCODER_PATH"] = text_encoder_dir
-            os.environ["QWEN3_4B_MODEL_PATH"] = text_encoder_dir
-            print(f"     Found Text Encoder dir: {text_encoder_dir}")
-    else:
-        print("  -> Warning: No persistent data directory automatically detected.")
+        te_dir = os.path.join(p_root, "text_encoder")
+        if os.path.exists(te_dir):
+            os.environ["QWEN3_4B_DIR"] = te_dir
+            print(f"     Found Text Encoder dir: {te_dir}")
 
 
 def run_experiment(
@@ -236,6 +220,7 @@ def run_experiment(
     output_path: str,
     model_name: str = "flux.2-klein-base-4b",
     checkpoint_dir: str | None = None,
+    font_path: str | None = None,
     height: int = 1024,
     width: int = 1024,
     num_steps: int = 50,
@@ -243,11 +228,20 @@ def run_experiment(
     seed: int = 42,
     device: str = "cuda",
 ):
+    # Snap box coordinates to multiples of 16 immediately (prevents any rounding mismatch)
+    ymin = (box[0] // 16) * 16
+    xmin = (box[1] // 16) * 16
+    ymax = (box[2] // 16) * 16
+    xmax = (box[3] // 16) * 16
+    box_h = ymax - ymin
+    box_w = xmax - xmin
+    assert box_h > 0 and box_w > 0, f"Invalid bounding box: {[ymin, xmin, ymax, xmax]}"
+
     print("=" * 80)
     print(f"🚀 Starting RoPE Spatial Binding Experiment (Phase 1A)")
     print(f"Prompt        : {prompt}")
     print(f"Target Text   : {text}")
-    print(f"Target Box    : {box} (ymin, xmin, ymax, xmax)")
+    print(f"Target Box    : [{ymin}, {xmin}, {ymax}, {xmax}] (Snapped to 16px grid)")
     print(f"Model         : {model_name}")
     print(f"Canvas Size   : {width}x{height}")
     print("=" * 80)
@@ -256,9 +250,6 @@ def run_experiment(
     resolve_model_paths(checkpoint_dir)
 
     torch.manual_seed(seed)
-    ymin, xmin, ymax, xmax = box
-    box_h = ymax - ymin
-    box_w = xmax - xmin
 
     # 1. Render Glyph Image
     print("\n[Step 1/5] Rendering tight-crop Vietnamese glyph bitmap...")
@@ -266,6 +257,7 @@ def run_experiment(
         text=text,
         target_width=box_w,
         target_height=box_h,
+        font_path=font_path,
         font_size=64,
     )
     glyph_preview_path = Path(output_path).stem + "_glyph_preview.png"
@@ -291,12 +283,10 @@ def run_experiment(
     model = load_flow_model(model_name, device=device_dit)
     text_encoder = load_text_encoder(model_name, device=device_te)
 
-    # 3. Encode Text Prompt
+    # 3. Encode Text Prompt (Single synchronized batch for identical seq_len padding)
     print("\n[Step 3/5] Extracting context from Qwen3 text encoder...")
     with torch.no_grad():
-        txt_emb = text_encoder([prompt]).to(device_dit)
-        txt_empty = text_encoder([""]).to(device_dit)
-        txt = torch.cat([txt_empty, txt_emb], dim=0)
+        txt = text_encoder(["", prompt]).to(device_dit)  # Batch size 2: [uncond, cond]
         _, txt_ids = batched_prc_txt(txt)
         txt_ids = txt_ids.to(device_dit)
 
@@ -360,10 +350,9 @@ def run_experiment(
         result_rope.save(output_path)
         print(f"  -> Saved RoPE-bound result to: {output_path}")
 
-        # Optional: Baseline comparison (Default coordinates at 0, 0)
+        # Baseline 1: Unbound coordinates (starts at 0, 0)
         baseline_path = Path(output_path).stem + "_baseline_default_coords.png"
-        print(f"\n[Comparison] Running Baseline (Default ref coordinates at 0,0)...")
-        # Default RoPE coordinates (unbound, starts at 0,0)
+        print(f"\n[Comparison] Running Baseline 1 (Default ref coordinates at 0,0)...")
         t_c = torch.tensor([10.0], dtype=torch.float32, device=device_dit)
         h_c = torch.arange(box_h // 16, dtype=torch.float32, device=device_dit)
         w_c = torch.arange(box_w // 16, dtype=torch.float32, device=device_dit)
@@ -386,22 +375,45 @@ def run_experiment(
         out_pixels_base = ((out_pixels_base[0].clamp(-1, 1) + 1.0) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
         result_base = Image.fromarray(out_pixels_base)
         result_base.save(baseline_path)
-        print(f"  -> Saved Baseline result to: {baseline_path}")
+        print(f"  -> Saved Baseline 1 result to: {baseline_path}")
 
-        # Create 2-panel Side-by-Side Comparison: [Baseline (0,0) | RoPE Bound (target box)]
+        # Baseline 2: Pure Prompt (No Glyph Conditioning)
+        pure_prompt_path = Path(output_path).stem + "_pure_prompt_no_glyph.png"
+        print(f"\n[Comparison] Running Baseline 2 (Pure Prompt, No Glyph Conditioning)...")
+        out_latent_pure = denoise_cfg(
+            model=model,
+            img=img_tokens.clone(),
+            img_ids=img_ids.clone(),
+            txt=txt,
+            txt_ids=txt_ids,
+            timesteps=timesteps,
+            guidance=guidance,
+            img_cond_seq=None,
+            img_cond_seq_ids=None,
+        )
+        out_latent_pure = rearrange(out_latent_pure, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
+        out_pixels_pure = ae.decode(out_latent_pure.to(device_ae))
+        out_pixels_pure = ((out_pixels_pure[0].clamp(-1, 1) + 1.0) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
+        result_pure = Image.fromarray(out_pixels_pure)
+        result_pure.save(pure_prompt_path)
+        print(f"  -> Saved Baseline 2 (Pure Prompt) result to: {pure_prompt_path}")
+
+        # Create 3-panel Side-by-Side Comparison: [Pure Prompt | Baseline (0,0) | RoPE Bound (target box)]
         comparison_path = Path(output_path).stem + "_COMPARISON.png"
-        comp_img = Image.new("RGB", (width * 2, height), color=(30, 30, 30))
-        comp_img.paste(result_base, (0, 0))
-        comp_img.paste(result_rope, (width, 0))
+        comp_img = Image.new("RGB", (width * 3, height), color=(30, 30, 30))
+        comp_img.paste(result_pure, (0, 0))
+        comp_img.paste(result_base, (width, 0))
+        comp_img.paste(result_rope, (width * 2, 0))
         comp_img.save(comparison_path)
-        print(f"  -> 🌟 Saved Side-by-Side Comparison to: {comparison_path}")
+        print(f"  -> 🌟 Saved 3-Panel Side-by-Side Comparison to: {comparison_path}")
 
     print("\n" + "=" * 80)
     print(f"✅ EXPERIMENT COMPLETE!")
     print(f"1. Glyph Preview       : {glyph_preview_path}")
-    print(f"2. Baseline (Default)  : {baseline_path}")
-    print(f"3. RoPE Bound (Target) : {output_path}")
-    print(f"4. Side-by-side View   : {comparison_path}")
+    print(f"2. Pure Prompt (No Ref): {pure_prompt_path}")
+    print(f"3. Baseline (Coords 0,0): {baseline_path}")
+    print(f"4. RoPE Bound (Target) : {output_path}")
+    print(f"5. 3-Panel Comparison  : {comparison_path}")
     print("=" * 80)
 
 
@@ -413,7 +425,7 @@ if __name__ == "__main__":
         "--box",
         type=int,
         nargs=4,
-        default=[256, 128, 512, 896],
+        default=[256, 128, 448, 896],
         help="Target bounding box on canvas in pixels: ymin xmin ymax xmax",
     )
     parser.add_argument("--output", type=str, default="output_rope_vietnamese.png", help="Path to save output image")
@@ -423,6 +435,12 @@ if __name__ == "__main__":
         type=str,
         default=None,
         help="Optional explicit path to pre-downloaded persistent-data directory",
+    )
+    parser.add_argument(
+        "--font_path",
+        type=str,
+        default=None,
+        help="Optional path to TTF/OTF Unicode font with Vietnamese support",
     )
     parser.add_argument("--height", type=int, default=1024, help="Output image height (multiple of 16)")
     parser.add_argument("--width", type=int, default=1024, help="Output image width (multiple of 16)")
@@ -440,6 +458,7 @@ if __name__ == "__main__":
         output_path=args.output,
         model_name=args.model_name,
         checkpoint_dir=args.checkpoint_dir,
+        font_path=args.font_path,
         height=args.height,
         width=args.width,
         num_steps=args.steps,
