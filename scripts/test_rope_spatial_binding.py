@@ -337,7 +337,6 @@ def run_experiment(
     timesteps = get_schedule(
         num_steps=num_steps,
         image_seq_len=img_tokens.shape[1],
-        shift=True,
     )
 
     with torch.no_grad():
