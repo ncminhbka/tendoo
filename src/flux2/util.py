@@ -95,10 +95,25 @@ def load_flow_model(model_name: str, debug_mode: bool = False, device: str | tor
         config["params"].depth = 1
         config["params"].depth_single_blocks = 1
     else:
-        if config["model_path"] in os.environ:
+        weight_path = None
+        if config["model_path"] in os.environ and os.path.exists(os.environ[config["model_path"]]):
             weight_path = os.environ[config["model_path"]]
-            assert os.path.exists(weight_path), f"Provided weight path {weight_path} does not exist"
         else:
+            # Auto-check local persistent directories
+            candidate_paths = [
+                f"../persistent-data/FLUX.2-klein-base-4B/{config['filename']}",
+                f"/persistent-data/FLUX.2-klein-base-4B/{config['filename']}",
+                f"./persistent-data/FLUX.2-klein-base-4B/{config['filename']}",
+                f"../persistent-data/{config['filename']}",
+                f"/persistent-data/{config['filename']}",
+            ]
+            for cp in candidate_paths:
+                if os.path.exists(cp):
+                    weight_path = cp
+                    print(f"Found local FLUX.2 weights at: {cp}")
+                    break
+
+        if weight_path is None:
             # download from huggingface
             try:
                 weight_path = huggingface_hub.hf_hub_download(
@@ -106,11 +121,10 @@ def load_flow_model(model_name: str, debug_mode: bool = False, device: str | tor
                     filename=config["filename"],
                     repo_type="model",
                 )
-            except huggingface_hub.errors.RepositoryNotFoundError:
+            except Exception as e:
                 print(
-                    f"Failed to access the model repository. Please check your internet "
-                    f"connection and make sure you've access to {config['repo_id']}."
-                    "Stopping."
+                    f"Failed to access model repository on HuggingFace and local file not found ({config['filename']}). "
+                    f"Error: {e}. Please set environment variable {config['model_path']} to local file path."
                 )
                 sys.exit(1)
 
@@ -133,11 +147,28 @@ def load_text_encoder(model_name: str, device: str | torch.device = "cuda"):
 
 def load_ae(model_name: str, device: str | torch.device = "cuda") -> AutoEncoder:
     config = FLUX2_MODEL_INFO[model_name.lower()]
+    weight_path = None
 
-    if "AE_MODEL_PATH" in os.environ:
+    if "AE_MODEL_PATH" in os.environ and os.path.exists(os.environ["AE_MODEL_PATH"]):
         weight_path = os.environ["AE_MODEL_PATH"]
-        assert os.path.exists(weight_path), f"Provided weight path {weight_path} does not exist"
     else:
+        # Auto-check local persistent directories
+        candidate_paths = [
+            f"../persistent-data/FLUX.2-klein-base-4B/{config['filename_ae']}",
+            f"/persistent-data/FLUX.2-klein-base-4B/{config['filename_ae']}",
+            f"./persistent-data/FLUX.2-klein-base-4B/{config['filename_ae']}",
+            f"../persistent-data/FLUX.2-klein-base-4B/vae/{config['filename_ae']}",
+            f"/persistent-data/FLUX.2-klein-base-4B/vae/{config['filename_ae']}",
+            f"../persistent-data/{config['filename_ae']}",
+            f"/persistent-data/{config['filename_ae']}",
+        ]
+        for cp in candidate_paths:
+            if os.path.exists(cp):
+                weight_path = cp
+                print(f"Found local AutoEncoder weights at: {cp}")
+                break
+
+    if weight_path is None:
         # download from huggingface
         try:
             ae_repo = config.get("ae_repo_id", config["repo_id"])
@@ -146,11 +177,10 @@ def load_ae(model_name: str, device: str | torch.device = "cuda") -> AutoEncoder
                 filename=config["filename_ae"],
                 repo_type="model",
             )
-        except huggingface_hub.errors.RepositoryNotFoundError:
+        except Exception as e:
             print(
-                f"Failed to access the model repository. Please check your internet "
-                f"connection and make sure you've access to {config['repo_id']}."
-                "Stopping."
+                f"Failed to access AE repository on HuggingFace and local file not found ({config['filename_ae']}). "
+                f"Error: {e}. Please set environment variable AE_MODEL_PATH to local file path."
             )
             sys.exit(1)
 

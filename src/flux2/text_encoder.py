@@ -428,9 +428,41 @@ class Qwen3Embedder(nn.Module):
         raise NotImplementedError("Qwen3Embedder does not support upsampling")
 
 
-def load_mistral_small_embedder(device: str | torch.device = "cuda") -> Mistral3SmallEmbedder:
-    return Mistral3SmallEmbedder().to(device)
-
-
 def load_qwen3_embedder(variant: str, device: str | torch.device = "cuda"):
-    return Qwen3Embedder(model_spec=f"Qwen/Qwen3-{variant}-FP8", device=device)
+    import os
+    env_var_key = f"QWEN3_{variant.upper()}_MODEL_PATH"
+    model_spec = f"Qwen/Qwen3-{variant}-FP8"
+
+    if env_var_key in os.environ and os.path.exists(os.environ[env_var_key]):
+        model_spec = os.environ[env_var_key]
+        print(f"Loading Qwen3 text encoder from env {env_var_key}: {model_spec}")
+    elif "TEXT_ENCODER_PATH" in os.environ and os.path.exists(os.environ["TEXT_ENCODER_PATH"]):
+        model_spec = os.environ["TEXT_ENCODER_PATH"]
+        print(f"Loading Qwen3 text encoder from TEXT_ENCODER_PATH: {model_spec}")
+    else:
+        # Check standard local directories in persistent-data
+        candidate_paths = [
+            f"../persistent-data/FLUX.2-klein-base-{variant}/text_encoder",
+            f"../persistent-data/FLUX.2-klein-base-{variant}/qwen3",
+            f"../persistent-data/FLUX.2-klein-base-{variant}/Qwen3-{variant}-FP8",
+            f"../persistent-data/FLUX.2-klein-base-{variant}",
+            f"/persistent-data/FLUX.2-klein-base-{variant}/text_encoder",
+            f"/persistent-data/FLUX.2-klein-base-{variant}/qwen3",
+            f"/persistent-data/FLUX.2-klein-base-{variant}/Qwen3-{variant}-FP8",
+            f"/persistent-data/FLUX.2-klein-base-{variant}",
+            f"../persistent-data/Qwen3-{variant}-FP8",
+            f"/persistent-data/Qwen3-{variant}-FP8",
+            f"../persistent-data/text_encoder",
+            f"/persistent-data/text_encoder",
+        ]
+        for cp in candidate_paths:
+            if os.path.exists(cp) and (
+                os.path.exists(os.path.join(cp, "config.json"))
+                or os.path.exists(os.path.join(cp, "tokenizer.json"))
+                or os.path.exists(os.path.join(cp, "tokenizer_config.json"))
+            ):
+                model_spec = cp
+                print(f"Detected and loading local Qwen3 from: {cp}")
+                break
+
+    return Qwen3Embedder(model_spec=model_spec, device=device)
