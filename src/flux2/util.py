@@ -2,6 +2,7 @@ import base64
 import io
 import os
 import sys
+from pathlib import Path
 
 import huggingface_hub
 import torch
@@ -184,6 +185,50 @@ def load_text_encoder(model_name: str, device: str | torch.device = "cuda"):
     return config["text_encoder_load_fn"](device=device)
 
 
+def convert_diffusers_vae_to_bfl(sd: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+    new_sd = {}
+    for k, v in sd.items():
+        new_k = k
+        if new_k.startswith("vae."):
+            new_k = new_k[4:]
+
+        # quant_conv / post_quant_conv
+        if new_k.startswith("quant_conv."):
+            new_k = "encoder." + new_k
+        elif new_k.startswith("post_quant_conv."):
+            new_k = "decoder." + new_k
+
+        # conv_norm_out -> norm_out
+        new_k = new_k.replace("conv_norm_out.", "norm_out.")
+
+        # downsamplers.0.conv -> downsample.conv
+        new_k = new_k.replace(".downsamplers.0.conv.", ".downsample.conv.")
+        # upsamplers.0.conv -> upsample.conv
+        new_k = new_k.replace(".upsamplers.0.conv.", ".upsample.conv.")
+
+        # conv_shortcut -> nin_shortcut
+        new_k = new_k.replace(".conv_shortcut.", ".nin_shortcut.")
+
+        # mid_block -> mid
+        new_k = new_k.replace(".mid_block.resnets.0.", ".mid.block_1.")
+        new_k = new_k.replace(".mid_block.resnets.1.", ".mid.block_2.")
+        new_k = new_k.replace(".mid_block.attentions.0.group_norm.", ".mid.attn_1.norm.")
+        new_k = new_k.replace(".mid_block.attentions.0.to_q.", ".mid.attn_1.q.")
+        new_k = new_k.replace(".mid_block.attentions.0.to_k.", ".mid.attn_1.k.")
+        new_k = new_k.replace(".mid_block.attentions.0.to_v.", ".mid.attn_1.v.")
+        new_k = new_k.replace(".mid_block.attentions.0.to_out.0.", ".mid.attn_1.proj_out.")
+
+        # down_blocks -> down, up_blocks -> up
+        new_k = new_k.replace("down_blocks.", "down.")
+        new_k = new_k.replace("up_blocks.", "up.")
+
+        # resnets -> block
+        new_k = new_k.replace(".resnets.", ".block.")
+
+        new_sd[new_k] = v
+    return new_sd
+
+
 def load_ae(model_name: str, device: str | torch.device = "cuda") -> AutoEncoder:
     config = FLUX2_MODEL_INFO[model_name.lower()]
     weight_path = None
@@ -227,8 +272,14 @@ def load_ae(model_name: str, device: str | torch.device = "cuda") -> AutoEncoder
 
     print(f"Loading {weight_path} for the AutoEncoder weights")
     sd = load_sft(weight_path, device=str(device))
-    if any(k.startswith("vae.") for k in sd.keys()):
+    
+    # Auto-convert diffusers format to BFL format if detected
+    if any(k.startswith("encoder.down_blocks.") or k.startswith("quant_conv.") or k.startswith("decoder.up_blocks.") for k in sd.keys()):
+        print("  -> Detected Diffusers format VAE keys, converting to BFL AutoEncoder format...")
+        sd = convert_diffusers_vae_to_bfl(sd)
+    elif any(k.startswith("vae.") for k in sd.keys()):
         sd = {k.replace("vae.", ""): v for k, v in sd.items()}
+
     try:
         ae.load_state_dict(sd, strict=True, assign=True)
     except Exception as e:
