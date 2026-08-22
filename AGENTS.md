@@ -1,0 +1,66 @@
+# HƯỚNG DẪN HOẠT ĐỘNG DÀNH CHO AGENT (AGENT INSTRUCTIONS & ENVIRONMENT CONSTRAINTS)
+
+## 📌 1. MÔI TRƯỜNG PHÁT TRIỂN & PHÂN VÙNG THỰC THI (ENVIRONMENT PARTITIONING)
+
+### 💻 A. MÁY CÁ NHÂN CỦA USER (LOCAL DEVELOPMENT MACHINE - WINDOWS):
+- **Phần cứng**: Máy cá nhân, **KHÔNG CÓ GPU / KHÔNG ĐỦ TÀI NGUYÊN** để chạy mô hình AI nặng.
+- **Vai trò**: Dùng DUY NHẤT để:
+  + Đọc hiểu, phân tích mã nguồn, tài liệu và paper.
+  + Viết code, debug cú pháp, đóng gói module, viết scripts kiểm thử/huấn luyện.
+  + Quản lý phiên bản mã nguồn (Git commit, git push, tạo file ZIP).
+- **⚠️ ĐIỀU CẤM KỴ**: **TUYỆT ĐỐI KHÔNG CHẠY** các lệnh inference mô hình nặng (`cli.py`, tải checkpoint DiT 4B, train LoRA, load weights lớn) trên máy local này!
+
+---
+
+### 🚀 B. MÁY CHỦ THỰC THI (REMOTE COMPUTING SERVER - 2x NVIDIA A30 48GB):
+- **Phần cứng**: **2x NVIDIA A30 (24GB VRAM x 2 = 48GB VRAM)**.
+- **Môi trường kết nối**: Máy chủ nằm trong **MẠNG NỘI BỘ (Internal Network)**, truy cập thông qua **JupyterLab**.
+- **Cấu trúc thư mục máy chủ**:
+  ```
+  / (hoặc thư mục gốc JupyterLab)
+  ├── persistent-data/
+  │   └── FLUX.2-klein-base-4B/   <-- Nơi đã tải sẵn toàn bộ weights mô hình
+  └── work/                       <-- Nơi clone repository này (ngang hàng với persistent-data)
+  ```
+- **Kênh truyền tải mã nguồn**:
+  + Qua **GitHub Repository** (Git push từ local -> Git pull trong thư mục `work/` trên server).
+  + Hoặc đóng gói tệp **ZIP** / copy paste trực tiếp mã nguồn vào JupyterLab.
+- **Vai trò**:
+  + Chạy các thực nghiệm suy luận (Inference Gate tests, RoPE Binding).
+  + Chạy huấn luyện (Fine-tune VAE Decoder, LoRA DiT 4B Base).
+  + Xuất log, ảnh kết quả và lưu checkpoint. Kết quả sau đó được chuyển về máy local để đánh giá.
+
+---
+
+## 🎯 2. QUY TRÌNH LÀM VIỆC CHUẨN (STANDARD AGENT WORKFLOW)
+
+```
+[ BƯỚC 1: LOCAL AGENT ]
+  Viết code hoàn chỉnh, độc lập, có tài liệu hướng dẫn và script tự động.
+         │
+         ▼
+[ BƯỚC 2: ĐÓNG GÓI & ĐẨY CODE ]
+  Commit Git / Hướng dẫn lệnh Git hoặc tạo file ZIP để User chuyển sang JupyterLab.
+         │
+         ▼
+[ BƯỚC 3: USER CHẠY TRÊN SERVER ]
+  User chạy script trên 2x GPU A30 qua JupyterLab Terminal / Notebook.
+         │
+         ▼
+[ BƯỚC 4: NHẬN KẾT QUẢ VỀ LOCAL ]
+  User copy log / ảnh kết quả về máy local -> Agent đọc log và phân tích phản biện tiếp.
+```
+
+---
+
+## 📋 3. NGUYÊN TẮC GIAO TIẾP VÀ KỸ THUẬT (COMMUNICATION & TECHNICAL PRINCIPLES)
+
+1. **Phong cách đồng nghiệp phản biện**:
+   - Khách quan, trung thực 100%, không nịnh bợ, không lạc quan tếu.
+   - Sẵn sàng chỉ ra lỗ hổng toán học, rủi ro bộ nhớ và sai số kiến trúc.
+2. **Nguyên tắc Kiềng 3 Chân (3-Pillar Complementary Rule)**:
+   - RoPE Spatial Binding (giải quyết Vị trí).
+   - Tight Crop Bitmap (giải quyết Chi phí Sequence Length).
+   - LoRA DiT 4B Base (giải quyết Chất liệu & Ánh sáng).
+   - Ba giải pháp này bổ trợ cho nhau, không thay thế nhau.
+3. **Mã nguồn thực thi**: Mọi script viết ra để chạy trên Server phải tự chứa (self-contained), có xử lý exception, hỗ trợ GPU CUDA, và tối ưu cho cấu hình 2x GPU A30 (Ampere architecture, BF16/FP16, DDP).

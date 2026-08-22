@@ -1,0 +1,412 @@
+"""
+Test Script: Phase 1A - RoPE Spatial Coordinate Binding for Vietnamese Text Rendering
+Model: FLUX.2 klein 4B Base + Qwen3-4B-FP8 + AE
+
+Usage on Remote Server (2x NVIDIA A30 / JupyterLab):
+    python scripts/test_rope_spatial_binding.py \
+        --prompt "a rustic wooden signboard hanging in front of a cozy coffee shop, highly detailed, 8k" \
+        --text "CÀ PHÊ SỮA ĐÁ" \
+        --box 256 128 512 896 \
+        --output "output_rope_test.png" \
+        --model_name "flux.2-klein-base-4b"
+"""
+
+import argparse
+import math
+import os
+from pathlib import Path
+import torch
+from einops import rearrange
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+
+# Import native FLUX.2 modules
+from flux2.autoencoder import AutoEncoder
+from flux2.model import Flux2
+from flux2.sampling import (
+    batched_prc_txt,
+    denoise_cfg,
+    get_schedule,
+    prc_img,
+)
+from flux2.text_encoder import Qwen3Embedder
+from flux2.util import (
+    FLUX2_MODEL_INFO,
+    load_ae,
+    load_flow_model,
+    load_text_encoder,
+)
+
+
+def create_glyph_image(
+    text: str,
+    target_width: int,
+    target_height: int,
+    font_path: str | None = None,
+    font_size: int = 72,
+    bg_color: tuple[int, int, int] = (0, 0, 0),
+    text_color: tuple[int, int, int] = (255, 255, 255),
+) -> Image.Image:
+    """
+    Renders a tight-crop Vietnamese glyph image with exact text and diacritics.
+    Dimensions must be divisible by 16 (for 16x VAE patchification).
+    """
+    # Ensure dimensions are divisible by 16
+    target_width = (target_width // 16) * 16
+    target_height = (target_height // 16) * 16
+    assert target_width > 0 and target_height > 0
+
+    img = Image.new("RGB", (target_width, target_height), color=bg_color)
+    draw = ImageDraw.Draw(img)
+
+    # Load font
+    font = None
+    candidate_fonts = [
+        font_path,
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+        "C:\\Windows\\Fonts\\arial.ttf",
+        "C:\\Windows\\Fonts\\segoeui.ttf",
+    ]
+    for fp in candidate_fonts:
+        if fp and os.path.exists(fp):
+            try:
+                font = ImageFont.truetype(fp, font_size)
+                break
+            except Exception:
+                continue
+
+    if font is None:
+        font = ImageFont.load_default()
+
+    # Calculate text bounding box to center it
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+
+    # Auto scale font if text is larger than target box
+    if text_w > target_width * 0.9 or text_h > target_height * 0.9:
+        scale_factor = min((target_width * 0.9) / max(text_w, 1), (target_height * 0.9) / max(text_h, 1))
+        new_font_size = max(int(font_size * scale_factor), 16)
+        if font_path and os.path.exists(font_path):
+            font = ImageFont.truetype(font_path, new_font_size)
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+
+    x_pos = (target_width - text_w) // 2 - bbox[0]
+    y_pos = (target_height - text_h) // 2 - bbox[1]
+
+    draw.text((x_pos, y_pos), text, font=font, fill=text_color)
+    return img
+
+
+def encode_glyph_with_custom_rope(
+    ae: AutoEncoder,
+    glyph_img: Image.Image,
+    canvas_height: int,
+    canvas_width: int,
+    box: tuple[int, int, int, int],  # (ymin, xmin, ymax, xmax) in pixels
+    t_offset: float = 10.0,
+    device: str = "cuda",
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Encodes glyph image via VAE and constructs 4D RoPE IDs matching target canvas coordinates.
+
+    Math:
+        Canvas Latent Grid: H_c = canvas_height // 16, W_c = canvas_width // 16
+        Box in Latent Grid:
+            h_start = ymin // 16, h_end = ymax // 16
+            w_start = xmin // 16, w_end = xmax // 16
+        Ref RoPE IDs:
+            t = t_offset (10.0)
+            h = arange(h_start, h_end)   <-- EXACT ALIGNMENT (Delta h = 0)
+            w = arange(w_start, w_end)   <-- EXACT ALIGNMENT (Delta w = 0)
+            l = 0
+    """
+    ymin, xmin, ymax, xmax = box
+    h_start = ymin // 16
+    h_end = ymax // 16
+    w_start = xmin // 16
+    w_end = xmax // 16
+
+    expected_h = h_end - h_start
+    expected_w = w_end - w_start
+    assert expected_h > 0 and expected_w > 0, "Invalid target box dimensions"
+
+    # Preprocess glyph image to tensor [-1, 1]
+    np_arr = np.array(glyph_img, dtype=np.float32) / 127.5 - 1.0
+    glyph_tensor = torch.from_numpy(np_arr).permute(2, 0, 1).unsqueeze(0).to(device)
+
+    # Encode with VAE
+    with torch.no_grad():
+        encoded = ae.encode(glyph_tensor)[0]  # Shape: (128, H_lat, W_lat)
+
+    _, lat_h, lat_w = encoded.shape
+    assert lat_h == expected_h and lat_w == expected_w, (
+        f"Encoded latent shape ({lat_h}, {lat_w}) does not match expected box latent shape ({expected_h}, {expected_w})"
+    )
+
+    # Construct Custom RoPE Coordinate IDs
+    t_coord = torch.tensor([t_offset], dtype=torch.float32, device=device)
+    h_coord = torch.arange(h_start, h_end, dtype=torch.float32, device=device)
+    w_coord = torch.arange(w_start, w_end, dtype=torch.float32, device=device)
+    l_coord = torch.arange(1, dtype=torch.float32, device=device)
+
+    # Cartesian product for (t, h, w, l)
+    ref_ids = torch.cartesian_prod(t_coord, h_coord, w_coord, l_coord)  # Shape: (lat_h * lat_w, 4)
+
+    # Flatten tokens: (128, H, W) -> (H*W, 128)
+    ref_tokens = rearrange(encoded, "c h w -> (h w) c")
+
+    # Add batch dimension
+    ref_tokens = ref_tokens.unsqueeze(0).to(torch.bfloat16)  # (1, num_ref_tokens, C)
+    ref_ids = ref_ids.unsqueeze(0)  # (1, num_ref_tokens, 4)
+
+    return ref_tokens, ref_ids
+
+
+def resolve_model_paths(custom_dir: str | None = None):
+    """
+    Auto-detects model checkpoints in persistent-data directory structure:
+        - ../persistent-data/FLUX.2-klein-base-4B/
+        - /persistent-data/FLUX.2-klein-base-4B/
+        - ./persistent-data/FLUX.2-klein-base-4B/
+    """
+    candidate_dirs = [
+        custom_dir,
+        os.environ.get("FLUX_CHECKPOINT_DIR"),
+        "../persistent-data/FLUX.2-klein-base-4B",
+        "/persistent-data/FLUX.2-klein-base-4B",
+        "./persistent-data/FLUX.2-klein-base-4B",
+        "../persistent-data",
+        "/persistent-data",
+    ]
+
+    for cdir in candidate_dirs:
+        if cdir and os.path.exists(cdir):
+            print(f"  -> Detected persistent checkpoint directory: {os.path.abspath(cdir)}")
+            # Check DiT weights
+            dit_candidates = [
+                os.path.join(cdir, "flux-2-klein-base-4b.safetensors"),
+                os.path.join(cdir, "flux-2-klein-4b.safetensors"),
+            ]
+            for dit_path in dit_candidates:
+                if os.path.exists(dit_path):
+                    os.environ["KLEIN_4B_BASE_MODEL_PATH"] = dit_path
+                    os.environ["KLEIN_4B_MODEL_PATH"] = dit_path
+                    print(f"     Found DiT weights: {dit_path}")
+                    break
+
+            # Check VAE weights
+            ae_candidates = [
+                os.path.join(cdir, "ae.safetensors"),
+                os.path.join(cdir, "vae", "ae.safetensors"),
+            ]
+            for ae_path in ae_candidates:
+                if os.path.exists(ae_path):
+                    os.environ["AE_MODEL_PATH"] = ae_path
+                    print(f"     Found AE weights : {ae_path}")
+                    break
+            break
+
+
+def run_experiment(
+    prompt: str,
+    text: str,
+    box: list[int],
+    output_path: str,
+    model_name: str = "flux.2-klein-base-4b",
+    checkpoint_dir: str | None = None,
+    height: int = 1024,
+    width: int = 1024,
+    num_steps: int = 50,
+    guidance: float = 4.0,
+    seed: int = 42,
+    device: str = "cuda",
+):
+    print("=" * 80)
+    print(f"🚀 Starting RoPE Spatial Binding Experiment (Phase 1A)")
+    print(f"Prompt        : {prompt}")
+    print(f"Target Text   : {text}")
+    print(f"Target Box    : {box} (ymin, xmin, ymax, xmax)")
+    print(f"Model         : {model_name}")
+    print(f"Canvas Size   : {width}x{height}")
+    print("=" * 80)
+
+    # Auto-resolve checkpoint paths from persistent-data
+    resolve_model_paths(checkpoint_dir)
+
+    torch.manual_seed(seed)
+    ymin, xmin, ymax, xmax = box
+    box_h = ymax - ymin
+    box_w = xmax - xmin
+
+    # 1. Render Glyph Image
+    print("\n[Step 1/5] Rendering tight-crop Vietnamese glyph bitmap...")
+    glyph_img = create_glyph_image(
+        text=text,
+        target_width=box_w,
+        target_height=box_h,
+        font_size=64,
+    )
+    glyph_preview_path = Path(output_path).stem + "_glyph_preview.png"
+    glyph_img.save(glyph_preview_path)
+    print(f"  -> Saved glyph reference preview: {glyph_preview_path}")
+
+    # 2. Load Models
+    print("\n[Step 2/5] Loading FLUX.2 models to GPU...")
+    ae = load_ae(model_name, device=device)
+    model = load_flow_model(model_name, device=device)
+    text_encoder = load_text_encoder(model_name, device=device)
+
+    # 3. Encode Text Prompt
+    print("\n[Step 3/5] Extracting context from Qwen3 text encoder...")
+    with torch.no_grad():
+        txt_emb = text_encoder(prompt)
+        txt_empty = text_encoder("")
+        txt = torch.cat([txt_empty, txt_emb], dim=0)
+        _, txt_ids = batched_prc_txt(txt)
+
+    # 4. Prepare Canvas & RoPE Bound Glyph
+    print("\n[Step 4/5] Preparing Latent Canvas and RoPE Spatial Coordinates...")
+    lat_h = height // 16
+    lat_w = width // 16
+    z_init = torch.randn(1, 128, lat_h, lat_w, device=device, dtype=torch.bfloat16)
+    img_tokens, img_ids = prc_img(z_init[0])
+    img_tokens = img_tokens.unsqueeze(0)
+    img_ids = img_ids.unsqueeze(0)
+
+    # Encode Glyph with RoPE Coordinate Alignment
+    ref_tokens, ref_ids = encode_glyph_with_custom_rope(
+        ae=ae,
+        glyph_img=glyph_img,
+        canvas_height=height,
+        canvas_width=width,
+        box=(ymin, xmin, ymax, xmax),
+        t_offset=10.0,
+        device=device,
+    )
+
+    print(f"  -> Canvas Tokens : {img_tokens.shape[1]} tokens (Grid: {lat_h}x{lat_w})")
+    print(f"  -> Glyph Tokens  : {ref_tokens.shape[1]} tokens (Box: {box_h//16}x{box_w//16})")
+    print(f"  -> RoPE h range  : [{ymin//16}, {ymax//16}), w range: [{xmin//16}, {xmax//16})")
+
+    # 5. Denoise with Flow Matching ODE (RoPE Bound Experiment)
+    print("\n[Step 5/5] Running Denoise with RoPE Bound Glyph Conditioning...")
+    timesteps = get_schedule(
+        num_steps=num_steps,
+        image_seq_len=img_tokens.shape[1],
+        shift=True,
+    )
+
+    with torch.no_grad():
+        out_latent = denoise_cfg(
+            model=model,
+            img=img_tokens.clone(),
+            img_ids=img_ids.clone(),
+            txt=txt,
+            txt_ids=txt_ids,
+            timesteps=timesteps,
+            guidance=guidance,
+            img_cond_seq=ref_tokens,
+            img_cond_seq_ids=ref_ids,
+        )
+
+        out_latent = rearrange(out_latent, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
+        print("  -> Decoding RoPE bound output image via VAE...")
+        out_pixels = ae.decode(out_latent)
+        out_pixels = ((out_pixels[0].clamp(-1, 1) + 1.0) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
+        result_rope = Image.fromarray(out_pixels)
+        result_rope.save(output_path)
+        print(f"  -> Saved RoPE-bound result to: {output_path}")
+
+        # Optional: Baseline comparison (Default coordinates at 0, 0)
+        baseline_path = Path(output_path).stem + "_baseline_default_coords.png"
+        print(f"\n[Comparison] Running Baseline (Default ref coordinates at 0,0)...")
+        # Default RoPE coordinates (unbound, starts at 0,0)
+        t_c = torch.tensor([10.0], dtype=torch.float32, device=device)
+        h_c = torch.arange(box_h // 16, dtype=torch.float32, device=device)
+        w_c = torch.arange(box_w // 16, dtype=torch.float32, device=device)
+        l_c = torch.arange(1, dtype=torch.float32, device=device)
+        baseline_ref_ids = torch.cartesian_prod(t_c, h_c, w_c, l_c).unsqueeze(0)
+
+        out_latent_base = denoise_cfg(
+            model=model,
+            img=img_tokens.clone(),
+            img_ids=img_ids.clone(),
+            txt=txt,
+            txt_ids=txt_ids,
+            timesteps=timesteps,
+            guidance=guidance,
+            img_cond_seq=ref_tokens,
+            img_cond_seq_ids=baseline_ref_ids,
+        )
+        out_latent_base = rearrange(out_latent_base, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
+        out_pixels_base = ae.decode(out_latent_base)
+        out_pixels_base = ((out_pixels_base[0].clamp(-1, 1) + 1.0) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
+        result_base = Image.fromarray(out_pixels_base)
+        result_base.save(baseline_path)
+        print(f"  -> Saved Baseline result to: {baseline_path}")
+
+        # Create 3-panel Side-by-Side Comparison: [Glyph | Baseline (0,0) | RoPE Bound (target box)]
+        comparison_path = Path(output_path).stem + "_COMPARISON.png"
+        comp_w = width * 2 + glyph_img.width
+        comp_img = Image.new("RGB", (width * 2, height), color=(30, 30, 30))
+        comp_img.paste(result_base, (0, 0))
+        comp_img.paste(result_rope, (width, 0))
+        comp_img.save(comparison_path)
+        print(f"  -> 🌟 Saved Side-by-Side Comparison to: {comparison_path}")
+
+    print("\n" + "=" * 80)
+    print(f"✅ EXPERIMENT COMPLETE!")
+    print(f"1. Glyph Preview       : {glyph_preview_path}")
+    print(f"2. Baseline (Default)  : {baseline_path}")
+    print(f"3. RoPE Bound (Target) : {output_path}")
+    print(f"4. Side-by-side View   : {comparison_path}")
+    print("=" * 80)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test RoPE Spatial Binding for Vietnamese Text in FLUX.2")
+    parser.add_argument("--prompt", type=str, required=True, help="Text prompt for image generation")
+    parser.add_argument("--text", type=str, required=True, help="Vietnamese text to render into the image")
+    parser.add_argument(
+        "--box",
+        type=int,
+        nargs=4,
+        default=[256, 128, 512, 896],
+        help="Target bounding box on canvas in pixels: ymin xmin ymax xmax",
+    )
+    parser.add_argument("--output", type=str, default="output_rope_vietnamese.png", help="Path to save output image")
+    parser.add_argument("--model_name", type=str, default="flux.2-klein-base-4b", help="FLUX.2 model variant")
+    parser.add_argument(
+        "--checkpoint_dir",
+        type=str,
+        default=None,
+        help="Optional explicit path to pre-downloaded persistent-data directory",
+    )
+    parser.add_argument("--height", type=int, default=1024, help="Output image height (multiple of 16)")
+    parser.add_argument("--width", type=int, default=1024, help="Output image width (multiple of 16)")
+    parser.add_argument("--steps", type=int, default=50, help="Number of Euler ODE denoise steps")
+    parser.add_argument("--guidance", type=float, default=4.0, help="CFG guidance scale")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--device", type=str, default="cuda", help="Computation device (cuda/cuda:0)")
+
+    args = parser.parse_args()
+
+    run_experiment(
+        prompt=args.prompt,
+        text=args.text,
+        box=args.box,
+        output_path=args.output,
+        model_name=args.model_name,
+        checkpoint_dir=args.checkpoint_dir,
+        height=args.height,
+        width=args.width,
+        num_steps=args.steps,
+        guidance=args.guidance,
+        seed=args.seed,
+        device=args.device,
+    )

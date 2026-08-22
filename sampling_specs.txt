@@ -1,0 +1,69 @@
+================================================================================
+THÔNG SỐ KỸ THUẬT VÀ QUY TRÌNH - FLUX.2 SAMPLING & FLOW MATCHING
+Tệp tham chiếu: src/flux2/sampling.py
+================================================================================
+
+1. TỔNG QUAN VAI TRÒ (OVERVIEW)
+--------------------------------------------------------------------------------
+- Tệp `sampling.py` là bộ điều phối trung tâm của quá trình suy luận (Inference Pipeline).
+- Nhiệm vụ cốt lõi:
+  + Tính toán lịch trình thời gian khử nhiễu (Time Schedule) thích ứng theo độ phân giải.
+  + Mã hóa và định vị tọa độ Positional IDs (4D) cho Token Ảnh, Văn bản và Ảnh tham chiếu.
+  + Thực thi vòng lặp khử nhiễu Euler ODE (Euler ODE Solver) cho Flow Matching.
+  + Cung cấp 3 chế độ lấy mẫu: Guidance Distilled, KV Cached và True CFG Denoise.
+
+
+2. TOÁN HỌC LỊCH TRÌNH THỜI GIAN (FLOW MATCHING TIME SCHEDULE)
+--------------------------------------------------------------------------------
+A. Phép dịch chuyển SNR theo độ phân giải (Generalized Time-SNR Shift):
+   - Công thức:
+       t_shifted = exp(mu) / (exp(mu) + (1/t - 1)^sigma)   (với sigma = 1.0)
+   - Mục đích: Độ phân giải càng lớn (nhiều token) thì mô hình càng cần tập trung
+     nhiều bước tính toán ở vùng thời gian t gần 1 (vùng nhiễu cao) để hình thành bố cục.
+
+B. Tính toán hệ số dịch chuyển thực nghiệm (compute_empirical_mu):
+   - Dựa trên số lượng token ảnh (image_seq_len = (H/16) * (W/16)) và số bước (num_steps):
+     + Nếu image_seq_len > 4300: mu = 0.00016927 * image_seq_len + 0.45666666
+     + Nếu image_seq_len <= 4300: Nội suy tuyến tính giữa m_10 và m_200.
+
+C. Vòng lặp Euler ODE Solver:
+   - Đi từ t = 1.0 (Nhiễu hoàn toàn) về t = 0.0 (Ảnh rõ nét):
+       x_next = x_curr + (t_prev - t_curr) * v_pred
+     (trong đó v_pred là vector vận tốc dự đoán từ DiT).
+
+
+3. BA CHẾ ĐỘ KHỬ NHIỄU (DENOISING LOOPS)
+--------------------------------------------------------------------------------
+
+| Chế độ | Hàm thực thi | Áp dụng cho dòng Model | Cơ chế hoạt động |
+|--------|--------------|------------------------|------------------|
+| 1. Guidance-Distilled | denoise() | FLUX.2 [klein] 4B/9B & FLUX.2 [dev] | Chạy 1 batch duy nhất, nhúng thẳng guidance scale vào vector điều chế vec. Rất nhanh (4 - 50 steps). |
+| 2. KV Cached Editing  | denoise_cached() | FLUX.2 [klein] 9B KV | Bước 0: Trích xuất K_ref, V_ref của ảnh tham chiếu.<br>Bước 1+: Bỏ ảnh tham chiếu khỏi input, tiêm K/V cache vào Attention. Tăng tốc 1.4x - 2.66x. |
+| 3. True CFG Denoise   | denoise_cfg() | FLUX.2 [klein] 4B Base & 9B Base | Nhân đôi batch = 2 [Uncond, Cond].<br>Công thức CFG: v = v_uncond + guidance * (v_cond - v_uncond). Dùng cho model Base chưa chưng cất. |
+
+
+4. XỬ LÝ TỌA ĐỘ VỊ TRÍ 4D (POSITIONAL IDS PIPELINE)
+--------------------------------------------------------------------------------
+- Tọa độ 4 trục [t, h, w, l]:
+  + Token Văn bản (prc_txt): t = 0, h = 0, w = 0, l = 0..511 (chiều dài chuỗi từ).
+  + Token Ảnh sinh (prc_img): t = 0, h = 0..(H/16 - 1), w = 0..(W/16 - 1), l = 0.
+  + Token Ảnh tham chiếu (encode_image_refs):
+    * Gán độ lệch thời gian riêng biệt: t_off = [10, 20, 30, ...] cho từng ảnh tham chiếu.
+    * Giúp RoPE phân biệt rõ ràng vị trí không gian của từng ảnh tham chiếu độc lập.
+
+- scatter_ids:
+  + Dùng để trải các token phẳng (flattened tokens) trở lại thành lưới tensor 2D/3D (B, C, T, H, W)
+    dựa trên ma trận tọa độ pos_ids.
+
+
+5. TIỀN XỬ LÝ ẢNH THAM CHIẾU (IMAGE PREPROCESSING PIPELINE)
+--------------------------------------------------------------------------------
+- default_prep():
+  1. to_rgb(): Đảm bảo định dạng chuẩn RGB 3 kênh.
+  2. cap_min_pixels(): Đảm bảo kích thước tối thiểu >= 64px, tỷ lệ khung hình <= 8:1.
+  3. cap_pixels(): Giới hạn số lượng điểm ảnh tối đa (1024^2 cho multi-ref, 2024^2 cho 1 ref)
+     bằng thuật toán nội suy chất lượng cao Lanczos.
+  4. center_crop_to_multiple_of_x(): Cắt viền căn giữa để chiều rộng và cao chia hết cho 16
+     (bắt buộc để tương thích với cấu trúc nén 16x của VAE).
+  5. default_images_prep(): Chuẩn hóa pixel về khoảng [-1.0, 1.0].
+================================================================================

@@ -1,0 +1,17 @@
+# Python Environment Dependencies for FLUX.2 + Qwen3 on NVIDIA A30
+# Run on server: pip install -r requirements.txt
+
+torch>=2.4.0
+torchvision>=0.19.0
+torchaudio
+einops>=0.8.0
+transformers>=4.45.0
+safetensors>=0.4.5
+accelerate>=0.34.0
+fire>=0.6.0
+Pillow>=10.0.0
+numpy>=1.24.0
+scipy>=1.11.0
+sentencepiece>=0.2.0
+protobuf>=4.25.0
+huggingface_hub>=0.24.0

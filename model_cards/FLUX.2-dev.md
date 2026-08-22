@@ -1,27 +1,27 @@
 ![Teaser](../assets/teaser_generation.png)
 ![Teaser](../assets/teaser_editing.png)
 
-`FLUX.2 [dev]` is a 32 billion parameter rectified flow transformer capable of generating, editing and combining images based on text instructions.
-For more information, please read our [blog post](https://bfl.ai/blog/flux-2).
+`FLUX.2 [dev]` là một mô hình rectified flow transformer 32 tỷ tham số (32B parameters), có khả năng tạo, chỉnh sửa và kết hợp nhiều hình ảnh dựa trên các câu lệnh văn bản.
+Để biết thêm thông tin chi tiết, vui lòng đọc [bài viết trên blog của chúng tôi](https://bfl.ai/blog/flux-2).
 
-# Key Features
-1. State of the art in open text-to-image generation, single-reference editing and multi-reference editing.
-2. No need for finetuning: character, object and style reference without additional training in one model.
-4. Trained using guidance distillation, making `FLUX.2 [dev]` more efficient.
-5. Open weights to drive new scientific research, and empower artists to develop innovative workflows.
-6. Generated outputs can be used for personal, scientific, and commercial purposes, as described in the [FLUX \[dev\] Non-Commercial License](https://github.com/black-forest-labs/flux/blob/main/model_licenses/LICENSE-FLUX1-dev).
+# Các tính năng chính
+1. Dẫn đầu về chất lượng (SOTA) trong việc sinh ảnh từ văn bản (text-to-image), chỉnh sửa ảnh đơn tham chiếu (single-reference editing) và chỉnh sửa đa tham chiếu (multi-reference editing).
+2. Không cần fine-tune: Giữ tham chiếu nhân vật, đồ vật và phong cách mà không cần huấn luyện bổ sung trong cùng một mô hình.
+3. Huấn luyện bằng kỹ thuật guidance distillation, giúp `FLUX.2 [dev]` đạt hiệu suất thực thi cao hơn.
+4. Mở trọng số (Open weights) nhằm thúc đẩy nghiên cứu khoa học mới và hỗ trợ các nghệ sĩ phát triển các quy trình sáng tạo đột phá.
+5. Kết quả sinh ra có thể được sử dụng cho mục đích cá nhân, nghiên cứu khoa học và thương mại, như đã quy định trong [Giấy phép phi thương mại FLUX [dev]](https://github.com/black-forest-labs/flux/blob/main/model_licenses/LICENSE-FLUX1-dev).
 
-# Usage
-We provide a reference implementation of `FLUX.2 [dev]`, as well as sampling code, in a dedicated [github repository](https://github.com/black-forest-labs/flux2).
-Developers and creatives looking to build on top of `FLUX.2 [dev]` are encouraged to use this as a starting point.
+# Hướng dẫn sử dụng
+Chúng tôi cung cấp bản triển khai tham chiếu của `FLUX.2 [dev]`, cũng như mã lấy mẫu (sampling code), trong một [repository github chuyên dụng](https://github.com/black-forest-labs/flux2).
+Các nhà phát triển và nhà sáng tạo muốn xây dựng giải pháp trên nền tảng `FLUX.2 [dev]` được khuyến khích sử dụng repository này làm điểm xuất phát.
 
-`FLUX.2 [dev]` is also available in both [ComfyUI](https://github.com/comfyanonymous/ComfyUI) and [Diffusers](https://github.com/huggingface/diffusers).
+`FLUX.2 [dev]` cũng đã được hỗ trợ trên cả [ComfyUI](https://github.com/comfyanonymous/ComfyUI) và [Diffusers](https://github.com/huggingface/diffusers).
 
-### Using with diffusers 🧨
+### Sử dụng với diffusers 🧨
 
-For local deployment on a consumer type graphics card, like an RTX 4090 or an RTX 5090, please see the [diffusers docs](https://github.com/black-forest-labs/flux2/blob/main/docs/flux2_dev_hf.md) on our GitHub page.
+Để triển khai cục bộ trên các card đồ họa phổ thông dành cho người dùng cá nhân như RTX 4090 hoặc RTX 5090, vui lòng xem [tài liệu diffusers](https://github.com/black-forest-labs/flux2/blob/main/docs/flux2_dev_hf.md) trên trang GitHub của chúng tôi.
 
-As an example, here's a way to load a 4-bit quantized model with a remote text-encoder on an RTX 4090:
+Dưới đây là một ví dụ về cách nạp mô hình đã được lượng tử hóa 4-bit với remote text-encoder trên RTX 4090:
 
 ```python
 import torch
@@ -56,30 +56,29 @@ prompt = "Realistic macro photograph of a hermit crab using a soda can as its sh
 
 image = pipe(
     prompt_embeds=remote_text_encoder(prompt),
-    #image=load_image("https://huggingface.co/spaces/zerogpu-aoti/FLUX.1-Kontext-Dev-fp8-dynamic/resolve/main/cat.png") #optional image input
+    #image=load_image("https://huggingface.co/spaces/zerogpu-aoti/FLUX.1-Kontext-Dev-fp8-dynamic/resolve/main/cat.png") # Tùy chọn truyền ảnh đầu vào
     generator=torch.Generator(device=device).manual_seed(42),
-    num_inference_steps=50, #28 steps can be a good trade-off
+    num_inference_steps=50, # 28 bước có thể là sự cân bằng tốt
     guidance_scale=4,
 ).images[0]
 
 image.save("flux2_output.png")
 ```
 
-
 ---
 
-# Risks
+# Các rủi ro và biện pháp giảm thiểu
 
-Black Forest Labs is committed to the responsible development and deployment of our models. Prior to releasing the FLUX.2 family of models, we evaluated and mitigated a number of risks in our model checkpoints and hosted services, including the generation of unlawful content such as child sexual abuse material (CSAM) and nonconsensual intimate imagery (NCII). We implemented a series of pre-release mitigations to help prevent misuse by third parties, with additional post-release mitigations to help address residual risks:
-1. Pre-training mitigation. We filtered pre-training data for multiple categories of “not safe for work” (NSFW) and known child sexual abuse material (CSAM) to help prevent a user generating unlawful content in response to text prompts or uploaded images. We have partnered with the Internet Watch Foundation, an independent nonprofit organization dedicated to preventing online abuse, to filter known CSAM from the training data.
-2. Post-training mitigation. Subsequently, we undertook multiple rounds of targeted fine-tuning to provide additional mitigation against potential abuse, including both text-to-image (T2I) and image-to-image (I2I) attacks. By inhibiting certain behaviors and suppressing certain concepts in the trained model, these techniques can help to prevent a user generating synthetic CSAM or NCII from a text prompt, or transforming an uploaded image into synthetic CSAM or NCII.
-3. Ongoing evaluation. Throughout this process, we conducted multiple internal and external third-party evaluations of model checkpoints to identify further opportunities for mitigation. External third-party evaluations focused on eliciting CSAM and NCII through adversarial testing with (i) text-only prompts, (ii) a single uploaded reference image with text prompts, and (iii) multiple uploaded reference images with text prompts. Based on this feedback, we conducted further safety fine-tuning to produce our open-weight model (FLUX.2 [dev]).
-4. Release decision. After safety fine-tuning and prior to release, we conducted a final third-party evaluation of the proposed release checkpoint, focused on T2I and I2I generation of synthetic CSAM and NCII, including a comparison with other open-weight T2I and I2I models (total prompts n≈2,800). The final FLUX.2 [dev] checkpoint demonstrated high resilience against violative inputs in complex generation and editing tasks, and demonstrated higher resilience than leading open-weight models across these risk categories. Based on these findings, we approved the release of the FLUX.2 Pro model via API and the release of the open-weight FLUX.2 [dev] model under a non-commercial license to support third-party research and development.
-5. Inference filters. The repository for the FLUX.2 [dev] model includes filters for NSFW and IP-infringing content at input and output. Filters or manual review must be used with the model under the terms of the FLUX.2 [dev] Non-Commercial License. We may approach known deployers of the FLUX.2 [dev] model at random to verify that filters or manual review processes are in place. Additionally, we apply multiple filters to intercept text prompts, uploaded images, and output images on the API for FLUX.2 [pro]. We utilize both in-house and third-party supplied filters to prevent CSAM and NCII outputs, including filters provided by Hive and Microsoft. We provide filters for other categories of potentially harmful content, including gore, which can be adjusted by developers based on their specific risk profile and legitimate use cases.
-6. Content provenance. Content provenance features can help users and platforms better identify, label, and interpret AI-generated content online. The inference code for FLUX.2 [dev] implements an example of pixel-layer watermarking, and this repository includes links to the Coalition for Content Provenance and Authenticity (C2PA) standard for metadata. The API for FLUX.2 Pro applies cryptographically-signed C2PA metadata to output content to indicate that images were produced with our model.
-7. Policies. Use of our models and access to our API are governed by our FLUX [dev] Non-Commercial License (for our non-commercial open-weight users); Developer Terms of Service, Self-Hosted Commercial License Terms, and Usage Policy (for our commercial open-weight model users); and Developer Terms of Service, FLUX API Service Terms, and Usage Policy (for our API users). These prohibit the generation of unlawful content or the use of generated content for unlawful, defamatory, or abusive purposes. Developers and users must consent to these conditions to access the FLUX.2 [dev] model on Hugging Face.
-8. Monitoring. We are monitoring for patterns of violative use after release. We continue to issue and escalate takedown requests to websites, services, or businesses that misuse our models. Additionally, we may ban users or developers who we detect intentionally and repeatedly violate our policies via the FLUX API. Additionally, we provide a dedicated email address (safety@blackforestlabs.ai) to solicit feedback from the community. We maintain a reporting relationship with organizations such as the Internet Watch Foundation and the National Center for Missing and Exploited Children, and welcome ongoing engagement with authorities, developers, and researchers to share intelligence about emerging risks and develop effective mitigations.
+Black Forest Labs cam kết phát triển và triển khai các mô hình một cách có trách nhiệm. Trước khi phát hành dòng mô hình FLUX.2, chúng tôi đã đánh giá và giảm thiểu hàng loạt rủi ro trong các checkpoint mô hình và dịch vụ lưu trữ, bao gồm việc tạo ra nội dung bất hợp pháp như tài liệu lạm dụng tình dục trẻ em (CSAM) và hình ảnh nhạy cảm không có sự đồng thuận (NCII). Chúng tôi đã triển khai một chuỗi các biện pháp giảm thiểu trước khi phát hành nhằm ngăn chặn việc sử dụng sai mục đích bởi bên thứ ba, cùng các biện pháp bổ sung sau phát hành để xử lý các rủi ro còn lại:
 
+1. **Giảm thiểu trong giai đoạn Tiền huấn luyện (Pre-training)**: Chúng tôi đã lọc dữ liệu tiền huấn luyện cho nhiều danh mục "không an toàn tại nơi làm việc" (NSFW) và các tài liệu lạm dụng tình dục trẻ em (CSAM) đã biết để ngăn người dùng tạo nội dung phi pháp từ các câu lệnh văn bản hoặc hình ảnh tải lên. Chúng tôi đã hợp tác với Internet Watch Foundation, một tổ chức phi lợi nhuận độc lập chuyên ngăn chặn lạm dụng trực tuyến, để lọc các nội dung CSAM đã biết ra khỏi dữ liệu huấn luyện.
+2. **Giảm thiểu trong giai đoạn Sau huấn luyện (Post-training)**: Sau đó, chúng tôi đã thực hiện nhiều đợt fine-tuning có chủ đích để tăng cường khả năng chống lại các hành vi lạm dụng tiềm ẩn, bao gồm cả các cuộc tấn công dạng text-to-image (T2I) và image-to-image (I2I). Bằng cách ức chế các hành vi và triệt tiêu một số khái niệm nhất định trong mô hình đã huấn luyện, các kỹ thuật này giúp ngăn chặn việc tạo ra CSAM hoặc NCII tổng hợp từ câu lệnh văn bản, hoặc biến đổi ảnh tải lên thành CSAM hoặc NCII.
+3. **Đánh giá liên tục**: Trong suốt quá trình này, chúng tôi đã thực hiện nhiều đợt đánh giá nội bộ và bên thứ ba độc lập đối với các checkpoint của mô hình để xác định thêm các cơ hội giảm thiểu rủi ro. Các đánh giá từ bên thứ ba tập trung vào việc cố gắng kích hoạt CSAM và NCII thông qua kiểm thử đối kháng (adversarial testing) với (i) câu lệnh chỉ có văn bản, (ii) ảnh tham chiếu đơn lẻ kèm câu lệnh văn bản, và (iii) nhiều ảnh tham chiếu kèm câu lệnh văn bản. Dựa trên phản hồi này, chúng tôi đã tiến hành fine-tuning an toàn bổ sung để tạo ra phiên bản mô hình mở trọng số (`FLUX.2 [dev]`).
+4. **Quyết định phát hành**: Sau quá trình fine-tuning an toàn và trước khi phát hành, chúng tôi đã tiến hành đánh giá lần cuối từ bên thứ ba đối với checkpoint dự kiến phát hành, tập trung vào khả năng sinh CSAM và NCII tổng hợp ở cả T2I và I2I, bao gồm việc so sánh với các mô hình T2I và I2I mở trọng số khác (tổng số prompt n≈2,800). Checkpoint `FLUX.2 [dev]` cuối cùng đã thể hiện khả năng chống chịu cao trước các dữ liệu đầu vào vi phạm trong các tác vụ tạo và chỉnh sửa ảnh phức tạp, đồng thời vượt trội hơn các mô hình mở trọng số hàng đầu khác ở các hạng mục rủi ro này. Dựa trên những phát hiện đó, chúng tôi đã phê duyệt việc phát hành mô hình FLUX.2 Pro qua API và phát hành mô hình mở trọng số `FLUX.2 [dev]` theo giấy phép phi thương mại để hỗ trợ nghiên cứu và phát triển từ bên thứ ba.
+5. **Bộ lọc suy luận (Inference filters)**: Repository của mô hình `FLUX.2 [dev]` tích hợp sẵn các bộ lọc cho nội dung NSFW và vi phạm bản quyền (IP) ở cả đầu vào và đầu ra. Việc sử dụng các bộ lọc hoặc quy trình kiểm duyệt thủ công là bắt buộc theo các điều khoản của Giấy phép phi thương mại FLUX.2 [dev]. Chúng tôi có thể ngẫu nhiên kiểm tra các bên triển khai mô hình `FLUX.2 [dev]` đã biết để xác minh xem các bộ lọc hoặc quy trình kiểm duyệt thủ công có được áp dụng hay không. Ngoài ra, chúng tôi áp dụng nhiều bộ lọc để chặn các câu lệnh văn bản, ảnh tải lên và ảnh đầu ra trên API cho FLUX.2 [pro]. Chúng tôi sử dụng cả bộ lọc nội bộ và bộ lọc do bên thứ ba cung cấp (bao gồm từ Hive và Microsoft) để ngăn chặn đầu ra CSAM và NCII. Chúng tôi cũng cung cấp bộ lọc cho các danh mục nội dung có khả năng gây hại khác, bao gồm hình ảnh bạo lực/kinh dị (gore), có thể được các nhà phát triển điều chỉnh dựa trên hồ sơ rủi ro và các trường hợp sử dụng hợp pháp của họ.
+6. **Nguồn gốc nội dung (Content provenance)**: Các tính năng xác thực nguồn gốc nội dung giúp người dùng và nền tảng nhận diện, gắn nhãn và diễn giải tốt hơn nội dung do AI tạo ra trên môi trường mạng. Mã suy luận của `FLUX.2 [dev]` triển khai một ví dụ về thủy vân ở lớp điểm ảnh (pixel-layer watermarking), và repository này bao gồm các liên kết đến tiêu chuẩn siêu dữ liệu của Coalition for Content Provenance and Authenticity (C2PA). API cho FLUX.2 Pro áp dụng siêu dữ liệu C2PA có chữ ký số mã hóa cho nội dung đầu ra nhằm biểu thị rằng hình ảnh được tạo ra từ mô hình của chúng tôi.
+7. **Chính sách**: Việc sử dụng các mô hình và truy cập API của chúng tôi chịu sự điều chỉnh bởi Giấy phép phi thương mại FLUX [dev] (dành cho người dùng mở trọng số phi thương mại); Điều khoản dịch vụ dành cho nhà phát triển, Điều khoản giấy phép thương mại tự lưu trữ và Chính sách sử dụng (dành cho người dùng mô hình mở trọng số thương mại); cùng với Điều khoản dịch vụ dành cho nhà phát triển, Điều khoản dịch vụ FLUX API và Chính sách sử dụng (dành cho người dùng API). Các chính sách này nghiêm cấm việc tạo nội dung bất hợp pháp hoặc sử dụng nội dung được tạo cho các mục đích bất hợp pháp, bôi nhọ hoặc lạm dụng. Các nhà phát triển và người dùng phải đồng ý với các điều kiện này để truy cập mô hình `FLUX.2 [dev]` trên Hugging Face.
+8. **Giám sát**: Chúng tôi đang theo dõi các hành vi sử dụng vi phạm sau khi phát hành. Chúng tôi tiếp tục gửi và nâng cấp các yêu cầu gỡ bỏ tới các trang web, dịch vụ hoặc doanh nghiệp sử dụng sai mục đích các mô hình của chúng tôi. Ngoài ra, chúng tôi có thể cấm các tài khoản người dùng hoặc nhà phát triển bị phát hiện cố ý và liên tục vi phạm chính sách thông qua FLUX API. Chúng tôi cũng cung cấp một địa chỉ email chuyên dụng (safety@blackforestlabs.ai) để tiếp nhận phản hồi từ cộng đồng. Chúng tôi duy trì mối quan hệ báo cáo với các tổ chức như Internet Watch Foundation và National Center for Missing and Exploited Children, đồng thời hoan nghênh sự phối hợp liên tục với các cơ quan chức năng, nhà phát triển và nhà nghiên cứu để chia sẻ thông tin về các rủi ro mới xuất hiện và phát triển các biện pháp giảm thiểu hiệu quả.
 
-# License
-This model falls under the [FLUX \[dev\] Non-Commercial License](https://huggingface.co/black-forest-labs/FLUX.2-dev/blob/main/LICENSE.txt).
+# Giấy phép (License)
+Mô hình này được phát hành theo [Giấy phép phi thương mại FLUX [dev]](https://huggingface.co/black-forest-labs/FLUX.2-dev/blob/main/LICENSE.txt).

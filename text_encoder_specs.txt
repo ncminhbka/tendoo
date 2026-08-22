@@ -1,0 +1,60 @@
+================================================================================
+THÔNG SỐ KỸ THUẬT VÀ CƠ CHẾ - FLUX.2 TEXT ENCODER
+Tệp tham chiếu: src/flux2/text_encoder.py
+================================================================================
+
+1. TỔNG QUAN VAI TRÒ (OVERVIEW)
+--------------------------------------------------------------------------------
+- Chức năng chính:
+  + Chuyển đổi câu lệnh (Text Prompt) thành Tensor ngữ cảnh (Context Embedding)
+    với số chiều tương thích chính xác cho DiT Transformer.
+  + Hỗ trợ kỹ thuật Prompt Upsampling (mở rộng câu lệnh thông minh qua VLM).
+  + Tích hợp bộ lọc nội dung an toàn (Content Filter & NSFW Detection).
+
+
+2. SO SÁNH HAI BỘ MÃ HÓA VĂN BẢN (Qwen3 vs Mistral-Small)
+--------------------------------------------------------------------------------
+| Thông số / Đặc tính        | Qwen3Embedder (Dùng cho Klein)      | Mistral3SmallEmbedder (Dùng cho Dev 32B) |
+|----------------------------|-------------------------------------|------------------------------------------|
+| Mô hình nền tảng (LLM/VLM) | Qwen3-4B-FP8 / Qwen3-8B-FP8         | Mistral-Small-3.2-24B-Instruct-2506      |
+| Kiểu mô hình               | LLM Causal LM (Text-only)           | VLM Đa phương thức (Multimodal Pixtral)  |
+| Chiều ẩn cơ sở (Hidden Dim)| 2560 (bản 4B) / 4096 (bản 8B)       | 5120                                     |
+| Các tầng trích xuất        | OUTPUT_LAYERS_QWEN3 = [9, 18, 27]   | OUTPUT_LAYERS_MISTRAL = [10, 20, 30]     |
+| Số lượng tầng ghép nối     | 3 tầng                              | 3 tầng                                   |
+| Tổng số chiều Context      | 4B: 2560 x 3 = 7680                 | 5120 x 3 = 15360                         |
+| (context_in_dim vào DiT)   | 9B: 4096 x 3 = 12288                | (Khớp với Flux2Params)                   |
+| Độ dài chuỗi tối đa        | MAX_LENGTH = 512 tokens             | MAX_LENGTH = 512 tokens                  |
+| Định dạng lượng tử         | FP8 (chạy rất nhẹ trên GPU)         | bfloat16                                 |
+| Hỗ trợ Prompt Upsampling   | Không (Dùng OpenRouter nếu cần)     | Có (chạy cục bộ qua Pixtral)             |
+| Bộ lọc NSFW / Safety       | Không                               | Có (Falconsai NSFW + Pixtral Guardrail)  |
+
+
+3. BÍ QUYẾT TRÍCH XUẤT ĐA TẦNG (MULTI-LAYER CONTEXT EXTRACTION)
+--------------------------------------------------------------------------------
+- Thay vì chỉ lấy tầng cuối cùng (Last Hidden State) như các kiến trúc SD cũ,
+  FLUX.2 trích xuất đồng thời 3 tầng phân bố đều từ thân LLM:
+  + Tầng nông (Layer 9/10) : Giữ cấu trúc từ vựng, cú pháp ngữ pháp chi tiết.
+  + Tầng giữa  (Layer 18/20): Nắm bắt thực thể, thuộc tính và quan hệ không gian.
+  + Tầng sâu   (Layer 27/30): Nắm bắt ngữ nghĩa trừu tượng, logic và phong cách tổng thể.
+- Công thức ghép nối Tensor:
+  out = stack([hidden_states[layer1], hidden_states[layer2], hidden_states[layer3]])
+  context = rearrange(out, "b c l d -> b l (c d)")
+  => Kết quả tạo ra Context Tensor có Shape: (Batch_Size, 512, context_in_dim)
+
+
+4. CÁC TÍNH NĂNG MỞ RỘNG TRONG MISTRAL3SMALLEMBEDDER
+--------------------------------------------------------------------------------
+
+A. Kỹ thuật Tăng cường câu lệnh (Prompt Upsampling):
+   - Sử dụng phương thức generate() của Mistral-Small để viết lại prompt chi tiết hơn:
+     + Chế độ Text-to-Image (T2I): Mở rộng mô tả ánh sáng, góc chụp, chi tiết vật thể.
+     + Chế độ Image-to-Image (I2I): Nhìn ảnh đầu vào qua Vision Encoder của Pixtral,
+       đọc chỉ dẫn (mũi tên, chữ trên ảnh) và mô tả hành động chỉnh sửa chính xác.
+   - Tham số: temperature = 0.15, max_new_tokens = 512.
+
+B. Bộ kiểm duyệt an toàn 2 lớp (Two-Stage Safety Filter):
+   - Lớp 1 (Phân loại nhanh): Model Falconsai/nsfw_image_detection (ngưỡng 0.85).
+   - Lớp 2 (Suy luận sâu qua LLM): Gửi prompt/ảnh kèm SYSTEM_PROMPT_CONTENT_FILTER
+     đến Mistral-Small, giới hạn logit chỉ trả về 2 token [yes/no] qua
+     yes_no_logit_processor để quyết định chặn nội dung vi phạm bản quyền hoặc độc hại.
+================================================================================

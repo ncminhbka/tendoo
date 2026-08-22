@@ -1,0 +1,160 @@
+================================================================================
+LỘ TRÌNH DỰ ÁN: NÂNG CẤP FLUX.2 KLEIN 4B BASE SINH CHỮ TIẾNG VIỆT
+Cấu hình phần cứng mục tiêu: 2x NVIDIA A30 (24GB VRAM x 2 = 48GB VRAM)
+Phiên bản: v2 — đã sửa sau khi đối chiếu với paper FreeText (arXiv:2601.00535,
+đã xác minh có thật) và với cấu trúc RoPE thật của FLUX.2 (EmbedND, axes_dim
+đã xác minh qua tài liệu công khai).
+================================================================================
+
+I. NHỮNG THAY ĐỔI SO VỚI BẢN v1 VÀ LÝ DO
+--------------------------------------------------------------------------------
+1. Bỏ ưu tiên "special-token/placeholder [TEXT]" ra khỏi luồng mặc định.
+   Lý do: ablation thật của paper FreeText (bảng 4.3.1) cho thấy giữ token
+   thật của chữ (Entity-only, IoU 0.495) đọc attention tốt hơn Sink-only
+   (0.479, giống ý tưởng placeholder); Entity+Sink kết hợp mới tốt nhất
+   (0.561). Thay chữ thật bằng placeholder có nguy cơ làm YẾU tín hiệu định
+   vị, không phải làm mạnh. Đưa xuống thành cờ thử nghiệm tùy chọn (mục IV.5).
+
+2. Đổi thứ tự ưu tiên trong Giai đoạn 1: thử "RoPE Spatial Coordinate
+   Binding + native ref-token" TRƯỚC, "FreeText-style hard latent injection"
+   là phương án dự phòng nếu cách trên không đạt.
+   Lý do: RoPE binding tận dụng đúng cơ chế reference-conditioning đã được
+   pretrain sẵn trong DiT (không có latent "ngoại lai" bị ghép giữa chừng
+   quá trình denoise), rủi ro artifact thấp hơn so với ghi đè trực tiếp
+   latent như FreeText. Cả hai đều 0-training, chi phí thử như nhau.
+
+3. Sửa số liệu overhead: paper đo overhead thật là +12-18% tổng thời gian
+   sinh ảnh (vài giây), KHÔNG PHẢI 15-20ms như bản v1 (số đó không có
+   nguồn, đã loại bỏ).
+
+4. Thêm bước gate xác nhận kiến trúc trước khi viết code (mục II, bước 0)
+   — vì các chi tiết code cụ thể (tên hàm, biến, offset) trong các thảo
+   luận trước chưa được xác minh độc lập.
+
+5. Giữ nguyên triết lý "không train đồng thời 3 khối" — phần này có cơ sở
+   đúng (tránh distribution shift / gradient conflict), không cần sửa.
+
+
+II. GIAI ĐOẠN 0: XÁC MINH KIẾN TRÚC (BẮT BUỘC, TRƯỚC KHI CODE)
+Thời gian ước tính: 0.5 - 1 ngày
+--------------------------------------------------------------------------------
+1. Clone trực tiếp black-forest-labs/flux2, đọc nguyên văn:
+   - src/flux2/model.py: cấu trúc EmbedND, rope(), apply_rope(), cách
+     position_ids được xây cho ref token vs canvas token.
+   - src/flux2/sampling.py: cách ref_tokens được ghép vào sequence, cơ chế
+     causal_attn_fn (hoặc tên thật tương đương), có tồn tại tham số kiểu
+     "t_offset" cho ref hay không.
+   KHÔNG dùng lại các đoạn code do AI đưa ra ở các lượt trước làm chuẩn —
+   những đoạn đó (x_coords, prc_img, t=10) chưa được xác minh độc lập.
+2. Xác nhận: attention giữa ref-token và canvas-token có thực sự tính theo
+   kiểu (t,h,w,l) tách trục rồi CỘNG (concat-then-attend) như tài liệu công
+   khai gợi ý, hay có cơ chế khác. Việc này quyết định cách gán tọa độ ở
+   Giai đoạn 1 có hoạt động đúng như kỳ vọng hay không.
+
+
+III. GIAI ĐOẠN 1: PROTOTYPE 0-TRAINING (THỬ 2 HƯỚNG SONG SONG, CHỌN 1)
+Thời gian ước tính: 2 - 3 ngày
+--------------------------------------------------------------------------------
+Mục tiêu: kiểm chứng bằng thực nghiệm, KHÔNG train, trước khi quyết định có
+cần LoRA hay không.
+
+LƯU Ý CỐT LÕI VỀ KIỀNG 3 CHÂN (3 VẤN ĐỀ <-> 3 GIẢI PHÁP BỔ TRỢ, KHÔNG THAY THẾ NHAU):
++ Vấn đề 1 (Vị trí / Spatial Binding): Giải quyết bằng RoPE Coordinate Binding (0 tham số, sửa tọa độ h, w).
++ Vấn đề 2 (Chất liệu / Shape vs Texture): Vẫn cần LoRA DiT ở Giai đoạn 3 (để tách nét chữ khỏi nền phẳng).
++ Vấn đề 3 (Độ dài chuỗi / Attention Cost): Giải quyết bằng Tight Crop Glyph (giữ token count <= 256).
+-> Ba giải pháp này BỔ TRỢ CHO NHAU, giải quyết riêng từng tầng, không cái nào thay thế được cái nào.
+
+1A. HƯỚNG CHÍNH — RoPE Spatial Binding qua native ref-token:
+   - Render glyph tiếng Việt (PIL/FreeType, font .ttf Unicode) thành ảnh
+     nhị phân, CROP SÁT viền chữ (Vấn đề 3: không dùng full-size 1024x1024,
+     để giữ token count thấp — ví dụ ảnh 512x128 thay vì 1024x1024).
+   - Encode qua VAE có sẵn, đẩy vào làm ref-token.
+   - Gán tọa độ (h, w) của ref-token TRÙNG với tọa độ vùng đích trên canvas
+     (Vấn đề 1: ép vị trí bằng pha RoPE, không trôi tự do ở 0,0).
+   - Vị trí đích (y_start, x_start) lấy bằng 1 trong 2 cách, thử cả hai:
+     a) Người dùng/bạn tự chỉ định box thủ công (rẻ, kiểm soát được).
+     b) Lấy từ attention của token thật trong prompt (không phải
+        placeholder) ở bước denoise đầu, theo đúng phương pháp localization
+        mà FreeText đã kiểm chứng (Entity+Sink, DBSCAN + ngưỡng Otsu).
+
+1B. HƯỚNG DỰ PHÒNG — FreeText-style hard injection (nếu 1A thất bại):
+   - Noise-align glyph latent theo đúng mức nhiễu tại timestep hiện tại.
+   - Lọc Log-Gabor band-pass giữ tần trung-cao (nét chữ), bỏ tần thấp/rất cao.
+   - Ghi đè latent trong mask, dùng trọng số cosine-annealing, chỉ trong
+     cửa sổ thời gian giữa quá trình denoise (không đầu, không cuối).
+   - Rủi ro cao hơn 1A: latent "ngoại lai" bị ghép giữa chừng có thể gây
+     artifact viền quanh vùng chữ nếu sai band tần số hoặc sai timing.
+
+2. Tiêu chí nghiệm thu Giai đoạn 1 (GATE — quyết định có sang Giai đoạn 2
+   hay không):
+   - Sinh thử ít nhất 20 ảnh biển hiệu/poster tiếng Việt có dấu.
+   - Đánh giá riêng 2 tiêu chí, không gộp chung:
+     a) Vị trí: chữ có nằm đúng chỗ mong muốn (biển hiệu, bát, áo...)
+        hay bị "dán đè" như sticker lơ lửng?
+     b) Chính tả/dấu: dấu hỏi/ngã/nặng/mũ/móc có đúng và sắc nét không?
+   - Nếu (a) đạt mà (b) chưa đạt → vấn đề nằm ở VAE decode, chuyển sang
+     Giai đoạn 2 như kế hoạch.
+   - Nếu (a) KHÔNG đạt dù đã crop tight + gán tọa độ đúng → đây là tín
+     hiệu cần LoRA cho DiT sớm hơn dự kiến (gộp phần "vị trí" lẫn "chất
+     liệu" ở Giai đoạn 3, đừng tách rời).
+
+
+IV. GIAI ĐOẠN 2: TINH CHỈNH VAE DECODER
+Thời gian ước tính: 2 - 3 ngày (không đổi so với v1, phần này không có vấn đề)
+--------------------------------------------------------------------------------
+1. Dataset: ~2,000-3,000 ảnh typography tiếng Việt chất lượng cao, kích
+   thước chia hết cho 16.
+2. Đóng băng Encoder + phần lớn Decoder, chỉ mở khóa gradient các
+   ResnetBlock cuối + conv_out của Decoder.
+3. Loss = L1 + 0.5 * LPIPS. 1 GPU A30, batch 4-8, ~3-5 giờ.
+4. Nghiệm thu: so sánh decode trước/sau trên các dấu nhỏ (ẵ, ặ, ở...).
+
+
+V. GIAI ĐOẠN 3: LORA CHO DiT (CHỈ LÀM NẾU GIAI ĐOẠN 1 CHO THẤY CẦN)
+Thời gian ước tính: 3 - 5 ngày
+--------------------------------------------------------------------------------
+1. Mục tiêu tách rõ theo kết quả Giai đoạn 1:
+   - Nếu chỉ cần dạy "chất liệu/ánh sáng" (shape đã đúng nhờ RoPE binding):
+     LoRA rank thấp hơn (16-32), ít data hơn, hội tụ nhanh hơn.
+   - Nếu cần dạy cả "vị trí" (RoPE binding chưa đủ): LoRA rank cao hơn
+     (32-64), cần nhiều data hơn, thời gian train dài hơn dự kiến ban đầu.
+2. Dataset: ~3,000-5,000 cặp ảnh + caption (70% T2I, 30% I2I), pre-encode
+   latent để tiết kiệm thời gian train.
+3. Đóng băng Qwen3 + VAE. LoRA trên Q,K,V,Out của DoubleStreamBlock và
+   SingleStreamBlock. Loss = Flow Matching (MSE trên vector vận tốc).
+4. Chạy trên 2x A30 song song (DDP/accelerate), batch 2-4/GPU.
+5. Nghiệm thu: nhiều chất liệu (neon, khắc gỗ, graffiti, in áo...).
+
+6. TÍNH NĂNG TÙY CHỌN — Special-token/placeholder cho ngữ cảnh xung quanh:
+   - CHỈ bật nếu quan sát thấy rò rỉ ngữ nghĩa lan RA NGOÀI vùng chữ (ví dụ
+     "CON HỔ" khiến nền ảnh xung quanh cũng nhuốm màu hổ/rừng) trên tập
+     test thực tế — không bật mặc định vì chưa có bằng chứng cần thiết.
+   - Nếu bật: cần 2 forward pass Qwen3 riêng biệt (1 pass chữ thật để lấy
+     mask định vị, 1 pass placeholder để lấy context sinh ảnh) — chấp nhận
+     đánh đổi: mask có thể lệch nhẹ vì hai pass có context khác nhau.
+
+
+VI. GIAI ĐOẠN 4: ĐÓNG GÓI SẢN PHẨM
+Thời gian ước tính: 2 ngày (không đổi so với v1)
+--------------------------------------------------------------------------------
+1. Pipeline: Text Input -> (RoPE binding hoặc SGMI tùy Giai đoạn 1) ->
+   DiT (LoRA nếu có) Denoise -> VAE Tuned Decode -> Ảnh kết quả.
+2. torch.compile cho DiT, phục vụ song song trên 2x A30.
+3. FastAPI/Gradio để test bằng tiếng Việt.
+
+
+VII. TỔNG KẾT TÀI NGUYÊN VÀ RỦI RO (ĐÃ CẬP NHẬT TRUNG THỰC HƠN)
+--------------------------------------------------------------------------------
+- Tổng thời gian: 9.5 - 14 ngày (đã cộng thêm Giai đoạn 0 xác minh code, và
+  buffer cho khả năng Giai đoạn 3 phải mở rộng scope nếu Giai đoạn 1 cho
+  thấy RoPE binding không đủ để giải quyết vị trí).
+- Yêu cầu GPU: 2x NVIDIA A30 — đủ cho toàn bộ pipeline.
+- Yêu cầu dữ liệu: ~3,000-5,000 ảnh typography tiếng Việt (không đổi).
+- Rủi ro kỹ thuật lớn nhất: các chi tiết implementation cụ thể (tên hàm,
+  cấu trúc position_ids) trong các thảo luận trước CHƯA được xác minh trực
+  tiếp trên repo gốc — bắt buộc làm Giai đoạn 0 trước, không bỏ qua.
+- Rủi ro kỹ thuật thứ hai: chưa có benchmark nào (kể cả FreeText) từng test
+  trên kiến trúc encoder giống Klein 4B (Qwen3 LLM thuần) hay trên tiếng
+  Việt có dấu — Giai đoạn 1 chính là bước để lấp khoảng trống này bằng
+  thực nghiệm, không phải giả định.
+================================================================================
