@@ -227,6 +227,28 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/linux,windows,macos,visualstudiocode,python
-
 output/
+outputs/
+exp*.png
+output_*.png
+*_COMPARISON.png
+*_preview.png
+
+# Assets & Heavy binary files
+assets/
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+
+# Server persistent data & caches
+persistent-data/
+checkpoints/
+runs/
+logs/
