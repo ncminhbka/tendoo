@@ -201,29 +201,41 @@ def convert_diffusers_vae_to_bfl(sd: dict[str, torch.Tensor]) -> dict[str, torch
         # conv_norm_out -> norm_out
         new_k = new_k.replace("conv_norm_out.", "norm_out.")
 
-        # downsamplers.0.conv -> downsample.conv
-        new_k = new_k.replace(".downsamplers.0.conv.", ".downsample.conv.")
-        # upsamplers.0.conv -> upsample.conv
-        new_k = new_k.replace(".upsamplers.0.conv.", ".upsample.conv.")
+        # Encoder: down_blocks.{i} -> down.{i} (same order)
+        if "encoder.down_blocks." in new_k:
+            new_k = new_k.replace("encoder.down_blocks.", "encoder.down.")
+            new_k = new_k.replace(".downsamplers.0.conv.", ".downsample.conv.")
+            new_k = new_k.replace(".conv_shortcut.", ".nin_shortcut.")
+            new_k = new_k.replace(".resnets.", ".block.")
 
-        # conv_shortcut -> nin_shortcut
-        new_k = new_k.replace(".conv_shortcut.", ".nin_shortcut.")
+        # Decoder: up_blocks.{i} -> up.{3 - i} (reversed order in BFL)
+        elif "decoder.up_blocks." in new_k:
+            parts = new_k.split(".")
+            # parts example: ['decoder', 'up_blocks', '0', 'resnets', '0', ...]
+            level_idx = int(parts[2])
+            bfl_level = 3 - level_idx
+            parts[1] = "up"
+            parts[2] = str(bfl_level)
+            new_k = ".".join(parts)
+
+            new_k = new_k.replace(".upsamplers.0.conv.", ".upsample.conv.")
+            new_k = new_k.replace(".conv_shortcut.", ".nin_shortcut.")
+            new_k = new_k.replace(".resnets.", ".block.")
 
         # mid_block -> mid
-        new_k = new_k.replace(".mid_block.resnets.0.", ".mid.block_1.")
-        new_k = new_k.replace(".mid_block.resnets.1.", ".mid.block_2.")
-        new_k = new_k.replace(".mid_block.attentions.0.group_norm.", ".mid.attn_1.norm.")
-        new_k = new_k.replace(".mid_block.attentions.0.to_q.", ".mid.attn_1.q.")
-        new_k = new_k.replace(".mid_block.attentions.0.to_k.", ".mid.attn_1.k.")
-        new_k = new_k.replace(".mid_block.attentions.0.to_v.", ".mid.attn_1.v.")
-        new_k = new_k.replace(".mid_block.attentions.0.to_out.0.", ".mid.attn_1.proj_out.")
+        if ".mid_block." in new_k:
+            new_k = new_k.replace(".mid_block.resnets.0.", ".mid.block_1.")
+            new_k = new_k.replace(".mid_block.resnets.1.", ".mid.block_2.")
+            new_k = new_k.replace(".mid_block.attentions.0.group_norm.", ".mid.attn_1.norm.")
+            new_k = new_k.replace(".mid_block.attentions.0.to_q.", ".mid.attn_1.q.")
+            new_k = new_k.replace(".mid_block.attentions.0.to_k.", ".mid.attn_1.k.")
+            new_k = new_k.replace(".mid_block.attentions.0.to_v.", ".mid.attn_1.v.")
+            new_k = new_k.replace(".mid_block.attentions.0.to_out.0.", ".mid.attn_1.proj_out.")
 
-        # down_blocks -> down, up_blocks -> up
-        new_k = new_k.replace("down_blocks.", "down.")
-        new_k = new_k.replace("up_blocks.", "up.")
-
-        # resnets -> block
-        new_k = new_k.replace(".resnets.", ".block.")
+        # Shape adjustment: Diffusers attention Linear (512, 512) -> BFL Conv2d (512, 512, 1, 1)
+        if any(att in new_k for att in [".attn_1.q.weight", ".attn_1.k.weight", ".attn_1.v.weight", ".attn_1.proj_out.weight"]):
+            if len(v.shape) == 2:
+                v = v.view(v.shape[0], v.shape[1], 1, 1)
 
         new_sd[new_k] = v
     return new_sd
