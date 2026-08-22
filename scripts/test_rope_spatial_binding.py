@@ -391,8 +391,6 @@ def run_experiment(
             txt_ids=txt_ids,
             timesteps=timesteps,
             guidance=guidance,
-            img_cond_seq=None,
-            img_cond_seq_ids=None,
         )
         out_latent_pure = rearrange(out_latent_pure, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
         out_pixels_pure = ae.decode(out_latent_pure.to(device_ae))
