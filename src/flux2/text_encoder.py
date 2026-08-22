@@ -442,20 +442,20 @@ def load_qwen3_embedder(variant: str, device: str | torch.device = "cuda"):
         model_spec = os.environ["TEXT_ENCODER_PATH"]
         print(f"Loading Qwen3 text encoder from TEXT_ENCODER_PATH: {model_spec}")
     else:
-        # Check standard local directories in persistent-data
-        candidate_paths = [
-            f"../persistent-data/FLUX.2-klein-base-{variant}/text_encoder",
-            f"/persistent-data/FLUX.2-klein-base-{variant}/text_encoder",
-            f"./persistent-data/FLUX.2-klein-base-{variant}/text_encoder",
-            f"../persistent-data/FLUX.2-klein-base-{variant.lower()}/text_encoder",
-            f"/persistent-data/FLUX.2-klein-base-{variant.lower()}/text_encoder",
-            f"../persistent-data/FLUX.2-klein-base-4B/text_encoder",
-            f"/persistent-data/FLUX.2-klein-base-4B/text_encoder",
-        ]
-        for cp in candidate_paths:
-            if os.path.exists(cp):
-                model_spec = cp
-                print(f"Detected local Qwen3 weights at: {cp}")
-                break
+        from .util import find_persistent_data_root
+        p_root = find_persistent_data_root()
+        if p_root:
+            candidates = [
+                os.path.join(p_root, "text_encoder"),
+                p_root,
+            ]
+            for cp in candidates:
+                if os.path.exists(cp) and (
+                    os.path.exists(os.path.join(cp, "config.json"))
+                    or os.path.exists(os.path.join(cp, "model.safetensors.index.json"))
+                ):
+                    model_spec = cp
+                    print(f"Detected local Qwen3 weights at: {cp}")
+                    break
 
     return Qwen3Embedder(model_spec=model_spec, tokenizer_spec=tokenizer_spec, device=device)

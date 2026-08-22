@@ -183,54 +183,49 @@ def encode_glyph_with_custom_rope(
 def resolve_model_paths(custom_dir: str | None = None):
     """
     Auto-detects model checkpoints in persistent-data directory structure:
-        - ../persistent-data/FLUX.2-klein-base-4B/
-        - /persistent-data/FLUX.2-klein-base-4B/
-        - ./persistent-data/FLUX.2-klein-base-4B/
+        - ~/persistent-data/FLUX.2-klein-base-4B/
+        - /home/jovyan/persistent-data/FLUX.2-klein-base-4B/
+        - ../../persistent-data/FLUX.2-klein-base-4B/
     """
-    candidate_dirs = [
-        custom_dir,
-        os.environ.get("FLUX_CHECKPOINT_DIR"),
-        "../persistent-data/FLUX.2-klein-base-4B",
-        "/persistent-data/FLUX.2-klein-base-4B",
-        "./persistent-data/FLUX.2-klein-base-4B",
-        "../persistent-data",
-        "/persistent-data",
-    ]
+    from flux2.util import find_persistent_data_root
 
-    for cdir in candidate_dirs:
-        if cdir and os.path.exists(cdir):
-            print(f"  -> Detected persistent checkpoint directory: {os.path.abspath(cdir)}")
-            # Check DiT weights
-            dit_candidates = [
-                os.path.join(cdir, "flux-2-klein-base-4b.safetensors"),
-                os.path.join(cdir, "flux-2-klein-4b.safetensors"),
-            ]
-            for dit_path in dit_candidates:
-                if os.path.exists(dit_path):
-                    os.environ["KLEIN_4B_BASE_MODEL_PATH"] = dit_path
-                    os.environ["KLEIN_4B_MODEL_PATH"] = dit_path
-                    print(f"     Found DiT weights: {dit_path}")
-                    break
+    cdir = custom_dir or find_persistent_data_root()
 
-            # Check VAE weights
-            ae_candidates = [
-                os.path.join(cdir, "vae", "diffusion_pytorch_model.safetensors"),
-                os.path.join(cdir, "ae.safetensors"),
-                os.path.join(cdir, "vae", "ae.safetensors"),
-            ]
-            for ae_path in ae_candidates:
-                if os.path.exists(ae_path):
-                    os.environ["AE_MODEL_PATH"] = ae_path
-                    print(f"     Found AE weights : {ae_path}")
-                    break
+    if cdir and os.path.exists(cdir):
+        print(f"  -> Detected persistent checkpoint directory: {os.path.abspath(cdir)}")
+        # Check DiT weights
+        dit_candidates = [
+            os.path.join(cdir, "flux-2-klein-base-4b.safetensors"),
+            os.path.join(cdir, "transformer", "diffusion_pytorch_model.safetensors"),
+            os.path.join(cdir, "flux-2-klein-4b.safetensors"),
+        ]
+        for dit_path in dit_candidates:
+            if os.path.exists(dit_path):
+                os.environ["KLEIN_4B_BASE_MODEL_PATH"] = dit_path
+                os.environ["KLEIN_4B_MODEL_PATH"] = dit_path
+                print(f"     Found DiT weights: {dit_path}")
+                break
 
-            # Check Text Encoder (Qwen3) directory
-            text_encoder_dir = os.path.join(cdir, "text_encoder")
-            if os.path.exists(text_encoder_dir):
-                os.environ["TEXT_ENCODER_PATH"] = text_encoder_dir
-                os.environ["QWEN3_4B_MODEL_PATH"] = text_encoder_dir
-                print(f"     Found Text Encoder dir: {text_encoder_dir}")
-            break
+        # Check VAE weights
+        ae_candidates = [
+            os.path.join(cdir, "vae", "diffusion_pytorch_model.safetensors"),
+            os.path.join(cdir, "ae.safetensors"),
+            os.path.join(cdir, "vae", "ae.safetensors"),
+        ]
+        for ae_path in ae_candidates:
+            if os.path.exists(ae_path):
+                os.environ["AE_MODEL_PATH"] = ae_path
+                print(f"     Found AE weights : {ae_path}")
+                break
+
+        # Check Text Encoder (Qwen3) directory
+        text_encoder_dir = os.path.join(cdir, "text_encoder")
+        if os.path.exists(text_encoder_dir):
+            os.environ["TEXT_ENCODER_PATH"] = text_encoder_dir
+            os.environ["QWEN3_4B_MODEL_PATH"] = text_encoder_dir
+            print(f"     Found Text Encoder dir: {text_encoder_dir}")
+    else:
+        print("  -> Warning: No persistent data directory automatically detected.")
 
 
 def run_experiment(

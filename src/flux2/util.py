@@ -88,6 +88,43 @@ FLUX2_MODEL_INFO = {
 }
 
 
+def find_persistent_data_root() -> str | None:
+    if "FLUX_CHECKPOINT_DIR" in os.environ and os.path.exists(os.environ["FLUX_CHECKPOINT_DIR"]):
+        return os.environ["FLUX_CHECKPOINT_DIR"]
+
+    home = os.path.expanduser("~")
+    candidates = [
+        os.path.join(home, "persistent-data", "FLUX.2-klein-base-4B"),
+        "/home/jovyan/persistent-data/FLUX.2-klein-base-4B",
+        "/persistent-data/FLUX.2-klein-base-4B",
+        os.path.join(home, "persistent-data"),
+        "/home/jovyan/persistent-data",
+        "/persistent-data",
+    ]
+
+    cwd = Path.cwd()
+    for base in [cwd, Path(__file__).resolve().parent.parent.parent]:
+        curr = base
+        for _ in range(5):
+            candidates.append(str(curr / "persistent-data" / "FLUX.2-klein-base-4B"))
+            candidates.append(str(curr / "persistent-data"))
+            if curr.parent == curr:
+                break
+            curr = curr.parent
+
+    for c in candidates:
+        if c and os.path.exists(c):
+            if os.path.exists(os.path.join(c, "FLUX.2-klein-base-4B")):
+                return os.path.join(c, "FLUX.2-klein-base-4B")
+            if (
+                os.path.exists(os.path.join(c, "flux-2-klein-base-4b.safetensors"))
+                or os.path.exists(os.path.join(c, "vae"))
+                or os.path.exists(os.path.join(c, "text_encoder"))
+            ):
+                return c
+    return None
+
+
 def load_flow_model(model_name: str, debug_mode: bool = False, device: str | torch.device = "cuda") -> Flux2:
     config = FLUX2_MODEL_INFO[model_name.lower()]
 
@@ -99,19 +136,17 @@ def load_flow_model(model_name: str, debug_mode: bool = False, device: str | tor
         if config["model_path"] in os.environ and os.path.exists(os.environ[config["model_path"]]):
             weight_path = os.environ[config["model_path"]]
         else:
-            # Auto-check local persistent directories
-            candidate_paths = [
-                f"../persistent-data/FLUX.2-klein-base-4B/{config['filename']}",
-                f"/persistent-data/FLUX.2-klein-base-4B/{config['filename']}",
-                f"./persistent-data/FLUX.2-klein-base-4B/{config['filename']}",
-                f"../persistent-data/{config['filename']}",
-                f"/persistent-data/{config['filename']}",
-            ]
-            for cp in candidate_paths:
-                if os.path.exists(cp):
-                    weight_path = cp
-                    print(f"Found local FLUX.2 weights at: {cp}")
-                    break
+            p_root = find_persistent_data_root()
+            if p_root:
+                candidates = [
+                    os.path.join(p_root, config["filename"]),
+                    os.path.join(p_root, "transformer", "diffusion_pytorch_model.safetensors"),
+                ]
+                for cp in candidates:
+                    if os.path.exists(cp):
+                        weight_path = cp
+                        print(f"Found local FLUX.2 weights at: {cp}")
+                        break
 
         if weight_path is None:
             # download from huggingface
@@ -152,24 +187,18 @@ def load_ae(model_name: str, device: str | torch.device = "cuda") -> AutoEncoder
     if "AE_MODEL_PATH" in os.environ and os.path.exists(os.environ["AE_MODEL_PATH"]):
         weight_path = os.environ["AE_MODEL_PATH"]
     else:
-        # Auto-check local persistent directories
-        candidate_paths = [
-            f"../persistent-data/FLUX.2-klein-base-4B/vae/diffusion_pytorch_model.safetensors",
-            f"/persistent-data/FLUX.2-klein-base-4B/vae/diffusion_pytorch_model.safetensors",
-            f"./persistent-data/FLUX.2-klein-base-4B/vae/diffusion_pytorch_model.safetensors",
-            f"../persistent-data/FLUX.2-klein-base-4B/{config['filename_ae']}",
-            f"/persistent-data/FLUX.2-klein-base-4B/{config['filename_ae']}",
-            f"./persistent-data/FLUX.2-klein-base-4B/{config['filename_ae']}",
-            f"../persistent-data/FLUX.2-klein-base-4B/vae/{config['filename_ae']}",
-            f"/persistent-data/FLUX.2-klein-base-4B/vae/{config['filename_ae']}",
-            f"../persistent-data/{config['filename_ae']}",
-            f"/persistent-data/{config['filename_ae']}",
-        ]
-        for cp in candidate_paths:
-            if os.path.exists(cp):
-                weight_path = cp
-                print(f"Found local AutoEncoder weights at: {cp}")
-                break
+        p_root = find_persistent_data_root()
+        if p_root:
+            candidates = [
+                os.path.join(p_root, "vae", "diffusion_pytorch_model.safetensors"),
+                os.path.join(p_root, config["filename_ae"]),
+                os.path.join(p_root, "vae", config["filename_ae"]),
+            ]
+            for cp in candidates:
+                if os.path.exists(cp):
+                    weight_path = cp
+                    print(f"Found local AutoEncoder weights at: {cp}")
+                    break
 
     if weight_path is None:
         # download from huggingface
