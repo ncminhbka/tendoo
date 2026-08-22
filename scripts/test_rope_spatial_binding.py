@@ -201,6 +201,7 @@ def resolve_model_paths(custom_dir: str | None = None):
 
             # Check VAE weights
             ae_candidates = [
+                os.path.join(cdir, "vae", "diffusion_pytorch_model.safetensors"),
                 os.path.join(cdir, "ae.safetensors"),
                 os.path.join(cdir, "vae", "ae.safetensors"),
             ]
@@ -209,6 +210,13 @@ def resolve_model_paths(custom_dir: str | None = None):
                     os.environ["AE_MODEL_PATH"] = ae_path
                     print(f"     Found AE weights : {ae_path}")
                     break
+
+            # Check Text Encoder (Qwen3) directory
+            text_encoder_dir = os.path.join(cdir, "text_encoder")
+            if os.path.exists(text_encoder_dir):
+                os.environ["TEXT_ENCODER_PATH"] = text_encoder_dir
+                os.environ["QWEN3_4B_MODEL_PATH"] = text_encoder_dir
+                print(f"     Found Text Encoder dir: {text_encoder_dir}")
             break
 
 

@@ -15,12 +15,24 @@
 ### 🚀 B. MÁY CHỦ THỰC THI (REMOTE COMPUTING SERVER - 2x NVIDIA A30 48GB):
 - **Phần cứng**: **2x NVIDIA A30 (24GB VRAM x 2 = 48GB VRAM)**.
 - **Môi trường kết nối**: Máy chủ nằm trong **MẠNG NỘI BỘ (Internal Network)**, truy cập thông qua **JupyterLab**.
-- **Cấu trúc thư mục máy chủ**:
+- **Cấu trúc thư mục máy chủ thực tế (Source of Truth)**:
   ```
-  / (hoặc thư mục gốc JupyterLab)
+  ~/ (thư mục gốc JupyterLab: /home/jovyan/)
   ├── persistent-data/
-  │   └── FLUX.2-klein-base-4B/   <-- Nơi đã tải sẵn toàn bộ weights mô hình
-  └── work/                       <-- Nơi clone repository này (ngang hàng với persistent-data)
+  │   └── FLUX.2-klein-base-4B/
+  │       ├── flux-2-klein-base-4b.safetensors   (7.3GB - Weights DiT chuẩn BFL)
+  │       ├── text_encoder/                      (Weights Qwen3-4B-FP8)
+  │       │   ├── config.json
+  │       │   ├── model-00001-of-00002.safetensors
+  │       │   ├── model-00002-of-00002.safetensors
+  │       │   └── model.safetensors.index.json
+  │       ├── tokenizer/                         (Tokenizer của Qwen3)
+  │       │   ├── tokenizer.json, tokenizer_config.json, vocab.json, merges.txt...
+  │       ├── vae/
+  │       │   └── diffusion_pytorch_model.safetensors (161MB - VAE)
+  │       └── transformer/
+  │           └── diffusion_pytorch_model.safetensors (7.3GB - Diffusers DiT)
+  └── work/                                      <-- Nơi clone repo Tendoo AI (ngang hàng)
   ```
 - **Kênh truyền tải mã nguồn**:
   + Qua **GitHub Repository** (Git push từ local -> Git pull trong thư mục `work/` trên server).

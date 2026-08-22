@@ -7,8 +7,17 @@
 - **Remote Server (Internal Network / JupyterLab)**:
   - 2x NVIDIA A30 (24GB VRAM each = 48GB VRAM).
   - Directory layout on server:
-    - `/persistent-data/FLUX.2-klein-base-4B/` (Pre-downloaded model checkpoints)
-    - `work/` (Cloned repo codebase, sibling to persistent-data)
+    ```
+    /home/jovyan/
+    ├── persistent-data/
+    │   └── FLUX.2-klein-base-4B/
+    │       ├── flux-2-klein-base-4b.safetensors   (7.3GB - DiT)
+    │       ├── text_encoder/                      (Qwen3-4B-FP8 weights)
+    │       ├── tokenizer/                         (Tokenizer files)
+    │       ├── vae/diffusion_pytorch_model.safetensors (161MB - VAE)
+    │       └── transformer/
+    └── work/                                      (Cloned repo workspace)
+    ```
   - Isolated network: code is deployed via GitHub repo (push/pull), zip archives, or copy-paste into JupyterLab.
   - Executes all model runs, inference experiments, VAE fine-tuning, and LoRA training.
 

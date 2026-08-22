@@ -367,17 +367,32 @@ class Qwen3Embedder(nn.Module):
     def __init__(
         self,
         model_spec: str,
+        tokenizer_spec: str | None = None,
         device: str | torch.device = "cuda",
     ):
         super().__init__()
+        import os
 
+        print(f"Loading Qwen3 model weights from: {model_spec}")
         self.model = AutoModelForCausalLM.from_pretrained(
             model_spec,
             torch_dtype=None,
             device_map=str(device),
         )
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_spec)
+        if tokenizer_spec is None:
+            if os.path.exists(model_spec):
+                parent_dir = os.path.dirname(os.path.abspath(model_spec))
+                sibling_tokenizer = os.path.join(parent_dir, "tokenizer")
+                if os.path.exists(sibling_tokenizer):
+                    tokenizer_spec = sibling_tokenizer
+                else:
+                    tokenizer_spec = model_spec
+            else:
+                tokenizer_spec = model_spec
+
+        print(f"Loading Qwen3 tokenizer from: {tokenizer_spec}")
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_spec)
         self.max_length = MAX_LENGTH
 
     @torch.no_grad()
@@ -432,6 +447,7 @@ def load_qwen3_embedder(variant: str, device: str | torch.device = "cuda"):
     import os
     env_var_key = f"QWEN3_{variant.upper()}_MODEL_PATH"
     model_spec = f"Qwen/Qwen3-{variant}-FP8"
+    tokenizer_spec = None
 
     if env_var_key in os.environ and os.path.exists(os.environ[env_var_key]):
         model_spec = os.environ[env_var_key]
@@ -443,26 +459,17 @@ def load_qwen3_embedder(variant: str, device: str | torch.device = "cuda"):
         # Check standard local directories in persistent-data
         candidate_paths = [
             f"../persistent-data/FLUX.2-klein-base-{variant}/text_encoder",
-            f"../persistent-data/FLUX.2-klein-base-{variant}/qwen3",
-            f"../persistent-data/FLUX.2-klein-base-{variant}/Qwen3-{variant}-FP8",
-            f"../persistent-data/FLUX.2-klein-base-{variant}",
             f"/persistent-data/FLUX.2-klein-base-{variant}/text_encoder",
-            f"/persistent-data/FLUX.2-klein-base-{variant}/qwen3",
-            f"/persistent-data/FLUX.2-klein-base-{variant}/Qwen3-{variant}-FP8",
-            f"/persistent-data/FLUX.2-klein-base-{variant}",
-            f"../persistent-data/Qwen3-{variant}-FP8",
-            f"/persistent-data/Qwen3-{variant}-FP8",
-            f"../persistent-data/text_encoder",
-            f"/persistent-data/text_encoder",
+            f"./persistent-data/FLUX.2-klein-base-{variant}/text_encoder",
+            f"../persistent-data/FLUX.2-klein-base-{variant.lower()}/text_encoder",
+            f"/persistent-data/FLUX.2-klein-base-{variant.lower()}/text_encoder",
+            f"../persistent-data/FLUX.2-klein-base-4B/text_encoder",
+            f"/persistent-data/FLUX.2-klein-base-4B/text_encoder",
         ]
         for cp in candidate_paths:
-            if os.path.exists(cp) and (
-                os.path.exists(os.path.join(cp, "config.json"))
-                or os.path.exists(os.path.join(cp, "tokenizer.json"))
-                or os.path.exists(os.path.join(cp, "tokenizer_config.json"))
-            ):
+            if os.path.exists(cp):
                 model_spec = cp
-                print(f"Detected and loading local Qwen3 from: {cp}")
+                print(f"Detected local Qwen3 weights at: {cp}")
                 break
 
-    return Qwen3Embedder(model_spec=model_spec, device=device)
+    return Qwen3Embedder(model_spec=model_spec, tokenizer_spec=tokenizer_spec, device=device)

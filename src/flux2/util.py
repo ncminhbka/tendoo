@@ -154,6 +154,9 @@ def load_ae(model_name: str, device: str | torch.device = "cuda") -> AutoEncoder
     else:
         # Auto-check local persistent directories
         candidate_paths = [
+            f"../persistent-data/FLUX.2-klein-base-4B/vae/diffusion_pytorch_model.safetensors",
+            f"/persistent-data/FLUX.2-klein-base-4B/vae/diffusion_pytorch_model.safetensors",
+            f"./persistent-data/FLUX.2-klein-base-4B/vae/diffusion_pytorch_model.safetensors",
             f"../persistent-data/FLUX.2-klein-base-4B/{config['filename_ae']}",
             f"/persistent-data/FLUX.2-klein-base-4B/{config['filename_ae']}",
             f"./persistent-data/FLUX.2-klein-base-4B/{config['filename_ae']}",
