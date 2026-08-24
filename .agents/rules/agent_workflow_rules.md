@@ -52,6 +52,10 @@
 - ⛔ **NGƯỠNG PHÂN GIẢI LATENT TỐI THIỂU CHO GLYPH BITMAP ($\ge 10$ TOKENS HEIGHT)**:
   - **Nguyên nhân**: VAE nén $16\times$. Các câu dài nhiều từ nếu bị ép vào box có chiều cao $< 128\text{px}$ ($< 8$ latent tokens) sẽ khiến các dấu phụ (`Á`, `Ệ`, `Ộ`) bị thu nhỏ dưới 1 pixel, gây nghẽn cổ chai giải mã ở VAE Decoder.
   - **Quy tắc bắt buộc**: Kích thước chiều cao Box của Glyph phải đạt tối thiểu $160\text{px}$ ($\ge 10$ latent tokens). Với slogan dài $\ge 4$ từ, tự động tăng chiều cao lên $192\text{px}$ ($12$ latent tokens) để đảm bảo độ sắc nét $100\%$.
+- ⛔ **BẮT BUỘC PHÂN TÁCH TIME OFFSET ($t=10, 20...$) KÈM ĐỊNH HƯỚNG BỀ MẶT CHO ĐA THỰC THỂ (MULTI-ENTITY DISAMBIGUATION RULE)**:
+  - **Nguyên nhân**: Gộp các khối text độc lập về cùng $t=10.0$ tại $(0, 0)$ sẽ làm DiT trộn lẫn từ ngữ và in đè lên nhau. Tách $t=10.0, 20.0$ nhưng thiếu 2 bề mặt vật thể trong Prompt sẽ làm mất khối $t=20.0$.
+  - **Quy tắc bắt buộc**: Gán Time Offset riêng cho từng thực thể (Ref 1: $t=10.0$, Ref 2: $t=20.0$, Ref 3: $t=30.0$) + Định hình rõ 2 bề mặt vật thể tương ứng trong Prompt + Đảm bảo Glyph height $\ge 160-192\text{px}$.
+
 
 
 

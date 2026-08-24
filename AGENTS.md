@@ -110,5 +110,15 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
    - **Nguyên nhân**: VAE nén $16\times$. Các câu dài nhiều từ nếu bị ép vào box có chiều cao $< 128\text{px}$ ($< 8$ latent tokens) sẽ khiến các dấu phụ (`Á`, `Ệ`, `Ộ`) bị thu nhỏ dưới 1 pixel, gây nghẽn cổ chai giải mã ở VAE Decoder.
    - **Quy tắc**: Kích thước chiều cao Box của Glyph phải đạt tối thiểu $160\text{px}$ ($\ge 10$ latent tokens). Với slogan dài $\ge 4$ từ, tự động tăng chiều cao lên $192\text{px}$ ($12$ latent tokens) để đảm bảo độ sắc nét $100\%$.
 
+5. **BẮT BUỘC PHÂN TÁCH TIME OFFSET ($t=10, 20...$) KÈM ĐỊNH HƯỚNG BỀ MẶT CHO ĐA THỰC THỂ (MULTI-ENTITY DISAMBIGUATION RULE)**:
+   - **Nguyên nhân**:
+     - Nếu gộp các khối text độc lập về cùng mốc $t=10.0$ tại $(0, 0)$, DiT thấy tọa độ không-thời gian trùng lặp $\rightarrow$ Trộn lẫn từ ngữ của 2 câu thành chuỗi lai tạp và in đè lên nhau.
+     - Nếu tách mốc $t=10.0$ và $t=20.0$ nhưng KHÔNG có 2 bề mặt vật thể rõ ràng trong Prompt $\rightarrow$ Khối $t=20.0$ bị suy hao và biến mất.
+   - **Quy tắc bắt buộc**:
+     - Mỗi thực thể độc lập (Sản phẩm, Tiêu đề, Slogan) **BẮT BUỘC mang Time Offset riêng**: Thực thể 1 ở $t=10.0$, Thực thể 2 ở $t=20.0$, Thực thể 3 ở $t=30.0$.
+     - Prompt **BẮT BUỘC định hình 2 bề mặt vật thể riêng biệt** tương ứng (ví dụ: *biển hiệu trên cao* cho $t=10.0$ và *màn hình đế bục/thân sản phẩm* cho $t=20.0$).
+     - Đảm bảo từng Glyph đạt độ phân giải $\ge 10-12$ latent tokens height ($160-192\text{px}$) để tín hiệu ở $t=20.0$ sắc nét $100\%$.
+
+
 
 
