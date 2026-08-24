@@ -294,12 +294,28 @@ Dưới đây là bảng theo dõi toàn bộ các commit được thực hiện
 * **Thời gian**: `Mon Aug 24 09:56:36 2026 +0700`
 * **File thay đổi** (1 file: +113, -35):
   * [`scripts/test_rope_spatial_binding.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_rope_spatial_binding.py)
-* **Vấn đề xuất hiện**:
-  * Hàm `create_glyph_image` cũ bị lỗi không cập nhật `selected_font_path`, khiến text dài không bao giờ co nhỏ font size, bị tràn ra ngoài biên và cắt cụt chữ.
-  * Không hỗ trợ ngắt dòng nhiều dòng (multi-line wrapping) khi text dài (ví dụ: tên quán 5-8 từ).
-* **Giải pháp kỹ thuật**:
+* **Nội dung thay đổi**:
   * Hỗ trợ ngắt dòng thủ công `\n` và tự động ngắt 1, 2, 3 dòng tùy theo tỉ lệ khung hình (Aspect Ratio) của Bounding Box.
-  * Dùng thuật toán Binary Search tìm cỡ chữ lớn nhất có thể hiển thị vừa khít trong vùng vẽ (kèm padding an toàn).
-  * Tự động căn giữa hoàn hảo theo cả chiều ngang và chiều dọc.
+  * Dùng thuật toán Binary Search tìm cỡ chữ lớn nhất có thể hiển thị vừa khít trong vùng vẽ.
+
+---
+
+### 25. Commit `d84315f` — Feat: Thêm Script Kiểm thử Đa Text Độc lập (`test_multi_text_rope.py`)
+* **Thời gian**: `Mon Aug 24 10:07:05 2026 +0700`
+* **File thay đổi** (1 file: +467, -0):
+  * [`scripts/test_multi_text_rope.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_multi_text_rope.py)
+* **Nội dung thay đổi**:
+  * Xây dựng script chuyên biệt kiểm thử đa khối text tiếng Việt đồng thời với hệ tọa độ Time-Offset In-Context ($t=10, t=20$).
+
+---
+
+### 26. Commit `10a2267` — Feat: Thêm Script Sinh Poster Quảng cáo Sản phẩm (`test_product_poster.py`)
+* **Thời gian**: `Mon Aug 24 10:16:38 2026 +0700`
+* **File thay đổi** (5 files: +487, -0):
+  * [`scripts/test_product_poster.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_product_poster.py), [`images/reference_prod.png`](file:///d:/Viettel%20Telecom/Tendoo%20AI/images/reference_prod.png), [`.gitignore`](file:///d:/Viettel%20Telecom/Tendoo%20AI/.gitignore)
+* **Nội dung thay đổi**:
+  * Tạo pipeline kết hợp Reference Ảnh Sản phẩm thật ($t=10.0$) và Reference Glyph Tiêu đề/Slogan tiếng Việt ($t=20.0$) để sinh poster thương mại chất lượng cao.
+  * Cập nhật `.gitignore` cho phép theo dõi và đẩy ảnh mẫu trong thư mục `images/`.
+
 
 
