@@ -72,21 +72,23 @@ def create_glyph_image(
     target_width: int,
     target_height: int,
     font_path: str | None = None,
-    font_size: int = 72,
+    font_size: int = 64,
     bg_color: tuple[int, int, int] = (0, 0, 0),
     text_color: tuple[int, int, int] = (255, 255, 255),
+    padding_ratio: float = 0.08,
 ) -> Image.Image:
     """
     Renders a tight-crop Vietnamese glyph image with exact text and diacritics.
-    Dimensions must be divisible by 16 (for 16x VAE patchification).
+    - Handles user manual newlines ('\\n').
+    - Auto-wraps long text into optimal multi-line layouts based on box aspect ratio.
+    - Uses binary search to find the maximum legible font size that fits without clipping.
+    - Guarantees dimensions are divisible by 16 for 16x VAE patchification.
     """
-    assert target_width > 0 and target_height > 0 and target_width % 16 == 0 and target_height % 16 == 0
+    assert target_width > 0 and target_height > 0
+    target_width = (target_width // 16) * 16
+    target_height = (target_height // 16) * 16
 
-    img = Image.new("RGB", (target_width, target_height), color=bg_color)
-    draw = ImageDraw.Draw(img)
-
-    # Load font
-    font = None
+    # 1. Discover valid Unicode font
     candidate_fonts = [
         font_path,
         "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
@@ -95,44 +97,120 @@ def create_glyph_image(
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
         "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+        "C:\\Windows\\Fonts\\arialbd.ttf",
         "C:\\Windows\\Fonts\\arial.ttf",
+        "C:\\Windows\\Fonts\\segoeuib.ttf",
         "C:\\Windows\\Fonts\\segoeui.ttf",
     ]
+    selected_font_path = None
     for fp in candidate_fonts:
         if fp and os.path.exists(fp):
-            try:
-                font = ImageFont.truetype(fp, font_size)
-                print(f"  -> Using Unicode font: {fp}")
-                break
-            except Exception:
-                continue
+            selected_font_path = fp
+            break
 
-    if font is None:
+    if selected_font_path is None:
         raise RuntimeError(
             "❌ No valid Unicode font found with Vietnamese support! "
             "Please specify a valid font using --font_path /path/to/font.ttf "
             "(e.g. /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf)."
         )
 
-    # Calculate text bounding box to center it
-    bbox = draw.textbbox((0, 0), text, font=font)
-    text_w = bbox[2] - bbox[0]
-    text_h = bbox[3] - bbox[1]
+    # Drawable area with padding
+    pad_w = int(target_width * padding_ratio)
+    pad_h = int(target_height * padding_ratio)
+    max_w = target_width - 2 * pad_w
+    max_h = target_height - 2 * pad_h
 
-    # Auto scale font if text is larger than target box
-    if text_w > target_width * 0.9 or text_h > target_height * 0.9:
-        scale_factor = min((target_width * 0.9) / max(text_w, 1), (target_height * 0.9) / max(text_h, 1))
-        new_font_size = max(int(font_size * scale_factor), 16)
-        if font_path and os.path.exists(font_path):
-            font = ImageFont.truetype(font_path, new_font_size)
-        bbox = draw.textbbox((0, 0), text, font=font)
-        text_w = bbox[2] - bbox[0]
-        text_h = bbox[3] - bbox[1]
+    # 2. Layout planning: manual newlines vs auto-wrapping
+    text = text.replace("\\n", "\n")
 
-    x_pos = (target_width - text_w) // 2 - bbox[0]
-    y_pos = (target_height - text_h) // 2 - bbox[1]
+    if "\n" in text:
+        candidate_layouts = [[line.strip() for line in text.split("\n") if line.strip()]]
+    else:
+        words = text.split()
+        box_ar = target_width / target_height
+        candidate_layouts = [[text]]  # 1 line
 
-    draw.text((x_pos, y_pos), text, font=font, fill=text_color)
+        if len(words) >= 2 and box_ar < 3.5:
+            mid = (len(words) + 1) // 2
+            candidate_layouts.append([" ".join(words[:mid]), " ".join(words[mid:])])
+
+        if len(words) >= 4 and box_ar < 2.0:
+            w_per_l = (len(words) + 2) // 3
+            candidate_layouts.append([
+                " ".join(words[:w_per_l]),
+                " ".join(words[w_per_l : 2 * w_per_l]),
+                " ".join(words[2 * w_per_l :]),
+            ])
+
+    def test_layout_fit(lines: list[str], size: int):
+        f = ImageFont.truetype(selected_font_path, size)
+        dummy = Image.new("RGB", (1, 1))
+        d = ImageDraw.Draw(dummy)
+
+        line_spacing = max(int(size * 0.2), 4)
+        max_line_w = 0
+        total_h = 0
+        line_boxes = []
+
+        for line in lines:
+            bbox = d.textbbox((0, 0), line, font=f)
+            lw = bbox[2] - bbox[0]
+            lh = bbox[3] - bbox[1]
+            line_boxes.append((lw, lh, bbox))
+            max_line_w = max(max_line_w, lw)
+            total_h += lh
+
+        total_h += line_spacing * (len(lines) - 1)
+        fits = (max_line_w <= max_w) and (total_h <= max_h)
+        return fits, size, max_line_w, total_h, f, line_spacing, line_boxes
+
+    # Binary search for maximum legible font size
+    best_layout_result = None
+    max_score = -1
+
+    for lines in candidate_layouts:
+        low = 14
+        high = 180
+        best_for_this_layout = None
+        while low <= high:
+            mid = (low + high) // 2
+            fits, size, lw, lh, f, l_spacing, l_boxes = test_layout_fit(lines, mid)
+            if fits:
+                best_for_this_layout = (lines, size, lw, lh, f, l_spacing, l_boxes)
+                low = mid + 1
+            else:
+                high = mid - 1
+
+        if best_for_this_layout is not None:
+            lines, size, lw, lh, f, l_spacing, l_boxes = best_for_this_layout
+            score = size * (lw * lh) ** 0.5
+            if score > max_score:
+                max_score = score
+                best_layout_result = best_for_this_layout
+
+    if best_layout_result is None:
+        fallback_lines = candidate_layouts[-1]
+        _, size, lw, lh, f, l_spacing, l_boxes = test_layout_fit(fallback_lines, 14)
+        lines = fallback_lines
+    else:
+        lines, size, lw, lh, f, l_spacing, l_boxes = best_layout_result
+
+    print(f"  -> [Glyph] Layout '{text.replace(chr(10), ' ')}': {len(lines)} line(s), font_size={size}px in box ({target_width}x{target_height})")
+
+    # 3. Draw Centered Text
+    img = Image.new("RGB", (target_width, target_height), color=bg_color)
+    draw = ImageDraw.Draw(img)
+
+    total_block_h = sum(b[1] for b in l_boxes) + l_spacing * (len(lines) - 1)
+    curr_y = (target_height - total_block_h) // 2
+
+    for i, line in enumerate(lines):
+        lw, lh, bbox = l_boxes[i]
+        curr_x = (target_width - lw) // 2 - bbox[0]
+        draw.text((curr_x, curr_y - bbox[1]), line, font=f, fill=text_color)
+        curr_y += lh + l_spacing
+
     return img
 
 
