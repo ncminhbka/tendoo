@@ -1,39 +1,43 @@
 [
   {
     "id": 1,
-    "text": "HƯƠNG SẮC QUÝ PHÁI",
-    "font": "playfair",
-    "prompt": "Ảnh chụp quảng cáo thương mại cho chai nước hoa pha lê cao cấp đặt trên mặt nước phẳng lặng, những gợn sóng nước lăn tăn, cánh hoa hồng nhung đỏ thắm trôi xung quanh, dòng chữ vàng gold dập nổi 3D phản chiếu ánh sáng hoàng hôn lấp lánh trên mặt nước, phong cách thời trang Paris sang trọng, chất lượng điện ảnh",
+    "image_ref": "images/hao_hao.jpg",
+    "text": "MÌ SỐ 1 VIỆT NAM",
+    "font": "anton",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho gói mì ăn liền màu hồng đặt trên bàn gỗ ấm cúng ở giữa, bên cạnh là một bát mì tôm chua cay nóng hổi bốc khói nghi ngút có tôm đỏ tươi và lát chanh xanh mọng nước, biển hiệu gỗ vintage treo phía trên tường, dòng chữ dập nổi mạ vàng đồng rực rỡ sắc nét, ánh sáng studio ẩm thực ấm áp, phong cách nghệ thuật quảng cáo cao cấp",
     "width": 576,
     "height": 1024,
-    "output": "demo_new_1_luxury_perfume.png"
+    "output": "demo_vip_1_hao_hao.png"
   },
   {
     "id": 2,
-    "text": "BỨT PHÁ MỌI GIỚI HẠN",
+    "image_ref": "images/shoes.jpeg",
+    "text": "BACK TO COOL",
     "font": "anton",
-    "prompt": "Ảnh chụp quảng cáo thương mại cho đôi giày thể thao sneaker phong cách tương lai lơ lửng giữa không trung, luồng khói sương huyền ảo bao quanh, những vệt tia sáng laser đỏ và xanh cắt ngang bóng tối, dòng chữ kim loại bạc dập nổi 3D viền đỏ rực lửa, phong cách thể thao đột phá, ánh sáng studio mạnh mẽ",
+    "prompt": "Ảnh chụp quảng cáo nghệ thuật phong cách Pop Art và Comic Book pha trộn Doodle Art, khối chữ phong cách truyện tranh 3D màu trắng với viền đen bold outline rất đậm nổi bật đặt ở phía trên cao, đôi giày thể thao sneaker màu trắng đế xanh nhạt đặt nghiêng lơ lửng ở nửa dưới khung hình ngay bên dưới dòng chữ, nền vàng mù tạt mustard yellow rực rỡ năng lượng, các họa tiết vẽ nguệch ngoạc doodle art và tia chớp phong cách streetwear năng động, ánh sáng studio sắc nét, độ tương phản cao, bố cục thoáng đãng cân đối",
     "width": 576,
     "height": 1024,
-    "output": "demo_new_2_tech_sneaker.png"
+    "output": "demo_vip_2_shoes_popart.png"
   },
   {
     "id": 3,
-    "text": "THIÊN ĐƯỜNG NGHỈ DƯỠNG",
-    "font": "dancing",
-    "prompt": "Ảnh chụp nghệ thuật phong cảnh một khu nghỉ dưỡng resort 5 sao ven biển nhiệt đới, hồ bơi vô cực nhìn ra đại dương xanh ngọc bích, rặng dừa xanh đung đưa trong gió chiều, dòng chữ khắc gỗ mộc mạc màu trắng tinh khôi gắn trên lan can gỗ, ánh nắng vàng rực rỡ nhiệt đới, phong cách du lịch cao cấp",
+    "image_ref": "images/ref_prod_02.png",
+    "text": "ÂM THANH ĐỈNH CAO",
+    "font": "playfair",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho chiếc tai nghe chụp tai không dây màu đen sang trọng đặt trên mặt bục tối giản, dòng chữ vàng gold kim loại dập nổi 3D phản chiếu ánh sáng studio ấm áp, đổ bóng sắc nét lên nền vàng, phong cách điện ảnh cao cấp",
     "width": 576,
     "height": 1024,
-    "output": "demo_new_3_tropical_resort.png"
+    "output": "demo_vip_3_headphone_gold.png"
   },
   {
     "id": 4,
-    "text": "ĐẲNG CẤP SỐNG\nTHƯỢNG LƯU",
-    "font": "bevietnam",
-    "prompt": "Ảnh chụp kiến trúc nội thất căn hộ penthouse sang trọng nhìn qua cửa kính panorama toàn cảnh thành phố lung linh ánh đèn lúc chạng vạng, sofa da cao cấp và bàn đá marble, dòng chữ kim loại mạ vàng hồng dập nổi 3D lơ lửng trang nhã, phong cách kiến trúc thượng lưu, chất lượng điện ảnh",
+    "image_ref": "images/reference_prod.png",
+    "text": "KEM DƯỠNG THỂ\nTHUẦN CHAY",
+    "font": "playfair",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho sản phẩm chăm sóc da cao cấp, chai kem dưỡng thể đặt trên bục đá cẩm thạch sang trọng ở giữa, biển hiệu vàng đồng gắn trên tường phía trên, xung quanh có lá trà xanh tươi mát, giọt sương mai đọng trên lá, ánh sáng studio mềm mại, phong cách điện ảnh",
     "width": 576,
     "height": 1024,
-    "output": "demo_new_4_penthouse_luxury.png"
+    "output": "demo_vip_4_skincare_botanical.png"
   },
   {
     "id": 5,
@@ -42,15 +46,15 @@
     "prompt": "Ảnh chụp quảng cáo thương mại cho ly nước ép cam tươi tràn đầy năng lượng, những giọt nước bắn tung tóe sống động giữa không trung, những lát cam và lá bạc hà tươi mát bay xung quanh, dòng chữ nổi 3D màu xanh lá cây tươi mát viền trắng nổi bật, ánh sáng rực rỡ tươi vui, phong cách ẩm thực đỉnh cao",
     "width": 576,
     "height": 1024,
-    "output": "demo_new_5_fruit_splash.png"
+    "output": "demo_vip_5_juice_splash.png"
   },
   {
     "id": 6,
-    "text": "HÀNH TRÌNH\nVƯỢT KHÔNG GIAN",
-    "font": "oswald",
-    "prompt": "Ảnh chụp điện ảnh viễn tưởng cho một phi thuyền không gian đang bay xuyên qua dải ngân hà đầy sao và tinh vân rực rỡ, các chùm tia năng lượng phát sáng màu xanh lam, dòng chữ kim loại titan dập nổi 3D phản chiếu ánh sáng vũ trụ kỳ ảo, phong cách bom tấn Hollywood, chất lượng điện ảnh siêu thực",
+    "text": "HƯƠNG SẮC QUÝ PHÁI",
+    "font": "dancing",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho chai nước hoa pha lê cao cấp đặt trên mặt nước phẳng lặng, những gợn sóng nước lăn tăn, cánh hoa hồng nhung đỏ thắm trôi xung quanh, dòng chữ vàng gold dập nổi 3D phản chiếu ánh sáng hoàng hôn lấp lánh trên mặt nước, phong cách thời trang Paris sang trọng, chất lượng điện ảnh",
     "width": 576,
     "height": 1024,
-    "output": "demo_new_6_scifi_galaxy.png"
+    "output": "demo_vip_6_luxury_perfume.png"
   }
 ]
