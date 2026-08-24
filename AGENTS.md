@@ -151,6 +151,15 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
    - **Phân tích bản chất**: Việc mô hình Base zero-shot cần Prompt "gợi mở 2 bề mặt" thực chất chỉ là một "chiếc nạng cứu trợ tạm thời" để bù đắp cho tín hiệu Attention bị suy hao ở $t=20.0$. Thực nghiệm `exp45` (giữ nguyên $100\%$ sản phẩm thật ở $t=60.0$ mà không cần prompt chi tiết) đã chứng minh gốc rễ hoàn toàn nằm ở trọng số Attention $W_Q, W_K$ của DiT cho loại token đó.
    - **Mục tiêu giải phóng của LoRA (Giai đoạn 3)**: Huấn luyện LoRA tối ưu hóa ma trận Attention cho Glyph chữ ở $t=20.0, 30.0$, giải phóng người dùng khỏi việc phải "viết prompt văn mẫu", cho phép prompt hoàn toàn tự nhiên, ngắn gọn mà mô hình vẫn tự động định vị và vẽ đúng $100\%$ đa khối text.
 
+10. **QUY LUẬT VÀNG ĐƠN KHỐI ($t=10.0$) VS ĐA KHỐI ($\ge 2$ TEXTS) TRÊN DiT BASE 4B (SINGLE-TEXT ABSOLUTE PRESERVATION LAW)**:
+    - **Khẳng định thực nghiệm $100\%$ (Kiểm chứng qua exp49 - exp51)**:
+      + Khi chỉ có **DUY NHẤT 1 KHỐI TEXT đặt tại $t=10.0$**: Chữ **LUÔN LUÔN ĐƯỢC GIỮ ĐẸP VÀ CHUẨN XÁC TUYỆT ĐỐI $100\%$**, biến hóa xuất sắc theo mọi chất liệu và ánh sáng trong Prompt (chữ vàng dập nổi 3D, đèn neon phát quang, đổ bóng studio).
+      + Khi có **TỪ 2 KHỐI TEXT TRỞ LÊN ($\ge 2$ texts)** trên mô hình Base 4B zero-shot: Kết quả **CỰC KỲ LUNG LAY, lúc được lúc không** và phụ thuộc nặng nề vào việc prompt có mô tả chính xác bề mặt vật thể hay không.
+    - **Tầm quan trọng sống còn của LoRA (Giai đoạn 3)**:
+      + Mô hình Base 4B nguyên bản đã đủ $100\%$ độ tin cậy cho bài toán: **1 Ảnh Sản phẩm ($t=60$) + 1 Dòng Chữ Chính ($t=10$)**.
+      + Để mở rộng năng lực phục vụ **Đa khối Text ($\ge 2$ texts)** đạt chuẩn $100\%$ bất chấp prompt tự nhiên, bắt buộc phải hoàn thành **Huấn luyện LoRA DiT 4B ở Giai đoạn 3**.
+
+
 
 
 
