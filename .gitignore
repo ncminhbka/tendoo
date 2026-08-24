@@ -247,6 +247,10 @@ assets/
 *.pth
 *.ckpt
 
+# Allow reference test images in images/
+!images/
+!images/*
+
 # Server persistent data & caches
 persistent-data/
 checkpoints/
