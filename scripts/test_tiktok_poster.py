@@ -346,34 +346,35 @@ def generate_tiktok_poster(
     ref_token_list = []
     ref_id_list = []
 
+    current_time_offset = 10.0
+
     # Optional Product Reference Image (t=10.0)
     if image_ref and os.path.exists(image_ref):
         prod_tokens, prod_ids = encode_product_to_incontext_tokens(
-            ae=ae, image_path=image_ref, t_offset=10.0, device=device_ae
+            ae=ae, image_path=image_ref, t_offset=current_time_offset, device=device_ae
         )
         ref_token_list.append(prod_tokens)
         ref_id_list.append(prod_ids)
-        print(f"  -> Added Product Image at t=10.0 ({prod_tokens.shape[1]} tokens)")
-        typo_time_offset = 20.0
-    else:
-        typo_time_offset = 10.0
+        print(f"  -> Added Product Image at t={current_time_offset} ({prod_tokens.shape[1]} tokens)")
+        current_time_offset += 10.0
 
-    # Main Title Glyph (sharing typo_time_offset)
+    # Main Title Glyph (t=10.0 if no product, t=20.0 if with product)
     title_tokens, title_ids = encode_glyph_to_incontext_tokens(
-        ae=ae, glyph_img=glyph_title, t_offset=typo_time_offset, device=device_ae
+        ae=ae, glyph_img=glyph_title, t_offset=current_time_offset, device=device_ae
     )
     ref_token_list.append(title_tokens)
     ref_id_list.append(title_ids)
-    print(f"  -> Added Main Title at t={typo_time_offset} ({title_tokens.shape[1]} tokens)")
+    print(f"  -> Added Main Title at t={current_time_offset} ({title_tokens.shape[1]} tokens)")
+    current_time_offset += 10.0
 
-    # Sub-Slogan Glyph (sharing the EXACT SAME typo_time_offset as Title!)
+    # Sub-Slogan Glyph (t=20.0 if no product, t=30.0 if with product)
     if glyph_slogan is not None:
         slogan_tokens, slogan_ids = encode_glyph_to_incontext_tokens(
-            ae=ae, glyph_img=glyph_slogan, t_offset=typo_time_offset, device=device_ae
+            ae=ae, glyph_img=glyph_slogan, t_offset=current_time_offset, device=device_ae
         )
         ref_token_list.append(slogan_tokens)
         ref_id_list.append(slogan_ids)
-        print(f"  -> Added Sub-Slogan at t={typo_time_offset} (SAME t_offset as Title! {slogan_tokens.shape[1]} tokens)")
+        print(f"  -> Added Sub-Slogan at t={current_time_offset} ({slogan_tokens.shape[1]} tokens)")
 
     # Combined Reference Tokens
     all_ref_tokens = torch.cat(ref_token_list, dim=1).to(device_dit)
