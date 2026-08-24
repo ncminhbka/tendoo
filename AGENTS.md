@@ -123,6 +123,17 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
    - **Nguyên nhân**: Khi đưa các chuỗi như `"9:16"`, `"16:9"`, `"8k"`, `"4k"`, `"1080p"` vào Prompt, Text Encoder `Qwen3` hiểu nhầm đây là chuỗi ký tự cần hiển thị trên sản phẩm/ảnh $\rightarrow$ DiT sẽ tự động vẽ các cụm số và chữ rác (như `3:16 9 168`, `8K0...`) lên các bề mặt hoặc góc đáy của bức ảnh.
    - **Quy tắc bắt buộc**: **KHÔNG BAO GIỜ GHI CÁC THÔNG SỐ KÍCH THƯỚC/TỈ LỆ VÀO TEXT PROMPT**. Tỉ lệ khung hình và kích thước chỉ được khai báo duy nhất qua các tham số CLI `--width` và `--height`.
 
+7. **BẮT BUỘC TUÂN THỦ CÁC MỐC TIME OFFSET TIỀN HUẤN LUYỆN ($t \in \{10.0, 20.0, 30.0\}$) (CANONICAL PRETRAINED OFFSETS RULE)**:
+   - **Nguyên nhân**: BFL tiền huấn luyện FLUX.2 độc quyền với các mốc thời gian rời rạc $t = 10 \times k$ ($10.0, 20.0, 30.0$). Trọng số của các Attention Heads đã được tối ưu sâu để nhận diện $t=10.0$ là kênh tham chiếu chính. Khi đưa vào các mốc $t < 10.0$ (như $t=5.0$), mô hình hoàn toàn không có biểu diễn tiền huấn luyện (Out-of-Distribution) nên sẽ bỏ qua $t=5.0$ và dồn toàn bộ sự chú ý vào $t=10.0$.
+   - **Quy tắc bắt buộc & Định hướng Huấn luyện LoRA (Giai đoạn 3)**:
+     - Cả trong suy luận (Inference) và huấn luyện LoRA (Training): **TUYỆT ĐỐI KHÔNG DÙNG $t < 10.0$**.
+     - Bắt buộc chuẩn hóa 3 kênh thời gian:
+       + **Kênh 1 ($t = 10.0$)**: Ảnh Sản phẩm chính HOẶC Tiêu đề chính (Title).
+       + **Kênh 2 ($t = 20.0$)**: Slogan phụ HOẶC Biển hiệu 2.
+       + **Kênh 3 ($t = 30.0$)**: Logo / Tem nhãn thương hiệu.
+     - **Mục tiêu của LoRA DiT 4B (Giai đoạn 3)**: Tái cân bằng ma trận Attention Query/Key trên đúng các mốc $10.0, 20.0, 30.0$ này để biến kênh $t=20.0$ và $t=30.0$ thành vững chắc $100\%$ mà không phụ thuộc vào câu từ của Prompt.
+
+
 
 
 

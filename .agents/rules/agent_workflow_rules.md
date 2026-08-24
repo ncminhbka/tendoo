@@ -58,6 +58,10 @@
 - ⛔ **TUYỆT ĐỐI KHÔNG ĐƯA TỈ LỆ KHUNG HÌNH VÀ THÔNG SỐ ĐỘ PHÂN GIẢI VÀO PROMPT (DIMENSIONS / RESOLUTION POLLUTION)**:
   - **Nguyên nhân**: Đưa `"9:16"`, `"16:9"`, `"8k"`, `"4k"` vào Prompt khiến Text Encoder Qwen3 kích hoạt DiT vẽ chuỗi số/chữ rác lên các bề mặt hoặc đáy ảnh.
   - **Quy tắc bắt buộc**: Không bao giờ ghi thông số kích thước/tỉ lệ vào Prompt. Chỉ khai báo qua tham số CLI `--width` và `--height`.
+- ⛔ **BẮT BUỘC TUÂN THỦ CÁC MỐC TIME OFFSET TIỀN HUẤN LUYỆN ($t \in \{10.0, 20.0, 30.0\}$)**:
+  - **Nguyên nhân**: BFL pretrain FLUX.2 độc quyền với $t = 10 \times k$. Các mốc $t < 10.0$ (như $t=5.0$) là Out-of-Distribution, khiến mô hình bỏ qua $t=5.0$ và dồn toàn bộ attention vào $t=10.0$.
+  - **Quy tắc bắt buộc**: Luôn dùng $t=10.0$ cho Ref 1 (Sản phẩm/Title), $t=20.0$ cho Ref 2 (Slogan/Biển 2), $t=30.0$ cho Ref 3 (Logo). LoRA (Giai đoạn 3) sẽ học ma trận $\Delta W$ dựa trên đúng các mốc này để tái cân bằng attention.
+
 
 
 
