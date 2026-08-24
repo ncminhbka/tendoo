@@ -1,0 +1,59 @@
+[
+  {
+    "id": 1,
+    "text": "TIỆM CÀ PHỄ ANH QUÂN",
+    "font": "playfair",
+    "prompt": "Ảnh chụp kiến trúc ngoại cảnh một quán cà phê phong cách vintage ấm cúng vào buổi chiều hoàng hôn, biển hiệu gỗ màu nâu trầm cổ điển treo phía trên cửa chính, dòng chữ chạm khắc mạ vàng đồng tinh xảo, ánh nắng vàng ấm áp rọi qua tán cây xanh, không gian lãng mạn hoài niệm, chất lượng điện ảnh",
+    "width": 576,
+    "height": 1024,
+    "output": "demo_batch_1_cafe.png"
+  },
+  {
+    "id": 2,
+    "image_ref": "images/ref_prod_02.png",
+    "text": "ÂM THANH ĐỈNH CAO",
+    "font": "anton",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho chiếc tai nghe chụp tai không dây màu đen sang trọng đặt trên mặt bục tối giản, dòng chữ vàng gold kim loại dập nổi 3D phản chiếu ánh sáng studio ấm áp, đổ bóng sắc nét lên nền vàng, phong cách điện ảnh cao cấp",
+    "width": 576,
+    "height": 1024,
+    "output": "demo_batch_2_headphone_gold.png"
+  },
+  {
+    "id": 3,
+    "image_ref": "images/ref_prod_02.png",
+    "text": "CHỐNG ỒN CHỦ ĐỘNG",
+    "font": "pacifico",
+    "prompt": "Ảnh chụp thương mại công nghệ cho chiếc tai nghe không dây chụp tai màu đen, dòng chữ đèn neon phát quang màu xanh ngọc bích rực rỡ lơ lửng, hắt ánh sáng dạ quang lên bề mặt tai nghe kim loại, không gian studio tối tương phản mạnh, ánh sáng điện ảnh",
+    "width": 576,
+    "height": 1024,
+    "output": "demo_batch_3_headphone_neon.png"
+  },
+  {
+    "id": 4,
+    "image_ref": "images/reference_prod.png",
+    "text": "KEM DƯỠNG THỂ\nTHUẦN CHAY",
+    "font": "playfair",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho sản phẩm chăm sóc da cao cấp, chai kem dưỡng thể đặt trên bục đá cẩm thạch sang trọng ở giữa, biển hiệu vàng đồng gắn trên tường phía trên, xung quanh có lá trà xanh tươi mát, giọt sương mai đọng trên lá, ánh sáng studio mềm mại, phong cách điện ảnh",
+    "width": 576,
+    "height": 1024,
+    "output": "demo_batch_4_cosmetic_vegan.png"
+  },
+  {
+    "id": 5,
+    "text": "PHONG CÁCH ĐƯỜNG PHỐ\nTHẾ HỆ MỚI",
+    "font": "graffiti",
+    "prompt": "Ảnh chụp lookbook thời trang đường phố ấn tượng, background bức tường gạch phong cách urban ngập tràn nghệ thuật tranh phun sơn, dòng chữ nghệ thuật graffiti màu cam rực lửa nổi bật trên tường gạch, ánh sáng đèn đường ban đêm, phong cách điện ảnh sắc sảo",
+    "width": 576,
+    "height": 1024,
+    "output": "demo_batch_5_streetwear_graffiti.png"
+  },
+  {
+    "id": 6,
+    "text": "TRÀ SỮA ĐÀI LOAN\nVỊ NGON ĐẬM ĐÀ",
+    "font": "bevietnam",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho đồ uống giải khát, một ly trà sữa trân châu lớn đặt trên mặt bàn gỗ sáng màu ở giữa, trân châu đen óng ả, biển hiệu gỗ vintage treo phía trên tường, dòng chữ dập nổi màu trắng viền đen rõ nét, ánh sáng studio tươi sáng, phong cách nghệ thuật ẩm thực",
+    "width": 576,
+    "height": 1024,
+    "output": "demo_batch_6_milktea_modern.png"
+  }
+]
