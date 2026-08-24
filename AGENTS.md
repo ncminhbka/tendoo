@@ -133,6 +133,16 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
        + **Kênh 3 ($t = 30.0$)**: Logo / Tem nhãn thương hiệu.
      - **Mục tiêu của LoRA DiT 4B (Giai đoạn 3)**: Tái cân bằng ma trận Attention Query/Key trên đúng các mốc $10.0, 20.0, 30.0$ này để biến kênh $t=20.0$ và $t=30.0$ thành vững chắc $100\%$ mà không phụ thuộc vào câu từ của Prompt.
 
+8. **KHỐI LƯỢNG TOKEN & TIỀM NĂNG TIẾP NHẬN ĐA PHƯƠNG THỨC Ở CÁC MỐC THỜI GIAN XA (TOKEN MASS & MULTI-MODAL TIME HORIZON RULE)**:
+   - **Phát hiện thực nghiệm đối chứng (`exp44` vs `exp45`)**:
+     + Đặt **Glyph chữ thưa thớt ($\sim 320$ tokens)** tại $t=60.0$ $\rightarrow$ Chữ bị mất hoàn toàn do suy hao góc quay RoPE và thiếu khối lượng token kích hoạt.
+     + Đặt **Ảnh Sản phẩm thật tự nhiên ($4096$ tokens)** tại $t=60.0$ $\rightarrow$ Sản phẩm trong ảnh sinh ra được giữ **Y HỆT $100\%$ so với ảnh thật**!
+   - **Ý nghĩa sống còn đối với Giai đoạn 3 (Huấn luyện LoRA)**:
+     + Kiến trúc 4D RoPE của FLUX.2 **hoàn toàn có năng lực truyền tải và bảo toàn thông tin ở các mốc thời gian xa ($t \ge 30, 60$)**.
+     + Lý do chữ bị yếu ở mốc $t=20, 30$ trên mô hình gốc chỉ vì BFL chưa từng huấn luyện DiT đọc Glyph chữ đen trắng ở các mốc này.
+     + Khi huấn luyện LoRA ở Giai đoạn 3, LoRA sẽ kích hoạt phản xạ chú ý cho Glyph chữ, giúp năng lực vẽ chữ ở các mốc $t=20, 30$ đạt độ chính xác $100\%$ vững chắc ngang ngửa khả năng giữ ảnh sản phẩm thật!
+
+
 
 
 

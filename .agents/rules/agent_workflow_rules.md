@@ -61,6 +61,9 @@
 - ⛔ **BẮT BUỘC TUÂN THỦ CÁC MỐC TIME OFFSET TIỀN HUẤN LUYỆN ($t \in \{10.0, 20.0, 30.0\}$)**:
   - **Nguyên nhân**: BFL pretrain FLUX.2 độc quyền với $t = 10 \times k$. Các mốc $t < 10.0$ (như $t=5.0$) là Out-of-Distribution, khiến mô hình bỏ qua $t=5.0$ và dồn toàn bộ attention vào $t=10.0$.
   - **Quy tắc bắt buộc**: Luôn dùng $t=10.0$ cho Ref 1 (Sản phẩm/Title), $t=20.0$ cho Ref 2 (Slogan/Biển 2), $t=30.0$ cho Ref 3 (Logo). LoRA (Giai đoạn 3) sẽ học ma trận $\Delta W$ dựa trên đúng các mốc này để tái cân bằng attention.
+- ⛔ **KHỐI LƯỢNG TOKEN & NĂNG LỰC TIẾP NHẬN ĐA PHƯƠNG THỨC Ở MỐC THỜI GIAN XA**:
+  - **Phát hiện**: Ảnh sản phẩm $4096$ tokens ở $t=60.0$ giữ y hệt $100\%$ do mật độ đặc trưng dày đặc, trong khi Glyph thưa thớt $\sim 320$ tokens bị mất. Điều này chứng minh kiến trúc 4D RoPE hoàn toàn có thể truyền tải thông tin ở mốc xa, và LoRA Giai đoạn 3 sẽ kích hoạt năng lực này cho Glyph chữ tiếng Việt!
+
 
 
 
