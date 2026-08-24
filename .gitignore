@@ -251,6 +251,10 @@ assets/
 !images/
 !images/*
 
+# Allow curated typography fonts in fonts/
+!fonts/
+!fonts/*
+
 # Server persistent data & caches
 persistent-data/
 checkpoints/

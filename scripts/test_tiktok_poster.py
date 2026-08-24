@@ -69,6 +69,10 @@ def create_glyph_image(
 
     candidate_fonts = [
         font_path,
+        str(ROOT_DIR / "fonts" / "BeVietnamPro-Black.ttf"),
+        str(ROOT_DIR / "fonts" / "Anton-Regular.ttf"),
+        str(ROOT_DIR / "fonts" / "PlayfairDisplay.ttf"),
+        str(ROOT_DIR / "fonts" / "Pacifico-Regular.ttf"),
         "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
         "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
