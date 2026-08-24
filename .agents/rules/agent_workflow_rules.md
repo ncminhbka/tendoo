@@ -38,3 +38,9 @@
   - VAE: 128 channels, 16x downsampling.
   - Inference: 50 steps Euler ODE, CFG guidance = 4.0.
   - No 9B, No 32B, No 4-step distilled models.
+
+## 5. LESSONS LEARNED & ARCHITECTURAL PITFALLS (BÀI HỌC KỸ THUẬT BẮT BUỘC GHI NHỚ)
+- ⛔ **TUYỆT ĐỐI KHÔNG DÙNG KV-CACHING CHO DiT BASE 4B (`forward_kv_cached`)**:
+  - **Nguyên nhân**: Cơ chế KV-caching của BFL chỉ thiết kế cho mô hình Distilled 4 bước (9B-KV). Đối với Base 4B (50 bước ODE + CFG 4.0), việc trích xuất và đóng băng KV của Reference token tại Step 0 ($t=1.0$ khi canvas là 100% nhiễu hạt) sẽ cắt đứt sự tương tác động giữa nét chữ và canvas qua các timestep, khiến chữ bị biến thành ký tự rác.
+  - **Quy tắc bắt buộc**: Luôn dùng `denoise_cfg` full 50 bước tương tác liên tục `[Canvas, Ref]` qua `model.forward()`. Với $L_{\text{ref}} \le 256$ tokens (Tight Crop), tốc độ chạy trên 2x A30 vẫn đạt yêu cầu mà chất lượng chữ đạt đỉnh.
+

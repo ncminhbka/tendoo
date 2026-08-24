@@ -89,3 +89,12 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
   + Euler ODE Flow Matching: `num_steps = 50`.
   + Classifier-Free Guidance (CFG): `guidance = 4.0` (Do đây là bản Base, bắt buộc có CFG để chất lượng đạt đỉnh).
 - **Mọi code, script, LoRA fine-tuning và tối ưu hóa từ nay về sau**: Đều viết và cấu hình riêng cho `FLUX.2-klein-base-4B`.
+
+---
+
+## ⛔ 5. BÀI HỌC KỸ THUẬT BẮT BUỘC GHI NHỚ (LESSONS LEARNED)
+
+1. **TUYỆT ĐỐI KHÔNG DÙNG KV-CACHING CHO DiT BASE 4B (`forward_kv_cached`)**:
+   - **Nguyên nhân**: Cơ chế KV-caching đóng băng Key/Value của Reference token tại Step 0 ($t=1.0$ khi canvas là 100% nhiễu hạt), làm mất sự tương tác thích ứng động giữa nét chữ và canvas qua 50 bước ODE, khiến chữ bị biến thành ký tự rác.
+   - **Quy tắc**: Luôn dùng `denoise_cfg` full 50 bước tương tác liên tục `[Canvas, Ref]` qua `model.forward()`. Với $L_{\text{ref}} \le 256$ tokens (Tight Crop), tốc độ chạy trên 2x A30 hoàn toàn đảm bảo mà chất lượng vẽ chữ đạt đỉnh.
+
