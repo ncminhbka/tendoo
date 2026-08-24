@@ -30,6 +30,10 @@
 - **Trung thực, thẳng thắn 100% (Honest & Candid)**: Đóng vai trò đồng nghiệp phản biện độc lập; thẳng thắn chỉ ra các lỗ hổng toán học, rủi ro bộ nhớ, điểm bất hợp lý trong logic hay hạn chế thực tế của mô hình.
 - **Suy nghĩ sâu sắc & cẩn trọng (Deep & Thorough Thinking)**: Phân tích kỹ cơ chế hoạt động thực tế, kiến trúc DiT/Transformer và luồng dữ liệu trước khi phát ngôn hoặc viết code; tuyệt đối không phán đoán hời hợt, không giả định thiếu căn cứ.
 - **Nguyên tắc Kiềng 3 chân (Chuẩn v3)**: Tuân thủ nghiêm ngặt mô hình bổ trợ 3 chân (In-Context Time-Offset Conditioning $t=10, 20...$ + Tight Crop Glyph + DiT LoRA).
+- **Nguyên tắc Phân Công Lao Động Nhị Hợp (Dual Division of Labor Rule)**:
+  - **Nhánh Glyph Bitmap (VAE)**: Chịu trách nhiệm $100\%$ về **HÌNH HỌC & CHÍNH TẢ** (nội dung tiếng Việt đúng dấu `Á`, `Ệ`, `Ộ`, kiểu dáng Font chữ tùy biến Serif/Sans/Brush/Graffiti, bố cục xuống dòng).
+  - **Nhánh Text Prompt (Qwen3)**: Chịu trách nhiệm $100\%$ về **CHẤT LIỆU, VẬT LÝ & QUANG HỌC** (kỹ thuật chế tác: dập nổi, khắc chìm trên gỗ, đúc kim loại; hiệu ứng ánh sáng: đèn neon phát quang, đổ bóng 3D, phản chiếu studio).
+  - Glyph tạo nên "khung xương hình học", Prompt tạo nên "phần hồn, ánh sáng và chất liệu".
 
 ## 4. SOLE TARGET MODEL: FLUX.2-klein-base-4B
 - All development, LoRA training, and inference scripts strictly target **FLUX.2-klein-base-4B**:

@@ -73,7 +73,12 @@
    - Tight Crop Bitmap (giải quyết Chi phí Sequence Length, tiết kiệm $>80\%$ tokens).
    - LoRA DiT 4B Base (giải quyết Chất liệu & Ánh sáng trên vật liệu phức tạp).
    - Ba giải pháp này bổ trợ cho nhau, không thay thế nhau.
-3. **Mã nguồn thực thi**: Mọi script viết ra để chạy trên Server phải tự chứa (self-contained), có xử lý exception, hỗ trợ GPU CUDA, và tối ưu cho cấu hình 2x GPU A30 (Ampere architecture, BF16/FP16, DDP).
+3. **Nguyên tắc Phân Công Lao Động Nhị Hợp (Dual Division of Labor Rule)**:
+   - **Nhánh Glyph Bitmap (VAE)**: Chịu trách nhiệm $100\%$ về **HÌNH HỌC & CHÍNH TẢ** (nội dung tiếng Việt đúng dấu `Á`, `Ệ`, `Ộ`, kiểu dáng Font chữ tùy biến Serif/Sans/Brush/Graffiti, bố cục xuống dòng).
+   - **Nhánh Text Prompt (Qwen3)**: Chịu trách nhiệm $100\%$ về **CHẤT LIỆU, VẬT LÝ & QUANG HỌC** (kỹ thuật chế tác: dập nổi, khắc chìm trên gỗ, đúc kim loại; hiệu ứng ánh sáng: đèn neon phát quang, đổ bóng 3D, phản chiếu studio).
+   - Glyph tạo nên "khung xương hình học", Prompt tạo nên "phần hồn, ánh sáng và chất liệu".
+4. **Mã nguồn thực thi**: Mọi script viết ra để chạy trên Server phải tự chứa (self-contained), có xử lý exception, hỗ trợ GPU CUDA, và tối ưu cho cấu hình 2x GPU A30 (Ampere architecture, BF16/FP16, DDP).
+
 
 ---
 
