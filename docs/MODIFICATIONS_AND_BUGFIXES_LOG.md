@@ -317,5 +317,46 @@ Dưới đây là bảng theo dõi toàn bộ các commit được thực hiện
   * Tạo pipeline kết hợp Reference Ảnh Sản phẩm thật ($t=10.0$) và Reference Glyph Tiêu đề/Slogan tiếng Việt ($t=20.0$) để sinh poster thương mại chất lượng cao.
   * Cập nhật `.gitignore` cho phép theo dõi và đẩy ảnh mẫu trong thư mục `images/`.
 
+---
+
+### 27. Commit `0835f05` — Refactor: Loại bỏ RoPE Shift, Chuyển sang 1-Pass In-Context & Tạo `test_tiktok_poster.py` (9:16)
+* **Thời gian**: `Mon Aug 24 10:42:15 2026 +0700`
+* **File thay đổi** (5 files: +506, -105):
+  * [`scripts/test_tiktok_poster.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_tiktok_poster.py), [`scripts/test_rope_spatial_binding.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_rope_spatial_binding.py), [`docs/PROJECT_ROADMAP.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/docs/PROJECT_ROADMAP.md)
+* **Nội dung thay đổi**:
+  * Chính thức loại bỏ việc ép tọa độ RoPE thủ công khỏi toàn bộ codebase, chuyển sang chạy 1-pass In-Context tại $(0, 0)$ giúp giảm $50\%$ thời gian sinh ảnh trên GPU A30.
+  * Tạo script sinh poster dọc 9:16 chuyên dụng cho TikTok / Reels / Shorts.
+
+---
+
+### 28. Commit `bd911dc` — Docs & Feat: Bài học Xung đột Ngữ nghĩa & Nâng cấp Kích thước Slogan Glyph
+* **Thời gian**: `Mon Aug 24 11:24:01 2026 +0700`
+* **File thay đổi** (3 files: +19, -3):
+  * [`AGENTS.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/AGENTS.md), [`.agents/rules/agent_workflow_rules.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/.agents/rules/agent_workflow_rules.md), [`scripts/test_tiktok_poster.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_tiktok_poster.py)
+* **Nội dung thay đổi**:
+  * Khóa cứng quy tắc cấm lặp lại nguyên văn chuỗi text tiếng Việt trong Prompt để tránh hiện tượng Representation Clash với Text Encoder Qwen3.
+  * Nâng chiều cao Box Slogan lên $192\text{px}$ ($12$ latent tokens) chống nghẽn giải mã ở VAE Decoder.
+
+---
+
+### 29. Commit `69ad52d` — Feat: Phân tách Time Offset $t=10.0$ cho Title và $t=20.0$ cho Slogan
+* **Thời gian**: `Mon Aug 24 13:51:47 2026 +0700`
+* **File thay đổi** (1 file: +12, -11):
+  * [`scripts/test_tiktok_poster.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_tiktok_poster.py)
+* **Nội dung thay đổi**:
+  * Gán $t=10.0$ cho Tiêu đề chính và $t=20.0$ cho Slogan phụ. Tránh hiện tượng 2 text bị đè và trộn lẫn vào nhau khi đặt chung mốc thời gian.
+
+---
+
+### 30. Commit `2025c36` — Docs: Khóa cứng Định luật 3 Điều kiện Tiên quyết cho Đa khối Text
+* **Thời gian**: `Mon Aug 24 13:54:58 2026 +0700`
+* **File thay đổi** (2 files: +14, -0):
+  * [`AGENTS.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/AGENTS.md), [`.agents/rules/agent_workflow_rules.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/.agents/rules/agent_workflow_rules.md)
+* **Phát hiện thực nghiệm cốt tử (Đã kiểm chứng qua chuỗi đối chứng exp21, exp32, exp35, exp36)**:
+  * **(1) Phân tách Time Offset ($\Delta t = 10$)**: Bắt buộc để tránh token collision (nếu cùng $t=10$ sẽ bị trộn chữ như `exp32`).
+  * **(2) Định hướng Bề mặt Ngữ nghĩa (Surface Anchoring)**: Bắt buộc mô tả 2 bề mặt vật thể trong Prompt (biển trên / màn hình bục dưới) để định tuyến Attention cho $t=20.0$ (nếu không có bề mặt, $t=20$ sẽ bị Attention bỏ rơi như `exp36`).
+  * **(3) Ngưỡng phân giải Latent ($\ge 10-12$ tokens height)**: Đảm bảo VAE không làm mờ dấu phụ tiếng Việt.
+
+
 
 
