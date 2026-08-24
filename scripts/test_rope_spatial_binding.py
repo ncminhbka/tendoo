@@ -54,7 +54,6 @@ from flux2.model import Flux2
 from flux2.sampling import (
     batched_prc_txt,
     denoise_cfg,
-    denoise_cfg_cached,
     get_schedule,
     prc_img,
 )
@@ -438,7 +437,7 @@ def run_experiment(
     )
 
     with torch.no_grad():
-        out_latent = denoise_cfg_cached(
+        out_latent = denoise_cfg(
             model=model,
             img=img_tokens.clone(),
             img_ids=img_ids.clone(),
@@ -448,7 +447,6 @@ def run_experiment(
             guidance=guidance,
             img_cond_seq=ref_tokens,
             img_cond_seq_ids=ref_ids,
-            ref_fixed_timestep=0.0,
         )
 
         out_latent = rearrange(out_latent, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
@@ -468,7 +466,7 @@ def run_experiment(
         l_c = torch.arange(1, dtype=torch.float32, device=device_dit)
         baseline_ref_ids = torch.cartesian_prod(t_c, h_c, w_c, l_c).unsqueeze(0).to(device_dit)
 
-        out_latent_base = denoise_cfg_cached(
+        out_latent_base = denoise_cfg(
             model=model,
             img=img_tokens.clone(),
             img_ids=img_ids.clone(),
@@ -478,7 +476,6 @@ def run_experiment(
             guidance=guidance,
             img_cond_seq=ref_tokens,
             img_cond_seq_ids=baseline_ref_ids,
-            ref_fixed_timestep=0.0,
         )
         out_latent_base = rearrange(out_latent_base, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
         out_pixels_base = ae.decode(out_latent_base.to(device_ae))
