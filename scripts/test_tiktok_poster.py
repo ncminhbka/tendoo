@@ -306,10 +306,10 @@ def generate_tiktok_poster(
 
     glyph_slogan = None
     if slogan:
-        # Slogan box: wide compact banner across lower canvas (e.g. 480 x 112)
-        slogan_w = min(width - 96, 480)
+        # Slogan box: wide banner across lower canvas with adequate height for 10-12 latent tokens
+        slogan_w = min(width - 64, 512)
         slogan_w = (slogan_w // 16) * 16
-        slogan_h = 112
+        slogan_h = 160 if len(slogan.split()) <= 3 else 192
         glyph_slogan = create_glyph_image(text=slogan, target_width=slogan_w, target_height=slogan_h, font_path=font_path)
         slogan_preview = Path(output_path).stem + "_slogan_preview.png"
         glyph_slogan.save(slogan_preview)

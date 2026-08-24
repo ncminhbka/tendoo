@@ -46,5 +46,12 @@
 - ⛔ **TUYỆT ĐỐI KHÔNG DÙNG KV-CACHING CHO DiT BASE 4B (`forward_kv_cached`)**:
   - **Nguyên nhân**: Cơ chế KV-caching của BFL chỉ thiết kế cho mô hình Distilled 4 bước (9B-KV). Đối với Base 4B (50 bước ODE + CFG 4.0), việc trích xuất và đóng băng KV của Reference token tại Step 0 ($t=1.0$ khi canvas là 100% nhiễu hạt) sẽ cắt đứt sự tương tác động giữa nét chữ và canvas qua các timestep, khiến chữ bị biến thành ký tự rác.
   - **Quy tắc bắt buộc**: Luôn dùng `denoise_cfg` full 50 bước tương tác liên tục `[Canvas, Ref]` qua `model.forward()`. Với $L_{\text{ref}} \le 256$ tokens (Tight Crop), tốc độ chạy trên 2x A30 vẫn đạt yêu cầu mà chất lượng chữ đạt đỉnh.
+- ⛔ **KHÔNG LẶP LẠI NGUYÊN VĂN NỘI DUNG CHỮ TRONG TEXT PROMPT (REPRESENTATION CLASH)**:
+  - **Nguyên nhân**: Khi đưa nguyên văn chuỗi text tiếng Việt vào Prompt, `Qwen3-4B-FP8` cố gắng tự sinh chữ từ kiến thức tiền huấn luyện (vốn yếu về dấu tiếng Việt $\rightarrow$ sinh ra chữ lỗi). Tín hiệu lỗi này xung đột trực tiếp với tín hiệu In-Context Glyph Bitmap chuẩn từ VAE, khiến DiT bị "phân tâm" và làm vỡ nát nét chữ.
+  - **Quy tắc bắt buộc**: Trong Text Prompt, **TUYỆT ĐỐI KHÔNG LẶP LẠI NỘI DUNG CHỮ CẦN VẼ**. Chỉ mô tả vai trò (`tiêu đề`, `slogan`), vị trí (`ở trên`, `ở dưới`) và chất liệu/màu sắc (`đèn neon xanh`, `chữ vàng dập nổi`). Hãy để In-Context Glyph đảm nhiệm $100\%$ nội dung chính tả.
+- ⛔ **NGƯỠNG PHÂN GIẢI LATENT TỐI THIỂU CHO GLYPH BITMAP ($\ge 10$ TOKENS HEIGHT)**:
+  - **Nguyên nhân**: VAE nén $16\times$. Các câu dài nhiều từ nếu bị ép vào box có chiều cao $< 128\text{px}$ ($< 8$ latent tokens) sẽ khiến các dấu phụ (`Á`, `Ệ`, `Ộ`) bị thu nhỏ dưới 1 pixel, gây nghẽn cổ chai giải mã ở VAE Decoder.
+  - **Quy tắc bắt buộc**: Kích thước chiều cao Box của Glyph phải đạt tối thiểu $160\text{px}$ ($\ge 10$ latent tokens). Với slogan dài $\ge 4$ từ, tự động tăng chiều cao lên $192\text{px}$ ($12$ latent tokens) để đảm bảo độ sắc nét $100\%$.
+
 
 
