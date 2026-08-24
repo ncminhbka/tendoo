@@ -1,59 +1,56 @@
 [
   {
     "id": 1,
-    "text": "TIỆM CÀ PHỄ ANH QUÂN",
+    "text": "HƯƠNG SẮC QUÝ PHÁI",
     "font": "playfair",
-    "prompt": "Ảnh chụp kiến trúc ngoại cảnh một quán cà phê phong cách vintage ấm cúng vào buổi chiều hoàng hôn, biển hiệu gỗ màu nâu trầm cổ điển treo phía trên cửa chính, dòng chữ chạm khắc mạ vàng đồng tinh xảo, ánh nắng vàng ấm áp rọi qua tán cây xanh, không gian lãng mạn hoài niệm, chất lượng điện ảnh",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho chai nước hoa pha lê cao cấp đặt trên mặt nước phẳng lặng, những gợn sóng nước lăn tăn, cánh hoa hồng nhung đỏ thắm trôi xung quanh, dòng chữ vàng gold dập nổi 3D phản chiếu ánh sáng hoàng hôn lấp lánh trên mặt nước, phong cách thời trang Paris sang trọng, chất lượng điện ảnh",
     "width": 576,
     "height": 1024,
-    "output": "demo_batch_1_cafe.png"
+    "output": "demo_new_1_luxury_perfume.png"
   },
   {
     "id": 2,
-    "image_ref": "images/ref_prod_02.png",
-    "text": "ÂM THANH ĐỈNH CAO",
+    "text": "BỨT PHÁ MỌI GIỚI HẠN",
     "font": "anton",
-    "prompt": "Ảnh chụp quảng cáo thương mại cho chiếc tai nghe chụp tai không dây màu đen sang trọng đặt trên mặt bục tối giản, dòng chữ vàng gold kim loại dập nổi 3D phản chiếu ánh sáng studio ấm áp, đổ bóng sắc nét lên nền vàng, phong cách điện ảnh cao cấp",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho đôi giày thể thao sneaker phong cách tương lai lơ lửng giữa không trung, luồng khói sương huyền ảo bao quanh, những vệt tia sáng laser đỏ và xanh cắt ngang bóng tối, dòng chữ kim loại bạc dập nổi 3D viền đỏ rực lửa, phong cách thể thao đột phá, ánh sáng studio mạnh mẽ",
     "width": 576,
     "height": 1024,
-    "output": "demo_batch_2_headphone_gold.png"
+    "output": "demo_new_2_tech_sneaker.png"
   },
   {
     "id": 3,
-    "image_ref": "images/ref_prod_02.png",
-    "text": "CHỐNG ỒN CHỦ ĐỘNG",
-    "font": "pacifico",
-    "prompt": "Ảnh chụp thương mại công nghệ cho chiếc tai nghe không dây chụp tai màu đen, dòng chữ đèn neon phát quang màu xanh ngọc bích rực rỡ lơ lửng, hắt ánh sáng dạ quang lên bề mặt tai nghe kim loại, không gian studio tối tương phản mạnh, ánh sáng điện ảnh",
+    "text": "THIÊN ĐƯỜNG NGHỈ DƯỠNG",
+    "font": "dancing",
+    "prompt": "Ảnh chụp nghệ thuật phong cảnh một khu nghỉ dưỡng resort 5 sao ven biển nhiệt đới, hồ bơi vô cực nhìn ra đại dương xanh ngọc bích, rặng dừa xanh đung đưa trong gió chiều, dòng chữ khắc gỗ mộc mạc màu trắng tinh khôi gắn trên lan can gỗ, ánh nắng vàng rực rỡ nhiệt đới, phong cách du lịch cao cấp",
     "width": 576,
     "height": 1024,
-    "output": "demo_batch_3_headphone_neon.png"
+    "output": "demo_new_3_tropical_resort.png"
   },
   {
     "id": 4,
-    "image_ref": "images/reference_prod.png",
-    "text": "KEM DƯỠNG THỂ\nTHUẦN CHAY",
-    "font": "playfair",
-    "prompt": "Ảnh chụp quảng cáo thương mại cho sản phẩm chăm sóc da cao cấp, chai kem dưỡng thể đặt trên bục đá cẩm thạch sang trọng ở giữa, biển hiệu vàng đồng gắn trên tường phía trên, xung quanh có lá trà xanh tươi mát, giọt sương mai đọng trên lá, ánh sáng studio mềm mại, phong cách điện ảnh",
+    "text": "ĐẲNG CẤP SỐNG\nTHƯỢNG LƯU",
+    "font": "bevietnam",
+    "prompt": "Ảnh chụp kiến trúc nội thất căn hộ penthouse sang trọng nhìn qua cửa kính panorama toàn cảnh thành phố lung linh ánh đèn lúc chạng vạng, sofa da cao cấp và bàn đá marble, dòng chữ kim loại mạ vàng hồng dập nổi 3D lơ lửng trang nhã, phong cách kiến trúc thượng lưu, chất lượng điện ảnh",
     "width": 576,
     "height": 1024,
-    "output": "demo_batch_4_cosmetic_vegan.png"
+    "output": "demo_new_4_penthouse_luxury.png"
   },
   {
     "id": 5,
-    "text": "PHONG CÁCH ĐƯỜNG PHỐ\nTHẾ HỆ MỚI",
-    "font": "graffiti",
-    "prompt": "Ảnh chụp lookbook thời trang đường phố ấn tượng, background bức tường gạch phong cách urban ngập tràn nghệ thuật tranh phun sơn, dòng chữ nghệ thuật graffiti màu cam rực lửa nổi bật trên tường gạch, ánh sáng đèn đường ban đêm, phong cách điện ảnh sắc sảo",
+    "text": "TƯƠI MÁT MỖI NGÀY",
+    "font": "pacifico",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho ly nước ép cam tươi tràn đầy năng lượng, những giọt nước bắn tung tóe sống động giữa không trung, những lát cam và lá bạc hà tươi mát bay xung quanh, dòng chữ nổi 3D màu xanh lá cây tươi mát viền trắng nổi bật, ánh sáng rực rỡ tươi vui, phong cách ẩm thực đỉnh cao",
     "width": 576,
     "height": 1024,
-    "output": "demo_batch_5_streetwear_graffiti.png"
+    "output": "demo_new_5_fruit_splash.png"
   },
   {
     "id": 6,
-    "text": "TRÀ SỮA ĐÀI LOAN\nVỊ NGON ĐẬM ĐÀ",
-    "font": "bevietnam",
-    "prompt": "Ảnh chụp quảng cáo thương mại cho đồ uống giải khát, một ly trà sữa trân châu lớn đặt trên mặt bàn gỗ sáng màu ở giữa, trân châu đen óng ả, biển hiệu gỗ vintage treo phía trên tường, dòng chữ dập nổi màu trắng viền đen rõ nét, ánh sáng studio tươi sáng, phong cách nghệ thuật ẩm thực",
+    "text": "HÀNH TRÌNH\nVƯỢT KHÔNG GIAN",
+    "font": "oswald",
+    "prompt": "Ảnh chụp điện ảnh viễn tưởng cho một phi thuyền không gian đang bay xuyên qua dải ngân hà đầy sao và tinh vân rực rỡ, các chùm tia năng lượng phát sáng màu xanh lam, dòng chữ kim loại titan dập nổi 3D phản chiếu ánh sáng vũ trụ kỳ ảo, phong cách bom tấn Hollywood, chất lượng điện ảnh siêu thực",
     "width": 576,
     "height": 1024,
-    "output": "demo_batch_6_milktea_modern.png"
+    "output": "demo_new_6_scifi_galaxy.png"
   }
 ]
