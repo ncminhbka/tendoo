@@ -4,6 +4,36 @@ import os
 import sys
 from pathlib import Path
 
+import torch.nn as _nn
+
+
+def _load_state_dict_verbose(module: "_nn.Module", sd: dict, label: str) -> None:
+    """
+    Loads a state dict and ALWAYS reports missing/unexpected keys explicitly,
+    even when falling back to strict=False. A silent strict=False fallback can
+    hide a broken key-conversion (e.g. Diffusers->BFL VAE remap) behind a model
+    that "loads fine" but is missing real weights.
+    """
+    try:
+        module.load_state_dict(sd, strict=True, assign=True)
+        print(f"  -> [{label}] Loaded with strict=True (0 missing, 0 unexpected).")
+    except Exception as e:
+        print(f"Warning: Strict state dict loading failed for [{label}] ({e}), retrying non-strict...")
+        result = module.load_state_dict(sd, strict=False, assign=True)
+        missing = list(result.missing_keys)
+        unexpected = list(result.unexpected_keys)
+        print(f"  -> [{label}] Non-strict load: {len(missing)} missing key(s), {len(unexpected)} unexpected key(s).")
+        if missing:
+            print(f"     Missing (first 10): {missing[:10]}")
+        if unexpected:
+            print(f"     Unexpected (first 10): {unexpected[:10]}")
+        if missing or unexpected:
+            print(
+                "     ⚠️  This checkpoint did NOT fully match the target architecture. "
+                "Outputs may be silently degraded (e.g. VAE decode quality). "
+                "Do not treat this as a successful load without reviewing the lists above."
+            )
+
 import huggingface_hub
 import torch
 from PIL import Image
@@ -169,11 +199,7 @@ def load_flow_model(model_name: str, debug_mode: bool = False, device: str | tor
             model = Flux2(FLUX2_MODEL_INFO[model_name.lower()]["params"]).to(torch.bfloat16)
         print(f"Loading {weight_path} for the FLUX.2 weights")
         sd = load_sft(weight_path, device=str(device))
-        try:
-            model.load_state_dict(sd, strict=True, assign=True)
-        except Exception as e:
-            print(f"Warning: Strict state dict loading failed ({e}), fallback to non-strict...")
-            model.load_state_dict(sd, strict=False, assign=True)
+        _load_state_dict_verbose(model, sd, label=f"DiT:{model_name}")
         return model.to(device)
     else:
         with torch.device(device):
@@ -292,11 +318,7 @@ def load_ae(model_name: str, device: str | torch.device = "cuda") -> AutoEncoder
     elif any(k.startswith("vae.") for k in sd.keys()):
         sd = {k.replace("vae.", ""): v for k, v in sd.items()}
 
-    try:
-        ae.load_state_dict(sd, strict=True, assign=True)
-    except Exception as e:
-        print(f"Warning: Strict AE loading failed ({e}), fallback to non-strict...")
-        ae.load_state_dict(sd, strict=False, assign=True)
+    _load_state_dict_verbose(ae, sd, label=f"AutoEncoder:{model_name}")
 
     return ae.to(device)
 

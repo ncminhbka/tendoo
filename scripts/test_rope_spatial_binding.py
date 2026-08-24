@@ -380,41 +380,20 @@ def run_experiment(
         result_base.save(baseline_path)
         print(f"  -> Saved Baseline 1 result to: {baseline_path}")
 
-        # Baseline 2: Pure Prompt (No Glyph Conditioning)
-        pure_prompt_path = Path(output_path).stem + "_pure_prompt_no_glyph.png"
-        print(f"\n[Comparison] Running Baseline 2 (Pure Prompt, No Glyph Conditioning)...")
-        out_latent_pure = denoise_cfg(
-            model=model,
-            img=img_tokens.clone(),
-            img_ids=img_ids.clone(),
-            txt=txt,
-            txt_ids=txt_ids,
-            timesteps=timesteps,
-            guidance=guidance,
-        )
-        out_latent_pure = rearrange(out_latent_pure, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
-        out_pixels_pure = ae.decode(out_latent_pure.to(device_ae))
-        out_pixels_pure = ((out_pixels_pure[0].clamp(-1, 1) + 1.0) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
-        result_pure = Image.fromarray(out_pixels_pure)
-        result_pure.save(pure_prompt_path)
-        print(f"  -> Saved Baseline 2 (Pure Prompt) result to: {pure_prompt_path}")
-
-        # Create 3-panel Side-by-Side Comparison: [Pure Prompt | Baseline (0,0) | RoPE Bound (target box)]
+        # Create 2-panel Side-by-Side Comparison: [Baseline (0,0) | RoPE Bound (target box)]
         comparison_path = Path(output_path).stem + "_COMPARISON.png"
-        comp_img = Image.new("RGB", (width * 3, height), color=(30, 30, 30))
-        comp_img.paste(result_pure, (0, 0))
-        comp_img.paste(result_base, (width, 0))
-        comp_img.paste(result_rope, (width * 2, 0))
+        comp_img = Image.new("RGB", (width * 2, height), color=(30, 30, 30))
+        comp_img.paste(result_base, (0, 0))
+        comp_img.paste(result_rope, (width, 0))
         comp_img.save(comparison_path)
-        print(f"  -> 🌟 Saved 3-Panel Side-by-Side Comparison to: {comparison_path}")
+        print(f"  -> 🌟 Saved 2-Panel Side-by-Side Comparison to: {comparison_path}")
 
     print("\n" + "=" * 80)
     print(f"✅ EXPERIMENT COMPLETE!")
-    print(f"1. Glyph Preview       : {glyph_preview_path}")
-    print(f"2. Pure Prompt (No Ref): {pure_prompt_path}")
-    print(f"3. Baseline (Coords 0,0): {baseline_path}")
-    print(f"4. RoPE Bound (Target) : {output_path}")
-    print(f"5. 3-Panel Comparison  : {comparison_path}")
+    print(f"1. Glyph Preview        : {glyph_preview_path}")
+    print(f"2. Baseline (Coords 0,0): {baseline_path}")
+    print(f"3. RoPE Bound (Target)  : {output_path}")
+    print(f"4. 2-Panel Comparison   : {comparison_path}")
     print("=" * 80)
 
 
