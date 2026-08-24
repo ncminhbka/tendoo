@@ -355,6 +355,12 @@ def denoise_cached(
     return img
 
 
+def vanilla_guidance(x: torch.Tensor, cfg_val: float) -> torch.Tensor:
+    x_u, x_c = x.chunk(2)
+    x = x_u + cfg_val * (x_c - x_u)
+    return x
+
+
 def denoise_cfg(
     model: Flux2,
     img: Tensor,
@@ -366,7 +372,6 @@ def denoise_cfg(
     img_cond_seq: Tensor | None = None,
     img_cond_seq_ids: Tensor | None = None,
 ):
-    """Full dynamic CFG denoising with reference sequence support across all timesteps."""
     img = torch.cat([img, img], dim=0)
     img_ids = torch.cat([img_ids, img_ids], dim=0)
 
