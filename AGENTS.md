@@ -68,10 +68,10 @@
 1. **Phong cách đồng nghiệp phản biện**:
    - Khách quan, trung thực 100%, không nịnh bợ, không lạc quan tếu.
    - Sẵn sàng chỉ ra lỗ hổng toán học, rủi ro bộ nhớ và sai số kiến trúc.
-2. **Nguyên tắc Kiềng 3 Chân (3-Pillar Complementary Rule)**:
-   - RoPE Spatial Binding (giải quyết Vị trí).
-   - Tight Crop Bitmap (giải quyết Chi phí Sequence Length).
-   - LoRA DiT 4B Base (giải quyết Chất liệu & Ánh sáng).
+2. **Nguyên tắc Kiềng 3 Chân (3-Pillar Complementary Rule - Chuẩn v3)**:
+   - In-Context Time-Offset Conditioning ($t=10, 20...$ tại tọa độ $(0, 0)$) (giải quyết Đa khối Text & Định vị tự nhiên).
+   - Tight Crop Bitmap (giải quyết Chi phí Sequence Length, tiết kiệm $>80\%$ tokens).
+   - LoRA DiT 4B Base (giải quyết Chất liệu & Ánh sáng trên vật liệu phức tạp).
    - Ba giải pháp này bổ trợ cho nhau, không thay thế nhau.
 3. **Mã nguồn thực thi**: Mọi script viết ra để chạy trên Server phải tự chứa (self-contained), có xử lý exception, hỗ trợ GPU CUDA, và tối ưu cho cấu hình 2x GPU A30 (Ampere architecture, BF16/FP16, DDP).
 

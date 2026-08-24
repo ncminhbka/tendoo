@@ -477,8 +477,8 @@ def run_experiment(
         del text_encoder
         torch.cuda.empty_cache()
 
-    # 4. Prepare Canvas & RoPE Bound Glyph
-    print("\n[Step 4/5] Preparing Latent Canvas and RoPE Spatial Coordinates...")
+    # 4. Prepare Canvas & In-Context Reference Glyph
+    print("\n[Step 4/5] Preparing Latent Canvas and In-Context Reference Tokens...")
     lat_h = height // 16
     lat_w = width // 16
     z_init = torch.randn(1, 128, lat_h, lat_w, device=device_dit, dtype=torch.bfloat16)
@@ -486,29 +486,27 @@ def run_experiment(
     img_tokens = img_tokens.unsqueeze(0).to(device_dit)
     img_ids = img_ids.unsqueeze(0).to(device_dit)
 
-    # Encode Glyph with RoPE Coordinate Alignment
-    ref_tokens, ref_ids = encode_glyph_with_custom_rope(
-        ae=ae,
-        glyph_img=glyph_img,
-        canvas_height=height,
-        canvas_width=width,
-        box=(ymin, xmin, ymax, xmax),
-        t_offset=10.0,
-        device=device_ae,
-    )
-    ref_tokens = ref_tokens.to(device_dit)
-    ref_ids = ref_ids.to(device_dit)
+    # Encode Glyph with standard In-Context Coordinates starting at (0, 0)
+    np_arr = np.array(glyph_img, dtype=np.float32) / 127.5 - 1.0
+    glyph_dtype = next(ae.parameters()).dtype if hasattr(ae, "parameters") else torch.bfloat16
+    glyph_tensor = torch.from_numpy(np_arr).permute(2, 0, 1).unsqueeze(0).to(device=device_ae, dtype=glyph_dtype)
+    with torch.no_grad():
+        encoded = ae.encode(glyph_tensor)[0]
+
+    _, g_lat_h, g_lat_w = encoded.shape
+    t_c = torch.tensor([10.0], dtype=torch.float32, device=device_dit)
+    h_c = torch.arange(g_lat_h, dtype=torch.float32, device=device_dit)
+    w_c = torch.arange(g_lat_w, dtype=torch.float32, device=device_dit)
+    l_c = torch.arange(1, dtype=torch.float32, device=device_dit)
+
+    ref_ids = torch.cartesian_prod(t_c, h_c, w_c, l_c).unsqueeze(0).to(device_dit)
+    ref_tokens = rearrange(encoded, "c h w -> (h w) c").unsqueeze(0).to(device_dit, dtype=torch.bfloat16)
 
     print(f"  -> Canvas Tokens : {img_tokens.shape[1]} tokens (Grid: {lat_h}x{lat_w})")
-    print(f"  -> Glyph Tokens  : {ref_tokens.shape[1]} tokens (Box: {box_h//16}x{box_w//16})")
-    print(f"  -> RoPE h range  : [{ymin//16}, {ymax//16}), w range: [{xmin//16}, {xmax//16})")
+    print(f"  -> Glyph Tokens  : {ref_tokens.shape[1]} tokens (Grid: {g_lat_h}x{g_lat_w} at t=10.0)")
 
-    # [DIAG] MANDATORY sanity check BEFORE spending 50 denoise steps on a run that
-    # might be spatially meaningless. Run this on every experiment from now on.
-    diagnose_id_ranges(img_ids, ref_ids, lat_h, lat_w)
-
-    # 5. Denoise with Flow Matching ODE (RoPE Bound Experiment)
-    print("\n[Step 5/5] Running Denoise with RoPE Bound Glyph Conditioning...")
+    # 5. Denoise with Flow Matching ODE (Single Ultra-Fast Pass)
+    print("\n[Step 5/5] Running Denoise with In-Context Glyph Conditioning (50 Steps)...")
     timesteps = get_schedule(
         num_steps=num_steps,
         image_seq_len=img_tokens.shape[1],
@@ -517,8 +515,8 @@ def run_experiment(
     with torch.no_grad():
         out_latent = denoise_cfg(
             model=model,
-            img=img_tokens.clone(),
-            img_ids=img_ids.clone(),
+            img=img_tokens,
+            img_ids=img_ids,
             txt=txt,
             txt_ids=txt_ids,
             timesteps=timesteps,
@@ -528,54 +526,17 @@ def run_experiment(
         )
 
         out_latent = rearrange(out_latent, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
-        print("  -> Decoding RoPE bound output image via VAE...")
+        print("  -> Decoding output image via VAE...")
         out_pixels = ae.decode(out_latent.to(device_ae))
         out_pixels = ((out_pixels[0].clamp(-1, 1) + 1.0) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
-        result_rope = Image.fromarray(out_pixels)
-        result_rope.save(output_path)
-        print(f"  -> Saved RoPE-bound result to: {output_path}")
-
-        # Baseline 1: Unbound coordinates (starts at 0, 0)
-        baseline_path = Path(output_path).stem + "_baseline_default_coords.png"
-        print(f"\n[Comparison] Running Baseline 1 (Default ref coordinates at 0,0)...")
-        t_c = torch.tensor([10.0], dtype=torch.float32, device=device_dit)
-        h_c = torch.arange(box_h // 16, dtype=torch.float32, device=device_dit)
-        w_c = torch.arange(box_w // 16, dtype=torch.float32, device=device_dit)
-        l_c = torch.arange(1, dtype=torch.float32, device=device_dit)
-        baseline_ref_ids = torch.cartesian_prod(t_c, h_c, w_c, l_c).unsqueeze(0).to(device_dit)
-
-        out_latent_base = denoise_cfg(
-            model=model,
-            img=img_tokens.clone(),
-            img_ids=img_ids.clone(),
-            txt=txt,
-            txt_ids=txt_ids,
-            timesteps=timesteps,
-            guidance=guidance,
-            img_cond_seq=ref_tokens,
-            img_cond_seq_ids=baseline_ref_ids,
-        )
-        out_latent_base = rearrange(out_latent_base, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
-        out_pixels_base = ae.decode(out_latent_base.to(device_ae))
-        out_pixels_base = ((out_pixels_base[0].clamp(-1, 1) + 1.0) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
-        result_base = Image.fromarray(out_pixels_base)
-        result_base.save(baseline_path)
-        print(f"  -> Saved Baseline 1 result to: {baseline_path}")
-
-        # Create 2-panel Side-by-Side Comparison: [Baseline (0,0) | RoPE Bound (target box)]
-        comparison_path = Path(output_path).stem + "_COMPARISON.png"
-        comp_img = Image.new("RGB", (width * 2, height), color=(30, 30, 30))
-        comp_img.paste(result_base, (0, 0))
-        comp_img.paste(result_rope, (width, 0))
-        comp_img.save(comparison_path)
-        print(f"  -> 🌟 Saved 2-Panel Side-by-Side Comparison to: {comparison_path}")
+        result_img = Image.fromarray(out_pixels)
+        result_img.save(output_path)
+        print(f"  -> Saved output image to: {output_path}")
 
     print("\n" + "=" * 80)
-    print(f"✅ EXPERIMENT COMPLETE!")
-    print(f"1. Glyph Preview        : {glyph_preview_path}")
-    print(f"2. Baseline (Coords 0,0): {baseline_path}")
-    print(f"3. RoPE Bound (Target)  : {output_path}")
-    print(f"4. 2-Panel Comparison   : {comparison_path}")
+    print(f"✅ INFERENCE COMPLETE (1-Pass Fast Execution)!")
+    print(f"1. Glyph Preview : {glyph_preview_path}")
+    print(f"2. Output Image  : {output_path} ({width}x{height})")
     print("=" * 80)
 
 
