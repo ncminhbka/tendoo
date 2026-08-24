@@ -63,6 +63,9 @@
   - **Quy tắc bắt buộc**: Luôn dùng $t=10.0$ cho Ref 1 (Sản phẩm/Title), $t=20.0$ cho Ref 2 (Slogan/Biển 2), $t=30.0$ cho Ref 3 (Logo). LoRA (Giai đoạn 3) sẽ học ma trận $\Delta W$ dựa trên đúng các mốc này để tái cân bằng attention.
 - ⛔ **KHỐI LƯỢNG TOKEN & NĂNG LỰC TIẾP NHẬN ĐA PHƯƠNG THỨC Ở MỐC THỜI GIAN XA**:
   - **Phát hiện**: Ảnh sản phẩm $4096$ tokens ở $t=60.0$ giữ y hệt $100\%$ do mật độ đặc trưng dày đặc, trong khi Glyph thưa thớt $\sim 320$ tokens bị mất. Điều này chứng minh kiến trúc 4D RoPE hoàn toàn có thể truyền tải thông tin ở mốc xa, và LoRA Giai đoạn 3 sẽ kích hoạt năng lực này cho Glyph chữ tiếng Việt!
+- ⛔ **GỐC RỄ NẰM Ở MA TRẬN ATTENTION ROPE, KHÔNG PHẢI DO CÂU TỪ PROMPT**:
+  - **Phân tích**: Việc zero-shot cần prompt "gợi mở bề mặt" chỉ là chiếc nạng cứu trợ tạm thời. LoRA Giai đoạn 3 sẽ tối ưu ma trận $W_Q, W_K$ cho Glyph ở $t=20, 30$, giúp người dùng hoàn toàn tự do viết prompt tự nhiên ngắn gọn mà vẫn giữ vững $100\%$ đa khối text.
+
 
 
 

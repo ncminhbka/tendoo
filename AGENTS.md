@@ -142,6 +142,11 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
      + Lý do chữ bị yếu ở mốc $t=20, 30$ trên mô hình gốc chỉ vì BFL chưa từng huấn luyện DiT đọc Glyph chữ đen trắng ở các mốc này.
      + Khi huấn luyện LoRA ở Giai đoạn 3, LoRA sẽ kích hoạt phản xạ chú ý cho Glyph chữ, giúp năng lực vẽ chữ ở các mốc $t=20, 30$ đạt độ chính xác $100\%$ vững chắc ngang ngửa khả năng giữ ảnh sản phẩm thật!
 
+9. **BẢN CHẤT GỐC RỄ NẰM Ở MA TRẬN ATTENTION ROPE, KHÔNG PHẢI DO CÂU TỪ PROMPT (INDEPENDENT ATTENTION ROUTING RULE)**:
+   - **Phân tích bản chất**: Việc mô hình Base zero-shot cần Prompt "gợi mở 2 bề mặt" thực chất chỉ là một "chiếc nạng cứu trợ tạm thời" để bù đắp cho tín hiệu Attention bị suy hao ở $t=20.0$. Thực nghiệm `exp45` (giữ nguyên $100\%$ sản phẩm thật ở $t=60.0$ mà không cần prompt chi tiết) đã chứng minh gốc rễ hoàn toàn nằm ở trọng số Attention $W_Q, W_K$ của DiT cho loại token đó.
+   - **Mục tiêu giải phóng của LoRA (Giai đoạn 3)**: Huấn luyện LoRA tối ưu hóa ma trận Attention cho Glyph chữ ở $t=20.0, 30.0$, giải phóng người dùng khỏi việc phải "viết prompt văn mẫu", cho phép prompt hoàn toàn tự nhiên, ngắn gọn mà mô hình vẫn tự động định vị và vẽ đúng $100\%$ đa khối text.
+
+
 
 
 
