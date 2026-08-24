@@ -257,6 +257,9 @@ def generate_tiktok_poster(
     title: str,
     slogan: str | None = None,
     image_ref: str | None = None,
+    t_title: float = 5.0,
+    t_slogan: float = 10.0,
+    t_product: float = 2.0,
     width: int = 576,
     height: int = 1024,
     output_path: str = "output_tiktok_poster.png",
@@ -347,38 +350,35 @@ def generate_tiktok_poster(
     img_tokens = img_tokens.unsqueeze(0).to(device_dit)
     img_ids = img_ids.unsqueeze(0).to(device_dit)
 
+    # In-Context Time-Offset Assignments
     ref_token_list = []
     ref_id_list = []
 
-    current_time_offset = 10.0
-
-    # Optional Product Reference Image (t=10.0)
+    # 1. Optional Product Reference Image
     if image_ref and os.path.exists(image_ref):
         prod_tokens, prod_ids = encode_product_to_incontext_tokens(
-            ae=ae, image_path=image_ref, t_offset=current_time_offset, device=device_ae
+            ae=ae, image_path=image_ref, t_offset=t_product, device=device_ae
         )
         ref_token_list.append(prod_tokens)
         ref_id_list.append(prod_ids)
-        print(f"  -> Added Product Image at t={current_time_offset} ({prod_tokens.shape[1]} tokens)")
-        current_time_offset += 10.0
+        print(f"  -> Added Product Image at t={t_product} ({prod_tokens.shape[1]} tokens)")
 
-    # Main Title Glyph (t=10.0 if no product, t=20.0 if with product)
+    # 2. Main Title Glyph
     title_tokens, title_ids = encode_glyph_to_incontext_tokens(
-        ae=ae, glyph_img=glyph_title, t_offset=current_time_offset, device=device_ae
+        ae=ae, glyph_img=glyph_title, t_offset=t_title, device=device_ae
     )
     ref_token_list.append(title_tokens)
     ref_id_list.append(title_ids)
-    print(f"  -> Added Main Title at t={current_time_offset} ({title_tokens.shape[1]} tokens)")
-    current_time_offset += 10.0
+    print(f"  -> Added Main Title at t={t_title} ({title_tokens.shape[1]} tokens)")
 
-    # Sub-Slogan Glyph (t=20.0 if no product, t=30.0 if with product)
+    # 3. Sub-Slogan Glyph
     if glyph_slogan is not None:
         slogan_tokens, slogan_ids = encode_glyph_to_incontext_tokens(
-            ae=ae, glyph_img=glyph_slogan, t_offset=current_time_offset, device=device_ae
+            ae=ae, glyph_img=glyph_slogan, t_offset=t_slogan, device=device_ae
         )
         ref_token_list.append(slogan_tokens)
         ref_id_list.append(slogan_ids)
-        print(f"  -> Added Sub-Slogan at t={current_time_offset} ({slogan_tokens.shape[1]} tokens)")
+        print(f"  -> Added Sub-Slogan at t={t_slogan} ({slogan_tokens.shape[1]} tokens)")
 
     # Combined Reference Tokens
     all_ref_tokens = torch.cat(ref_token_list, dim=1).to(device_dit)
@@ -423,6 +423,9 @@ if __name__ == "__main__":
     parser.add_argument("--title", type=str, required=True, help="Main Title Vietnamese Text")
     parser.add_argument("--slogan", type=str, default=None, help="Optional Sub-Slogan / Promo Text")
     parser.add_argument("--image_ref", type=str, default=None, help="Optional Path to Product Reference Image")
+    parser.add_argument("--t_title", type=float, default=5.0, help="Time offset for Main Title (default: 5.0)")
+    parser.add_argument("--t_slogan", type=float, default=10.0, help="Time offset for Sub-Slogan (default: 10.0)")
+    parser.add_argument("--t_product", type=float, default=2.0, help="Time offset for Product Image (default: 2.0)")
     parser.add_argument("--width", type=int, default=576, help="Width in pixels (multiple of 16, default 576)")
     parser.add_argument("--height", type=int, default=1024, help="Height in pixels (multiple of 16, default 1024)")
     parser.add_argument("--output", type=str, default="output_tiktok_poster.png", help="Output path")
@@ -441,6 +444,9 @@ if __name__ == "__main__":
         title=args.title,
         slogan=args.slogan,
         image_ref=args.image_ref,
+        t_title=args.t_title,
+        t_slogan=args.t_slogan,
+        t_product=args.t_product,
         width=args.width,
         height=args.height,
         output_path=args.output,
@@ -452,3 +458,4 @@ if __name__ == "__main__":
         seed=args.seed,
         device=args.device,
     )
+
