@@ -262,11 +262,44 @@ Dưới đây là bảng theo dõi toàn bộ các commit được thực hiện
 
 ---
 
-### 21. Commit `REVERT_KV_CACHE` — Fix: Khôi phục Full Dynamic Denoise (Revert KV-Caching gây vỡ chữ)
-* **Thời gian**: `Mon Aug 24 09:09:00 2026 +0700`
-* **File thay đổi** (2 files: +20, -76):
+### 21. Commit `468fe66` — Fix: Khôi phục Full Dynamic Denoise (Revert KV-Caching gây vỡ chữ)
+* **Thời gian**: `Mon Aug 24 09:09:48 2026 +0700`
+* **File thay đổi** (3 files: +30, -76):
   * [`src/flux2/sampling.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/src/flux2/sampling.py), [`scripts/test_rope_spatial_binding.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_rope_spatial_binding.py)
 * **Vấn đề xuất hiện**: KV-caching đóng băng Key/Value của ref token tại $t=1.0$ (khi canvas còn là nhiễu hạt 100%), triệt tiêu tương tác động đa bước và làm đảo thứ tự layout, khiến chữ bị biến thành ký tự rác.
 * **Giải pháp kỹ thuật**:
   * Hủy bỏ `denoise_cfg_cached`, khôi phục hàm `denoise_cfg` full 50 bước tương tác liên tục giữa Canvas và Ref Tokens `[Canvas, Ref]`. Khôi phục chất lượng vẽ chữ và dấu tiếng Việt sắc nét như ban đầu.
+
+---
+
+### 22. Commit `5903303` — Sync: Đồng bộ 100% nguyên bản BFL cho `src/flux2/sampling.py`
+* **Thời gian**: `Mon Aug 24 09:14:03 2026 +0700`
+* **File thay đổi** (1 file: +6, -1):
+  * [`src/flux2/sampling.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/src/flux2/sampling.py)
+* **Nội dung thay đổi**:
+  * Khôi phục toàn bộ hàm nguyên bản upstream của BFL, đảm bảo 6/8 file trong `src/flux2/` hoàn toàn đồng nhất 100% với official repository.
+
+---
+
+### 23. Commit `3f9d5cb` — Rules: Khóa cứng nguyên tắc Đóng băng Upstream Core (`src/flux2/`)
+* **Thời gian**: `Mon Aug 24 09:17:22 2026 +0700`
+* **File thay đổi** (2 files: +10, -1):
+  * [`AGENTS.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/AGENTS.md), [`.agents/rules/agent_workflow_rules.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/.agents/rules/agent_workflow_rules.md)
+* **Nội dung thay đổi**:
+  * Đưa quy tắc "Đóng băng mã nguồn gốc BFL (`src/flux2/`)" thành quy chuẩn bắt buộc của dự án. Mọi mở rộng chỉ được viết ở tầng ngoài (`scripts/`, `src/tendoo/`).
+
+---
+
+### 24. Commit `297d947` — Feat: Nâng cấp bộ tạo Glyph Bitmap tiếng Việt chống tràn cho Text dài
+* **Thời gian**: `Mon Aug 24 09:56:36 2026 +0700`
+* **File thay đổi** (1 file: +113, -35):
+  * [`scripts/test_rope_spatial_binding.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_rope_spatial_binding.py)
+* **Vấn đề xuất hiện**:
+  * Hàm `create_glyph_image` cũ bị lỗi không cập nhật `selected_font_path`, khiến text dài không bao giờ co nhỏ font size, bị tràn ra ngoài biên và cắt cụt chữ.
+  * Không hỗ trợ ngắt dòng nhiều dòng (multi-line wrapping) khi text dài (ví dụ: tên quán 5-8 từ).
+* **Giải pháp kỹ thuật**:
+  * Hỗ trợ ngắt dòng thủ công `\n` và tự động ngắt 1, 2, 3 dòng tùy theo tỉ lệ khung hình (Aspect Ratio) của Bounding Box.
+  * Dùng thuật toán Binary Search tìm cỡ chữ lớn nhất có thể hiển thị vừa khít trong vùng vẽ (kèm padding an toàn).
+  * Tự động căn giữa hoàn hảo theo cả chiều ngang và chiều dọc.
+
 
