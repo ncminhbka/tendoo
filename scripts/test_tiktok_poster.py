@@ -248,48 +248,6 @@ def encode_product_to_incontext_tokens(
     return prod_tokens, prod_ids
 
 
-def create_composite_poster_glyph(
-    title: str,
-    slogan: str | None = None,
-    canvas_width: int = 576,
-    canvas_height: int = 1024,
-    font_path: str | None = None,
-) -> Image.Image:
-    """
-    Creates a unified composite typography reference layout:
-    - Main Title in upper region
-    - Sub-Slogan in lower region
-    - Clean middle region for product / visual subject
-    Both elements reside on the EXACT SAME reference time-step (t=10.0 or t=20.0).
-    """
-    img = Image.new("RGB", (canvas_width, canvas_height), color=(0, 0, 0))
-
-    # 1. Render Main Title in upper box
-    title_w = min(canvas_width - 64, 512)
-    title_w = (title_w // 16) * 16
-    title_h = 224 if "\n" in title or len(title.split()) >= 4 else 160
-    glyph_title = create_glyph_image(
-        text=title, target_width=title_w, target_height=title_h, font_path=font_path
-    )
-    title_x = (canvas_width - title_w) // 2
-    title_y = 48
-    img.paste(glyph_title, (title_x, title_y))
-
-    # 2. Render Sub-Slogan in lower box
-    if slogan:
-        slogan_w = min(canvas_width - 64, 512)
-        slogan_w = (slogan_w // 16) * 16
-        slogan_h = 192 if len(slogan.split()) >= 4 else 160
-        glyph_slogan = create_glyph_image(
-            text=slogan, target_width=slogan_w, target_height=slogan_h, font_path=font_path
-        )
-        slogan_x = (canvas_width - slogan_w) // 2
-        slogan_y = canvas_height - slogan_h - 48
-        img.paste(glyph_slogan, (slogan_x, slogan_y))
-
-    return img
-
-
 def generate_tiktok_poster(
     prompt: str,
     title: str,
@@ -310,7 +268,7 @@ def generate_tiktok_poster(
     height = (height // 16) * 16
 
     print("=" * 80)
-    print("📱 Starting TikTok / Reels 9:16 Vertical Poster Generation (Unified Composite Glyph)")
+    print("📱 Starting TikTok / Reels 9:16 Vertical Poster Generation")
     print(f"Canvas Size : {width}x{height} (Aspect Ratio 9:16)")
     print(f"Main Title  : '{title}'")
     if slogan:
@@ -335,18 +293,25 @@ def generate_tiktok_poster(
 
     torch.manual_seed(seed)
 
-    # 1. Render Unified Composite Glyph
-    print("\n[Step 1/5] Rendering Unified Composite Typography Bitmap (Title + Slogan)...")
-    composite_glyph = create_composite_poster_glyph(
-        title=title,
-        slogan=slogan,
-        canvas_width=width,
-        canvas_height=height,
-        font_path=font_path,
-    )
-    composite_preview = Path(output_path).stem + "_composite_glyph_preview.png"
-    composite_glyph.save(composite_preview)
-    print(f"  -> Saved Composite Glyph preview: {composite_preview} ({width}x{height})")
+    # 1. Render 2 Separate Tight-Crop Glyphs
+    print("\n[Step 1/5] Rendering 2 Separate Tight-Crop Typography Bitmaps...")
+    title_w = min(width - 64, 512)
+    title_w = (title_w // 16) * 16
+    title_h = 224 if "\n" in title or len(title.split()) >= 4 else 160
+    glyph_title = create_glyph_image(text=title, target_width=title_w, target_height=title_h, font_path=font_path)
+    title_preview = Path(output_path).stem + "_title_preview.png"
+    glyph_title.save(title_preview)
+    print(f"  -> Saved Title preview: {title_preview} ({title_w}x{title_h})")
+
+    glyph_slogan = None
+    if slogan:
+        slogan_w = min(width - 64, 512)
+        slogan_w = (slogan_w // 16) * 16
+        slogan_h = 192 if len(slogan.split()) >= 4 else 160
+        glyph_slogan = create_glyph_image(text=slogan, target_width=slogan_w, target_height=slogan_h, font_path=font_path)
+        slogan_preview = Path(output_path).stem + "_slogan_preview.png"
+        glyph_slogan.save(slogan_preview)
+        print(f"  -> Saved Slogan preview: {slogan_preview} ({slogan_w}x{slogan_h})")
 
     # 2. Load Models
     print("\n[Step 2/5] Loading FLUX.2 Base DiT & VAE...")
@@ -369,7 +334,7 @@ def generate_tiktok_poster(
         del text_encoder
         torch.cuda.empty_cache()
 
-    # 4. Prepare Multi-Context Tokens
+    # 4. Prepare Multi-Context Tokens (Sharing the SAME t_offset for all text glyphs)
     print("\n[Step 4/5] Preparing In-Context Multi-Reference Tokens...")
     lat_h = height // 16
     lat_w = width // 16
@@ -380,32 +345,42 @@ def generate_tiktok_poster(
 
     ref_token_list = []
     ref_id_list = []
-    current_time_offset = 10.0
 
     # Optional Product Reference Image (t=10.0)
     if image_ref and os.path.exists(image_ref):
         prod_tokens, prod_ids = encode_product_to_incontext_tokens(
-            ae=ae, image_path=image_ref, t_offset=current_time_offset, device=device_ae
+            ae=ae, image_path=image_ref, t_offset=10.0, device=device_ae
         )
         ref_token_list.append(prod_tokens)
         ref_id_list.append(prod_ids)
-        print(f"  -> Added Product Image at t={current_time_offset} ({prod_tokens.shape[1]} tokens)")
-        current_time_offset += 10.0
+        print(f"  -> Added Product Image at t=10.0 ({prod_tokens.shape[1]} tokens)")
+        typo_time_offset = 20.0
+    else:
+        typo_time_offset = 10.0
 
-    # Unified Composite Typography Glyph (t=10.0 if no product, t=20.0 if with product)
-    typo_tokens, typo_ids = encode_glyph_to_incontext_tokens(
-        ae=ae, glyph_img=composite_glyph, t_offset=current_time_offset, device=device_ae
+    # Main Title Glyph (sharing typo_time_offset)
+    title_tokens, title_ids = encode_glyph_to_incontext_tokens(
+        ae=ae, glyph_img=glyph_title, t_offset=typo_time_offset, device=device_ae
     )
-    ref_token_list.append(typo_tokens)
-    ref_id_list.append(typo_ids)
-    print(f"  -> Added Unified Typography (Title + Slogan) at t={current_time_offset} ({typo_tokens.shape[1]} tokens)")
+    ref_token_list.append(title_tokens)
+    ref_id_list.append(title_ids)
+    print(f"  -> Added Main Title at t={typo_time_offset} ({title_tokens.shape[1]} tokens)")
+
+    # Sub-Slogan Glyph (sharing the EXACT SAME typo_time_offset as Title!)
+    if glyph_slogan is not None:
+        slogan_tokens, slogan_ids = encode_glyph_to_incontext_tokens(
+            ae=ae, glyph_img=glyph_slogan, t_offset=typo_time_offset, device=device_ae
+        )
+        ref_token_list.append(slogan_tokens)
+        ref_id_list.append(slogan_ids)
+        print(f"  -> Added Sub-Slogan at t={typo_time_offset} (SAME t_offset as Title! {slogan_tokens.shape[1]} tokens)")
 
     # Combined Reference Tokens
     all_ref_tokens = torch.cat(ref_token_list, dim=1).to(device_dit)
     all_ref_ids = torch.cat(ref_id_list, dim=1).to(device_dit)
 
     print(f"  -> Total Canvas Tokens: {img_tokens.shape[1]} (Grid: {lat_h}x{lat_w})")
-    print(f"  -> Total Ref Tokens   : {all_ref_tokens.shape[1]} across {len(ref_token_list)} reference layers")
+    print(f"  -> Total Ref Tokens   : {all_ref_tokens.shape[1]} across {len(ref_token_list)} reference blocks")
 
     # 5. Denoise (Single Ultra-Fast Pass)
     print("\n[Step 5/5] Running Denoise ODE (50 Steps)...")
