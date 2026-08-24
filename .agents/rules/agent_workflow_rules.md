@@ -40,7 +40,11 @@
   - No 9B, No 32B, No 4-step distilled models.
 
 ## 5. LESSONS LEARNED & ARCHITECTURAL PITFALLS (BÀI HỌC KỸ THUẬT BẮT BUỘC GHI NHỚ)
+- ⛔ **ĐÓNG BĂNG UPSTREAM CORE (`src/flux2/`) — TUYỆT ĐỐI HẠN CHẾ SỬA CODE GỐC**:
+  - **Nguyên nhân**: Can thiệp trực tiếp vào mã nguồn gốc của BFL (`model.py`, `sampling.py`, `autoencoder.py`) dễ gây lỗi hồi quy ngầm (silent regressions), phá vỡ các giả định toán học của mô hình và làm mất mốc đối chứng (Ground Truth) khi debug.
+  - **Quy tắc bắt buộc**: Giữ nguyên vẹn 100% các file gốc của BFL. Mọi logic mở rộng của Tendoo AI (RoPE Spatial Binding, Glyph Rendering, LoRA Training Pipelines, Custom Wrappers) phải được phát triển ở tầng riêng bên ngoài (`scripts/`, `src/tendoo/`), chỉ gọi các API chuẩn của BFL (`model.forward()`, `ae.encode()`, `ae.decode()`).
 - ⛔ **TUYỆT ĐỐI KHÔNG DÙNG KV-CACHING CHO DiT BASE 4B (`forward_kv_cached`)**:
   - **Nguyên nhân**: Cơ chế KV-caching của BFL chỉ thiết kế cho mô hình Distilled 4 bước (9B-KV). Đối với Base 4B (50 bước ODE + CFG 4.0), việc trích xuất và đóng băng KV của Reference token tại Step 0 ($t=1.0$ khi canvas là 100% nhiễu hạt) sẽ cắt đứt sự tương tác động giữa nét chữ và canvas qua các timestep, khiến chữ bị biến thành ký tự rác.
   - **Quy tắc bắt buộc**: Luôn dùng `denoise_cfg` full 50 bước tương tác liên tục `[Canvas, Ref]` qua `model.forward()`. Với $L_{\text{ref}} \le 256$ tokens (Tight Crop), tốc độ chạy trên 2x A30 vẫn đạt yêu cầu mà chất lượng chữ đạt đỉnh.
+
 
