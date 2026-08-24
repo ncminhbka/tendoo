@@ -2,6 +2,12 @@
 Test Script: Phase 1A - RoPE Spatial Coordinate Binding for Vietnamese Text Rendering
 Model: FLUX.2 klein 4B Base + Qwen3-4B-FP8 + AE
 
+v3 — Thêm instrumentation để chẩn đoán lệch trục tọa độ RoPE (img_ids vs ref_ids),
+     và chế độ --debug_mode solid_color để cô lập câu hỏi "có bind được vị trí không"
+     khỏi câu hỏi "có đọc đúng glyph phức tạp không" — 2 việc khác nhau đang bị
+     trộn lẫn trong kết quả thực nghiệm gần nhất (biển hiệu bị lệch cả vị trí lẫn
+     nội dung chữ).
+
 Usage on Remote Server (2x NVIDIA A30 / JupyterLab):
     python scripts/test_rope_spatial_binding.py \
         --prompt "a rustic wooden signboard hanging in front of a cozy coffee shop, highly detailed, 8k" \
@@ -9,6 +15,15 @@ Usage on Remote Server (2x NVIDIA A30 / JupyterLab):
         --box 256 128 512 896 \
         --output "output_rope_test.png" \
         --model_name "flux.2-klein-base-4b"
+
+    # Chế độ chẩn đoán — khối đỏ đặc thay vì chữ, để cô lập bug định vị:
+    python scripts/test_rope_spatial_binding.py \
+        --prompt "a rustic wooden signboard hanging in front of a cozy coffee shop, highly detailed, 8k" \
+        --text "CÀ PHÊ SỮA ĐÁ" \
+        --box 780 128 940 896 \
+        --output "exp9_debug_solid.png" \
+        --model_name "flux.2-klein-base-4b" \
+        --debug_mode solid_color
 """
 
 import argparse
@@ -122,6 +137,23 @@ def create_glyph_image(
     return img
 
 
+def create_debug_solid_block(
+    target_width: int,
+    target_height: int,
+    color: tuple[int, int, int] = (255, 0, 0),
+) -> Image.Image:
+    """
+    DIAGNOSTIC ONLY: a flat solid-color reference block, no text/font involved.
+    Purpose: isolate "does RoPE binding move the ref content to the right place at
+    all" from "does the model correctly interpret complex glyph shapes" — the two
+    experiments so far (brick wall, signboard) failed in ways that conflate both
+    questions. A solid block has an unambiguous pass/fail: either the color patch
+    shows up inside the target box, or it does not.
+    """
+    assert target_width > 0 and target_height > 0 and target_width % 16 == 0 and target_height % 16 == 0
+    return Image.new("RGB", (target_width, target_height), color=color)
+
+
 def encode_glyph_with_custom_rope(
     ae: AutoEncoder,
     glyph_img: Image.Image,
@@ -130,6 +162,7 @@ def encode_glyph_with_custom_rope(
     box: tuple[int, int, int, int],  # (ymin, xmin, ymax, xmax) in pixels, already snapped to 16
     t_offset: float = 10.0,
     device: str = "cuda",
+    verbose: bool = True,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Encodes glyph image via VAE and constructs 4D RoPE IDs matching target canvas coordinates.
@@ -185,7 +218,72 @@ def encode_glyph_with_custom_rope(
     ref_tokens = ref_tokens.unsqueeze(0).to(torch.bfloat16)  # (1, num_ref_tokens, C)
     ref_ids = ref_ids.unsqueeze(0)  # (1, num_ref_tokens, 4)
 
+    if verbose:
+        print(
+            f"  -> [DIAG] ref_ids constructed as columns (t,h,w,l). "
+            f"t={t_offset}, h∈[{h_start},{h_end}), w∈[{w_start},{w_end}), l=0"
+        )
+        print(f"  -> [DIAG] ref_ids[0, 0]  (first token id)  = {ref_ids[0, 0].tolist()}")
+        print(f"  -> [DIAG] ref_ids[0, -1] (last token id)   = {ref_ids[0, -1].tolist()}")
+
     return ref_tokens, ref_ids
+
+
+def diagnose_id_ranges(img_ids: torch.Tensor, ref_ids: torch.Tensor, lat_h: int, lat_w: int) -> None:
+    """
+    DIAGNOSTIC ONLY — does not change any tensor. Prints the min/max of each of the
+    4 columns of img_ids vs ref_ids, side by side, so a column-order mismatch (e.g.
+    prc_img emitting (t,l,h,w) while we constructed ref_ids as (t,h,w,l)) becomes
+    visible from the printed ranges alone, WITHOUT needing to run a full 50-step
+    denoise or read prc_img's source. This must be run before trusting any image
+    output from this script.
+
+    How to read it:
+      - If img_ids' 4 columns have per-column ranges that look like
+        [0, 0] / [0, lat_h) / [0, lat_w) / [0, 0] in THAT column order, our
+        (t,h,w,l) convention for ref_ids matches — proceed to trust the image.
+      - If the column that is constant-zero in img_ids is NOT the same column
+        index we used for "t" and "l" in ref_ids, we have a confirmed axis-order
+        bug — fix encode_glyph_with_custom_rope's cartesian_prod argument order
+        to match, and do NOT trust any prior experiment's spatial conclusions.
+    """
+    print("\n" + "-" * 80)
+    print("[DIAGNOSTIC] Comparing img_ids vs ref_ids coordinate conventions")
+    print("-" * 80)
+    img_ids_flat = img_ids[0] if img_ids.dim() == 3 else img_ids
+    ref_ids_flat = ref_ids[0] if ref_ids.dim() == 3 else ref_ids
+
+    print(f"img_ids shape: {tuple(img_ids.shape)} | ref_ids shape: {tuple(ref_ids.shape)}")
+    print(f"Expected canvas latent grid: lat_h={lat_h}, lat_w={lat_w}")
+
+    for col in range(img_ids_flat.shape[-1]):
+        col_vals = img_ids_flat[:, col]
+        print(
+            f"  img_ids col {col}: min={col_vals.min().item():.1f} "
+            f"max={col_vals.max().item():.1f} unique={col_vals.unique().numel()}"
+        )
+    for col in range(ref_ids_flat.shape[-1]):
+        col_vals = ref_ids_flat[:, col]
+        print(
+            f"  ref_ids col {col}: min={col_vals.min().item():.1f} "
+            f"max={col_vals.max().item():.1f} unique={col_vals.unique().numel()}"
+        )
+
+    # Heuristic check: exactly one img_ids column should be constant (the "t" axis
+    # for canvas, typically 0), and its position should match where ref_ids has t=10.
+    img_const_cols = [c for c in range(img_ids_flat.shape[-1]) if img_ids_flat[:, c].unique().numel() == 1]
+    ref_const_cols = [c for c in range(ref_ids_flat.shape[-1]) if ref_ids_flat[:, c].unique().numel() == 1]
+    print(f"  img_ids constant columns: {img_const_cols} (candidates for 't' and/or 'l' axis)")
+    print(f"  ref_ids constant columns: {ref_const_cols} (should include our 't' col=0 and 'l' col=3)")
+    if img_const_cols and ref_const_cols and set(img_const_cols) != set([0, 3]) & set(ref_const_cols):
+        print(
+            "  ⚠️  MISMATCH WARNING: img_ids' constant column(s) do not line up with "
+            "ref_ids' (t, l) columns (indices 0, 3). This is consistent with an "
+            "axis-order bug between prc_img's convention and the (t,h,w,l) order "
+            "assumed in encode_glyph_with_custom_rope. Do not trust spatial binding "
+            "results until this is resolved."
+        )
+    print("-" * 80 + "\n")
 
 
 def resolve_model_paths(custom_dir: str | None = None):
@@ -228,6 +326,7 @@ def run_experiment(
     guidance: float = 4.0,
     seed: int = 42,
     device: str = "cuda",
+    debug_mode: str = "normal",
 ):
     # Snap box coordinates to multiples of 16 immediately (prevents any rounding mismatch)
     ymin = (box[0] // 16) * 16
@@ -239,7 +338,7 @@ def run_experiment(
     assert box_h > 0 and box_w > 0, f"Invalid bounding box: {[ymin, xmin, ymax, xmax]}"
 
     print("=" * 80)
-    print(f"🚀 Starting RoPE Spatial Binding Experiment (Phase 1A)")
+    print(f"🚀 Starting RoPE Spatial Binding Experiment (Phase 1A) — debug_mode={debug_mode}")
     print(f"Prompt        : {prompt}")
     print(f"Target Text   : {text}")
     print(f"Target Box    : [{ymin}, {xmin}, {ymax}, {xmax}] (Snapped to 16px grid)")
@@ -252,15 +351,19 @@ def run_experiment(
 
     torch.manual_seed(seed)
 
-    # 1. Render Glyph Image
-    print("\n[Step 1/5] Rendering tight-crop Vietnamese glyph bitmap...")
-    glyph_img = create_glyph_image(
-        text=text,
-        target_width=box_w,
-        target_height=box_h,
-        font_path=font_path,
-        font_size=64,
-    )
+    # 1. Render Glyph Image (or solid-color diagnostic block)
+    print("\n[Step 1/5] Rendering reference image (glyph or debug block)...")
+    if debug_mode == "solid_color":
+        glyph_img = create_debug_solid_block(target_width=box_w, target_height=box_h, color=(255, 0, 0))
+        print("  -> [DIAG] Using solid RED block instead of rendered text — isolates position-binding question.")
+    else:
+        glyph_img = create_glyph_image(
+            text=text,
+            target_width=box_w,
+            target_height=box_h,
+            font_path=font_path,
+            font_size=64,
+        )
     glyph_preview_path = Path(output_path).stem + "_glyph_preview.png"
     glyph_img.save(glyph_preview_path)
     print(f"  -> Saved glyph reference preview: {glyph_preview_path}")
@@ -322,6 +425,10 @@ def run_experiment(
     print(f"  -> Canvas Tokens : {img_tokens.shape[1]} tokens (Grid: {lat_h}x{lat_w})")
     print(f"  -> Glyph Tokens  : {ref_tokens.shape[1]} tokens (Box: {box_h//16}x{box_w//16})")
     print(f"  -> RoPE h range  : [{ymin//16}, {ymax//16}), w range: [{xmin//16}, {xmax//16})")
+
+    # [DIAG] MANDATORY sanity check BEFORE spending 50 denoise steps on a run that
+    # might be spatially meaningless. Run this on every experiment from now on.
+    diagnose_id_ranges(img_ids, ref_ids, lat_h, lat_w)
 
     # 5. Denoise with Flow Matching ODE (RoPE Bound Experiment)
     print("\n[Step 5/5] Running Denoise with RoPE Bound Glyph Conditioning...")
@@ -428,6 +535,14 @@ if __name__ == "__main__":
     parser.add_argument("--guidance", type=float, default=4.0, help="CFG guidance scale")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--device", type=str, default="cuda", help="Computation device (cuda/cuda:0)")
+    parser.add_argument(
+        "--debug_mode",
+        type=str,
+        default="normal",
+        choices=["normal", "solid_color"],
+        help="'solid_color' replaces the glyph with a flat red block to isolate the "
+        "position-binding question from the glyph-legibility question.",
+    )
 
     args = parser.parse_args()
 
@@ -445,4 +560,5 @@ if __name__ == "__main__":
         guidance=args.guidance,
         seed=args.seed,
         device=args.device,
+        debug_mode=args.debug_mode,
     )
