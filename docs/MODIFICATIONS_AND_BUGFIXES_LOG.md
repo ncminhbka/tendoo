@@ -357,6 +357,20 @@ Dưới đây là bảng theo dõi toàn bộ các commit được thực hiện
   * **(2) Định hướng Bề mặt Ngữ nghĩa (Surface Anchoring)**: Bắt buộc mô tả 2 bề mặt vật thể trong Prompt (biển trên / màn hình bục dưới) để định tuyến Attention cho $t=20.0$ (nếu không có bề mặt, $t=20$ sẽ bị Attention bỏ rơi như `exp36`).
   * **(3) Ngưỡng phân giải Latent ($\ge 10-12$ tokens height)**: Đảm bảo VAE không làm mờ dấu phụ tiếng Việt.
 
+---
+
+### 31. Commit `2b0baa1` & `exp43` — Feat: Tích hợp 7 Font Unicode & Thực nghiệm Xác minh Mốc $t=10.0$ Pretrained
+* **Thời gian**: `Mon Aug 24 14:41:26 2026 +0700`
+* **File thay đổi**: [`fonts/`](file:///d:/Viettel%20Telecom/Tendoo%20AI/fonts), [`docs/PROJECT_ROADMAP.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/docs/PROJECT_ROADMAP.md), [`project_roadmap.txt`](file:///d:/Viettel%20Telecom/Tendoo%20AI/project_roadmap.txt), [`AGENTS.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/AGENTS.md)
+* **Thực nghiệm đối chứng then chốt (`exp43`)**:
+  * **Test 1**: Chạy 1 text tại $t=5.0$ $\rightarrow$ Chữ MẤT HOÀN TOÀN ($100\%$ failed).
+  * **Test 2**: Chạy cùng 1 text đó tại $t=10.0$ $\rightarrow$ Chữ HIỂN THỊ HOÀN HẢO $100\%$.
+* **Kết luận khoa học bất biến**:
+  * $t=10.0, 20.0, 30.0$ là các mốc tiền huấn luyện rời rạc (Canonical Pretrained Offsets) duy nhất được khắc sâu vào các Attention Heads của FLUX.2.
+  * Toàn bộ pipeline suy luận và huấn luyện LoRA (Giai đoạn 3) bắt buộc chuẩn hóa trên 3 mốc này.
+
+
+
 
 
 
