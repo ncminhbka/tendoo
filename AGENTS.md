@@ -119,6 +119,11 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
      - Prompt **BẮT BUỘC định hình 2 bề mặt vật thể riêng biệt** tương ứng (ví dụ: *biển hiệu trên cao* cho $t=10.0$ và *màn hình đế bục/thân sản phẩm* cho $t=20.0$).
      - Đảm bảo từng Glyph đạt độ phân giải $\ge 10-12$ latent tokens height ($160-192\text{px}$) để tín hiệu ở $t=20.0$ sắc nét $100\%$.
 
+6. **TUYỆT ĐỐI KHÔNG ĐƯA TỈ LỆ KHUNG HÌNH VÀ THÔNG SỐ ĐỘ PHÂN GIẢI VÀO PROMPT (DIMENSIONS / RESOLUTION POLLUTION)**:
+   - **Nguyên nhân**: Khi đưa các chuỗi như `"9:16"`, `"16:9"`, `"8k"`, `"4k"`, `"1080p"` vào Prompt, Text Encoder `Qwen3` hiểu nhầm đây là chuỗi ký tự cần hiển thị trên sản phẩm/ảnh $\rightarrow$ DiT sẽ tự động vẽ các cụm số và chữ rác (như `3:16 9 168`, `8K0...`) lên các bề mặt hoặc góc đáy của bức ảnh.
+   - **Quy tắc bắt buộc**: **KHÔNG BAO GIỜ GHI CÁC THÔNG SỐ KÍCH THƯỚC/TỈ LỆ VÀO TEXT PROMPT**. Tỉ lệ khung hình và kích thước chỉ được khai báo duy nhất qua các tham số CLI `--width` và `--height`.
+
+
 
 
 

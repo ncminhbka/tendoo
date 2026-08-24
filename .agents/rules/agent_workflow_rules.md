@@ -55,6 +55,10 @@
 - ⛔ **BẮT BUỘC PHÂN TÁCH TIME OFFSET ($t=10, 20...$) KÈM ĐỊNH HƯỚNG BỀ MẶT CHO ĐA THỰC THỂ (MULTI-ENTITY DISAMBIGUATION RULE)**:
   - **Nguyên nhân**: Gộp các khối text độc lập về cùng $t=10.0$ tại $(0, 0)$ sẽ làm DiT trộn lẫn từ ngữ và in đè lên nhau. Tách $t=10.0, 20.0$ nhưng thiếu 2 bề mặt vật thể trong Prompt sẽ làm mất khối $t=20.0$.
   - **Quy tắc bắt buộc**: Gán Time Offset riêng cho từng thực thể (Ref 1: $t=10.0$, Ref 2: $t=20.0$, Ref 3: $t=30.0$) + Định hình rõ 2 bề mặt vật thể tương ứng trong Prompt + Đảm bảo Glyph height $\ge 160-192\text{px}$.
+- ⛔ **TUYỆT ĐỐI KHÔNG ĐƯA TỈ LỆ KHUNG HÌNH VÀ THÔNG SỐ ĐỘ PHÂN GIẢI VÀO PROMPT (DIMENSIONS / RESOLUTION POLLUTION)**:
+  - **Nguyên nhân**: Đưa `"9:16"`, `"16:9"`, `"8k"`, `"4k"` vào Prompt khiến Text Encoder Qwen3 kích hoạt DiT vẽ chuỗi số/chữ rác lên các bề mặt hoặc đáy ảnh.
+  - **Quy tắc bắt buộc**: Không bao giờ ghi thông số kích thước/tỉ lệ vào Prompt. Chỉ khai báo qua tham số CLI `--width` và `--height`.
+
 
 
 
