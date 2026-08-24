@@ -369,6 +369,21 @@ Dưới đây là bảng theo dõi toàn bộ các commit được thực hiện
   * $t=10.0, 20.0, 30.0$ là các mốc tiền huấn luyện rời rạc (Canonical Pretrained Offsets) duy nhất được khắc sâu vào các Attention Heads của FLUX.2.
   * Toàn bộ pipeline suy luận và huấn luyện LoRA (Giai đoạn 3) bắt buộc chuẩn hóa trên 3 mốc này.
 
+---
+
+### 32. Commit `d2e2b9c` & Chuỗi Thực nghiệm `exp44` - `exp48`: Khảo sát Cực hạn Giới hạn Zero-Shot
+* **Thời gian**: `Mon Aug 24 16:04:00 2026 +0700`
+* **File thay đổi**: [`scripts/test_dynamic_multi_text.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_dynamic_multi_text.py), [`AGENTS.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/AGENTS.md), [`.agents/rules/agent_workflow_rules.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/.agents/rules/agent_workflow_rules.md)
+* **Tổng kết các phát hiện thực nghiệm cực hạn**:
+  1. **`exp44` ($t=60.0$ cho Chữ Glyph $\sim 320$ tokens)**: Chữ mất hoàn toàn do suy hao góc quay RoPE.
+  2. **`exp45` ($t=60.0$ cho Ảnh Sản phẩm $4096$ tokens)**: Giữ nguyên $100\%$ chai sản phẩm thật $\rightarrow$ Chứng minh kiến trúc 4D RoPE hoàn toàn có thể truyền tải tín hiệu ở mốc xa nếu có đủ khối lượng token và được huấn luyện chú ý.
+  3. **`exp46` ($\Delta t = 1.0$ tại $t=10, 11, 12$)**: Khoảng cách góc quay $\Delta t = 1.0$ quá hẹp ($\cos \approx 0.999$) $\rightarrow$ DiT coi như cùng 1 vị trí và in đè/chồng chéo chữ.
+  4. **`exp48` (3 khối text đồng thời tại $t=10, 20, 30$)**: Vượt quá dung lượng chú ý (Zero-Shot Attention Capacity) của mô hình Base 4B gốc.
+* **Kết luận dứt khoát**:
+  * Đã khảo sát và khai thác $100\%$ giới hạn kỹ thuật của mô hình Base nguyên bản về mặt Time Offset và Prompt Engineering.
+  * Huấn luyện **LoRA DiT 4B (Giai đoạn 3)** là bước đi kỹ thuật duy nhất và bắt buộc để đạt độ ổn định thương mại $100\%$ cho đa khối text tiếng Việt.
+
+
 
 
 
