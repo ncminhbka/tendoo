@@ -230,3 +230,33 @@ Dưới đây là bảng theo dõi toàn bộ các commit được thực hiện
 * **File thay đổi** (8 files: +166, -0):
   * Di chuyển toàn bộ các file text/spec rải rác ở root vào thư mục [`docs/`](file:///d:/Viettel%20Telecom/Tendoo%20AI/docs).
   * Khởi tạo tài liệu tổng hợp sửa đổi mã nguồn gốc và lịch sử lỗi `MODIFICATIONS_AND_BUGFIXES_LOG.md`.
+
+---
+
+### 18. Commit `9088b0e` — Perf: Bỏ Baseline Pure Prompt, chuyển sang so sánh 2-Panel trực tiếp
+* **Thời gian**: `Mon Aug 24 08:14:16 2026 +0700`
+* **File thay đổi** (1 file: +9, -30):
+  * [`scripts/test_rope_spatial_binding.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_rope_spatial_binding.py)
+* **Nội dung thay đổi**:
+  * Loại bỏ pass denoise `Baseline 2 (Pure Prompt)` để tiết kiệm 33% thời gian chạy thực nghiệm.
+  * Xuất ảnh `_COMPARISON.png` chuẩn 2-Panel đối chứng: `[Baseline (0,0) | RoPE Bound Box]`.
+
+---
+
+### 19. Commit `5a53136` — Rules: Bổ sung quy tắc chống nịnh bợ và tư duy phản biện
+* **Thời gian**: `Mon Aug 24 08:35:42 2026 +0700`
+* **File thay đổi** (1 file: +5, -3):
+  * [`.agents/rules/agent_workflow_rules.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/.agents/rules/agent_workflow_rules.md)
+* **Nội dung thay đổi**:
+  * Quy định bắt buộc: Không nịnh bợ, trung thực thẳng thắn 100%, suy nghĩ kỹ lưỡng trước khi kết luận.
+
+---
+
+### 20. Commit `39405bf` — Feat: Thêm Diagnostic Instrumentation và chế độ Debug Solid Color
+* **Thời gian**: `Mon Aug 24 08:52:51 2026 +0700`
+* **File thay đổi** (1 file: +126, -10):
+  * [`scripts/test_rope_spatial_binding.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_rope_spatial_binding.py)
+* **Nội dung thay đổi**:
+  * Thêm hàm `diagnose_id_ranges`: Kiểm tra trực tiếp min/max 4 cột tọa độ `img_ids` vs `ref_ids` trước khi denoise, phát hiện sớm lỗi lệch thứ tự trục.
+  * Thêm cờ `--debug_mode solid_color` (`create_debug_solid_block`): Dùng khối màu đỏ đặc để cô lập bài toán định vị không gian khỏi bài toán nhận diện nét chữ.
+
