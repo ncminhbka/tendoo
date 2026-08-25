@@ -18,6 +18,8 @@ Dựa trên 60 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp60
 | **3. Uniform AdaLN Modulation** | `ref_fixed_timestep = 0.0` cố định cho mọi slot $\rightarrow$ mô hình không có biên độ ưu tiên giữa các slot, toàn bộ nhận diện slot dồn vào RoPE. | LoRA sẽ tối ưu hóa ma trận $W_Q, W_K$ để thích ứng nhạy bén với các dải tần số góc quay RoPE $\mathbf{R}(\Delta t)$ của từng slot ($t=10, 20, 30$). |
 | **4. Upstream Semantic Clash** | Khi prompt lặp lại nguyên văn text tiếng Việt, Text Encoder `Qwen3-4B-FP8` gây nhiễu và xung đột với tín hiệu Glyph từ VAE. | Tích hợp Upstream LLM (Gemini Flash / Qwen-2.5) tự động bóc tách text và làm sạch prompt (Prompt Sanitization). |
 | **5. Phân bổ Slot Chuẩn** | Mốc $t \le 40.0$ là vùng hoạt động an toàn tuyệt đối. Mốc $t \ge 50.0$ bắt đầu suy hao góc pha RoPE đối với glyph chữ. | Khóa cứng 4 Slot chuẩn: $t=10.0$ (Headline), $t=20.0$ (Subtitle), $t=30.0$ (CTA Badge), $t=40.0$ (Ảnh Sản Phẩm Thật). |
+| **6. True CFG & Chống CFG Drift** | Klein 4B Base dùng True CFG (`use_guidance_embed = False`), nhánh Unconditional giữ nguyên Reference Tokens `img_cond_seq` và chỉ null hóa Text Prompt `ctx = ""`. | Áp dụng Text Conditioning Dropout ($p=0.10$) khi train LoRA: Thay thế `txt` bằng embedding của chuỗi rỗng `""` với tỉ lệ $10\%$ để LoRA học đúng nhánh Unconditional. |
+
 
 ---
 
@@ -155,7 +157,9 @@ lora_config = {
 | **Precision Mode** | `bfloat16` Native Mixed Precision | Tối ưu kiến trúc Tensor Core A30, chống tràn số |
 | **Gradient Checkpointing** | Kích hoạt trên toàn bộ 25 Blocks | Giảm bộ nhớ kích hoạt trung gian $>65\%$ |
 | **Max Gradient Norm** | $1.0$ (Gradient Clipping) | Chống hiện tượng gradient spike khi gặp glyph phức tạp |
+| **Text Conditioning Dropout** | $p = 0.10$ ($10\%$ số step train) | Thay thế `txt` bằng embedding chuỗi rỗng `""`, giữ nguyên $100\%$ Reference Tokens để LoRA học đúng nhánh Unconditional của True CFG, chống CFG Drift |
 | **Hàm Mất Mát (Loss)** | Flow Matching MSE Loss: $\mathcal{L} = \| v_\theta - (x_1 - x_0) \|^2$ | Chuẩn Flow Matching Euler ODE của BFL |
+
 
 ---
 
@@ -240,6 +244,8 @@ Cứ sau mỗi **500 steps**, trainer tự động tạm dừng và sinh ảnh �
 7. *Test 7 (Product Anchor 4096 tokens)*: Giày Sneaker thật $t=40$ + Headline $t=10$ + CTA $t=30$.
 
 * Toàn bộ ảnh eval được tự động ghép vào panel: **`eval_checkpoints/STEP_XXXX_COMPARISON.png`** để theo dõi trực quan từng checkpoint.
+* **Đánh Giá Tuyến Tính CFG Scale (CFG Scale Sweep)**: Tại các checkpoint lớn (Step 600, 1800, 4000), trainer tự động chạy sweep qua 4 mức CFG Guidance Scale: `[1.0, 2.5, 4.0, 6.0]` để đảm bảo LoRA không bị suy thoái hoặc cháy nét ở các dải guidance khác nhau.
+
 
 
 ---
