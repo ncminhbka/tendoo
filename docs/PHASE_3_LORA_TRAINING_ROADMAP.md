@@ -75,9 +75,24 @@ $$\text{Sample}_i = \left( \text{Prompt}_{\text{clean}}, \; \text{Ref}_{10}, \; 
                                 • Đóng gói thành WebDataset / Sharded HDF5
 ```
 
+### 2.4. Ma trận Đa Tỉ Lệ Khung Hình (Aspect Ratio Bucketing Strategy):
+
+Để chống hiện tượng **Spatial Coordinate Overfitting** (học vẹt bố cục vuông 1:1) và phục vụ trực tiếp các định dạng thương mại thực tế, tập dữ liệu huấn luyện được phân bổ đa dạng qua 4 bucket chuẩn (bảo toàn diện tích $\approx 1\text{ Megapixel} \approx 4,032 - 4,096\text{ tokens}$):
+
+| Tỉ Lệ Bucket | Kích Thước Pixel | Latent Grid ($16\times$) | Token Canvas | Tỷ Trọng | Ứng Dụng Nghiệp Vụ Thương Mại |
+| :---: | :---: | :---: | :---: | :---: | :--- |
+| **1:1** (Vuông) | $1024 \times 1024$ | $64 \times 64$ | $4,096$ tokens | **35%** | Bài đăng Feed Facebook, Instagram, E-commerce Post |
+| **9:16** (Dọc cao) | $768 \times 1344$ | $48 \times 84$ | $4,032$ tokens | **35%** | **TikTok Ads**, Instagram Reels, Story, Standee quảng cáo |
+| **4:5** (Dọc vừa) | $896 \times 1152$ | $56 \times 72$ | $4,032$ tokens | **15%** | Instagram Portrait Post (Tối ưu diện tích màn hình mobile) |
+| **16:9** (Ngang) | $1344 \times 768$ | $84 \times 48$ | $4,032$ tokens | **15%** | Facebook Fanpage Cover, Website Banner, TV Display |
+
+> [!TIP]
+> **TỐI ƯU HÓA BỘ NHỚ**: Do mỗi GPU nhận `batch_size = 1`, việc luân chuyển giữa các bucket tỉ lệ khác nhau trong DataLoader diễn ra **hoàn toàn tự nhiên, không cần zero-padding và không làm tăng thêm 1 MB VRAM nào**!
+
 ---
 
 ## ⚙️ 3. THIẾT KẾ KIẾN TRÚC LORA & HYPERPARAMETERS
+
 
 ### 3.1. Cấu hình PEFT LoRA Injection:
 ```python
