@@ -292,11 +292,15 @@ def worker_generate_poster(task_dict: dict, gpu_id: int, result_queue: mp.Queue)
     num_words = len(text.replace("\\n", " ").split())
     box_h = 224 if ("\n" in text or num_words >= 4) else 160
     glyph_img = create_glyph_image(text=text, target_width=box_w, target_height=box_h, font_path=resolved_font)
+    glyph_output_path = Path(output_path).stem + "_glyph.png"
+    glyph_img.save(glyph_output_path)
+    print(f"  -> [Worker GPU {gpu_id} | Task {task_id}] 🖼️ Saved Glyph: {glyph_output_path} ({box_w}x{box_h})")
 
     # 2. Load Models on this Worker's GPU
     model = load_flow_model(model_name, device=device)
     ae = load_ae(model_name, device=device)
     text_encoder = load_qwen3_embedder(variant="4B", device=device)
+
 
     # 3. Encode Prompt
     with torch.no_grad():

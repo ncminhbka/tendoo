@@ -1,56 +1,56 @@
 [
   {
     "id": 1,
-    "text": "HƯƠNG SẮC QUÝ PHÁI",
+    "text": "TRÀ SEN HỒ TÂY",
     "font": "playfair",
-    "prompt": "Ảnh chụp quảng cáo thương mại cho chai nước hoa pha lê cao cấp đặt trên mặt nước phẳng lặng, những gợn sóng nước lăn tăn, cánh hoa hồng nhung đỏ thắm trôi xung quanh, dòng chữ vàng gold dập nổi 3D phản chiếu ánh sáng hoàng hôn lấp lánh trên mặt nước, phong cách thời trang Paris sang trọng, chất lượng điện ảnh",
+    "prompt": "Ảnh chụp nghệ thuật ẩm thực cho một ấm trà gốm sứ mộc mạc bốc khói nhẹ, đặt trên khay gỗ bên cạnh đóa hoa sen hồng tươi hé nở và búp sen xanh, mặt bàn gỗ thô mộc, ánh sáng buổi sớm rọi qua khung cửa sổ chiếu lên làn khói sương huyền ảo, dòng chữ chạm khắc mạ vàng đồng tinh xảo trên biển gỗ nhỏ, không gian thiền tịnh trang nhã, chất lượng điện ảnh",
     "width": 576,
     "height": 1024,
-    "output": "demo_free_1_luxury_perfume.png"
+    "output": "demo_v2_1_tra_sen.png"
   },
   {
     "id": 2,
-    "text": "BỨT PHÁ MỌI GIỚI HẠN",
+    "text": "TỐC ĐỘ\nVƯỢT THỜI GIAN",
     "font": "anton",
-    "prompt": "Ảnh chụp quảng cáo thương mại cho đôi giày thể thao sneaker phong cách tương lai lơ lửng giữa không trung, luồng khói sương huyền ảo bao quanh, những vệt tia sáng laser đỏ và xanh cắt ngang bóng tối, dòng chữ kim loại bạc dập nổi 3D viền đỏ rực lửa, phong cách thể thao đột phá, ánh sáng studio mạnh mẽ",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho siêu xe điện thể thao màu xám titan bóng loáng lướt đi trên đường phố tương lai ướt đẫm mưa đêm, vệt đèn pha LED xanh lam rực rỡ xé toạc bóng tối, phản chiếu ánh đèn neon lung linh trên mặt đường, dòng chữ kim loại bạc chrome dập nổi 3D viền xanh phát quang lơ lửng, phong cách viễn tưởng điện ảnh",
     "width": 576,
     "height": 1024,
-    "output": "demo_free_2_tech_sneaker.png"
+    "output": "demo_v2_2_electric_supercar.png"
   },
   {
     "id": 3,
-    "text": "THIÊN ĐƯỜNG NGHỈ DƯỠNG",
-    "font": "dancing",
-    "prompt": "Ảnh chụp nghệ thuật phong cảnh một khu nghỉ dưỡng resort 5 sao ven biển nhiệt đới, hồ bơi vô cực nhìn ra đại dương xanh ngọc bích, rặng dừa xanh đung đưa trong gió chiều, dòng chữ khắc gỗ mộc mạc màu trắng tinh khôi gắn trên lan can gỗ, ánh nắng vàng rực rỡ nhiệt đới, phong cách du lịch cao cấp",
+    "text": "TIỆM BÁNH MÙA THU",
+    "font": "pacifico",
+    "prompt": "Ảnh chụp quảng cáo thương mại cho những ổ bánh mì baguette vàng ươm giòn rụm và bánh sừng bò croissant bơ thơm lừng đặt trong giỏ mây, những hạt bột mì trắng mịn bay lơ lửng trong không trung bắt lấy vệt nắng sớm ấm áp, dòng chữ vàng mật ong nổi 3D ngọt ngào, phong cách ẩm thực Paris mộc mạc ấm cúng, chất lượng điện ảnh",
     "width": 576,
     "height": 1024,
-    "output": "demo_free_3_tropical_resort.png"
+    "output": "demo_v2_3_artisan_bakery.png"
   },
   {
     "id": 4,
-    "text": "ĐẲNG CẤP SỐNG\nTHƯỢNG LƯU",
+    "text": "KIỆT TÁC THỜI GIAN",
     "font": "bevietnam",
-    "prompt": "Ảnh chụp kiến trúc nội thất căn hộ penthouse sang trọng nhìn qua cửa kính panorama toàn cảnh thành phố lung linh ánh đèn lúc chạng vạng, sofa da cao cấp và bàn đá marble, dòng chữ kim loại mạ vàng hồng dập nổi 3D lơ lửng trang nhã, phong cách kiến trúc thượng lưu, chất lượng điện ảnh",
+    "prompt": "Ảnh chụp quảng cáo macro cực kỳ chi tiết cho một chiếc đồng hồ cơ Thụy Sĩ cao cấp bằng vàng hồng với mặt kính sapphire lấp lánh, đặt trên phiến đá bazan đen gồ ghề, những bánh răng cơ khí tinh xảo lộ cơ phản chiếu ánh sáng studio mềm mại, dòng chữ mạ vàng hồng dập nổi 3D đẳng cấp, phong cách xa xỉ thượng lưu",
     "width": 576,
     "height": 1024,
-    "output": "demo_free_4_penthouse_luxury.png"
+    "output": "demo_v2_4_luxury_watch.png"
   },
   {
     "id": 5,
-    "text": "TƯƠI MÁT MỖI NGÀY",
-    "font": "pacifico",
-    "prompt": "Ảnh chụp quảng cáo thương mại cho ly nước ép cam tươi tràn đầy năng lượng, những giọt nước bắn tung tóe sống động giữa không trung, những lát cam và lá bạc hà tươi mát bay xung quanh, dòng chữ nổi 3D màu xanh lá cây tươi mát viền trắng nổi bật, ánh sáng rực rỡ tươi vui, phong cách ẩm thực đỉnh cao",
+    "text": "LỄ HỘI ÂM NHẠC 2026",
+    "font": "graffiti",
+    "prompt": "Ảnh chụp toàn cảnh đêm đại nhạc hội âm nhạc ngoài trời hoành tráng, hàng ngàn khán giả cuồng nhiệt dưới chùm pháo hoa rực rỡ và luồng sáng laser đa sắc màu, sân khấu hologram bùng nổ năng lượng, dòng chữ nghệ thuật graffiti màu vàng neon phát sáng rực lửa trên bầu trời đêm, phong cách lễ hội trẻ trung sôi động",
     "width": 576,
     "height": 1024,
-    "output": "demo_free_5_juice_splash.png"
+    "output": "demo_v2_5_music_festival.png"
   },
   {
     "id": 6,
-    "text": "HÀNH TRÌNH\nVƯỢT KHÔNG GIAN",
-    "font": "oswald",
-    "prompt": "Ảnh chụp điện ảnh viễn tưởng cho một phi thuyền không gian đang bay xuyên qua dải ngân hà đầy sao và tinh vân rực rỡ, các chùm tia năng lượng phát sáng màu xanh lam, dòng chữ kim loại titan dập nổi 3D phản chiếu ánh sáng vũ trụ kỳ ảo, phong cách bom tấn Hollywood, chất lượng điện ảnh siêu thực",
+    "text": "SỐNG KHỎE\nMỖI NGÀY",
+    "font": "dancing",
+    "prompt": "Ảnh chụp quảng cáo nghệ thuật cho chén trà matcha xanh ngọc bích, làn khói thơm dịu và bột trà xanh mịn màng bắn tung tóe tạo thành hình xoáy nước sống động giữa không trung, xung quanh có những chiếc lá trà tươi non đọng sương, dòng chữ nổi 3D màu xanh lục bảo viền trắng trang nhã, ánh sáng tự nhiên tươi mát tràn ngập sức sống",
     "width": 576,
     "height": 1024,
-    "output": "demo_free_6_scifi_galaxy.png"
+    "output": "demo_v2_6_organic_matcha.png"
   }
 ]
