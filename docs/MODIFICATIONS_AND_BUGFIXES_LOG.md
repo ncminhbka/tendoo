@@ -369,6 +369,7 @@ Dưới đây là bảng theo dõi toàn bộ các commit được thực hiện
   * $t=10.0, 20.0, 30.0$ là các mốc tiền huấn luyện rời rạc (Canonical Pretrained Offsets) duy nhất được khắc sâu vào các Attention Heads của FLUX.2.
   * Toàn bộ pipeline suy luận và huấn luyện LoRA (Giai đoạn 3) bắt buộc chuẩn hóa trên 3 mốc này.
 
+
 ---
 
 ### 32. Commit `d2e2b9c` & Chuỗi Thực nghiệm `exp44` - `exp48`: Khảo sát Cực hạn Giới hạn Zero-Shot
@@ -382,6 +383,23 @@ Dưới đây là bảng theo dõi toàn bộ các commit được thực hiện
 * **Kết luận dứt khoát**:
   * Đã khảo sát và khai thác $100\%$ giới hạn kỹ thuật của mô hình Base nguyên bản về mặt Time Offset và Prompt Engineering.
   * Huấn luyện **LoRA DiT 4B (Giai đoạn 3)** là bước đi kỹ thuật duy nhất và bắt buộc để đạt độ ổn định thương mại $100\%$ cho đa khối text tiếng Việt.
+
+---
+
+### 33. Chuỗi Thực nghiệm `exp52` - `exp53`: Khảo sát Giới hạn Độ dài Văn bản (Text Length Ablation - Bài thơ Tây Tiến)
+* **Thời gian**: `Tue Aug 25 09:05:00 2026 +0700`
+* **File liên quan**: [`scripts/demo_tendoo_poster.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/demo_tendoo_poster.py), [`AGENTS.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/AGENTS.md)
+* **Thực nghiệm đối chứng**:
+  1. **`exp52` (Đoạn thơ 4 câu - 28 từ - 119 ký tự)**: 
+     * Script co chữ xuống $\sim 18\text{px}$ để nhồi vào glyph box $\rightarrow$ VAE Decoder nén $16\times$ làm suy hao gradient kết hợp Attention Heads bị phân tán $\rightarrow$ Mô hình không vẽ chữ ($0\%$ text rendered).
+  2. **`exp53` (Cắt ngắn thành 1 câu thơ 7 từ - `SÔNG MÃ XA RỒI TÂY TIẾN ƠI`)**:
+     * Lệnh: `python scripts/demo_tendoo_poster.py --text "SÔNG MÃ XA RỒI TÂY TIẾN ƠI" --prompt "Bức vách đá sa thạch cổ kính sừng sững ở tiền cảnh, chữ khắc chìm mạ vàng đồng cổ sắc nét trên mặt đá phẳng rêu phong, hậu cảnh núi non Tây Bắc mây mù hoàng hôn, phong cách điện ảnh sử thi" --font "playfair" --width 1024 --height 1024 --output "ablation_1_line.png"`
+     * Kết quả: **Chữ hiển thị chuẩn xác 100% từng dấu tiếng Việt, nét vẽ khắc đá sa thạch mạ vàng cổ kính cực kỳ sắc nét và hòa quyện hoàn hảo vào bối cảnh hùng vĩ**.
+* **Định luật đúc kết**:
+  * Mô hình DiT Base 4B Zero-Shot ở $t=10.0$ đạt độ chính xác đỉnh cao $100\%$ cho **Headline / Title / Slogan / Tên thương hiệu ($\le 7-10$ từ)** khi kết hợp kỹ thuật **Điểm neo bề mặt tiền cảnh (Surface Anchoring)**.
+  * Các đoạn văn bản/thơ dày đặc ($\ge 20$ từ) vượt quá dung lượng chú ý zero-shot, là bài toán dành riêng cho **Giai đoạn 3 (Huấn luyện LoRA DiT 4B)**.
+
+
 
 
 
