@@ -216,6 +216,20 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + Các giải pháp Heuristic "rẻ/miễn phí" đã chạm trần vật lý của mô hình Base.
       + **Huấn luyện LoRA DiT 4B Base (Giai đoạn 3) là giải pháp DUY NHẤT, BẮT BUỘC VÀ TẤT YẾU** để biến FLUX.2 thành cỗ máy sản xuất Banner thương mại 4-slot đạt chuẩn $100\%$.
 
+16. **QUY LUẬT PHÂN CẤP THỊ GIÁC 3 TẦNG & BỐ CỤC TỰ NHIÊN TRONG BANNER THƯƠNG MẠI (THE 3-TIER TYPOGRAPHIC HIERARCHY LAW)**:
+    - **Phát hiện từ thực tế nghiệp vụ & Thử nghiệm Prompt**:
+      + **Tầng 1 (Slot $t=10.0$ - Headline / Bắt mắt tức thì)**: Đóng vai trò tiêu đề chính, chữ nổi 3D lớn nhất, dập nổi kim loại/vàng gold/neon, chiếm $45\%$ trọng tâm thị giác.
+      + **Tầng 2 (Slot $t=20.0$ - Subtitle / Thông tin bổ trợ)**: Đóng vai trò cung cấp thông tin chi tiết (thời gian, chất lượng, thông số), chữ vừa, sắc nét, thanh lịch, chiếm $30\%$ trọng tâm thị giác.
+      + **Tầng 3 (Slot $t=30.0$ - CTA Badge / Kêu gọi hành động)**: Đóng vai trò kích thích chuyển đổi, thường gồm nhiều cụm từ ngắn gọn ("Ghé ngay hôm nay!", "Deal cực hot - Số lượng có hạn!"), chữ nhỏ hơn, trình bày dưới dạng **Huy hiệu / Badge / Khung neon / Sticker nhỏ xinh** ở các góc hoặc chân đế sản phẩm, chiếm $25\%$ trọng tâm thị giác.
+    - **Cơ chế học của LoRA DiT 4B Base**:
+      + Không dùng mẹo Prompting gợi mở vật đỡ (tránh Prompt Leakage như vụ lọt chữ "pacifico").
+      + Do toàn bộ tập dữ liệu Ground-Truth từ Gemini Teacher được cấu trúc chuẩn hóa theo đúng phân cấp 3 tầng này, LoRA sẽ tự động học được mối liên kết không gian:
+        * Tọa độ $t=10 \rightarrow$ Phóng to kích thước, dập nổi 3D ở phần trên/trung tâm.
+        * Tọa độ $t=20 \rightarrow$ Nét thẳng, thanh mảnh, nằm liền kề dưới tiêu đề.
+        * Tọa độ $t=30 \rightarrow$ Tự động bao gói thành các khung huy hiệu (Badge/Neon Pill) nhỏ xinh ở các góc.
+
+
+
 
 
 
