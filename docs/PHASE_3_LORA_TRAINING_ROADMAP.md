@@ -17,9 +17,11 @@ Dựa trên 60 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp60
 | **2. Target LoRA Layers** | FLUX.2 không có module Cross-Attention riêng; Canvas và Ref dùng chung `img_attn.qkv` (DoubleBlocks) và `linear1` (SingleBlocks). 80% độ sâu mô hình nằm ở 20 SingleBlocks. | Tiêm LoRA trực tiếp vào: `img_attn.qkv` (5 DoubleBlocks) và phần Q, K, V của `linear1` (20 SingleBlocks). Rank $r=32$, $\alpha=32$. |
 | **3. Uniform AdaLN Modulation** | `ref_fixed_timestep = 0.0` cố định cho mọi slot $\rightarrow$ mô hình không có biên độ ưu tiên giữa các slot, toàn bộ nhận diện slot dồn vào RoPE. | LoRA sẽ tối ưu hóa ma trận $W_Q, W_K$ để thích ứng nhạy bén với các dải tần số góc quay RoPE $\mathbf{R}(\Delta t)$ của từng slot ($t=10, 20, 30$). |
 | **4. Upstream Semantic Clash** | Khi prompt lặp lại nguyên văn text tiếng Việt, Text Encoder `Qwen3-4B-FP8` gây nhiễu và xung đột với tín hiệu Glyph từ VAE. | Tích hợp Upstream LLM (Gemini Flash / Qwen-2.5) tự động bóc tách text và làm sạch prompt (Prompt Sanitization). |
-| **5. Phân bổ Slot Chuẩn** | Mốc $t \le 40.0$ là vùng hoạt động an toàn tuyệt đối. Mốc $t \ge 50.0$ bắt đầu suy hao góc pha RoPE đối với glyph chữ. | Khóa cứng 4 Slot chuẩn: $t=10.0$ (Headline), $t=20.0$ (Subtitle), $t=30.0$ (CTA Badge), $t=40.0$ (Ảnh Sản Phẩm Thật). |
+| **5. Phân bổ Slot Chuẩn & Full-Power 5-Slot** | Mốc $t \le 40.0$ là vùng hoạt động an toàn tuyệt đối cho Text ($t=10, 20, 30, 40$). Khối lượng token áp đảo của Sản phẩm ($4096$ tokens) cho phép đặt SP an toàn tại $t=50.0$ hoặc $t=60.0$. | Khóa 2 Cấu hình Slot Chuẩn Hóa:<br>• **Standard 4-Slot (90% mẫu)**: $t=10$ (Headline), $t=20$ (Subtitle), $t=30$ (CTA Badge), $t=40/50$ (Ảnh Sản Phẩm).<br>• **Full-Power 5-Slot (10-15% mẫu Milestone C)**: $t=10$ (Headline), $t=20$ (Brand/Slogan), $t=30$ (Features/Bullet-points), $t=40$ (CTA Badge), $t=50/60$ (Ảnh Sản Phẩm). |
 | **6. True CFG & Chống CFG Drift** | Klein 4B Base dùng True CFG (`use_guidance_embed = False`), nhánh Unconditional giữ nguyên Reference Tokens `img_cond_seq` và chỉ null hóa Text Prompt `ctx = ""`. | Áp dụng Text Conditioning Dropout ($p=0.10$) khi train LoRA: Thay thế `txt` bằng embedding của chuỗi rỗng `""` với tỉ lệ $10\%$ để LoRA học đúng nhánh Unconditional. |
 | **7. Phân Cấp Thị Giác & Dense CTA (Real Scenarios)** | Trong quảng cáo thực tế, CTA thường gồm nhiều câu ngắn dồn dập hoặc gạch đầu dòng (bullet points) cần gói gọn trong các badge/khung neon nhỏ xinh. | Thiết kế Dynamic Glyph Engine hỗ trợ đa dòng (`\n`, `•`, `-`), dạy LoRA tự động học phân cấp 3 tầng: $t=10$ (Tiêu đề 3D lớn nhất $45\%$), $t=20$ (Thông tin $30\%$), $t=30$ (CTA dồn dập trong Badge nhỏ $25\%$). |
+| **8. Gemini In-Context Multimodal Teacher** | Thử nghiệm đối chứng khẳng định truyền trực tiếp Glyph Bitmaps + Ảnh SP vào Gemini 2.0 tạo ra Ground-Truth 100% chuẩn chính tả và bố cục thương mại đỉnh cao, triệt tiêu lỗi rò rỉ tên font. | Dùng Gemini 2.0 Flash / Pro làm Distillation Engine chính thức: sinh 1-shot trực tiếp toàn bộ tập Ground-Truth 2,500 mẫu với chi phí siêu rẻ (~$15 - $75). |
+
 
 
 ---
@@ -214,10 +216,13 @@ lora_config = {
 * **Số bước**: `1,200 steps` (tương đương **$6.4\text{ epochs}$** trên tập 1,500 mẫu).
 * **Tiêu chuẩn nghiệm thu**: Cả Headline và Subtitle đều render chuẩn $100\%$ chữ và dấu tiếng Việt trên cùng 1 ảnh.
 
-#### 🔹 Milestone C: Toàn diện 3 Khối Text ($t=10, 20, 30$) (1,500 mẫu SP + 1,000 mẫu Pure T2I)
-* **Mục tiêu**: Khóa cứng toàn bộ ma trận Attention cho bố cục chuẩn thương mại hoàn chỉnh (Headline 3D + Subtitle thông tin + CTA Badge phát sáng + Sản phẩm thật / Background AI).
+#### 🔹 Milestone C: Toàn diện 3-4 Khối Text (1,500 mẫu SP + 1,000 mẫu Pure T2I)
+* **Mục tiêu**: Khóa cứng toàn bộ ma trận Attention cho bố cục chuẩn thương mại hoàn chỉnh:
+  * **85% Mẫu Chuẩn (Standard 4-Slot)**: Headline 3D ($t=10$) + Subtitle thông tin ($t=20$) + CTA Badge phát sáng ($t=30$) + Sản phẩm thật ($t=40/50$).
+  * **15% Mẫu Cực Hạn (Full-Power 5-Slot)**: Mở rộng thêm 1 slot Text ($t=40$) cho danh sách tính năng/slogan và đẩy SP về $t=50/60$ để phục vụ các banner dày đặc thông tin.
 * **Số bước**: `2,200 steps` (tương đương **$7.04\text{ epochs}$** trên tập 2,500 mẫu).
 * **Tiêu chuẩn nghiệm thu**: Chạy bộ Benchmark 20 test case độc lập đạt tỷ lệ chính xác $\ge \mathbf{95\%}$ tổng thể và $\mathbf{100\%}$ trên các mẫu banner chuẩn.
+
 
 
 
