@@ -152,7 +152,7 @@ lora_config = {
 * **Tiêu chuẩn nghiệm thu**: Headline đạt độ chính xác $100\%$, sản phẩm đạt độ giống thật $\ge 98\%$.
 
 #### 🔹 Milestone B: Phân tách Chú ý 2 Khối Text ($t=10, 20$) + Sản Phẩm ($t=40$)
-* **Mục tiêu**: Kích hoạt khả năng phân tách kênh $t=20$ (Subtitle), triệt tiêu hoàn toàn hiện tượng Ref-to-Ref contamination và chữa dứt điểm lỗi dấu kép phức tạp (`Ố-Ồ-Ủ-Ộ`).
+* **Mục tiêu**: Kích hoạt khả năng phân tách kênh $t=20$ (Subtitle), triệt tiêu hoàn toàn hiện tượng Ref-to-Ref contamination (rò rỉ can nhiễu giữa các ref) và ngăn chặn DiT tự sinh chữ rác Lorem Ipsum.
 * **Số bước**: `1,200 steps`.
 * **Tiêu chuẩn nghiệm thu**: Cả Headline và Subtitle đều render chuẩn $100\%$ chữ và dấu tiếng Việt trên cùng 1 ảnh.
 
