@@ -194,6 +194,21 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + **Chiến lược LoRA Giai đoạn 3**: LoRA chỉ cần nhắm trực tiếp vào ma trận $W_Q, W_K$ ở các tầng Attention xử lý Reference tokens để đóng vai trò "Bộ điều phối phân luồng (Traffic Controller)".
       + **Tối ưu hóa Dataset**: Chỉ cần một tập dữ liệu nhỏ tập trung vào các mẫu Multi-Block / Banner ($\sim 500 - 1,000$ mẫu) là đủ cho bản Pilot đạt độ chính xác $100\%$ đa khối text, thay vì phải rải dữ liệu khổng lồ để "dạy chữ từ đầu".
 
+13. **TÍNH BẤT BIẾN HOÁN VỊ THỨ TỰ GHÉP CHUỖI CỦA 4D RoPE (THE SEQUENCE PERMUTATION INVARIANCE LAW)**:
+    - **Kiểm chứng thực nghiệm (`exp57` - `test_permutation_invariance.py`)**:
+      + Thay đổi thứ tự nối chuỗi vật lý `dim=1`: Xuôi `[Canvas, t10, t20, t30]` vs Ngược `[Canvas, t30, t20, t10]` vs Xáo trộn `[Canvas, t20, t10, t30]`.
+      + **Kết quả**: Cả 3 ảnh sinh ra **GIỐNG HỆT NHAU 100% TỪNG PIXEL**.
+    - **Ý nghĩa toán học**:
+      + Khẳng định hệ thống tọa độ 4D RoPE của Tendoo AI sạch tuyệt đối, không có rò rỉ thứ tự tuần tự (zero sequence-order bias).
+      + Mọi tương tác đa slot chỉ phụ thuộc duy nhất vào: Tọa độ không-thời gian $(t, h, w, l)$ và động lực học Softmax cạnh tranh.
+
+14. **MÔ HÌNH CƠ CHẾ KÉP TRONG SOFTMAX CẠNH TRANH (THE DUAL-MECHANISM CROSSTALK MODEL)**:
+    - **Phát hiện thực nghiệm đối chứng (`exp58` vs `exp59`)**:
+      + **Cơ chế 1 (Khối lượng Token - Token Mass Dominance)**: Khối ít token bị yếu thế trong Softmax chung trước khối 4096 tokens của sản phẩm. Khi tăng token mass lên $\ge 672$ tokens ($768 \times 224\text{px}$), khối CTA `"MUA 1 TẶNG 1"` ở $t=30$ **tự động phục hồi 100% độ chính xác mà không cần train**.
+      + **Cơ chế 2 (Nghẽn cục bộ vị trí / Dấu phụ phức tạp)**: Khối Subtitle `"CHỐNG ỒN CHỦ ĐỘNG"` tại $t=20$ không tự khỏi khi tăng token, cần phân lập giữa đặc thù RoPE $t=20$ và cụm 4 dấu phụ liên tiếp `Ố-Ồ-Ủ-Ộ`.
+    - **Định hướng công bố khoa học**: Mọi báo cáo kỹ thuật và pipeline huấn luyện LoRA cần kết hợp cả 2 trục: Chuẩn hóa kích thước Token Mass tối thiểu và Tinh chỉnh Attention Routing phân luồng.
+
+
 
 
 

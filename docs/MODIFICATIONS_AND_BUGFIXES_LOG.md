@@ -428,6 +428,75 @@ Dưới đây là bảng theo dõi toàn bộ các commit được thực hiện
   * Bản chất vấn đề DiT Base chưa làm được **KHÔNG PHẢI LÀ "học hiểu biểu diễn mới ở kênh lạ"** (nó đã hiểu xuất sắc), mà là **"phân luồng và giữ nhiều kênh hoạt động đồng thời không xung đột (Attention Disentanglement / Routing)"**.
   * **Định hướng LoRA Giai đoạn 3**: LoRA chỉ cần tối ưu hóa ma trận $W_Q, W_K$ làm "Bộ điều phối phân luồng", cho phép huấn luyện hiệu quả cao với tập dữ liệu nhỏ ($\sim 500 - 1,000$ mẫu) mà không cần dataset khổng lồ.
 
+---
+
+### 35. Phân tích Toán học Kiến trúc Attention (`exp56`): Truy vết Full Joint Self-Attention & Khám phá Kênh Can Nhiễu Kép (Dual Crosstalk Pathways)
+* **Thời gian**: `Tue Aug 25 10:45:00 2026 +0700`
+* **File liên quan**: [`src/flux2/sampling.py:L364-411`](file:///d:/Viettel%20Telecom/Tendoo%20AI/src/flux2/sampling.py#L364-L411), [`src/flux2/model.py:L758-816`](file:///d:/Viettel%20Telecom/Tendoo%20AI/src/flux2/model.py#L758-L816), [`AGENTS.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/AGENTS.md)
+* **Phân tích truy vết thực thi**:
+  * Hàm `denoise_cfg` thực hiện nối `img_input = torch.cat((img, img_cond_seq), dim=1)` và gọi `model.forward()` với `num_ref_tokens=0`.
+  * Hàm `causal_attn_fn` nhận `num_ref_tokens=0` nên coi toàn bộ chuỗi `[Canvas, Ref1, Ref2, Ref3...]` là một khối ảnh chung `q_img`, đưa vào phép tính `F.scaled_dot_product_attention(q_txt_img, k_all, v_all, is_causal=False)`.
+  * **Khẳng định 100%**: Tuyệt đối không dùng KV-caching. Mô hình tính toán lại toàn bộ QKV hai chiều (Bi-directional) cho Canvas và mọi Ref tokens qua đủ 50 bước Euler ODE.
+* **Đột phá lý thuyết về 2 kênh can nhiễu (Dual Crosstalk Channels)**:
+  1. **Kênh 1 ($Q_{\text{canvas}} \leftrightarrow K_{\text{ref}}$)**: Canvas phân bổ chia sẻ Softmax giữa các Ref.
+  2. **Kênh 2 ($Q_{\text{ref}} \leftrightarrow K_{\text{ref}}$ - Ref-to-Ref Cross Contamination)**: Các Ref tokens tương tác trực tiếp 2 chiều với nhau qua 25 tầng Transformer $\times$ 50 bước ODE = 1,250 lượt tương tác. Khối có mật độ/vector mạnh hơn sẽ "đồng hóa" và rò rỉ đặc trưng đè bẹp khối yếu hơn trước khi tín hiệu kịp chạm tới Canvas.
+
+---
+
+### 36. Chuỗi Thực nghiệm `exp57`: Xác nhận Tính Bất Biến Hoán Vị Thứ Tự Ghép Chuỗi (Sequence Permutation Invariance Benchmark)
+* **Thời gian**: `Tue Aug 25 10:50:00 2026 +0700`
+* **File liên quan**: [`scripts/test_permutation_invariance.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_permutation_invariance.py)
+* **Thiết kế thực nghiệm**:
+  * Cùng seed, cùng prompt, cùng gắn nhãn tọa độ RoPE $(t, h, w, l)$, chỉ thay đổi thứ tự nối vật lý trên chiều sequence `dim=1`:
+    * Pass A: Xuôi `[Canvas, Ref(t=10), Ref(t=20), Ref(t=30)]`
+    * Pass B: Ngược `[Canvas, Ref(t=30), Ref(t=20), Ref(t=10)]`
+    * Pass C: Xáo trộn `[Canvas, Ref(t=20), Ref(t=10), Ref(t=30)]`
+* **Kết quả thực nghiệm**: **CẢ 3 ẢNH SINH RA GIỐNG HỆT NHAU 100% TỪNG PIXEL**.
+* **Ý nghĩa khoa học**: Khẳng định pipeline tọa độ 4D RoPE của Tendoo AI sạch toán học tuyệt đối, zero sequence-order bias. Mọi tương tác hoàn toàn phụ thuộc vào tọa độ không-thời gian $(t, h, w, l)$ và động lực học Softmax.
+
+---
+
+### 37. Chuỗi Thực nghiệm `exp58`: Kiểm Thử Tải Thực Tế 5-Slot Production (5-Slot Production Stress Benchmark)
+* **Thời gian**: `Tue Aug 25 10:35:00 2026 +0700`
+* **File liên quan**: [`scripts/test_5slot_production_probe.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_5slot_production_probe.py)
+* **Thiết kế thực nghiệm**:
+  * Đưa tải thực tế tối đa: 4 Khối Text ($t=10, 20, 30, 40$) + 1 Ảnh Sản phẩm Tai nghe thật (4096 tokens, $t=50$). Đồng bộ 100% ngữ nghĩa công nghệ âm thanh sang trọng.
+  * So sánh 3 kịch bản: Case 1 (4 text + Prod $t=50$), Case 2 (Prod $t=10$ + 3 text), Case 3 (3 text + Prod $t=40$).
+* **Kết quả đối chứng then chốt**:
+  * **Ảnh sản phẩm thật (4096 tokens)**: Giữ chính xác 100% ở TẤT CẢ các mốc $t$ ($t=10, 40, 50$).
+  * **Headline `"ÂM THANH ĐỈNH CAO"` (480 tokens)**: Giữ chính xác 100% ở CẢ $t=10$ VÀ $t=20$ (kể cả khi sản phẩm chiếm $t=10$).
+  * **Subtitle `"CHỐNG ỒN CHỦ ĐỘNG"` (360 tokens) & CTA `"MUA 1 TẶNG 1"` (320 tokens)**: Bị vỡ hoặc biến mất khi đứng trước 4096 tokens của sản phẩm.
+
+---
+
+### 38. Chuỗi Thực nghiệm `exp59`: Kiểm Chứng Giả Thuyết Thống Trị Mật Độ Token (Token Mass Dominance Hypothesis)
+* **Thời gian**: `Tue Aug 25 11:00:00 2026 +0700`
+* **File liên quan**: [`scripts/test_token_density_hypothesis.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_token_density_hypothesis.py)
+* **Thiết kế thực nghiệm**:
+  * Giữ nguyên cấu trúc Case 3 (3 text $t=10, 20, 30$ + Prod $t=40$), cùng seed 300, tăng lũy tiến kích thước token của Subtitle và CTA:
+    * Pass A: Baseline thấp (Headline 480 tokens, Subtitle 360 tokens, CTA 320 tokens)
+    * Pass B: Cân bằng (Headline 480 tokens, Subtitle 480 tokens, CTA 480 tokens)
+    * Pass C: Mật độ cao (Headline 672 tokens, Subtitle 672 tokens, CTA 672 tokens - $768 \times 224\text{px}$)
+* **Kết quả thực nghiệm then chốt**:
+  * **CTA `"MUA 1 TẶNG 1"` ($t=30$)**: Pass A bị vỡ $\rightarrow$ Pass B bắt đầu hồi phục $\rightarrow$ **Pass C ĐẠT CHÍNH XÁC 100% HOÀN TOÀN NHỜ TĂNG TOKEN MASS LÊN 672 TOKENS**!
+  * **Subtitle `"CHỐNG ỒN CHỦ ĐỘNG"` ($t=20$)**: Vẫn bị lỗi ở cả Pass B và Pass C dù nhận đủ 672 tokens.
+* **Định luật đúc kết (The Dual Mechanism Model)**:
+  1. *Cơ chế 1 (Token Mass Dominance)*: Đã được chứng minh 100% qua khối CTA. Khối ít token bị yếu thế trong Softmax cạnh tranh, tăng token density sẽ trực tiếp chữa khỏi mà không cần train.
+  2. *Cơ chế 2 (Secondary Specific Bottleneck)*: Tác động riêng lên chuỗi `"CHỐNG ỒN CHỦ ĐỘNG"` tại $t=20$ (Cần phân lập giữa lỗi vị trí RoPE $t=20$ vs độ phức tạp hình học của 4 dấu phụ liên tiếp `Ố-Ồ-Ủ-Ộ`).
+
+---
+
+### 39. Chuỗi Thực nghiệm `exp60`: Phân Lập Vị Trí Slot RoPE vs Độ Phức Tạp Dấu Phụ (Cross-Slot Position vs Diacritic Complexity Benchmark)
+* **Thời gian**: `Tue Aug 25 11:10:00 2026 +0700`
+* **File liên quan**: [`scripts/test_slot_vs_diacritic_swap.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_slot_vs_diacritic_swap.py)
+* **Thiết kế thực nghiệm**:
+  * Chạy đồng bộ ở mức mật độ tối đa 672 tokens ($768 \times 224\text{px}$) cho tất cả các khối text, hoán đổi chéo:
+    * Pass 1: $t10=$ Âm thanh | $t20=$ Chống ồn | $t30=$ Mua 1
+    * Pass 2: $t10=$ Âm thanh | $t20=$ Mua 1 (CTA chuyển vào $t=20$) | $t30=$ Chống ồn (Subtitle chuyển vào $t=30$)
+    * Pass 3: $t10=$ Chống ồn (Subtitle chuyển vào $t=10$) | $t20=$ Âm thanh | $t30=$ Mua 1
+* **Mục tiêu khoa học**: Xác định dứt điểm lỗi thuộc về đặc tính vị trí RoPE hay thuộc về class dấu phụ tiếng Việt phức tạp để khóa hướng kiến trúc LoRA.
+
+
 
 
 
