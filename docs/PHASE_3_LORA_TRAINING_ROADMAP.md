@@ -64,32 +64,31 @@ $$\text{Sample}_i^{(\text{Milestone})} = \left( \text{Prompt}_{\text{clean}}, \;
 
 ---
 
-### 2.3. Quy Trình Chế Tạo Ground-Truth Tăng Dần (Incremental Layered Build-Up Pipeline):
+### 2.3. Quy Trình Chế Tạo 1-Shot Multi-Modal Distillation Trực Tiếp (Direct 1-Shot Distillation Pipeline):
 
-Thay vì sinh các bản độc lập rời rạc gây lệch pha phong cách, quy trình chế tạo Ground-Truth áp dụng cơ chế **Xây Dựng Tăng Dần (Layered Build-Up)** trên cùng một bối cảnh hình nền:
+Toàn bộ 2,500 mẫu huấn luyện được chế tạo theo cơ chế **Phi Trạng Thái Trực Tiếp (Stateless 1-Shot)**: Mỗi mẫu nhận đúng số lượng Glyph cần thiết và sinh ra bức ảnh Ground-Truth hoàn chỉnh chỉ trong **1 LẦN GỌI DUY NHẤT**, tối ưu hóa bố cục thị giác tự nhiên, chạy song song bất đồng bộ (`asyncio` / `ThreadPool`) cực nhanh và tiết kiệm $65\%$ chi phí API:
 
 ```
-          [ BƯỚC 1: SINH 2,500 HÌNH NỀN POSTER SẠCH + SẢN PHẨM (BACKGROUND SCENE) ]
-          • Mỗi template sinh 1 hình nền hoàn hảo (quán cafe, phòng studio, sàn catwalk)
-                                            │
-                                            ▼
-                    [ BƯỚC 2: CHUỖI BUILD-UP GROUND-TRUTH TĂNG DẦN ]
-                                            │
-          ┌─────────────────────────────────┼─────────────────────────────────┐
-          ▼                                 ▼                                 ▼
-   [ 🎯 PASS 1: + HEADLINE ]       [ 🎯 PASS 2: + SUBTITLE ]        [ 🎯 PASS 3: + CTA BADGE ]
-   • Dán & Hòa trộn Headline       • Tiếp tục từ Pass 1:            • Tiếp tục từ Pass 2:
-   • Ref Active: [t10, t40]        • Dán thêm Subtitle              • Dán thêm CTA Badge
-   • Ref Active: [t10, t20, t40]   • Ref Active: [t10, t20, t30, t40]
-   • Phục vụ: Milestone A          • Phục vụ: Milestone B           • Phục vụ: Milestone C
-     (500 mẫu đầu, đủ 5 domain)      (1,500 mẫu gồm 500 A + 1,000)    (Toàn bộ 2,500 mẫu)
-          │                                 │                                 │
-          └─────────────────────────────────┼─────────────────────────────────┘
-                                            ▼
-                           [ BƯỚC 3: AUTOMATED QUALITY FILTER ]
-                           • OCR Verification: Độ khớp ký tự tiếng Việt >= 98%
-                           • Đóng gói thành WebDataset Shards (tar/h5) phân tách theo từng Milestone
+                                  TỔNG QUY MÔ DATASET: 2,500 MẪU ĐỘC LẬP
+                                                    │
+         ┌──────────────────────────────────────────┼──────────────────────────────────────────┐
+         ▼                                          ▼                                          ▼
+ [ 🎯 NHÓM A: 500 MẪU (Milestone A) ]       [ 🎯 NHÓM B: 1,000 MẪU (Milestone B) ]     [ 🎯 NHÓM C: 1,000 MẪU (Milestone C) ]
+ • Phục vụ: Milestone A (500 mẫu)           • Phục vụ: Milestone B (1,500 mẫu = A + B) • Phục vụ: Milestone C (2,500 mẫu = A+B+C)
+ • 1-Shot Input: [Ref_10 (Headline)]        • 1-Shot Input: [Ref_10, Ref_20]           • 1-Shot Input: [Ref_10, Ref_20, Ref_30]
+   + [Ref_SP_40 (nếu có)]                     + [Ref_SP_40 (nếu có)]                     + [Ref_SP_40 (nếu có)]
+ • Output Ground-Truth:                     • Output Ground-Truth:                     • Output Ground-Truth:
+   Poster 1 Text + SP/Scene                   Poster 2 Texts + SP/Scene                  Poster 3 Texts + SP/Scene
+ • ⚡ 500 Calls (Async Parallel)            • ⚡ 1,000 Calls (Async Parallel)          • ⚡ 1,000 Calls (Async Parallel)
+         │                                          │                                          │
+         └──────────────────────────────────────────┼──────────────────────────────────────────┘
+                                                    ▼
+                                   [ AUTOMATED QUALITY ASSURANCE FILTER ]
+                                   • OCR Check: Khớp chính xác ký tự tiếng Việt >= 98%
+                                   • Độ phân giải chuẩn hóa theo 4 Aspect Ratio Buckets
+                                   • Đóng gói thành WebDataset Shards (.tar / .h5)
 ```
+
 
 
 ### 2.4. Ma trận Đa Tỉ Lệ Khung Hình (Aspect Ratio Bucketing Strategy):
