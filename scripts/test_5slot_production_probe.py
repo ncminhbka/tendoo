@@ -418,10 +418,10 @@ def run_5slot_production_test(prober: ProductionStressProber, output_dir: Path, 
     print("=" * 80)
 
     prompt = (
-        "Ảnh chụp thương mại sản phẩm thật đặt ở vị trí trung tâm nổi bật, "
-        "phía trên có biển hiệu lớn chữ vàng 3D dập nổi sang trọng, "
-        "thông tin chi tiết chữ mạ đồng ở giữa, góc dưới có các huy hiệu chữ phát sáng rực rỡ, "
-        "ánh sáng studio điện ảnh, độ chi tiết cao"
+        "Ảnh chụp quảng cáo thương mại công nghệ cho chiếc tai nghe chụp tai không dây màu đen sang trọng đặt ở vị trí trung tâm, "
+        "phía trên có biển hiệu lớn chữ vàng kim loại 3D dập nổi sắc nét, "
+        "thông tin tính năng chữ mạ bạc ở giữa, góc dưới có các huy hiệu chữ phát sáng dạ quang rực rỡ, "
+        "ánh sáng studio điện ảnh tương phản cao, siêu chi tiết"
     )
 
     results = []
@@ -433,10 +433,10 @@ def run_5slot_production_test(prober: ProductionStressProber, output_dir: Path, 
     print("\n▶ [TEST 1/3] CASE 1: 4 Texts (t=10, 20, 30, 40) + Product at t=50.0")
     t_start = time.time()
     text_slots_c1 = [
-        {"text": "GRAND OPENING", "t": 10.0, "font": "anton", "w": 640, "h": 192},
-        {"text": "CÀ PHÊ RANG MỘC", "t": 20.0, "font": "bevietnam", "w": 576, "h": 160},
+        {"text": "ÂM THANH ĐỈNH CAO", "t": 10.0, "font": "anton", "w": 640, "h": 192},
+        {"text": "CHỐNG ỒN CHỦ ĐỘNG", "t": 20.0, "font": "bevietnam", "w": 576, "h": 160},
         {"text": "MUA 1 TẶNG 1", "t": 30.0, "font": "pacifico", "w": 512, "h": 160},
-        {"text": "GHÉ NGAY HÔM NAY", "t": 40.0, "font": "sedgwick", "w": 512, "h": 160},
+        {"text": "TRẢI NGHIỆM NGAY", "t": 40.0, "font": "sedgwick", "w": 512, "h": 160},
     ]
     prod_slots_c1 = [{"image_path": ref_img_path, "t": 50.0}]
 
@@ -460,8 +460,8 @@ def run_5slot_production_test(prober: ProductionStressProber, output_dir: Path, 
     print("\n▶ [TEST 2/3] CASE 2: Product at t=10.0 + 3 Texts (t=20, 30, 40)")
     t_start = time.time()
     text_slots_c2 = [
-        {"text": "GRAND OPENING", "t": 20.0, "font": "anton", "w": 640, "h": 192},
-        {"text": "CÀ PHÊ RANG MỘC", "t": 30.0, "font": "bevietnam", "w": 576, "h": 160},
+        {"text": "ÂM THANH ĐỈNH CAO", "t": 20.0, "font": "anton", "w": 640, "h": 192},
+        {"text": "CHỐNG ỒN CHỦ ĐỘNG", "t": 30.0, "font": "bevietnam", "w": 576, "h": 160},
         {"text": "MUA 1 TẶNG 1", "t": 40.0, "font": "pacifico", "w": 512, "h": 160},
     ]
     prod_slots_c2 = [{"image_path": ref_img_path, "t": 10.0}]
@@ -486,8 +486,8 @@ def run_5slot_production_test(prober: ProductionStressProber, output_dir: Path, 
     print("\n▶ [TEST 3/3] CASE 3: 3 Texts (t=10, 20, 30) + Product at t=40.0")
     t_start = time.time()
     text_slots_c3 = [
-        {"text": "GRAND OPENING", "t": 10.0, "font": "anton", "w": 640, "h": 192},
-        {"text": "CÀ PHÊ RANG MỘC", "t": 20.0, "font": "bevietnam", "w": 576, "h": 160},
+        {"text": "ÂM THANH ĐỈNH CAO", "t": 10.0, "font": "anton", "w": 640, "h": 192},
+        {"text": "CHỐNG ỒN CHỦ ĐỘNG", "t": 20.0, "font": "bevietnam", "w": 576, "h": 160},
         {"text": "MUA 1 TẶNG 1", "t": 30.0, "font": "pacifico", "w": 512, "h": 160},
     ]
     prod_slots_c3 = [{"image_path": ref_img_path, "t": 40.0}]
@@ -512,6 +512,7 @@ def run_5slot_production_test(prober: ProductionStressProber, output_dir: Path, 
         titles=titles,
         output_path=str(output_dir / "PROBE_5SLOT_PRODUCTION_3WAY_COMPARISON.png"),
     )
+
 
 
 if __name__ == "__main__":
