@@ -106,9 +106,34 @@ Thay vì sinh các bản độc lập rời rạc gây lệch pha phong cách, q
 > [!TIP]
 > **TỐI ƯU HÓA BỘ NHỚ**: Do mỗi GPU nhận `batch_size = 1`, việc luân chuyển giữa các bucket tỉ lệ khác nhau trong DataLoader diễn ra **hoàn toàn tự nhiên, không cần zero-padding và không làm tăng thêm 1 MB VRAM nào**!
 
+### 2.5. Phân Bổ Chế Độ Kép (Product-Anchor 60% vs Pure Text-to-Image 40%):
+
+Để chống hiện tượng mô hình bị "nghiện mỏ neo sản phẩm" (Spurious Anchor Dependency) và đáp ứng $100\%$ các bài toán marketing thực tế (bao gồm cả poster sự kiện, lễ hội, thơ ca không có ảnh sản phẩm upload), tập dữ liệu được chia làm 2 nhánh huấn luyện:
+
+```
+                                  TỔNG QUY MÔ DATASET: 2,500 SAMPLES
+                                                  │
+                 ┌────────────────────────────────┴────────────────────────────────┐
+                 ▼                                                                 ▼
+   [ 🛍️ NHÁNH A: PRODUCT-ANCHOR MODE (60% ~ 1,500 mẫu) ]          [ 🎨 NHÁNH B: PURE TEXT-TO-IMAGE MODE (40% ~ 1,000 mẫu) ]
+   • Dành cho E-commerce, Thiết bị, Mỹ phẩm, Thời trang           • Dành cho Poster Sự kiện, Lễ hội, Cafe, Thơ ca, Quote
+   • Input: Đa khối Text ($t=10,20,30$) + 1 SP thật ($t=40$)      • Input: ĐA KHỐI TEXT ($t=10,20,30$) + PROMPT SCENE
+   • Sequence dài: ~5,100 - 6,000 tokens                          • Sequence ngắn: ~4,400 - 5,000 tokens (KHÔNG CÓ t=40!)
+   • Học: Tách bạch Sản phẩm thật và Đa khối chữ                  • Học: Tự sinh Scene tự nhiên và Định tuyến Đa khối chữ
+```
+
+#### 🧮 Cơ Chế Phạt Loss Trong Cả 2 Chế Độ (Supervised Flow Matching Objective):
+Dù có hay không có ảnh sản phẩm ở Input, mỗi mẫu trong Dataset đều có một ảnh Poster hoàn chỉnh làm **Ground-Truth $\mathbf{X}_{\text{target}}$**:
+$$\mathcal{L}_{\text{Flow}} = \mathbb{E}_{t, x_0, x_1} \left[ \left\| \mathbf{v}_\theta\left(x_t, t, \text{ctx}, \{\text{Ref}_k\}\right) - (x_1 - x_0) \right\|^2 \right]$$
+
+1. **Khi chạy Nhánh A (Có SP $t=40$)**: Loss phạt nếu sản phẩm sinh ra sai lệch chi tiết so với ảnh thật ở $t=40$ hoặc chữ bị biến dạng.
+2. **Khi chạy Nhánh B (Pure T2I - Không có $t=40$)**: Loss phạt ở vùng hậu cảnh nếu không ăn khớp với Text Prompt, và phạt ở vùng chữ nếu không bám sát tọa độ hình học của các Glyph $t=10, 20, 30$.
+   * 👉 **Mô hình học được kỹ năng tối thượng**: *"Khi không có ảnh sản phẩm đưa vào, hãy tự do vẽ bối cảnh theo prompt, nhưng vẫn phải định tuyến chính xác $100\%$ các khối chữ từ $t=10, 20, 30$ lên bức tranh đó!"*
+
 ---
 
 ## ⚙️ 3. THIẾT KẾ KIẾN TRÚC LORA & HYPERPARAMETERS
+
 
 
 ### 3.1. Cấu hình PEFT LoRA Injection & Phân Bổ Tham Số Chính Xác:
@@ -176,23 +201,23 @@ lora_config = {
   • Học hòa trộn SP & Headline            • Học tách kênh Subtitle (t=20)         • Khóa toàn bộ 4-slot Production
 ```
 
-### 📍 Chi tiết từng Milestone:
+### 📍 Chi tiết từng Milestone (Phân Bổ 60% Product-Anchor / 40% Pure T2I):
 
-#### 🔹 Milestone A: Đồng bộ Hòa trộn 1 Sản Phẩm ($t=40$) + 1 Headline ($t=10$)
-* **Mục tiêu**: Dạy LoRA phân luồng mượt mà giữa khối token khổng lồ của sản phẩm (4096 tokens) và khối chữ chính ($280 - 640\text{ tokens}$ dynamic), đảm bảo chữ luôn ăn khớp ánh sáng với sản phẩm.
+#### 🔹 Milestone A: Đồng bộ Hòa trộn 1 Headline ($t=10$) (300 mẫu SP + 200 mẫu Pure T2I)
+* **Mục tiêu**: Dạy LoRA phân luồng mượt mà giữa khối token của sản phẩm và khối chữ chính ($280 - 640\text{ tokens}$ dynamic), đồng thời học cách tự sinh background khi không có ảnh sản phẩm.
 * **Số bước**: `600 steps` (tương đương **$9.6\text{ epochs}$** trên tập 500 mẫu với Effective Batch Size = 8).
+* **Tiêu chuẩn nghiệm thu**: Headline đạt độ chính xác $100\%$ trên cả ảnh có sản phẩm thật và ảnh T2I thuần.
 
-* **Tiêu chuẩn nghiệm thu**: Headline đạt độ chính xác $100\%$, sản phẩm đạt độ giống thật $\ge 98\%$.
-
-#### 🔹 Milestone B: Phân tách Chú ý 2 Khối Text ($t=10, 20$) + Sản Phẩm ($t=40$)
-* **Mục tiêu**: Kích hoạt khả năng phân tách kênh $t=20$ (Subtitle), triệt tiêu hoàn toàn hiện tượng Ref-to-Ref contamination (rò rỉ can nhiễu giữa các ref) và ngăn chặn DiT tự sinh chữ rác Lorem Ipsum.
+#### 🔹 Milestone B: Phân tách Chú ý 2 Khối Text ($t=10, 20$) (900 mẫu SP + 600 mẫu Pure T2I)
+* **Mục tiêu**: Kích hoạt khả năng phân tách kênh $t=20$ (Subtitle), triệt tiêu hoàn toàn hiện tượng Ref-to-Ref contamination và ngăn chặn DiT tự sinh chữ rác Lorem Ipsum.
 * **Số bước**: `1,200 steps` (tương đương **$6.4\text{ epochs}$** trên tập 1,500 mẫu).
 * **Tiêu chuẩn nghiệm thu**: Cả Headline và Subtitle đều render chuẩn $100\%$ chữ và dấu tiếng Việt trên cùng 1 ảnh.
 
-#### 🔹 Milestone C: Toàn diện 3 Khối Text ($t=10, 20, 30$) + Sản Phẩm ($t=40$)
-* **Mục tiêu**: Khóa cứng toàn bộ ma trận Attention cho bố cục chuẩn thương mại hoàn chỉnh (Headline 3D + Subtitle thông tin + CTA Badge phát sáng + Sản phẩm thật).
+#### 🔹 Milestone C: Toàn diện 3 Khối Text ($t=10, 20, 30$) (1,500 mẫu SP + 1,000 mẫu Pure T2I)
+* **Mục tiêu**: Khóa cứng toàn bộ ma trận Attention cho bố cục chuẩn thương mại hoàn chỉnh (Headline 3D + Subtitle thông tin + CTA Badge phát sáng + Sản phẩm thật / Background AI).
 * **Số bước**: `2,200 steps` (tương đương **$7.04\text{ epochs}$** trên tập 2,500 mẫu).
 * **Tiêu chuẩn nghiệm thu**: Chạy bộ Benchmark 20 test case độc lập đạt tỷ lệ chính xác $\ge \mathbf{95\%}$ tổng thể và $\mathbf{100\%}$ trên các mẫu banner chuẩn.
+
 
 
 ---
