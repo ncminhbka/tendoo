@@ -64,7 +64,7 @@ def create_deck():
         tf_t.word_wrap = True
         pt = tf_t.paragraphs[0]
         pt.text = title_text
-        pt.font.size = Pt(24)
+        pt.font.size = Pt(23)
         pt.font.bold = True
         pt.font.color.rgb = C_TEXT_MAIN
         pt.font.name = "Segoe UI"
@@ -77,8 +77,10 @@ def create_deck():
         card.line.width = Pt(1.2)
         return card
 
+    total_slides = "11"
+
     # ==========================================
-    # SLIDE 1: HERO TITLE (LIGHT THEME)
+    # SLIDE 1: HERO TITLE
     # ==========================================
     s1 = prs.slides.add_slide(blank_layout)
     set_slide_bg(s1)
@@ -140,11 +142,11 @@ def create_deck():
         sp2.space_before = Pt(6)
 
     # ==========================================
-    # SLIDE 2: KIẾN TRÚC FLUX.2 KLEIN 4B BASE
+    # SLIDE 2: KIẾN TRÚC FLUX.2 4B
     # ==========================================
     s2 = prs.slides.add_slide(blank_layout)
     set_slide_bg(s2)
-    add_header(s2, "KIẾN TRÚC HỆ THỐNG", "Cấu Trúc FLUX.2 Klein 4B Base & Nguyên Tắc Phân Công Lao Động", "02 / 10")
+    add_header(s2, "KIẾN TRÚC HỆ THỐNG", "Cấu Trúc FLUX.2 Klein 4B Base & Nguyên Tắc Phân Công Lao Động", f"02 / {total_slides}")
     
     comps = [
         ("1. TEXT ENCODER (Qwen3-4B-FP8)", "Trích xuất 3 tầng cố định [9, 18, 27] tạo Context Vector 7680-dim.\n• Đảm nhận: 100% về CHẤT LIỆU, ÁNH SÁNG, PHONG CÁCH QUANG HỌC.\n• Điểm yếu: Không hiểu hình học nét chữ 2D tiếng Việt.", C_PURPLE),
@@ -177,11 +179,63 @@ def create_deck():
         cp2.space_before = Pt(14)
 
     # ==========================================
-    # SLIDE 3: BẢN CHẤT GỐC RỄ: VÌ SAO TEXT ENCODER MÙ CHỮ TIẾNG VIỆT?
+    # SLIDE 3: GIẢI MÃ CƠ CHẾ 4D RoPE & TIME OFFSETS (t=10, 20, 30) (SLIDE MỚI!)
     # ==========================================
     s3 = prs.slides.add_slide(blank_layout)
     set_slide_bg(s3)
-    add_header(s3, "NGHIÊN CỨU LÝ THUYẾT & PAPERS", "Bản Chất Gốc Rễ: Vì Sao Text Encoder Không Thể Vẽ Chữ Tiếng Việt?", "03 / 10")
+    add_header(s3, "CƠ CHẾ TOÁN HỌC CỐT LÕI", "Giải Mã Hệ Tọa Độ 4D RoPE & Bí Mật Các Mốc Thời Gian (t=10, 20, 30...)", f"03 / {total_slides}")
+    
+    rope_cards = [
+        ("⏱️ 1. Mốc Thời Gian t=10, 20... Là Gì?", 
+         "FLUX.2 sử dụng hệ tọa độ 4 chiều: (t, h, w, l) để định vị từng token trong không gian và thời gian.\n\n"
+         "• Canvas (Ảnh cần sinh): Đặt tại mốc hiện tại t = 0.0, trải rộng từ (0, 0) đến (H, W).\n"
+         "• Ref Image 1 (Headline): Đặt tại mốc t = 10.0, tọa độ (0, 0).\n"
+         "• Ref Image 2 (Subtitle): Đặt tại mốc t = 20.0, tọa độ (0, 0).\n"
+         "• Ref Image 3 (CTA Badge): Đặt tại mốc t = 30.0, tọa độ (0, 0).\n"
+         "• Ref Image 4 (Ảnh Sản Phẩm): Đặt tại mốc t = 40.0 hoặc 60.0.", C_PRIMARY),
+         
+        ("🎯 2. Tại Sao Phân Biệt Được Các Ảnh?", 
+         "4D RoPE xoay vector truy vấn Q, K theo góc quay tần số: θ_i = 2000^(-2i/32).\n\n"
+         "• Chống nhầm lẫn tọa độ: Dù mọi ảnh Ref đều bắt đầu từ góc (0, 0), mô hình không bao giờ bị đè pixel vì chúng nằm ở các 'khung thời gian t' hoàn toàn khác nhau!\n\n"
+         "• Tính bất biến hoán vị (exp57): Thứ tự nối chuỗi cat() không quan trọng; chính giá trị t=10, 20 trong RoPE mới quyết định vai trò logic của từng ảnh!", C_PURPLE),
+         
+        ("🏛️ 3. Thiết Kế Gốc Của BFL & Hạn Chế", 
+         "Black Forest Labs (BFL) tiền huấn luyện FLUX.2 với các bước nhảy thời gian rời rạc: Δt = 10 x k (10.0, 20.0, 30.0).\n\n"
+         "• Kênh t=10.0 được tối ưu hóa sâu làm kênh tham chiếu chính.\n"
+         "• Điểm nghẽn gốc: BFL chưa từng huấn luyện DiT đọc nhiều khối Glyph chữ đen trắng cùng lúc -> Dẫn đến bão hòa và tràn kênh Attention ở t=20, 30.\n\n"
+         "👉 Đây chính là lý do Tendoo AI cần LoRA Phase 3 để tinh chỉnh ma trận Attention phân luồng!", C_EMERALD)
+    ]
+    for i, (rtitle, rdesc, col) in enumerate(rope_cards):
+        cx = Inches(0.8 + i * 3.98)
+        cy = Inches(1.8)
+        cw = Inches(3.78)
+        ch = Inches(4.8)
+        add_card(s3, cx, cy, cw, ch)
+        
+        rtb = s3.shapes.add_textbox(cx + Inches(0.2), cy + Inches(0.2), cw - Inches(0.4), ch - Inches(0.4))
+        rtf = rtb.text_frame
+        rtf.word_wrap = True
+        
+        rp1 = rtf.paragraphs[0]
+        rp1.text = rtitle
+        rp1.font.size = Pt(13)
+        rp1.font.bold = True
+        rp1.font.color.rgb = col
+        rp1.font.name = "Segoe UI"
+        
+        rp2 = rtf.add_paragraph()
+        rp2.text = rdesc
+        rp2.font.size = Pt(11)
+        rp2.font.color.rgb = C_TEXT_MAIN
+        rp2.font.name = "Segoe UI"
+        rp2.space_before = Pt(10)
+
+    # ==========================================
+    # SLIDE 4: BẢN CHẤT GỐC RỄ VÌ SAO TEXT ENCODER MÙ CHỮ
+    # ==========================================
+    s4 = prs.slides.add_slide(blank_layout)
+    set_slide_bg(s4)
+    add_header(s4, "NGHIÊN CỨU LÝ THUYẾT & PAPERS", "Bản Chất Gốc Rễ: Vì Sao Text Encoder Không Thể Vẽ Chữ Tiếng Việt?", f"04 / {total_slides}")
     
     reasons = [
         ("❌ Điểm Mù Không Gian 2D của LLM", "Các LLM ngôn ngữ thuần túy như Qwen3 chỉ xử lý chuỗi token 1D ngữ nghĩa. Chúng hoàn toàn không có biểu diễn tọa độ 2D về nét bút, vị trí dấu mũ (Â, Ô), dấu móc (Ơ, Ư) hay thanh điệu (Dấu hỏi, ngã, nặng).\n\n📌 Minh chứng từ BFL: Ở các phiên bản lớn hơn (9B / Dev), Black Forest Labs bắt buộc phải nâng cấp lên Vision-Language Model (VLM) đa phương thức để bù đắp điểm mù này!", C_GOLD),
@@ -192,9 +246,9 @@ def create_deck():
         cy = Inches(1.8)
         cw = Inches(5.75)
         ch = Inches(4.8)
-        add_card(s3, cx, cy, cw, ch, bg_color=C_CARD_HI if i==1 else C_CARD, border_color=C_CARD_HI_BORDER if i==1 else C_CARD_BORDER)
+        add_card(s4, cx, cy, cw, ch, bg_color=C_CARD_HI if i==1 else C_CARD, border_color=C_CARD_HI_BORDER if i==1 else C_CARD_BORDER)
         
-        rtb = s3.shapes.add_textbox(cx + Inches(0.25), cy + Inches(0.25), cw - Inches(0.5), ch - Inches(0.5))
+        rtb = s4.shapes.add_textbox(cx + Inches(0.25), cy + Inches(0.25), cw - Inches(0.5), ch - Inches(0.5))
         rtf = rtb.text_frame
         rtf.word_wrap = True
         
@@ -213,11 +267,11 @@ def create_deck():
         rp2.space_before = Pt(14)
 
     # ==========================================
-    # SLIDE 4: GIẢI PHÁP ĐỘT PHÁ DYNAMIC GLYPH
+    # SLIDE 5: GIẢI PHÁP ĐỘT PHÁ DYNAMIC GLYPH
     # ==========================================
-    s4 = prs.slides.add_slide(blank_layout)
-    set_slide_bg(s4)
-    add_header(s4, "SÁNG KIẾN KỸ THUẬT", "Giải Pháp Đột Phá: Dynamic Glyph In-Context Conditioning", "04 / 10")
+    s5 = prs.slides.add_slide(blank_layout)
+    set_slide_bg(s5)
+    add_header(s5, "SÁNG KIẾN KỸ THUẬT", "Giải Pháp Đột Phá: Dynamic Glyph In-Context Conditioning", f"05 / {total_slides}")
     
     pillars = [
         ("🔤 1. Render Glyph Đen-Trắng Chuẩn TTF", "Dùng Python PIL/OpenCV render trực tiếp file font thương mại (Anton, BeVietnamPro, Pacifico, Playfair, Sedgwick). Đảm bảo 100% hình học Unicode tiếng Việt chuẩn xác trước khi nạp vào VAE.", C_PRIMARY),
@@ -229,9 +283,9 @@ def create_deck():
         cy = Inches(1.8)
         cw = Inches(3.78)
         ch = Inches(4.8)
-        add_card(s4, cx, cy, cw, ch)
+        add_card(s5, cx, cy, cw, ch)
         
-        ptb = s4.shapes.add_textbox(cx + Inches(0.2), cy + Inches(0.2), cw - Inches(0.4), ch - Inches(0.4))
+        ptb = s5.shapes.add_textbox(cx + Inches(0.2), cy + Inches(0.2), cw - Inches(0.4), ch - Inches(0.4))
         ptf = ptb.text_frame
         ptf.word_wrap = True
         
@@ -250,34 +304,33 @@ def create_deck():
         pp2.space_before = Pt(14)
 
     # ==========================================
-    # SLIDE 5: SHOWCASE 1 - BÀI THƠ TÂY TIẾN (28 TỪ)
+    # SLIDE 6: SHOWCASE 1 - BÀI THƠ TÂY TIẾN (28 TỪ)
     # ==========================================
-    s5 = prs.slides.add_slide(blank_layout)
-    set_slide_bg(s5)
-    add_header(s5, "KẾT QUẢ THỰC NGHIỆM ĐỈNH CAO", "Showcase 1: Khắc Phục Nén VAE Với Bài Thơ Dài (28 Từ, 119 Ký Tự)", "05 / 10")
+    s6 = prs.slides.add_slide(blank_layout)
+    set_slide_bg(s6)
+    add_header(s6, "KẾT QUẢ THỰC NGHIỆM ĐỈNH CAO", "Showcase 1: Khắc Phục Nén VAE Với Bài Thơ Dài (28 Từ, 119 Ký Tự)", f"06 / {total_slides}")
     
     cx, cy, cw, ch = Inches(0.8), Inches(1.8), Inches(5.75), Inches(4.8)
-    add_card(s5, cx, cy, cw, ch)
-    stb5 = s5.shapes.add_textbox(cx + Inches(0.25), cy + Inches(0.25), cw - Inches(0.5), ch - Inches(0.5))
-    stf5 = stb5.text_frame
-    stf5.word_wrap = True
+    add_card(s6, cx, cy, cw, ch)
+    stb6 = s6.shapes.add_textbox(cx + Inches(0.25), cy + Inches(0.25), cw - Inches(0.5), ch - Inches(0.5))
+    stf6 = stb6.text_frame
+    stf6.word_wrap = True
     
-    sp1 = stf5.paragraphs[0]
-    sp1.text = "🏆 ĐỘT PHÁ EXP54: 100% CHÍNH TẢ BÀI THƠ 4 CÂU"
+    sp1 = stf6.paragraphs[0]
+    sp1.text = "🏆 ĐỘT PHÁ EXP54: 100% CHÍNH TẢ 4 CÂU THƠ"
     sp1.font.size = Pt(15)
     sp1.font.bold = True
     sp1.font.color.rgb = C_PRIMARY
     
-    sp2 = stf5.add_paragraph()
+    sp2 = stf6.add_paragraph()
     sp2.text = "• Lầm tưởng ban đầu (exp52): Cho rằng mô hình Base 4B bị giới hạn trí nhớ không thể sinh được bài thơ dài 4 câu.\n\n• Bản chất thật: Do ép 4 dòng vào Box nhỏ (512x224px) khiến font size bị co xuống 18px -> sụp đổ đặc trưng khi VAE nén 16x.\n\n• Thành công rực rỡ (exp54): Khi mở rộng Box lên 896x512px (font size ~46px), FLUX 4B sinh ảnh KHÔNG SAI MỘT DẤU NÀO cả bài thơ 4 câu 'Tây Tiến' khắc chìm mạ vàng trên vách đá sa thạch!"
     sp2.font.size = Pt(12)
     sp2.font.color.rgb = C_TEXT_MAIN
     sp2.space_before = Pt(12)
 
-    # Right: Image Placeholder
     rx, ry, rw, rh = Inches(6.75), Inches(1.8), Inches(5.75), Inches(4.8)
-    add_card(s5, rx, ry, rw, rh, bg_color=C_CARD_HI, border_color=C_CARD_HI_BORDER)
-    ptb = s5.shapes.add_textbox(rx + Inches(0.3), ry + Inches(1.8), rw - Inches(0.6), Inches(1.5))
+    add_card(s6, rx, ry, rw, rh, bg_color=C_CARD_HI, border_color=C_CARD_HI_BORDER)
+    ptb = s6.shapes.add_textbox(rx + Inches(0.3), ry + Inches(1.8), rw - Inches(0.6), Inches(1.5))
     ptf = ptb.text_frame
     ptf.word_wrap = True
     pp = ptf.paragraphs[0]
@@ -288,34 +341,33 @@ def create_deck():
     pp.font.color.rgb = C_PRIMARY
 
     # ==========================================
-    # SLIDE 6: SHOWCASE 2 - BIẾN HÓA 3D & SẢN PHẨM THẬT
+    # SLIDE 7: SHOWCASE 2 - BIẾN HÓA 3D & SẢN PHẨM THẬT
     # ==========================================
-    s6 = prs.slides.add_slide(blank_layout)
-    set_slide_bg(s6)
-    add_header(s6, "NĂNG LỰC QUANG HỌC & CHẤT LIỆU", "Showcase 2: Biến Hóa Chất Liệu 3D & Hòa Trộn Sản Phẩm Thật", "06 / 10")
+    s7 = prs.slides.add_slide(blank_layout)
+    set_slide_bg(s7)
+    add_header(s7, "NĂNG LỰC QUANG HỌC & CHẤT LIỆU", "Showcase 2: Biến Hóa Chất Liệu 3D & Hòa Trộn Sản Phẩm Thật", f"07 / {total_slides}")
     
     cx, cy, cw, ch = Inches(0.8), Inches(1.8), Inches(5.75), Inches(4.8)
-    add_card(s6, cx, cy, cw, ch)
-    stb6 = s6.shapes.add_textbox(cx + Inches(0.25), cy + Inches(0.25), cw - Inches(0.5), ch - Inches(0.5))
-    stf6 = stb6.text_frame
-    stf6.word_wrap = True
+    add_card(s7, cx, cy, cw, ch)
+    stb7 = s7.shapes.add_textbox(cx + Inches(0.25), cy + Inches(0.25), cw - Inches(0.5), ch - Inches(0.5))
+    stf7 = stb7.text_frame
+    stf7.word_wrap = True
     
-    sp1 = stf6.paragraphs[0]
+    sp1 = stf7.paragraphs[0]
     sp1.text = "💎 ĐỊNH LUẬT BẢO TOÀN ĐƠN KHỐI (exp50 - exp51)"
     sp1.font.size = Pt(15)
     sp1.font.bold = True
     sp1.font.color.rgb = C_EMERALD
     
-    sp2 = stf6.add_paragraph()
+    sp2 = stf7.add_paragraph()
     sp2.text = "• Khi chỉ có 1 Khối Text (t=10.0) + 1 Ảnh Sản Phẩm (t=60.0):\n  Chữ LUÔN LUÔN ĐƯỢC GIỮ ĐẸP VÀ CHUẨN XÁC 100%, tự động biến hóa mượt mà theo chất liệu trong Prompt (chữ vàng 3D dập nổi, đèn neon phát quang, đổ bóng studio).\n\n• Ảnh sản phẩm thật (4096 tokens) được bảo tồn 100% góc nhìn, ánh sáng và chi tiết thương hiệu.\n\n👉 Khẳng định: Mô hình Base 4B đã hoàn toàn sẵn sàng cho bài toán 1 Text + 1 Sản phẩm!"
     sp2.font.size = Pt(12)
     sp2.font.color.rgb = C_TEXT_MAIN
     sp2.space_before = Pt(12)
 
-    # Right: Image Placeholder
     rx, ry, rw, rh = Inches(6.75), Inches(1.8), Inches(5.75), Inches(4.8)
-    add_card(s6, rx, ry, rw, rh, bg_color=C_CARD_HI, border_color=C_CARD_HI_BORDER)
-    ptb = s6.shapes.add_textbox(rx + Inches(0.3), ry + Inches(1.8), rw - Inches(0.6), Inches(1.5))
+    add_card(s7, rx, ry, rw, rh, bg_color=C_CARD_HI, border_color=C_CARD_HI_BORDER)
+    ptb = s7.shapes.add_textbox(rx + Inches(0.3), ry + Inches(1.8), rw - Inches(0.6), Inches(1.5))
     ptf = ptb.text_frame
     ptf.word_wrap = True
     pp = ptf.paragraphs[0]
@@ -326,91 +378,91 @@ def create_deck():
     pp.font.color.rgb = C_EMERALD
 
     # ==========================================
-    # SLIDE 7: TRẠNG THÁI CÔ LẬP VS CẠNH TRANH
+    # SLIDE 8: TRẠNG THÁI CÔ LẬP VS CẠNH TRANH
     # ==========================================
-    s7 = prs.slides.add_slide(blank_layout)
-    set_slide_bg(s7)
-    add_header(s7, "BẢN CHẤT CƠ CHẾ SOFTMAX", "Thách Thức Kỹ Thuật: Trạng Thái Cô Lập (t<=40) vs Cạnh Tranh Đồng Thời", "07 / 10")
+    s8 = prs.slides.add_slide(blank_layout)
+    set_slide_bg(s8)
+    add_header(s8, "BẢN CHẤT CƠ CHẾ SOFTMAX", "Thách Thức Kỹ Thuật: Trạng Thái Cô Lập (t<=40) vs Cạnh Tranh Đồng Thời", f"08 / {total_slides}")
     
     cx, cy, cw, ch = Inches(0.8), Inches(1.8), Inches(5.75), Inches(4.8)
-    add_card(s7, cx, cy, cw, ch)
-    stb7a = s7.shapes.add_textbox(cx + Inches(0.25), cy + Inches(0.25), cw - Inches(0.5), ch - Inches(0.5))
-    stf7a = stb7a.text_frame
-    stf7a.word_wrap = True
+    add_card(s8, cx, cy, cw, ch)
+    stb8a = s8.shapes.add_textbox(cx + Inches(0.25), cy + Inches(0.25), cw - Inches(0.5), ch - Inches(0.5))
+    stf8a = stb8a.text_frame
+    stf8a.word_wrap = True
     
-    sp1 = stf7a.paragraphs[0]
+    sp1 = stf8a.paragraphs[0]
     sp1.text = "🟢 TRẠNG THÁI CÔ LẬP (PROBE SUITE 1)"
     sp1.font.size = Pt(14)
     sp1.font.bold = True
     sp1.font.color.rgb = C_EMERALD
     
-    sp2 = stf7a.add_paragraph()
+    sp2 = stf8a.add_paragraph()
     sp2.text = "• Khi chạy từng kênh đơn lẻ:\n  Kênh t=10.0, 20.0, 30.0, 40.0 ĐỀU VẼ CHỮ 3D ĐẸP 100% CHUẨN XÁC.\n• Chỉ bắt đầu suy hao góc quay RoPE tại t >= 50.0.\n\n👉 Ý nghĩa: Mô hình Base ĐÃ CÓ SẴN năng lực biểu diễn chữ ở dải t <= 40.0!"
     sp2.font.size = Pt(12)
     sp2.font.color.rgb = C_TEXT_MAIN
     sp2.space_before = Pt(10)
 
     rx, ry, rw, rh = Inches(6.75), Inches(1.8), Inches(5.75), Inches(4.8)
-    add_card(s7, rx, ry, rw, rh, bg_color=C_CARD_HI, border_color=C_CARD_HI_BORDER)
-    stb7b = s7.shapes.add_textbox(rx + Inches(0.25), ry + Inches(0.25), rw - Inches(0.5), rh - Inches(0.5))
-    stf7b = stb7b.text_frame
-    stf7b.word_wrap = True
+    add_card(s8, rx, ry, rw, rh, bg_color=C_CARD_HI, border_color=C_CARD_HI_BORDER)
+    stb8b = s8.shapes.add_textbox(rx + Inches(0.25), ry + Inches(0.25), rw - Inches(0.5), rh - Inches(0.5))
+    stf8b = stb8b.text_frame
+    stf8b.word_wrap = True
     
-    rp1 = stf7b.paragraphs[0]
+    rp1 = stf8b.paragraphs[0]
     rp1.text = "🔴 TRẠNG THÁI CẠNH TRANH (PROBE SUITE 2)"
     rp1.font.size = Pt(14)
     rp1.font.bold = True
     rp1.font.color.rgb = C_GOLD
     
-    rp2 = stf7b.add_paragraph()
+    rp2 = stf8b.add_paragraph()
     rp2.text = "• Khi đưa đồng thời 3-4 Slot:\n  Attention Heads bị hiện tượng Tranh chấp & Tràn kênh (Cross-Slot Bleeding) -> Slot giữa bị đè mất.\n\n• Ảnh sản phẩm (4096 tokens) luôn thắng thế nhờ Token Mass Dominance.\n\n👉 Mục tiêu LoRA Phase 3: Dạy DiT phân luồng Attention độc lập giữa các slot!"
     rp2.font.size = Pt(12)
     rp2.font.color.rgb = C_TEXT_MAIN
     rp2.space_before = Pt(10)
 
     # ==========================================
-    # SLIDE 8: THỰC NGHIỆM ĐỐI CHỨNG ĐA MÔ HÌNH (9B VS GEMINI)
+    # SLIDE 9: THỰC NGHIỆM ĐỐI CHỨNG ĐA MÔ HÌNH (9B VS GEMINI)
     # ==========================================
-    s8 = prs.slides.add_slide(blank_layout)
-    set_slide_bg(s8)
-    add_header(s8, "BẰNG CHỨNG THỰC NGHIỆM TRỰC QUAN", "Thực Nghiệm Đối Chứng Đa Mô Hình (Fal.ai FLUX 9B vs Gemini 2.0)", "08 / 10")
+    s9 = prs.slides.add_slide(blank_layout)
+    set_slide_bg(s9)
+    add_header(s9, "BẰNG CHỨNG THỰC NGHIỆM TRỰC QUAN", "Thực Nghiệm Đối Chứng Đa Mô Hình (Fal.ai FLUX 9B vs Gemini 2.0)", f"09 / {total_slides}")
     
     c1_x, c1_y, c1_w, c1_h = Inches(0.8), Inches(1.8), Inches(5.75), Inches(4.8)
-    add_card(s8, c1_x, c1_y, c1_w, c1_h)
+    add_card(s9, c1_x, c1_y, c1_w, c1_h)
     
     img_9b_path = "docs/slides/assets/fal_ai_9b_test.png"
     if os.path.exists(img_9b_path):
-        s8.shapes.add_picture(img_9b_path, c1_x + Inches(0.2), c1_y + Inches(0.2), width=Inches(5.35), height=Inches(3.0))
+        s9.shapes.add_picture(img_9b_path, c1_x + Inches(0.2), c1_y + Inches(0.2), width=Inches(5.35), height=Inches(3.0))
     
-    tb8a = s8.shapes.add_textbox(c1_x + Inches(0.2), c1_y + Inches(3.3), c1_w - Inches(0.4), Inches(1.3))
-    tf8a = tb8a.text_frame
-    tf8a.word_wrap = True
-    p = tf8a.paragraphs[0]
+    tb9a = s9.shapes.add_textbox(c1_x + Inches(0.2), c1_y + Inches(3.3), c1_w - Inches(0.4), Inches(1.3))
+    tf9a = tb9a.text_frame
+    tf9a.word_wrap = True
+    p = tf9a.paragraphs[0]
     p.text = "⚠️ FLUX.2 KLEIN 9B (ZERO-SHOT): Giữ được t=10 & t=20, nhưng sụp đổ ở t=30 thành chữ rác 'ÔUÔ-DAT!' do bão hòa Attention."
     p.font.size = Pt(11)
     p.font.color.rgb = C_GOLD
 
     c2_x, c2_y, c2_w, c2_h = Inches(6.75), Inches(1.8), Inches(5.75), Inches(4.8)
-    add_card(s8, c2_x, c2_y, c2_w, c2_h, bg_color=C_CARD_HI, border_color=C_CARD_HI_BORDER)
+    add_card(s9, c2_x, c2_y, c2_w, c2_h, bg_color=C_CARD_HI, border_color=C_CARD_HI_BORDER)
     
     img_gemini_path = "docs/slides/assets/gemini_teacher_test.jpg"
     if os.path.exists(img_gemini_path):
-        s8.shapes.add_picture(img_gemini_path, c2_x + Inches(0.2), c2_y + Inches(0.2), width=Inches(5.35), height=Inches(3.0))
+        s9.shapes.add_picture(img_gemini_path, c2_x + Inches(0.2), c2_y + Inches(0.2), width=Inches(5.35), height=Inches(3.0))
         
-    tb8b = s8.shapes.add_textbox(c2_x + Inches(0.2), c2_y + Inches(3.3), c2_w - Inches(0.4), Inches(1.3))
-    tf8b = tb8b.text_frame
-    tf8b.word_wrap = True
-    p = tf8b.paragraphs[0]
+    tb9b = s9.shapes.add_textbox(c2_x + Inches(0.2), c2_y + Inches(3.3), c2_w - Inches(0.4), Inches(1.3))
+    tf9b = tb9b.text_frame
+    tf9b.word_wrap = True
+    p = tf9b.paragraphs[0]
     p.text = "✅ GEMINI 2.0 (DISTILLATION TEACHER): CHUẨN XÁC 100% CẢ 3 KHỐI TEXT (Đủ 4 dấu kép khó nhất) + Giữ trọn tai nghe + Bố cục thương mại đỉnh cao!"
     p.font.size = Pt(11)
     p.font.color.rgb = C_EMERALD
 
     # ==========================================
-    # SLIDE 9: CHIẾN LƯỢC HUẤN LUYỆN LORA PHASE 3
+    # SLIDE 10: CHIẾN LƯỢC HUẤN LUYỆN LORA PHASE 3
     # ==========================================
-    s9 = prs.slides.add_slide(blank_layout)
-    set_slide_bg(s9)
-    add_header(s9, "CHIẾN LƯỢC CHUYỂN GIAO TRI THỨC", "Chiến Lược Huấn Luyện LoRA DiT 4B Base (Phase 3 Master Roadmap)", "09 / 10")
+    s10 = prs.slides.add_slide(blank_layout)
+    set_slide_bg(s10)
+    add_header(s10, "CHIẾN LƯỢC CHUYỂN GIAO TRI THỨC", "Chiến Lược Huấn Luyện LoRA DiT 4B Base (Phase 3 Master Roadmap)", f"10 / {total_slides}")
     
     milestones = [
         ("MILESTONE A (600 steps)", "Hòa Trộn 1 SP + 1 Headline\n• 500 mẫu (300 SP + 200 T2I)\n• Cân bằng Softmax giữa mỏ neo 4096 tokens và Headline.\n• Nghiệm thu: Headline 100%, SP >= 98%."),
@@ -422,9 +474,9 @@ def create_deck():
         cy = Inches(1.8)
         cw = Inches(3.78)
         ch = Inches(4.8)
-        add_card(s9, cx, cy, cw, ch, bg_color=C_CARD_HI if i==2 else C_CARD, border_color=C_CARD_HI_BORDER if i==2 else C_CARD_BORDER)
+        add_card(s10, cx, cy, cw, ch, bg_color=C_CARD_HI if i==2 else C_CARD, border_color=C_CARD_HI_BORDER if i==2 else C_CARD_BORDER)
         
-        mtb = s9.shapes.add_textbox(cx + Inches(0.2), cy + Inches(0.2), cw - Inches(0.4), ch - Inches(0.4))
+        mtb = s10.shapes.add_textbox(cx + Inches(0.2), cy + Inches(0.2), cw - Inches(0.4), ch - Inches(0.4))
         mtf = mtb.text_frame
         mtf.word_wrap = True
         
@@ -441,15 +493,15 @@ def create_deck():
         mp2.space_before = Pt(14)
 
     # ==========================================
-    # SLIDE 10: ĐỀ XUẤT PHÊ DUYỆT & KẾ HOẠCH HÀNH ĐỘNG
+    # SLIDE 11: ĐỀ XUẤT PHÊ DUYỆT & KẾ HOẠCH HÀNH ĐỘNG
     # ==========================================
-    s10 = prs.slides.add_slide(blank_layout)
-    set_slide_bg(s10)
-    add_header(s10, "ĐỀ XUẤT PHÊ DUYỆT & KẾ HOẠCH", "Dự Toán Ngân Sách Siêu Tiết Kiệm & Kế Hoạch Hoàn Thành 3 Ngày", "10 / 10")
+    s11 = prs.slides.add_slide(blank_layout)
+    set_slide_bg(s11)
+    add_header(s11, "ĐỀ XUẤT PHÊ DUYỆT & KẾ HOẠCH", "Dự Toán Ngân Sách Siêu Tiết Kiệm & Kế Hoạch Hoàn Thành 3 Ngày", f"11 / {total_slides}")
     
     cx, cy, cw, ch = Inches(0.8), Inches(1.8), Inches(5.75), Inches(4.8)
-    add_card(s10, cx, cy, cw, ch)
-    btb = s10.shapes.add_textbox(cx + Inches(0.25), cy + Inches(0.25), cw - Inches(0.5), ch - Inches(0.5))
+    add_card(s11, cx, cy, cw, ch)
+    btb = s11.shapes.add_textbox(cx + Inches(0.25), cy + Inches(0.25), cw - Inches(0.5), ch - Inches(0.5))
     btf = btb.text_frame
     btf.word_wrap = True
     
@@ -466,18 +518,18 @@ def create_deck():
     bp2.space_before = Pt(10)
 
     rx, ry, rw, rh = Inches(6.75), Inches(1.8), Inches(5.75), Inches(4.8)
-    add_card(s10, rx, ry, rw, rh, bg_color=C_CARD_HI, border_color=C_CARD_HI_BORDER)
-    ptb10 = s10.shapes.add_textbox(rx + Inches(0.25), ry + Inches(0.25), rw - Inches(0.5), rh - Inches(0.5))
-    ptf10 = ptb10.text_frame
-    ptf10.word_wrap = True
+    add_card(s11, rx, ry, rw, rh, bg_color=C_CARD_HI, border_color=C_CARD_HI_BORDER)
+    ptb11 = s11.shapes.add_textbox(rx + Inches(0.25), ry + Inches(0.25), rw - Inches(0.5), rh - Inches(0.5))
+    ptf11 = ptb11.text_frame
+    ptf11.word_wrap = True
     
-    pp1 = ptf10.paragraphs[0]
+    pp1 = ptf11.paragraphs[0]
     pp1.text = "🚀 KẾ HOẠCH HÀNH ĐỘNG 3 NGÀY TỚI"
     pp1.font.size = Pt(15)
     pp1.font.bold = True
     pp1.font.color.rgb = C_EMERALD
     
-    pp2 = ptf10.add_paragraph()
+    pp2 = ptf11.add_paragraph()
     pp2.text = "• NGÀY 1: Cấp Key -> Chạy `generate_distilled_dataset.py` sinh 500 mẫu Pilot -> QA OCR >= 98%.\n\n• NGÀY 2: Huấn luyện Milestone A & B trên 2x A30 -> Đánh giá 8 Golden Test Cases.\n\n• NGÀY 3: Huấn luyện hoàn tất Milestone C -> Đóng gói Inference Pipeline End-to-End.\n\n👉 KIẾN NGHỊ: Phê duyệt cấp API Key Gemini để bấm máy khởi động dự án ngay hôm nay!"
     pp2.font.size = Pt(11)
     pp2.font.color.rgb = C_TEXT_MAIN
@@ -485,7 +537,7 @@ def create_deck():
 
     out_path = "docs/TENDOO_AI_PHASE_3_EXECUTIVE_REPORT.pptx"
     prs.save(out_path)
-    print(f"[OK] Light theme PowerPoint saved successfully to: {out_path}")
+    print(f"[OK] 11-Slide Light Theme PowerPoint saved successfully to: {out_path}")
 
 if __name__ == "__main__":
     create_deck()

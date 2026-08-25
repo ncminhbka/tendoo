@@ -101,7 +101,7 @@
 
         .progress-fill {
             height: 100%;
-            width: 10%;
+            width: 9.09%;
             background: linear-gradient(90deg, var(--primary), var(--accent-purple));
             transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -168,7 +168,7 @@
 
         .slide-title {
             font-family: var(--font-head);
-            font-size: 2.6rem;
+            font-size: 2.5rem;
             font-weight: 800;
             line-height: 1.2;
             margin-bottom: 20px;
@@ -213,7 +213,7 @@
 
         .card-title {
             font-family: var(--font-head);
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
             margin-bottom: 10px;
             color: var(--text-main);
@@ -223,7 +223,7 @@
         }
 
         .card-body {
-            font-size: 0.95rem;
+            font-size: 0.93rem;
             color: #334155;
             line-height: 1.6;
         }
@@ -380,7 +380,7 @@
         <div class="progress-container">
             <div class="progress-fill" id="progressFill"></div>
         </div>
-        <div class="slide-counter" id="slideCounter">01 / 10</div>
+        <div class="slide-counter" id="slideCounter">01 / 11</div>
     </div>
 
     <!-- Presentation Deck -->
@@ -447,8 +447,44 @@
             </div>
         </div>
 
-        <!-- SLIDE 3: BẢN CHẤT GỐC RỄ -->
+        <!-- SLIDE 3: GIẢI MÃ 4D RoPE & TIME OFFSETS (NEW!) -->
         <div class="slide" id="slide-3">
+            <div class="slide-tag">CƠ CHẾ TOÁN HỌC CỐT LÕI</div>
+            <h2 class="slide-title">Giải Mã Hệ Tọa Độ 4D RoPE & Bí Mật Mốc Thời Gian (t=10, 20, 30...)</h2>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-title" style="color: var(--primary);">⏱️ 1. Mốc t=10, 20... Là Gì?</div>
+                    <p class="card-body">
+                        FLUX.2 định vị từng token bằng 4 chiều: <b>(t, h, w, l)</b>.<br><br>
+                        • <b>Canvas (Ảnh cần sinh)</b>: Đặt tại mốc <b>t = 0.0</b>.<br>
+                        • <b>Ref 1 (Headline)</b>: Đặt tại <b>t = 10.0</b>.<br>
+                        • <b>Ref 2 (Subtitle)</b>: Đặt tại <b>t = 20.0</b>.<br>
+                        • <b>Ref 3 (CTA Badge)</b>: Đặt tại <b>t = 30.0</b>.<br>
+                        • <b>Ref 4 (Sản phẩm thật)</b>: Đặt tại <b>t = 40.0 / 60.0</b>.
+                    </p>
+                </div>
+                <div class="card card-highlight">
+                    <div class="card-title" style="color: var(--accent-purple);">🎯 2. Tại Sao Phân Biệt Được?</div>
+                    <p class="card-body">
+                        4D RoPE xoay vector truy vấn Q, K theo góc quay tần số &theta;(t).<br><br>
+                        • <b>Chống nhầm lẫn</b>: Dù mọi ảnh Ref đều bắt đầu từ góc (0, 0), DiT không bao giờ bị đè pixel vì chúng nằm ở các "khung thời gian t" khác nhau!<br>
+                        • <b>Bất biến hoán vị</b>: Thứ tự nối chuỗi cat() không quan trọng; chính nhãn t trong RoPE quyết định vai trò logic từng ảnh!
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-title" style="color: var(--accent-emerald);">🏛️ 3. Thiết Kế Gốc Của BFL</div>
+                    <p class="card-body">
+                        Black Forest Labs (BFL) chia trục thời gian thành các bước nhảy rời rạc <b>&Delta;t = 10.0</b> để hỗ trợ In-Context đa ảnh.<br><br>
+                        • BFL tiền huấn luyện kênh t=10.0 làm mỏ neo chính.<br>
+                        • <b>Điểm nghẽn gốc</b>: BFL chưa từng huấn luyện DiT phân tách nhiều khối Glyph chữ đen trắng &rarr; bão hòa Attention ở t=20, 30.<br>
+                        👉 <b>Đó là lý do ta cần LoRA Phase 3!</b>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: BẢN CHẤT GỐC RỄ -->
+        <div class="slide" id="slide-4">
             <div class="slide-tag">NGHIÊN CỨU LÝ THUYẾT & PAPERS</div>
             <h2 class="slide-title">Bản Chất Gốc Rễ: Vì Sao Text Encoder Mù Chữ Tiếng Việt?</h2>
             <div class="grid-2">
@@ -470,8 +506,8 @@
             </div>
         </div>
 
-        <!-- SLIDE 4: GIẢI PHÁP DYNAMIC GLYPH -->
-        <div class="slide" id="slide-4">
+        <!-- SLIDE 5: GIẢI PHÁP DYNAMIC GLYPH -->
+        <div class="slide" id="slide-5">
             <div class="slide-tag">SÁNG KIẾN KỸ THUẬT</div>
             <h2 class="slide-title">Giải Pháp Đột Phá: Dynamic Glyph In-Context Conditioning</h2>
             <div class="grid-3">
@@ -496,8 +532,8 @@
             </div>
         </div>
 
-        <!-- SLIDE 5: SHOWCASE TÂY TIẾN -->
-        <div class="slide" id="slide-5">
+        <!-- SLIDE 6: SHOWCASE TÂY TIẾN -->
+        <div class="slide" id="slide-6">
             <div class="slide-tag">KẾT QUẢ THỰC NGHIỆM ĐỈNH CAO</div>
             <h2 class="slide-title">Showcase 1: Khắc Phục Nén VAE Với Bài Thơ Dài (28 Từ, 119 Ký Tự)</h2>
             <div class="grid-2">
@@ -517,8 +553,8 @@
             </div>
         </div>
 
-        <!-- SLIDE 6: SHOWCASE TAI NGHE 3D -->
-        <div class="slide" id="slide-6">
+        <!-- SLIDE 7: SHOWCASE TAI NGHE 3D -->
+        <div class="slide" id="slide-7">
             <div class="slide-tag">NĂNG LỰC QUANG HỌC & CHẤT LIỆU</div>
             <h2 class="slide-title">Showcase 2: Biến Hóa Chất Liệu 3D & Hòa Trộn Sản Phẩm Thật</h2>
             <div class="grid-2">
@@ -539,8 +575,8 @@
             </div>
         </div>
 
-        <!-- SLIDE 7: CÔ LẬP VS CẠNH TRANH -->
-        <div class="slide" id="slide-7">
+        <!-- SLIDE 8: CÔ LẬP VS CẠNH TRANH -->
+        <div class="slide" id="slide-8">
             <div class="slide-tag">BẢN CHẤT CƠ CHẾ SOFTMAX</div>
             <h2 class="slide-title">Thách Thức Kỹ Thuật: Trạng Thái Cô Lập (t&le;40) vs Cạnh Tranh</h2>
             <div class="grid-2">
@@ -565,8 +601,8 @@
             </div>
         </div>
 
-        <!-- SLIDE 8: THỰC NGHIỆM ĐỐI CHỨNG (9B VS GEMINI) -->
-        <div class="slide" id="slide-8">
+        <!-- SLIDE 9: THỰC NGHIỆM ĐỐI CHỨNG (9B VS GEMINI) -->
+        <div class="slide" id="slide-9">
             <div class="slide-tag">BẰNG CHỨNG THỰC NGHIỆM TRỰC QUAN</div>
             <h2 class="slide-title">Thực Nghiệm Đối Chứng Đa Mô Hình (Fal.ai FLUX 9B vs Gemini 2.0)</h2>
             <div class="grid-2">
@@ -591,8 +627,8 @@
             </div>
         </div>
 
-        <!-- SLIDE 9: CHIẾN LƯỢC LORA PHASE 3 -->
-        <div class="slide" id="slide-9">
+        <!-- SLIDE 10: CHIẾN LƯỢC LORA PHASE 3 -->
+        <div class="slide" id="slide-10">
             <div class="slide-tag">CHIẾN LƯỢC CHUYỂN GIAO TRI THỨC</div>
             <h2 class="slide-title">Chiến Lược Huấn Luyện LoRA DiT 4B Base (Phase 3 Master Roadmap)</h2>
             <div class="grid-3">
@@ -626,8 +662,8 @@
             </div>
         </div>
 
-        <!-- SLIDE 10: ĐỀ XUẤT BUDGET & KẾ HOẠCH -->
-        <div class="slide" id="slide-10">
+        <!-- SLIDE 11: ĐỀ XUẤT BUDGET & KẾ HOẠCH -->
+        <div class="slide" id="slide-11">
             <div class="slide-tag">ĐỀ XUẤT PHÊ DUYỆT & KẾ HOẠCH</div>
             <h2 class="slide-title">Dự Toán Ngân Sách Siêu Tiết Kiệm & Kế Hoạch 3 Ngày</h2>
             <div class="grid-2">
@@ -683,7 +719,7 @@
 
     <script>
         let currentSlide = 1;
-        const totalSlides = 10;
+        const totalSlides = 11;
 
         const progressFill = document.getElementById('progressFill');
         const slideCounter = document.getElementById('slideCounter');
