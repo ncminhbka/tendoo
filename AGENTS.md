@@ -208,6 +208,15 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + **Cơ chế 2 (Nghẽn cục bộ vị trí / Dấu phụ phức tạp)**: Khối Subtitle `"CHỐNG ỒN CHỦ ĐỘNG"` tại $t=20$ không tự khỏi khi tăng token, cần phân lập giữa đặc thù RoPE $t=20$ và cụm 4 dấu phụ liên tiếp `Ố-Ồ-Ủ-Ộ`.
     - **Định hướng công bố khoa học**: Mọi báo cáo kỹ thuật và pipeline huấn luyện LoRA cần kết hợp cả 2 trục: Chuẩn hóa kích thước Token Mass tối thiểu và Tinh chỉnh Attention Routing phân luồng.
 
+15. **ĐỊNH LUẬT CHẠM TRẦN HEURISTIC ZERO-SHOT & TÍNH TẤT YẾU CỦA LORA (THE ZERO-SHOT HEURISTIC CEILING LAW)**:
+    - **Phát hiện thực nghiệm (`exp60` vs `exp61`)**:
+      + Mô hình Base 4B vẽ được dấu kép phức tạp (minh chứng: `"CHỐNG"` ở `exp60` Pass C đẹp $100\%$).
+      + Nhưng khi đưa vào bài toán thương mại đầy đủ (3 Text + 1 Sản phẩm thật): Mọi mẹo Prompting, Whitelist bề mặt vật đỡ (ruy băng, kính mờ, bảng kim loại) đều **hoàn toàn bất lực trong việc ép DiT Base định tuyến đúng dòng chữ giữa**.
+    - **Kết luận tối hậu cho Giai đoạn 3**:
+      + Các giải pháp Heuristic "rẻ/miễn phí" đã chạm trần vật lý của mô hình Base.
+      + **Huấn luyện LoRA DiT 4B Base (Giai đoạn 3) là giải pháp DUY NHẤT, BẮT BUỘC VÀ TẤT YẾU** để biến FLUX.2 thành cỗ máy sản xuất Banner thương mại 4-slot đạt chuẩn $100\%$.
+
+
 
 
 

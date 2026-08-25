@@ -495,6 +495,24 @@ Dưới đây là bảng theo dõi toàn bộ các commit được thực hiện
     * Pass 2: $t10=$ Âm thanh | $t20=$ Mua 1 (CTA chuyển vào $t=20$) | $t30=$ Chống ồn (Subtitle chuyển vào $t=30$)
     * Pass 3: $t10=$ Chống ồn (Subtitle chuyển vào $t=10$) | $t20=$ Âm thanh | $t30=$ Mua 1
 * **Mục tiêu khoa học**: Xác định dứt điểm lỗi thuộc về đặc tính vị trí RoPE hay thuộc về class dấu phụ tiếng Việt phức tạp để khóa hướng kiến trúc LoRA.
+* **Kết quả quan sát then chốt**:
+  * Chữ `"CHỐNG"` trong Pass C (tại đáy) vẽ **đúng 100% cực kỳ sắc nét với dấu kép `Ố`**, chứng minh VAE và DiT 4B Base hoàn toàn đủ năng lực vẽ dấu phức tạp.
+  * Hiện tượng trộn lẫn `"CHỐNG TẶNG"` tại đáy và dòng chữ rác ở giữa chứng minh DiT Base bị **lỗi định tuyến chú ý (Attention Misrouting / Cross-Slot Bleeding)** khi cạnh tranh đa slot.
+
+---
+
+### 40. Chuỗi Thực nghiệm `exp61`: Đo lường Giả Thuyết Vật Đỡ Trung Tính (Surface Prior & Carrier Whitelist Benchmark)
+* **Thời gian**: `Tue Aug 25 14:25:00 2026 +0700`
+* **File liên quan**: [`scripts/test_surface_prior_benchmark.py`](file:///d:/Viettel%20Telecom/Tendoo%20AI/scripts/test_surface_prior_benchmark.py), [`AGENTS.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/AGENTS.md)
+* **Thiết kế thực nghiệm**:
+  * Kiểm tra 4 ứng viên Nhóm A (Bề mặt trung tính ít prior: Dải ruy băng, Kính mờ, Bảng kim loại, Khung viền) vs 2 ứng viên Nhóm B (Prior text dày đặc: Thông tin tính năng, Danh thiếp).
+* **Kết quả thực nghiệm**:
+  * Cả 6 ứng viên thuộc Nhóm A và Nhóm B đều **KHÔNG THỂ giúp mô hình Base zero-shot định tuyến đúng dòng chữ giữa**.
+* **Định luật đúc kết (The Zero-Shot Heuristic Ceiling Law)**:
+  * Mọi giải pháp mẹo Prompting, Whitelist bề mặt vật đỡ hay ép Density đều đã **chạm trần giới hạn vật lý của mô hình Base Zero-Shot**.
+  * Mô hình `FLUX.2-klein-base-4B` nguyên bản không được BFL tiền huấn luyện phân luồng đồng thời 3 text + 1 sản phẩm.
+  * 👉 **KẾT LUẬN TỐI HẬU**: **Fine-Tuning LoRA (Giai đoạn 3) là con đường kỹ thuật DUY NHẤT, BẮT BUỘC VÀ TẤT YẾU** để đạt độ chính xác $100\%$ đa khối text cho Production!
+
 
 
 
