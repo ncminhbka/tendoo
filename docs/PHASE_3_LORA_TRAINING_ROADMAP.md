@@ -94,7 +94,7 @@ $$\text{Sample}_i = \left( \text{Prompt}_{\text{clean}}, \; \text{Ref}_{10}, \; 
 ## ⚙️ 3. THIẾT KẾ KIẾN TRÚC LORA & HYPERPARAMETERS
 
 
-### 3.1. Cấu hình PEFT LoRA Injection:
+### 3.1. Cấu hình PEFT LoRA Injection & Phân Bổ Tham Số Chính Xác:
 ```python
 # Cấu hình LoRA tối ưu cho FLUX.2 Klein 4B Base
 lora_config = {
@@ -102,17 +102,29 @@ lora_config = {
     "lora_alpha": 32,                 # Scaling factor = 1.0
     "lora_dropout": 0.05,
     "target_modules": [
-        "img_attn.qkv",               # 5 DoubleStreamBlocks (Query, Key, Value ảnh/glyph)
-        "linear1",                    # 20 SingleStreamBlocks (Joint QKV + MLP projection)
+        "img_attn.qkv",               # 5 DoubleStreamBlocks (Query, Key, Value nhánh ảnh/glyph)
+        "txt_attn.qkv",               # 5 DoubleStreamBlocks (Query, Key, Value nhánh text-prompt)
+        "linear1",                    # 20 SingleStreamBlocks (Fused Joint QKV Attention + MLP Projection)
     ],
     "bias": "none",
     "dtype": "bfloat16"
 }
 ```
 
+#### 🧮 Tính Toán Số Lượng Tham Số LoRA Chi Tiết:
+1. **5 Khối DoubleStreamBlocks**:
+   * `img_attn.qkv`: $5 \times (3072 \times 32 + 9216 \times 32) = 1,966,080$ tham số.
+   * `txt_attn.qkv`: $5 \times (3072 \times 32 + 9216 \times 32) = 1,966,080$ tham số.
+   * $\rightarrow$ Tiểu kế DoubleBlocks: **$3,932,160$ tham số** (~3.93M).
+2. **20 Khối SingleStreamBlocks**:
+   * `linear1` (Ma trận fused $3072 \rightarrow 27648$ gồm 9216 dim cho QKV + 18432 dim cho MLP):
+   * $20 \times (3072 \times 32 + 27648 \times 32) = 20 \times 983,040 = \mathbf{19,660,800}$ tham số (~19.66M).
+   * *Ý nghĩa kỹ thuật*: Áp dụng LoRA lên `linear1` cho phép mô hình tối ưu đồng thời cả cơ chế Attention phân luồng lẫn biến đổi đặc trưng không gian (Feature Transformation) trong khối đơn luồng, tạo năng lực thích ứng mạnh mẽ nhất.
+
 * **Tổng tham số mô hình Base 4B**: $\approx 4.08 \times 10^9$ parameters.
-* **Tổng tham số LoRA cần huấn luyện**: $\approx 35.4 \times 10^6$ parameters (**chỉ chiếm $\mathbf{0.86\%}$ mô hình**).
-* **Kích thước file trọng số LoRA lưu trữ**: $\approx \mathbf{70.8\text{ MB}}$ (`.safetensors`).
+* **Tổng tham số LoRA cần huấn luyện**: $\mathbf{23,592,960\text{ parameters}}$ (**chỉ chiếm $\mathbf{0.58\%}$ mô hình**).
+* **Kích thước file trọng số LoRA lưu trữ**: $\approx \mathbf{47.2\text{ MB}}$ (`.safetensors`).
+
 
 ---
 
@@ -135,12 +147,13 @@ lora_config = {
 
 ## 📈 4. LỘ TRÌNH HUẤN LUYỆN 3 MỐC (CURRICULUM LEARNING ROADMAP)
 
-Để đảm bảo gradient hội tụ mượt mà và không làm "sốc" ma trận Attention của mô hình Base, quá trình train được chia làm 3 Phase tăng dần độ phức tạp:
+Để đảm bảo gradient hội tụ mượt mà và không làm "sốc" ma trận Attention của mô hình Base, quá trình train được chia làm 3 Phase tăng dần độ phức tạp (Effective Batch Size $= 1 \times 2 \times 4 = \mathbf{8}$):
 
 ```
-[ GIAI ĐOẠN 3.1: MILESTONE A ] ──────► [ GIAI ĐOẠN 3.2: MILESTONE B ] ──────► [ GIAI ĐOẠN 3.3: MILESTONE C ]
-  (1 Text t=10 + 1 SP t=40)              (2 Texts t=10,20 + 1 SP t=40)           (3 Texts t=10,20,30 + 1 SP t=40)
-  • 600 Steps (~45 phút)                  • 1,200 Steps (~1.5 giờ)                • 2,200 Steps (~2.8 giờ)
+       [ MILESTONE A ]                      [ MILESTONE B ]                      [ MILESTONE C ]
+     Phase Khởi Động (1 text)             Phase Tách Kênh (2 texts)            Phase Full 4-Slot (3 texts)
+      600 steps (9.6 epochs)              1,200 steps (6.4 epochs)             2,200 steps (7.04 epochs)
+   Tập dữ liệu: 500 samples             Tập dữ liệu: 1,500 samples           Tập dữ liệu: 2,500 samples
   • Học hòa trộn SP & Headline            • Học tách kênh Subtitle (t=20)         • Khóa toàn bộ 4-slot Production
 ```
 
@@ -148,18 +161,19 @@ lora_config = {
 
 #### 🔹 Milestone A: Đồng bộ Hòa trộn 1 Sản Phẩm ($t=40$) + 1 Headline ($t=10$)
 * **Mục tiêu**: Dạy LoRA phân luồng mượt mà giữa khối token khổng lồ của sản phẩm (4096 tokens) và khối chữ chính (672 tokens), đảm bảo chữ luôn ăn khớp ánh sáng với sản phẩm.
-* **Số bước**: `600 steps` (khoảng 2 epochs với tập 500 samples).
+* **Số bước**: `600 steps` (tương đương **$9.6\text{ epochs}$** trên tập 500 mẫu với Effective Batch Size = 8).
 * **Tiêu chuẩn nghiệm thu**: Headline đạt độ chính xác $100\%$, sản phẩm đạt độ giống thật $\ge 98\%$.
 
 #### 🔹 Milestone B: Phân tách Chú ý 2 Khối Text ($t=10, 20$) + Sản Phẩm ($t=40$)
 * **Mục tiêu**: Kích hoạt khả năng phân tách kênh $t=20$ (Subtitle), triệt tiêu hoàn toàn hiện tượng Ref-to-Ref contamination (rò rỉ can nhiễu giữa các ref) và ngăn chặn DiT tự sinh chữ rác Lorem Ipsum.
-* **Số bước**: `1,200 steps`.
+* **Số bước**: `1,200 steps` (tương đương **$6.4\text{ epochs}$** trên tập 1,500 mẫu).
 * **Tiêu chuẩn nghiệm thu**: Cả Headline và Subtitle đều render chuẩn $100\%$ chữ và dấu tiếng Việt trên cùng 1 ảnh.
 
 #### 🔹 Milestone C: Toàn diện 3 Khối Text ($t=10, 20, 30$) + Sản Phẩm ($t=40$)
 * **Mục tiêu**: Khóa cứng toàn bộ ma trận Attention cho bố cục chuẩn thương mại hoàn chỉnh (Headline 3D + Subtitle thông tin + CTA Badge phát sáng + Sản phẩm thật).
-* **Số bước**: `2,200 steps`.
+* **Số bước**: `2,200 steps` (tương đương **$7.04\text{ epochs}$** trên tập 2,500 mẫu).
 * **Tiêu chuẩn nghiệm thu**: Chạy bộ Benchmark 20 test case độc lập đạt tỷ lệ chính xác $\ge \mathbf{95\%}$ tổng thể và $\mathbf{100\%}$ trên các mẫu banner chuẩn.
+
 
 ---
 
@@ -178,15 +192,15 @@ lora_config = {
 
 ---
 
-### 5.2. Dự toán Thời gian Thực thi (Timeline Estimates):
+### 5.2. Dự toán Thời gian Thực thi Thực Tế (Realistic Timeline Estimates):
 
 ```
 ╔══════════════════════════════════════════════════════════╦══════════════╦═════════════════════════════════╗
 ║ Hạng Mục Công Việc                                       ║ Thời Gian    ║ Compute / Nhân Lực Cần Thiết    ║
 ╠══════════════════════════════════════════════════════════╬══════════════╬═════════════════════════════════╣
-║ 1. Viết Script Sinh Dataset & Gemini Distillation        ║ 0.5 Ngày     ║ Agent viết code trên Local      ║
-║ 2. Sinh tập Dữ liệu Pilot (500 mẫu) qua Gemini API       ║ 2 – 3 Giờ    ║ Chạy nền qua API                ║
-║ 3. Xây dựng Pipeline Train LoRA (`train_lora_dit.py`)    ║ 0.5 Ngày     ║ DDP Accelerate trên 2x A30      ║
+║ 1. Viết Script Sinh Dataset & Pipeline Distillation      ║ 0.5 Ngày     ║ Agent viết code trên Local      ║
+║ 2. Sinh Dataset Batch (2,500 mẫu kèm Retry Loop OCR)     ║ 6 – 8 Giờ    ║ Chạy nền qua đêm (Batch script) ║
+║ 3. Xây dựng Pipeline Train LoRA DDP (`train_lora_dit.py`) ║ 0.5 Ngày     ║ DDP Accelerate trên 2x A30      ║
 ║ 4. Huấn luyện Milestone A & B (1,800 steps)              ║ ~2.5 Giờ     ║ 2x GPU A30 chạy liên tục        ║
 ║ 5. Đánh giá & Điều chỉnh Hyperparameters                 ║ 0.5 Ngày     ║ Chạy Benchmark Suite 20 mẫu     ║
 ║ 6. Huấn luyện Full Milestone C (4,000 steps tổng)        ║ ~5.0 Giờ     ║ 2x GPU A30 chạy qua đêm         ║
@@ -200,14 +214,19 @@ lora_config = {
 
 ## 🛡️ 6. CHIẾN LƯỢC ĐÁNH GIÁ & DỰ PHÒNG RỦI RO (EVALUATION & CONTINGENCY)
 
-### 6.1. Bộ Đánh Giá Tự Động (Automated Evaluation Suite):
-* Cứ sau mỗi **500 steps**, trainer tự động tạm dừng 60 giây và sinh ảnh trên **5 mẫu Golden Test Cases** cố định:
-  1. *Test 1 (F&B)*: Poster Cafe Grand Opening 3 tầng chữ.
-  2. *Test 2 (Tech)*: Poster Tai nghe chống ồn với cụm 4 dấu kép `Ố-Ồ-Ủ-Ộ`.
-  3. *Test 3 (Fashion)*: Poster Flash Sale Thời trang cao cấp.
-  4. *Test 4 (Literature)*: Bài thơ Tây Tiến 4 câu (kiểm tra độ bền chữ dài).
-  5. *Test 5 (Product Anchor)*: Giày Sneaker thật $t=40$ + 2 khối text.
-* Toàn bộ ảnh eval được tự động ghép vào panel: **`eval_checkpoints/STEP_XXXX_COMPARISON.png`** để User theo dõi trực quan độ tiến bộ qua từng checkpoint.
+### 6.1. Bộ Đánh Giá Toàn Diện 8 Test Cases Cố Định (Golden Evaluation Suite):
+Cứ sau mỗi **500 steps**, trainer tự động tạm dừng và sinh ảnh đánh giá trên **8 Golden Test Cases** bao phủ đủ 5 ngành hàng và bài test chống hồi quy:
+0. *Test 0 (Single-Slot Zero-Shot Regression Test)*: Duy nhất 1 Headline ở $t=10.0$ (Xác nhận LoRA không phá vỡ độ chính xác 100% vốn có của mô hình Base).
+1. *Test 1 (F&B / Cafe)*: Poster Cafe Grand Opening 3 tầng chữ (Gỗ/Neon).
+2. *Test 2 (Tech / Audio)*: Poster Tai nghe chụp tai với Headline 3D kim loại + Subtitle mạ bạc + CTA Neon.
+3. *Test 3 (Fashion / Clothing)*: Poster Flash Sale Thời trang cao cấp với chất liệu chữ vàng đồng.
+4. *Test 4 (Spa / Cosmetics)*: Poster Spa Thảo mộc dưỡng da cao cấp (Chất liệu chữ pastel/tối giản).
+5. *Test 5 (Supermarket / FMCG)*: Poster Siêu thị Đại hạ giá cuối tuần (Chất liệu chữ pop-art dập nổi).
+6. *Test 6 (Literature / Dense Text)*: Bài thơ Tây Tiến 4 câu (28 từ, kiểm tra độ bền câu dài).
+7. *Test 7 (Product Anchor 4096 tokens)*: Giày Sneaker thật $t=40$ + Headline $t=10$ + CTA $t=30$.
+
+* Toàn bộ ảnh eval được tự động ghép vào panel: **`eval_checkpoints/STEP_XXXX_COMPARISON.png`** để theo dõi trực quan từng checkpoint.
+
 
 ---
 
