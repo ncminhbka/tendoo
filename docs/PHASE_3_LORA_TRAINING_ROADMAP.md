@@ -19,6 +19,7 @@ Dựa trên 60 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp60
 | **4. Upstream Semantic Clash** | Khi prompt lặp lại nguyên văn text tiếng Việt, Text Encoder `Qwen3-4B-FP8` gây nhiễu và xung đột với tín hiệu Glyph từ VAE. | Tích hợp Upstream LLM (Gemini Flash / Qwen-2.5) tự động bóc tách text và làm sạch prompt (Prompt Sanitization). |
 | **5. Phân bổ Slot Chuẩn** | Mốc $t \le 40.0$ là vùng hoạt động an toàn tuyệt đối. Mốc $t \ge 50.0$ bắt đầu suy hao góc pha RoPE đối với glyph chữ. | Khóa cứng 4 Slot chuẩn: $t=10.0$ (Headline), $t=20.0$ (Subtitle), $t=30.0$ (CTA Badge), $t=40.0$ (Ảnh Sản Phẩm Thật). |
 | **6. True CFG & Chống CFG Drift** | Klein 4B Base dùng True CFG (`use_guidance_embed = False`), nhánh Unconditional giữ nguyên Reference Tokens `img_cond_seq` và chỉ null hóa Text Prompt `ctx = ""`. | Áp dụng Text Conditioning Dropout ($p=0.10$) khi train LoRA: Thay thế `txt` bằng embedding của chuỗi rỗng `""` với tỉ lệ $10\%$ để LoRA học đúng nhánh Unconditional. |
+| **7. Phân Cấp Thị Giác & Dense CTA (Real Scenarios)** | Trong quảng cáo thực tế, CTA thường gồm nhiều câu ngắn dồn dập hoặc gạch đầu dòng (bullet points) cần gói gọn trong các badge/khung neon nhỏ xinh. | Thiết kế Dynamic Glyph Engine hỗ trợ đa dòng (`\n`, `•`, `-`), dạy LoRA tự động học phân cấp 3 tầng: $t=10$ (Tiêu đề 3D lớn nhất $45\%$), $t=20$ (Thông tin $30\%$), $t=30$ (CTA dồn dập trong Badge nhỏ $25\%$). |
 
 
 ---
@@ -36,11 +37,12 @@ Mỗi mẫu huấn luyện được cấu trúc động theo tiến trình Miles
 $$\text{Sample}_i^{(\text{Milestone})} = \left( \text{Prompt}_{\text{clean}}, \; \{\text{Ref}_k\}_{k \in \text{ActiveSlots}}, \; \mathbf{X}_{\text{target}}^{(\text{Aligned})} \right)$$
 
 1. **`Prompt_clean`**: Mô tả phong cách thị giác, bố cục, ánh sáng studio, chất liệu 3D, **TUYỆT ĐỐI KHÔNG CHỨA CHỮ NGUYÊN VĂN**.
-2. **`Ref_10` (Headline Glyph)**: Kích thước động ($280 - 640\text{ tokens}$), font nghệ thuật thương hiệu theo Domain.
-3. **`Ref_20` (Subtitle Glyph)**: Kích thước động ($240 - 480\text{ tokens}$), font thông tin sắc nét (`BeVietnamPro-Black`).
-4. **`Ref_30` (CTA Badge Glyph)**: Kích thước động ($240 - 384\text{ tokens}$), font uốn lượn/dạ quang (`Pacifico` / `Sedgwick`).
+2. **`Ref_10` (Headline Glyph)**: Kích thước động ($280 - 640\text{ tokens}$), $1 - 2$ dòng in hoa nổi bật, font nghệ thuật thương hiệu theo Domain.
+3. **`Ref_20` (Subtitle Glyph)**: Kích thước động ($240 - 480\text{ tokens}$), hỗ trợ dạng $1 - 2$ dòng thông tin hoặc gạch đầu dòng tính năng (`•`), font sắc nét (`BeVietnamPro-Black`).
+4. **`Ref_30` (CTA Badge Glyph)**: Kích thước động ($240 - 384\text{ tokens}$), hỗ trợ $1 - 2$ câu CTA dồn dập kích thích chuyển đổi (ví dụ: *"Ghé ngay hôm nay! / Deal cực hot - Số lượng có hạn!"*), font uốn lượn/dạ quang (`Pacifico` / `Sedgwick`) được tự động bao gói trong các Badge/Huy hiệu/Pill nhỏ xinh.
 5. **`Ref_prod_40` (Ảnh Sản phẩm Thật)**: Kích thước $1024 \times 1024$ (4096 tokens), ảnh sản phẩm studio sạch nền.
 6. **`X_target` (Ảnh Ground-Truth $1024 \times 1024$)**: Ảnh poster tương ứng chỉ chứa đúng các thành phần text đã kích hoạt.
+
 
 
 ---
