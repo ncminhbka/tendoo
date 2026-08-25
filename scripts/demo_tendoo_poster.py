@@ -279,23 +279,27 @@ def run_demo(
     t_product: float = 60.0,
     width: int = 576,
     height: int = 1024,
+    box_w: int | None = None,
+    box_h: int | None = None,
     font: str = "bevietnam",
-    output_path: str = "demo_result.png",
+    output_path: str = "demo_output.png",
     model_name: str = "flux.2-klein-base-4b",
     checkpoint_dir: str | None = None,
     num_steps: int = 50,
     guidance: float = 4.0,
     seed: int = 42,
 ):
+    """
+    Executes end-to-end Tendoo AI pipeline on FLUX.2 Klein 4B Base.
+    """
     start_time = time.time()
-    resolved_font = resolve_font_path(font)
-
-    # Ensure width and height are divisible by 16
     width = (width // 16) * 16
     height = (height // 16) * 16
 
-    print("\n" + "=" * 80)
-    print(" ⭐ TENDOO AI - VIETNAMESE TYPOGRAPHY & POSTER GENERATION DEMO ⭐")
+    resolved_font = resolve_font_path(font)
+
+    print("=" * 80)
+    print(" 🚀 TENDOO AI: EXECUTIVE POSTER GENERATOR")
     print("=" * 80)
     print(f"📝 Text Input     : '{text}'")
     print(f"🧭 Text Time (t)  : {t_text}")
@@ -321,22 +325,32 @@ def run_demo(
 
     torch.manual_seed(seed)
 
-    # 1. Render Glyph Bitmap
+    # 1. Render Glyph Bitmap with Intelligent Auto-Scaling for Multi-line / Poems
     print("\n[1/5] Generating Vietnamese Orthographic Glyph...")
-    box_w = min(width - 64, 512)
-    box_w = (box_w // 16) * 16
-    num_words = len(text.replace("\\n", " ").split())
-    box_h = 224 if ("\n" in text or num_words >= 4) else 160
+    raw_lines = [l.strip() for l in text.replace("\\n", "\n").split("\n") if l.strip()]
+    num_lines = len(raw_lines) if len(raw_lines) > 1 else (2 if len(text.split()) >= 4 else 1)
+
+    if box_w is None:
+        calc_w = min(width - 64, 896 if num_lines >= 3 else 512)
+    else:
+        calc_w = min(width, box_w)
+    calc_w = (calc_w // 16) * 16
+
+    if box_h is None:
+        calc_h = min(height - 64, max(160, num_lines * 128))
+    else:
+        calc_h = min(height, box_h)
+    calc_h = (calc_h // 16) * 16
 
     glyph_img = create_glyph_image(
         text=text,
-        target_width=box_w,
-        target_height=box_h,
+        target_width=calc_w,
+        target_height=calc_h,
         font_path=resolved_font,
     )
     glyph_preview = Path(output_path).stem + "_glyph_preview.png"
     glyph_img.save(glyph_preview)
-    print(f"  -> Glyph preview saved: {glyph_preview} ({box_w}x{box_h})")
+    print(f"  -> Glyph preview saved: {glyph_preview} ({calc_w}x{calc_h} - {num_lines} lines)")
 
     # 2. Load Models
     print("\n[2/5] Loading FLUX.2 Klein 4B Base Models...")
@@ -435,6 +449,8 @@ if __name__ == "__main__":
     parser.add_argument("--t_product", type=float, default=60.0, help="Time offset for Product Reference (default: 60.0)")
     parser.add_argument("--width", type=int, default=576, help="Width in pixels (default: 576 for 9:16)")
     parser.add_argument("--height", type=int, default=1024, help="Height in pixels (default: 1024 for 9:16)")
+    parser.add_argument("--box_w", type=int, default=None, help="Optional custom Glyph Box width (default: auto)")
+    parser.add_argument("--box_h", type=int, default=None, help="Optional custom Glyph Box height (default: auto)")
     parser.add_argument("--font", type=str, default="bevietnam", help="Font alias (playfair, bevietnam, anton, pacifico, graffiti, dancing, oswald) or path")
     parser.add_argument("--output", type=str, default="demo_output.png", help="Output image file path")
     parser.add_argument("--model_name", type=str, default="flux.2-klein-base-4b", help="FLUX.2 model variant")
@@ -453,6 +469,8 @@ if __name__ == "__main__":
         t_product=args.t_product,
         width=args.width,
         height=args.height,
+        box_w=args.box_w,
+        box_h=args.box_h,
         font=args.font,
         output_path=args.output,
         model_name=args.model_name,
@@ -461,3 +479,4 @@ if __name__ == "__main__":
         guidance=args.guidance,
         seed=args.seed,
     )
+
