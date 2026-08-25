@@ -56,19 +56,21 @@ graph TD
 
 ---
 
-### 📍 Giai đoạn 3: Huấn luyện LoRA cho DiT 4B Base
-* **Thời gian**: `3 – 5 Ngày`
+### 📍 Giai đoạn 3: Huấn luyện LoRA cho DiT 4B Base (Attention Disentanglement)
+* **Thời gian**: `3 – 4 Ngày`
+* **Tài liệu Kế hoạch Chi tiết**: 👉 [`docs/PHASE_3_LORA_TRAINING_ROADMAP.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/docs/PHASE_3_LORA_TRAINING_ROADMAP.md)
 * **Mục tiêu**:
-  * Tái cân bằng ma trận Attention giữa kênh chính ($t=10.0$) và kênh phụ ($t=20.0$), giúp slogan luôn sắc nét $100\%$ không phụ thuộc vào câu từ prompt.
-  * Dạy DiT tách biệt hình dáng (Shape từ Ref) và chất liệu/ánh sáng (Texture từ Target).
-  * LoRA Rank 16–32 trên các khối `DoubleStreamBlock` và `SingleStreamBlock`.
-  * Chạy trên 2x GPU A30 song song (DDP / `accelerate`).
+  * Tái cân bằng ma trận Attention giữa các kênh $t=10.0, 20.0, 30.0$ và Ảnh Sản Phẩm $t=40.0$.
+  * Phân tách dòng chú ý (Attention Disentanglement & Routing) giữa Canvas, Sản phẩm và Đa khối Text.
+  * LoRA Rank 32, Alpha 32 trên 5 `DoubleStreamBlock` (`img_attn.qkv`) và 20 `SingleStreamBlock` (`linear1`).
+  * Huấn luyện song song qua `accelerate` DDP trên 2x GPU A30 (48GB VRAM).
 
 ---
 
 ### 📍 Giai đoạn 4: Đóng gói Sản phẩm & Serving
 * **Thời gian**: `2 Ngày`
 * **Công việc**:
-  * Ghép nối pipeline hoàn chỉnh, áp dụng `torch.compile`.
-  * Phục vụ đa luồng trên 2x GPU A30 (FastAPI Backend / Gradio UI).
+  * Ghép nối pipeline hoàn chỉnh với Upstream LLM Router (bóc tách text, làm sạch prompt, dynamic glyph).
+  * Phục vụ đa luồng trên 2x GPU A30 (FastAPI Backend / Web UI).
+
 
