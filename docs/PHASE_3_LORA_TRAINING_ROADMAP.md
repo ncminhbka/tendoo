@@ -13,7 +13,7 @@ Dựa trên 60 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp60
 
 | Thành phần Kiến trúc | Phát hiện Thực nghiệm / Chân lý Toán học | Giải pháp Kỹ thuật trong Pipeline Huấn luyện |
 | :--- | :--- | :--- |
-| **1. Softmax Joint Attention** | Toàn bộ Key $K$ của Canvas, Sản phẩm (4096 tokens) và các Glyph bị gom chung vào 1 Softmax duy nhất $\rightarrow$ gây ra hiện tượng Token Mass Dominance đè bẹp các khối nhỏ. | Chuẩn hóa kích thước Token Mass tối thiểu $\ge 672$ tokens ($768 \times 224\text{px}$) cho mọi khối text trong Dataset. |
+| **1. Softmax Joint Attention** | Toàn bộ Key $K$ của Canvas, Sản phẩm (4096 tokens) và các Glyph bị gom chung vào 1 Softmax duy nhất $\rightarrow$ gây ra hiện tượng Token Mass Dominance đè bẹp các khối nhỏ nếu thiếu phân luồng. | Áp dụng **Quy Luật Kích Thước Động (Dynamic Glyph Token Sizing)**: Tự động tính toán Box theo độ dài từ ($240 - 800\text{ tokens}$), đảm bảo chiều cao $\ge 160\text{px}$/dòng và font size $\ge 40\text{px}$ để LoRA học tính đa hình không gian và tiết kiệm $>40\%$ sequence length. |
 | **2. Target LoRA Layers** | FLUX.2 không có module Cross-Attention riêng; Canvas và Ref dùng chung `img_attn.qkv` (DoubleBlocks) và `linear1` (SingleBlocks). 80% độ sâu mô hình nằm ở 20 SingleBlocks. | Tiêm LoRA trực tiếp vào: `img_attn.qkv` (5 DoubleBlocks) và phần Q, K, V của `linear1` (20 SingleBlocks). Rank $r=32$, $\alpha=32$. |
 | **3. Uniform AdaLN Modulation** | `ref_fixed_timestep = 0.0` cố định cho mọi slot $\rightarrow$ mô hình không có biên độ ưu tiên giữa các slot, toàn bộ nhận diện slot dồn vào RoPE. | LoRA sẽ tối ưu hóa ma trận $W_Q, W_K$ để thích ứng nhạy bén với các dải tần số góc quay RoPE $\mathbf{R}(\Delta t)$ của từng slot ($t=10, 20, 30$). |
 | **4. Upstream Semantic Clash** | Khi prompt lặp lại nguyên văn text tiếng Việt, Text Encoder `Qwen3-4B-FP8` gây nhiễu và xung đột với tín hiệu Glyph từ VAE. | Tích hợp Upstream LLM (Gemini Flash / Qwen-2.5) tự động bóc tách text và làm sạch prompt (Prompt Sanitization). |
@@ -36,11 +36,12 @@ Mỗi mẫu huấn luyện được cấu trúc động theo tiến trình Miles
 $$\text{Sample}_i^{(\text{Milestone})} = \left( \text{Prompt}_{\text{clean}}, \; \{\text{Ref}_k\}_{k \in \text{ActiveSlots}}, \; \mathbf{X}_{\text{target}}^{(\text{Aligned})} \right)$$
 
 1. **`Prompt_clean`**: Mô tả phong cách thị giác, bố cục, ánh sáng studio, chất liệu 3D, **TUYỆT ĐỐI KHÔNG CHỨA CHỮ NGUYÊN VĂN**.
-2. **`Ref_10` (Headline Glyph)**: Kích thước $768 \times 224$ (672 tokens), font nghệ thuật thương hiệu theo Domain.
-3. **`Ref_20` (Subtitle Glyph)**: Kích thước $768 \times 224$ (672 tokens), font thông tin sắc nét (`BeVietnamPro-Black`).
-4. **`Ref_30` (CTA Badge Glyph)**: Kích thước $768 \times 224$ (672 tokens), font uốn lượn/dạ quang (`Pacifico` / `Sedgwick`).
+2. **`Ref_10` (Headline Glyph)**: Kích thước động ($280 - 640\text{ tokens}$), font nghệ thuật thương hiệu theo Domain.
+3. **`Ref_20` (Subtitle Glyph)**: Kích thước động ($240 - 480\text{ tokens}$), font thông tin sắc nét (`BeVietnamPro-Black`).
+4. **`Ref_30` (CTA Badge Glyph)**: Kích thước động ($240 - 384\text{ tokens}$), font uốn lượn/dạ quang (`Pacifico` / `Sedgwick`).
 5. **`Ref_prod_40` (Ảnh Sản phẩm Thật)**: Kích thước $1024 \times 1024$ (4096 tokens), ảnh sản phẩm studio sạch nền.
 6. **`X_target` (Ảnh Ground-Truth $1024 \times 1024$)**: Ảnh poster tương ứng chỉ chứa đúng các thành phần text đã kích hoạt.
+
 
 ---
 
@@ -178,8 +179,9 @@ lora_config = {
 ### 📍 Chi tiết từng Milestone:
 
 #### 🔹 Milestone A: Đồng bộ Hòa trộn 1 Sản Phẩm ($t=40$) + 1 Headline ($t=10$)
-* **Mục tiêu**: Dạy LoRA phân luồng mượt mà giữa khối token khổng lồ của sản phẩm (4096 tokens) và khối chữ chính (672 tokens), đảm bảo chữ luôn ăn khớp ánh sáng với sản phẩm.
+* **Mục tiêu**: Dạy LoRA phân luồng mượt mà giữa khối token khổng lồ của sản phẩm (4096 tokens) và khối chữ chính ($280 - 640\text{ tokens}$ dynamic), đảm bảo chữ luôn ăn khớp ánh sáng với sản phẩm.
 * **Số bước**: `600 steps` (tương đương **$9.6\text{ epochs}$** trên tập 500 mẫu với Effective Batch Size = 8).
+
 * **Tiêu chuẩn nghiệm thu**: Headline đạt độ chính xác $100\%$, sản phẩm đạt độ giống thật $\ge 98\%$.
 
 #### 🔹 Milestone B: Phân tách Chú ý 2 Khối Text ($t=10, 20$) + Sản Phẩm ($t=40$)
