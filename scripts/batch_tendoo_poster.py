@@ -61,7 +61,19 @@ FONT_REGISTRY = {
     "sedgwick": str(ROOT_DIR / "fonts" / "SedgwickAveDisplay-Regular.ttf"),
     "dancing": str(ROOT_DIR / "fonts" / "DancingScript.ttf"),
     "oswald": str(ROOT_DIR / "fonts" / "Oswald.ttf"),
+    # New Playful, Fresh, Summer SVN Fonts:
+    "cookies": str(ROOT_DIR / "fonts" / "SVN-Cookies.ttf"),
+    "grocery": str(ROOT_DIR / "fonts" / "SVN-Grocery Rounded.ttf"),
+    "gretoon": str(ROOT_DIR / "fonts" / "SVN-Gretoon.ttf"),
+    "blowbrush": str(ROOT_DIR / "fonts" / "SVN-Blow Brush.ttf"),
+    "brush": str(ROOT_DIR / "fonts" / "SVN-Blow Brush.ttf"),
+    "holidays": str(ROOT_DIR / "fonts" / "SVN-Holidays.ttf"),
+    "clementine": str(ROOT_DIR / "fonts" / "SVN-Clementine.ttf"),
+    "harabaras": str(ROOT_DIR / "fonts" / "SVN-Harabaras.ttf"),
+    "lolapeluza": str(ROOT_DIR / "fonts" / "SVN-Lolapeluza Black.ttf"),
+    "gotham": str(ROOT_DIR / "fonts" / "SVN-Gotham Ultra.otf"),
 }
+
 
 
 def resolve_font_path(font_name_or_path: str | None) -> str:
