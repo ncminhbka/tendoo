@@ -23,57 +23,71 @@ Dựa trên 60 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp60
 
 ## 🗂️ 2. THIẾT KẾ DỮ LIỆU & QUY TRÌNH CHẾ TẠO DATASET (DISTILLATION ENGINE)
 
-### 2.1. Quy cách một Training Sample chuẩn:
-Mỗi mẫu huấn luyện là một bộ tứ thống nhất:
-$$\text{Sample}_i = \left( \text{Prompt}_{\text{clean}}, \; \text{Ref}_{10}, \; \text{Ref}_{20}, \; \text{Ref}_{30}, \; \text{Ref}_{\text{prod\_40}}, \; \mathbf{X}_{\text{target}} \right)$$
+### 2.1. Quy cách một Training Sample Chuẩn & Nguyên Tắc Khớp Tuyệt Đối (Strict Target-Ref Alignment):
+
+> [!IMPORTANT]
+> **NGUYÊN TẮC KHỚP TUYỆT ĐỐI (ZERO GHOST-TEXT PRINCIPLE)**:
+> Ảnh Ground-Truth $\mathbf{X}_{\text{target}}$ **BẮT BUỘC CHỈ CHỨA ĐÚNG các thành phần text có mặt trong danh sách Reference Tokens của Milestone đó**.
+> Tuyệt đối không để ảnh đích xuất hiện Subtitle hay CTA khi input ở Milestone A chỉ có Headline (tránh việc DiT bị ép phải "học vẹt sinh chữ ma từ không khí" khi không có glyph condition).
+
+Mỗi mẫu huấn luyện được cấu trúc động theo tiến trình Milestone:
+$$\text{Sample}_i^{(\text{Milestone})} = \left( \text{Prompt}_{\text{clean}}, \; \{\text{Ref}_k\}_{k \in \text{ActiveSlots}}, \; \mathbf{X}_{\text{target}}^{(\text{Aligned})} \right)$$
 
 1. **`Prompt_clean`**: Mô tả phong cách thị giác, bố cục, ánh sáng studio, chất liệu 3D, **TUYỆT ĐỐI KHÔNG CHỨA CHỮ NGUYÊN VĂN**.
-2. **`Ref_10` (Headline Glyph)**: Kích thước $768 \times 224$ (672 tokens), font nghệ thuật (Anton / Playfair / Oswald).
-3. **`Ref_20` (Subtitle Glyph)**: Kích thước $768 \times 224$ (672 tokens), font thông tin (BeVietnam / Sans).
-4. **`Ref_30` (CTA Badge Glyph)**: Kích thước $768 \times 224$ (672 tokens), font uốn lượn/dạ quang (Pacifico / Sedgwick).
+2. **`Ref_10` (Headline Glyph)**: Kích thước $768 \times 224$ (672 tokens), font nghệ thuật thương hiệu theo Domain.
+3. **`Ref_20` (Subtitle Glyph)**: Kích thước $768 \times 224$ (672 tokens), font thông tin sắc nét (`BeVietnamPro-Black`).
+4. **`Ref_30` (CTA Badge Glyph)**: Kích thước $768 \times 224$ (672 tokens), font uốn lượn/dạ quang (`Pacifico` / `Sedgwick`).
 5. **`Ref_prod_40` (Ảnh Sản phẩm Thật)**: Kích thước $1024 \times 1024$ (4096 tokens), ảnh sản phẩm studio sạch nền.
-6. **`X_target` (Ảnh Ground-Truth $1024 \times 1024$)**: Ảnh poster hoàn chỉnh đạt chuẩn thương mại, chữ hiển thị $100\%$ đúng hình học của 3 glyph và hòa quyện ánh sáng.
+6. **`X_target` (Ảnh Ground-Truth $1024 \times 1024$)**: Ảnh poster tương ứng chỉ chứa đúng các thành phần text đã kích hoạt.
 
 ---
 
-### 2.2. Phân bố Lĩnh vực & Quy mô Dataset (Domain Sizing Matrix):
+### 2.2. Ma Trận Ánh Xạ 1:1 Font Chuẩn Thương Hiệu Theo 5 Domain (Domain-Font Mapping Matrix):
 
-```
-                                  TỔNG QUY MÔ DATASET: 2,500 SAMPLES
-                                                  │
-         ┌───────────────────┬────────────────────┼───────────────────┬───────────────────┐
-         ▼                   ▼                    ▼                   ▼                   ▼
-    [ ☕ F&B / Cafe ]   [ 📱 Công Nghệ ]    [ 👗 Thời Trang ]   [ 💆 Spa / Mỹ Phẩm ] [ 🛍️ Siêu Thị / FMCG ]
-       500 samples         500 samples          500 samples          500 samples          500 samples
-     (Khắc gỗ, neon)     (Kim loại, LED)      (Thanh lịch, gold)   (Tối giản, pastel)   (Dập nổi, pop-art)
-```
+Để tối ưu hóa **Mật độ Tiếp xúc Font (Font Exposure Density)** và chống loãng tín hiệu học dấu tiếng Việt, toàn bộ 2,500 mẫu được ánh xạ cố định $1:1$ với 5 bộ Font chủ lực (đã QA Unicode $100\%$):
+
+| Ngành Hàng (Domain) | Quy Mô | Font Headline Chủ Lực | Font Subtitle | Font CTA Badge | Phong Cách Thiết Kế & Chất Liệu |
+| :--- | :---: | :--- | :--- | :--- | :--- |
+| **☕ 1. F&B / Cafe** | $500$ mẫu | `SedgwickAveDisplay` | `BeVietnamPro-Black` | `Pacifico` | Chữ khắc gỗ 3D mộc mạc, neon cafe ấm cúng |
+| **📱 2. Công Nghệ / Tech** | $500$ mẫu | `Anton-Regular` | `BeVietnamPro-Black` | `Pacifico` | Chữ kim loại vát cạnh, đèn LED, chrome bóng bẩy |
+| **👗 3. Thời Trang / Fashion**| $500$ mẫu | `PlayfairDisplay` | `BeVietnamPro-Black` | `Pacifico` | Chữ Serif mạ vàng gold, sang trọng, thanh lịch |
+| **💆 4. Spa / Mỹ Phẩm** | $500$ mẫu | `DancingScript` | `BeVietnamPro-Black` | `Pacifico` | Chữ mềm mại uyển chuyển, phong cách pastel tối giản |
+| **🛍️ 5. Siêu Thị / FMCG** | $500$ mẫu | `SVN-Gotham Ultra` / `Oswald`| `BeVietnamPro-Black` | `Pacifico` | Chữ dập nổi 3D khối to, pop-art khuyến mãi rực rỡ |
+
+> [!TIP]
+> **PHÂN TÁCH FONT CHỦ LỰC VS POOL AUGMENTATION**:
+> * **5 Font Chủ Lực trên**: Nhận $85\%$ tổng số lượt exposure để đảm bảo mô hình khắc sâu từng nét dấu tiếng Việt chuẩn xác $100\%$.
+> * **Pool Font Phụ Hệ Thống** (`SVN-Blow Brush`, `SVN-Cookies`, `SVN-Gretoon`, `SVN-Harabaras`...): Chỉ được kích hoạt trong cơ chế **Random Font Augmentation ($15\%$ xác suất)** trong DataLoader để giúp mô hình không bị overfit cứng nhắc vào 5 font chính.
 
 ---
 
-### 2.3. Quy trình Chế tạo Ground-Truth (Multimodal Distillation Pipeline):
+### 2.3. Quy Trình Chế Tạo Ground-Truth Tăng Dần (Incremental Layered Build-Up Pipeline):
+
+Thay vì sinh các bản độc lập rời rạc gây lệch pha phong cách, quy trình chế tạo Ground-Truth áp dụng cơ chế **Xây Dựng Tăng Dần (Layered Build-Up)** trên cùng một bối cảnh hình nền:
 
 ```
-       [ 1. Template Layout Generator (Python) ]
-       • Sinh ngẫu nhiên: Lĩnh vực, Headline, Subtitle, CTA, Font, Chất liệu, Bố cục
-                          │
-                          ▼
-       [ 2. Backend Dynamic Glyph Engine ]
-       • Xuất 3 ảnh Glyph Bitmap (768x224, tight crop, đúng Unicode tiếng Việt)
-                          │
-                          ├─────────────────────────────────────────────────┐
-                          ▼                                                 ▼
-        [ 3A. Nhánh Gemini 2.0 In-Context (70%) ]        [ 3B. Nhánh Programmatic Shader (30%) ]
-        • Đưa 3 Glyph + Ảnh Sản Phẩm vào Gemini API      • Render chữ font TTF lên nền Background sạch
-        • Prompt: "Giữ 100% hình học glyph, render 3D"   • OpenCV/Shader: Thêm drop shadow, viền kim loại,
-        • Xuất ảnh Ground Truth tự nhiên hoàn hảo          ánh sáng phát quang neon
-                          │                                                 │
-                          └───────────────────────┬─────────────────────────┘
-                                                  ▼
-                                [ 4. Automated Quality Filter ]
-                                • OCR Check: Độ khớp ký tự tiếng Việt >= 98%
-                                • SSIM / Color distribution check
-                                • Đóng gói thành WebDataset / Sharded HDF5
+          [ BƯỚC 1: SINH 2,500 HÌNH NỀN POSTER SẠCH + SẢN PHẨM (BACKGROUND SCENE) ]
+          • Mỗi template sinh 1 hình nền hoàn hảo (quán cafe, phòng studio, sàn catwalk)
+                                            │
+                                            ▼
+                    [ BƯỚC 2: CHUỖI BUILD-UP GROUND-TRUTH TĂNG DẦN ]
+                                            │
+          ┌─────────────────────────────────┼─────────────────────────────────┐
+          ▼                                 ▼                                 ▼
+   [ 🎯 PASS 1: + HEADLINE ]       [ 🎯 PASS 2: + SUBTITLE ]        [ 🎯 PASS 3: + CTA BADGE ]
+   • Dán & Hòa trộn Headline       • Tiếp tục từ Pass 1:            • Tiếp tục từ Pass 2:
+   • Ref Active: [t10, t40]        • Dán thêm Subtitle              • Dán thêm CTA Badge
+   • Ref Active: [t10, t20, t40]   • Ref Active: [t10, t20, t30, t40]
+   • Phục vụ: Milestone A          • Phục vụ: Milestone B           • Phục vụ: Milestone C
+     (500 mẫu đầu, đủ 5 domain)      (1,500 mẫu gồm 500 A + 1,000)    (Toàn bộ 2,500 mẫu)
+          │                                 │                                 │
+          └─────────────────────────────────┼─────────────────────────────────┘
+                                            ▼
+                           [ BƯỚC 3: AUTOMATED QUALITY FILTER ]
+                           • OCR Verification: Độ khớp ký tự tiếng Việt >= 98%
+                           • Đóng gói thành WebDataset Shards (tar/h5) phân tách theo từng Milestone
 ```
+
 
 ### 2.4. Ma trận Đa Tỉ Lệ Khung Hình (Aspect Ratio Bucketing Strategy):
 
