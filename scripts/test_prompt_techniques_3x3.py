@@ -91,26 +91,28 @@ def resolve_font_path(font_name_or_path: str | None) -> str:
 
 def create_glyph_image(
     text: str,
-    target_width: int,
-    target_height: int,
-    font_path: str,
+    target_width: int = 512,
+    target_height: int = 224,
+    font_path: str | None = None,
     bg_color: tuple[int, int, int] = (0, 0, 0),
     text_color: tuple[int, int, int] = (255, 255, 255),
     padding_ratio: float = 0.08,
+    tight_crop: bool = True,
 ) -> Image.Image:
     """
-    Renders tight-crop Vietnamese glyph bitmap with automatic line wrapping and binary-search sizing.
+    Renders TRUE TIGHT-CROP Vietnamese glyph bitmap with automatic line wrapping,
+    binary-search font sizing, and exact bounding-box cropping snapped to multiples of 16.
     """
     assert target_width > 0 and target_height > 0
-    target_width = (target_width // 16) * 16
-    target_height = (target_height // 16) * 16
+    envelope_w = (target_width // 16) * 16
+    envelope_h = (target_height // 16) * 16
 
     font_path = resolve_font_path(font_path)
 
-    pad_w = int(target_width * padding_ratio)
-    pad_h = int(target_height * padding_ratio)
-    max_w = target_width - 2 * pad_w
-    max_h = target_height - 2 * pad_h
+    pad_w = int(envelope_w * padding_ratio)
+    pad_h = int(envelope_h * padding_ratio)
+    max_w = envelope_w - 2 * pad_w
+    max_h = envelope_h - 2 * pad_h
 
     text = text.replace("\\n", "\n")
 
@@ -133,7 +135,7 @@ def create_glyph_image(
     best_size = 0
 
     for lines in candidate_layouts:
-        low, high = 14, 180
+        low, high = 14, 200
         opt_font = None
         opt_size = 0
 
@@ -174,9 +176,6 @@ def create_glyph_image(
         best_lines = candidate_layouts[-1]
         best_size = 20
 
-    img = Image.new("RGB", (target_width, target_height), color=bg_color)
-    draw = ImageDraw.Draw(img)
-
     line_heights = []
     line_widths = []
     for line in best_lines:
@@ -186,11 +185,28 @@ def create_glyph_image(
 
     line_spacing = int(best_size * 0.20)
     total_block_h = sum(line_heights) + line_spacing * (len(best_lines) - 1)
-    curr_y = (target_height - total_block_h) // 2
+    total_block_w = max(line_widths)
+
+    if tight_crop:
+        # Tight-crop dynamically around the actual text bounding box
+        pad_x = max(10, int(total_block_w * padding_ratio))
+        pad_y = max(8, int(total_block_h * padding_ratio))
+        final_w = total_block_w + 2 * pad_x
+        final_h = total_block_h + 2 * pad_y
+        final_w = max(32, ((final_w + 15) // 16) * 16)
+        final_h = max(32, ((final_h + 15) // 16) * 16)
+    else:
+        final_w = envelope_w
+        final_h = envelope_h
+
+    img = Image.new("RGB", (final_w, final_h), color=bg_color)
+    draw = ImageDraw.Draw(img)
+
+    curr_y = (final_h - total_block_h) // 2
 
     for i, line in enumerate(best_lines):
         lw = line_widths[i]
-        curr_x = (target_width - lw) // 2
+        curr_x = (final_w - lw) // 2
         bbox = best_font.getbbox(line)
         draw.text((curr_x - bbox[0], curr_y - bbox[1]), line, fill=text_color, font=best_font)
         curr_y += line_heights[i] + line_spacing
