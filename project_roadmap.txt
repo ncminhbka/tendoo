@@ -5,7 +5,7 @@ Phiên bản: v5 — Cập nhật sau khi HOÀN TẤT CHUỖI ĐỐI CHỨNG exp
   + Khóa cứng Hệ Tọa độ Bội số 10 Rời rạc Tiền huấn luyện (Canonical Discrete Offsets t in {10, 20, 30, 40, 50}).
   + Xác lập Nguyên lý Mở Khóa Kênh Chú Ý (Channel Unlocking Principle): t=10 mạnh nhất do Pretraining Data Density.
   + Chuẩn hóa Tiến trình Huấn luyện LoRA Giai đoạn 3: Lũy tiến 2 -> 3 -> 4/5 Slots (Bỏ qua 1 text đơn lẻ).
-  + Tích hợp True CFG (Text Dropout p=0.10), Stochastic Slot Subset Dropout (p=0.15), và Masked Product Loss.
+  + Tích hợp True CFG (Text Dropout p=0.10), Dãy Tiền Tố Liên Tục Khép Kín, và Masked Product Loss.
 ================================================================================
 
 I. CÁC ĐỊNH LUẬT THỰC NGHIỆM ĐẮT GIÁ ĐÃ ĐƯỢC CHỨNG MINH 100% (SCIENTIFIC LAWS)
@@ -69,7 +69,7 @@ III. CHI TIẾT CÁC GIAI ĐOẠN TRIỂN KHAI
   + Milestone A (2-Slot: 800 mẫu, 800 steps): Tách kênh t=10 vs t=20.
   + Milestone B (3-Slot: 1,500 mẫu, 1,400 steps): Mở rộng t=10, 20, 30 (CTA Badge).
   + Milestone C (4-5 Slot: 2,500 mẫu, 2,200 steps): Khóa cứng 4 Text + SP ở t=50 (Full-Power).
-- Kỹ thuật nâng cao: Text Conditioning Dropout (p=0.10 cho True CFG), Slot Subset Dropout (p=0.15),
+- Kỹ thuật nâng cao: Text Conditioning Dropout (p=0.10 cho True CFG), Cấu trúc Dãy Tiền Tố Liên Tục Khép Kín,
   Masked Product Loss (lambda_prod=2.0).
 - Checkpoint Eval: 8 Golden Test Cases cố định + CFG Scale Sweep [1.0, 2.5, 4.0, 6.0].
 
