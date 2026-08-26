@@ -260,5 +260,12 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + **Vùng Dành Riêng cho Glyph Văn Bản**: Khóa cứng $100\%$ các khối Text trong dải an toàn **$t \in [10.0, 40.0]$** ($t=10, 20, 30, 40$).
       + **Vùng Dành Riêng cho Sản Phẩm Thật**: Mốc $t=50.0$ là vị trí dành cho Sản phẩm thật (khi có 4 khối text) vì BFL đã có sẵn biểu diễn tiền huấn luyện vững chắc cho vật thể tại mốc này.
 
-
-
+19. **ĐỊNH LUẬT THỤ THỂ KÍCH HOẠT VĂN BẢN VÀ TÍNH ĐỘC LẬP VẬT CHỨA (THE TEXT ACTIVATION RECEPTOR & CONTAINER-INDEPENDENCE LAW)**:
+    - **Kiểm chứng thực nghiệm trực tiếp (`test_prompt_techniques_3x3.py` trên 3 độ dài văn bản)**:
+      + **Prompt 1 (Không nhắc chữ)**: Mô hình **TẮT HOÀN TOÀN CHÚ Ý** $\rightarrow$ Dù Glyph có ở $t=10.0$, DiT vẫn bỏ qua và không vẽ chữ.
+      + **Prompt 2 (Nhắc vai trò/chất liệu chữ, KHÔNG CẦN VẬT CHỨA)**: Mô hình **LẬP TỨC VẼ CHỮ ĐÚNG 100%**, biến hóa chữ 3D/neon cực đẹp.
+      + **Prompt 3 (Thêm vật chứa bảng biển/vách đá)**: Cho thấy vật chứa chỉ là chi tiết bối cảnh trang trí, **HOÀN TOÀN KHÔNG QUYẾT ĐỊNH việc chữ có xuất hiện hay không**.
+    - **Bản chất Khoa học & Bài học tối hậu**:
+      + Mô hình DiT **nhận thức được khối token ở $t=10.0$ là HÌNH THÁI VĂN BẢN (Text Morphology)**.
+      + Từ khóa chỉ vai trò/chất liệu (`dòng chữ tiêu đề`, `chữ 3D`, `đèn neon`, `mạ vàng`) trong Prompt đóng vai trò là **"Thụ thể kích hoạt (Semantic Activation Receptor)"** để bật công tắc Attention liên kết giữa Prompt và Glyph VAE.
+      + Tuyệt đối không cần gượng ép đưa "bảng gỗ/khung biển" vào Prompt. Chữ 3D hoàn toàn có thể đứng tự do trong không gian.
