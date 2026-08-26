@@ -30,9 +30,10 @@ Dựa trên 61 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp61
 ### 2.1. Quy cách một Training Sample Chuẩn & Khớp Tuyệt Đối (Strict Target-Ref Alignment):
 
 Mỗi mẫu huấn luyện được cấu trúc động theo tiến trình Milestone:
-$$\text{Sample}_i^{(\text{Milestone})} = \left( \text{Prompt}_{\text{clean}}, \; \{\text{Ref}_k\}_{k \in \text{ActiveSlots}}, \; \mathbf{X}_{\text{target}}^{(\text{Aligned})} \right)$$
-
-1. **`Prompt_clean`**: Mô tả phong cách thị giác, bố cục, ánh sáng studio, chất liệu 3D, **TUYỆT ĐỐI KHÔNG CHỨA CHỮ NGUYÊN VĂN**.
+1. **`Prompt_clean` (Nguyên Tắc Khai Báo Vai Trò & Chất Liệu - Role & Material Prompting Rule)**:
+   * ❌ **ĐIỀU CẤM**: Tuyệt đối **KHÔNG lặp lại nội dung chữ nguyên văn** (ví dụ cấm ghi `'Cà phê sữa đá'`, `'Giảm 50%'`) để triệt tiêu $100\%$ xung đột ngữ nghĩa (Semantic Clash) từ Text Encoder Qwen3.
+   * ✅ **ĐIỀU BẮT BUỘC**: Bắt buộc **nhắc nhở mô hình về sự tồn tại của các khối chữ thông qua vai trò và chất liệu/vật lý/ánh sáng/màu sắc** tương ứng với từng slot (ví dụ: *"dòng chữ tiêu đề 3D dập nổi mạ vàng đồng cổ sắc nét"*, *"chữ slogan đèn neon phát quang màu xanh ngọc"*, *"chữ huy hiệu chuyển đổi mạ bạc dạ quang"*).
+   * 💡 **Ý nghĩa**: Glyph VAE cung cấp **100% Khung Xương Hình Học & Chính Tả**, Text Prompt cung cấp **100% Phần Hồn, Ánh Sáng & Chất Liệu** đắp lên khung xương đó.
 2. **`Ref_10` (Headline Glyph)**: Kích thước động ($280 - 640\text{ tokens}$), $1 - 2$ dòng in hoa nổi bật, font nghệ thuật thương hiệu.
 3. **`Ref_20` (Subtitle Glyph)**: Kích thước động ($240 - 480\text{ tokens}$), font sắc nét (`BeVietnamPro-Black`).
 4. **`Ref_30` (CTA Badge Glyph)**: Kích thước động ($240 - 384\text{ tokens}$), font uốn lượn/dạ quang (`Pacifico` / `Sedgwick`) trong Badge nhỏ.
