@@ -207,8 +207,11 @@ def encode_glyph_to_incontext_tokens(
     device: torch.device | str = "cuda",
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Encodes a tight-crop glyph image to 4D RoPE coordinate tokens."""
+    # Ensure ae device is used for VAE encoding
+    ae_device = next(ae.parameters()).device if hasattr(ae, "parameters") else device
+
     g_arr = np.array(glyph_img).astype(np.float32) / 127.5 - 1.0
-    g_tensor = torch.from_numpy(g_arr).permute(2, 0, 1).unsqueeze(0).to(device=device, dtype=torch.bfloat16)
+    g_tensor = torch.from_numpy(g_arr).permute(2, 0, 1).unsqueeze(0).to(device=ae_device, dtype=torch.bfloat16)
 
     with torch.no_grad():
         g_latent = ae.encode(g_tensor)
