@@ -1,4 +1,4 @@
-# 🎯 KẾ HOẠCH & LỘ TRÌNH HUẤN LUYỆN LORA DiT 4B BASE (PHASE 3 MASTER ROADMAP - BẢN v5 CHUẨN HÓA)
+# 🎯 KẾ HOẠCH & LỘ TRÌNH HUẤN LUYỆN LORA DiT 4B BASE (PHASE 3 MASTER ROADMAP - BẢN v5 CHUẨN HÓA TOÀN DIỆN)
 
 - **Dự án**: Tendoo AI – Hệ Thống Sinh Banner Quảng Cáo Thương Mại Đa Khối Chữ Tiếng Việt
 - **Mô hình Mục Tiêu Duy Nhất**: **`FLUX.2-klein-base-4B`** (Bản Base 50-step, True CFG = 4.0 - 4.5).
@@ -10,7 +10,7 @@
 
 ## 📊 1. MA TRẬN PHÂN TÍCH KỸ THUẬT & ĐỊNH HÌNH THIẾT KẾ (TECHNICAL BASIS)
 
-Dựa trên 61 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp61` cùng bài test Fourier Phase Aliasing (`probe_rope_phase_aliasing.py`), toàn bộ kiến trúc huấn luyện được xây dựng trên các chân lý kỹ thuật đã được chứng minh $100\%$:
+Dựa trên 61 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp61` cùng bài test Fourier Phase Aliasing (`probe_rope_phase_aliasing.py`), toàn bộ kiến trúc huấn luyện được xây dựng trên 8 chân lý kỹ thuật đã được chứng minh $100\%$:
 
 | Thành phần Kiến trúc | Phát hiện Thực nghiệm / Chân lý Toán học | Giải pháp Kỹ thuật trong Pipeline Huấn luyện |
 | :--- | :--- | :--- |
@@ -18,7 +18,9 @@ Dựa trên 61 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp61
 | **2. Target LoRA Layers** | FLUX.2 không có module Cross-Attention riêng; Canvas và Ref dùng chung `img_attn.qkv` (DoubleBlocks) và `linear1` (SingleBlocks). 80% độ sâu mô hình nằm ở 20 SingleBlocks. | Tiêm LoRA trực tiếp vào: `img_attn.qkv` + `txt_attn.qkv` (5 DoubleBlocks) và phần Q, K, V của `linear1` (20 SingleBlocks). Rank $r=32$, $\alpha=32$. |
 | **3. Pretrained Discrete Offsets Supremacy** | Thực nghiệm phủ định giả thuyết góc quay số thực liên tục. Trọng số $W_Q, W_K$ của DiT đã được BFL hiệu chuẩn sâu trên các mốc số nguyên rời rạc $t \in \{10, 20, 30, 40, 50\}$. Mốc số thực lẻ ($44.0, 47.1...$) rơi vào Out-of-Distribution (OOD). | **Khóa cứng toàn bộ hệ thống trên các mốc số nguyên bội 10**: $t \in \{10.0, 20.0, 30.0, 40.0, 50.0\}$. Tuyệt đối không dùng các tọa độ float lẻ. |
 | **4. Dynamic Context-Aware Slot Assignment** | Vị trí sản phẩm không cố định ở $t=50$, mà được phân bổ linh hoạt theo số lượng khối văn bản thực tế để luôn đạt độ sắc nét cao nhất. | • 1 SP (Đổi background): SP ở $t=10.0$<br>• 1 Text + SP: Text $t=10$, SP $t=20$<br>• 2 Text + SP: Text $t=10, 20$, SP $t=30$<br>• 3 Text + SP: Text $t=10, 20, 30$, SP $t=40$<br>• 4 Text + SP (Full-Power): Text $t=10, 20, 30, 40$, SP $t=50$. |
+| **5. True CFG & Chống CFG Drift** | Klein 4B Base dùng True CFG (`use_guidance_embed = False`), nhánh Unconditional giữ nguyên Reference Tokens `img_cond_seq` và chỉ null hóa Text Prompt `ctx = ""`. | Áp dụng **Text Conditioning Dropout ($p=0.10$)**: Thay thế `txt` bằng embedding của chuỗi rỗng `""` với tỉ lệ $10\%$, giữ nguyên $100\%$ Reference Tokens để LoRA học đúng nhánh Unconditional. |
 | **6. Contiguous Prefix Sequential Guarantee** | Người dùng không trực tiếp chọn mốc $t$. Backend tự động xếp slot tuần tự từ trước ra sau ($1\rightarrow 2\rightarrow 3\rightarrow 4\rightarrow 5$). Thực tế chỉ xuất hiện các dãy liên tục: $\{10, 20\}$, $\{10, 20, 30\}$, $\{10, 20, 30, 40\}$, $\{10, 20, 30, 40, 50\}$. | Huấn luyện **$100\%$ theo các dãy tiền tố liên tục chuẩn**, triệt tiêu nhiễu rác và tập trung toàn bộ năng lượng gradient vào đúng các cấu hình thực tế của Backend. |
+| **7. Pure T2I Parallel Co-existence** | Nếu chỉ train với mỏ neo sản phẩm $4096$ tokens, mô hình bị "nghiện sản phẩm" và lúng túng khi sinh poster sự kiện/thơ ca không có ảnh sản phẩm. | Khóa cứng tỷ lệ **$55\%$ Product-Anchor + $45\%$ Pure T2I** ở CẢ 3 MILESTONES. |
 | **8. Masked Product-Region Flow Loss** | Để đảm bảo ở trường hợp cực hạn (Full 5-Slot), chi tiết chữ in và màu sắc nắp sản phẩm ở $t=50.0$ không bị suy thoái $\ge 20\%$. | Áp dụng **Mặt nạ trọng số vùng sản phẩm ($\lambda_{\text{prod}} = 2.0$)** trong hàm Loss Flow Matching cho các pixel thuộc vật thể thật. |
 
 ---
@@ -214,4 +216,4 @@ Cứ sau mỗi **500 steps**, trainer tự động tạm dừng và sinh ảnh �
 Bản Roadmap v5 này đã được chuẩn hóa tối hậu:
 * **Loại bỏ hoàn toàn công việc thừa thãi** (không train 1 text).
 * **Định hình tiến trình thực chiến lũy tiến $2 \rightarrow 3 \rightarrow 4/5$ Slots**.
-* **Đồng bộ hóa $100\%$ giữa True CFG, Masked Product Loss và Stochastic Slot Dropout**.
+* **Đồng bộ hóa $100\%$ giữa True CFG, Masked Product Loss và Cấu trúc Dãy Tiền Tố Liên Tục Khép Kín**.
