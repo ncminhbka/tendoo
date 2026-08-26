@@ -260,3 +260,7 @@ persistent-data/
 checkpoints/
 runs/
 logs/
+
+# Temporary Office Lock files & local Agent configs
+~$*
+.agents/
