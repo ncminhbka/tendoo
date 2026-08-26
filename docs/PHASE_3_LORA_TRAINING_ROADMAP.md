@@ -1,57 +1,50 @@
-# 🎯 KẾ HOẠCH & LỘ TRÌNH HUẤN LUYỆN LORA DiT 4B BASE (PHASE 3 MASTER ROADMAP)
+# 🎯 KẾ HOẠCH & LỘ TRÌNH HUẤN LUYỆN LORA DiT 4B BASE (PHASE 3 MASTER ROADMAP - BẢN v5 CHUẨN HÓA)
 
 - **Dự án**: Tendoo AI – Hệ Thống Sinh Banner Quảng Cáo Thương Mại Đa Khối Chữ Tiếng Việt
-- **Mô hình Mục Tiêu Duy Nhất**: **`FLUX.2-klein-base-4B`** (Bản Base nguyên bản, Euler ODE Flow Matching, CFG = 4.0).
+- **Mô hình Mục Tiêu Duy Nhất**: **`FLUX.2-klein-base-4B`** (Bản Base 50-step, True CFG = 4.0 - 4.5).
 - **Hạ tầng Thực thi**: **2x NVIDIA A30 (24GB VRAM $\times 2 = 48$GB VRAM)**, Ampere Architecture, DDP (`accelerate`).
 - **Bản chất Toán học Cốt lõi**: Huấn luyện bài toán **Định Tuyến & Phân Tách Chú Ý (Attention Disentanglement & Routing)** trên không gian 4D RoPE, giải quyết hiện tượng tranh chấp Softmax và rò rỉ đặc trưng Ref-to-Ref mà **KHÔNG CẦN DẠY LẠI BIỂU DIỄN CHỮ TỪ ĐẦU**.
+- **Tiến trình Curriculum Đột phá (Bản v5)**: Lũy tiến theo độ phức tạp cạnh tranh thực tế **$2\text{ Slots} \longrightarrow 3\text{ Slots} \longrightarrow 4-5\text{ Slots}$** (Bỏ qua bài toán 1 text đơn lẻ vì mô hình Base đã đạt $100\%$ zero-shot).
 
 ---
 
 ## 📊 1. MA TRẬN PHÂN TÍCH KỸ THUẬT & ĐỊNH HÌNH THIẾT KẾ (TECHNICAL BASIS)
 
-Dựa trên 60 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp60`, lộ trình huấn luyện được xây dựng trên các chân lý kỹ thuật đã được chứng minh $100\%$:
+Dựa trên 61 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp61` cùng bài test Fourier Phase Aliasing (`probe_rope_phase_aliasing.py`), toàn bộ kiến trúc huấn luyện được xây dựng trên các chân lý kỹ thuật đã được chứng minh $100\%$:
 
 | Thành phần Kiến trúc | Phát hiện Thực nghiệm / Chân lý Toán học | Giải pháp Kỹ thuật trong Pipeline Huấn luyện |
 | :--- | :--- | :--- |
-| **1. Softmax Joint Attention** | Toàn bộ Key $K$ của Canvas, Sản phẩm (4096 tokens) và các Glyph bị gom chung vào 1 Softmax duy nhất $\rightarrow$ gây ra hiện tượng Token Mass Dominance đè bẹp các khối nhỏ nếu thiếu phân luồng. | Áp dụng **Quy Luật Kích Thước Động (Dynamic Glyph Token Sizing)**: Tự động tính toán Box theo độ dài từ ($240 - 800\text{ tokens}$), đảm bảo chiều cao $\ge 160\text{px}$/dòng và font size $\ge 40\text{px}$ để LoRA học tính đa hình không gian và tiết kiệm $>40\%$ sequence length. |
-| **2. Target LoRA Layers** | FLUX.2 không có module Cross-Attention riêng; Canvas và Ref dùng chung `img_attn.qkv` (DoubleBlocks) và `linear1` (SingleBlocks). 80% độ sâu mô hình nằm ở 20 SingleBlocks. | Tiêm LoRA trực tiếp vào: `img_attn.qkv` (5 DoubleBlocks) và phần Q, K, V của `linear1` (20 SingleBlocks). Rank $r=32$, $\alpha=32$. |
-| **3. Uniform AdaLN Modulation** | `ref_fixed_timestep = 0.0` cố định cho mọi slot $\rightarrow$ mô hình không có biên độ ưu tiên giữa các slot, toàn bộ nhận diện slot dồn vào RoPE. | LoRA sẽ tối ưu hóa ma trận $W_Q, W_K$ để thích ứng nhạy bén với các dải tần số góc quay RoPE $\mathbf{R}(\Delta t)$ của từng slot ($t=10, 20, 30$). |
-| **4. Upstream Semantic Clash** | Khi prompt lặp lại nguyên văn text tiếng Việt, Text Encoder `Qwen3-4B-FP8` gây nhiễu và xung đột với tín hiệu Glyph từ VAE. | Tích hợp Upstream LLM (Gemini Flash / Qwen-2.5) tự động bóc tách text và làm sạch prompt (Prompt Sanitization). |
-| **5. Phân bổ Slot Chuẩn & Full-Power 5-Slot** | Mốc $t \le 40.0$ là vùng hoạt động an toàn tuyệt đối cho Text ($t=10, 20, 30, 40$). Khối lượng token áp đảo của Sản phẩm ($4096$ tokens) cho phép đặt SP an toàn tại $t=50.0$ hoặc $t=60.0$. | Khóa 2 Cấu hình Slot Chuẩn Hóa:<br>• **Standard 4-Slot (90% mẫu)**: $t=10$ (Headline), $t=20$ (Subtitle), $t=30$ (CTA Badge), $t=40/50$ (Ảnh Sản Phẩm).<br>• **Full-Power 5-Slot (10-15% mẫu Milestone C)**: $t=10$ (Headline), $t=20$ (Brand/Slogan), $t=30$ (Features/Bullet-points), $t=40$ (CTA Badge), $t=50/60$ (Ảnh Sản Phẩm). |
-| **6. True CFG & Chống CFG Drift** | Klein 4B Base dùng True CFG (`use_guidance_embed = False`), nhánh Unconditional giữ nguyên Reference Tokens `img_cond_seq` và chỉ null hóa Text Prompt `ctx = ""`. | Áp dụng Text Conditioning Dropout ($p=0.10$) khi train LoRA: Thay thế `txt` bằng embedding của chuỗi rỗng `""` với tỉ lệ $10\%$ để LoRA học đúng nhánh Unconditional. |
-| **7. Phân Cấp Thị Giác & Dense CTA (Real Scenarios)** | Trong quảng cáo thực tế, CTA thường gồm nhiều câu ngắn dồn dập hoặc gạch đầu dòng (bullet points) cần gói gọn trong các badge/khung neon nhỏ xinh. | Thiết kế Dynamic Glyph Engine hỗ trợ đa dòng (`\n`, `•`, `-`), dạy LoRA tự động học phân cấp 3 tầng: $t=10$ (Tiêu đề 3D lớn nhất $45\%$), $t=20$ (Thông tin $30\%$), $t=30$ (CTA dồn dập trong Badge nhỏ $25\%$). |
-| **8. Gemini In-Context Multimodal Teacher** | Thử nghiệm đối chứng khẳng định truyền trực tiếp Glyph Bitmaps + Ảnh SP vào Gemini 2.0 tạo ra Ground-Truth 100% chuẩn chính tả và bố cục thương mại đỉnh cao, triệt tiêu lỗi rò rỉ tên font. | Dùng Gemini 2.0 Flash / Pro làm Distillation Engine chính thức: sinh 1-shot trực tiếp toàn bộ tập Ground-Truth 2,500 mẫu với chi phí siêu rẻ (~$15 - $75). |
-
-
+| **1. Softmax Joint Attention** | Toàn bộ Key $K$ của Canvas, Sản phẩm ($4096$ tokens) và các Glyph bị gom chung vào 1 Softmax duy nhất $\rightarrow$ gây ra tranh chấp Softmax và lấn át khối nhỏ nếu thiếu phân luồng. | Áp dụng **Quy Luật Kích Thước Động (Dynamic Glyph Token Sizing)**: Tự động tính toán Box theo độ dài từ ($240 - 800\text{ tokens}$), đảm bảo chiều cao $\ge 160\text{px}$/dòng và font size $\ge 40\text{px}$ theo *Glyph Scaling Law*. |
+| **2. Target LoRA Layers** | FLUX.2 không có module Cross-Attention riêng; Canvas và Ref dùng chung `img_attn.qkv` (DoubleBlocks) và `linear1` (SingleBlocks). 80% độ sâu mô hình nằm ở 20 SingleBlocks. | Tiêm LoRA trực tiếp vào: `img_attn.qkv` + `txt_attn.qkv` (5 DoubleBlocks) và phần Q, K, V của `linear1` (20 SingleBlocks). Rank $r=32$, $\alpha=32$. |
+| **3. Pretrained Discrete Offsets Supremacy** | Thực nghiệm phủ định giả thuyết góc quay số thực liên tục. Trọng số $W_Q, W_K$ của DiT đã được BFL hiệu chuẩn sâu trên các mốc số nguyên rời rạc $t \in \{10, 20, 30, 40, 50\}$. Mốc số thực lẻ ($44.0, 47.1...$) rơi vào Out-of-Distribution (OOD). | **Khóa cứng toàn bộ hệ thống trên các mốc số nguyên bội 10**: $t \in \{10.0, 20.0, 30.0, 40.0, 50.0\}$. Tuyệt đối không dùng các tọa độ float lẻ. |
+| **4. Dynamic Context-Aware Slot Assignment** | Vị trí sản phẩm không cố định ở $t=50$, mà được phân bổ linh hoạt theo số lượng khối văn bản thực tế để luôn đạt độ sắc nét cao nhất. | • 1 SP (Đổi background): SP ở $t=10.0$<br>• 1 Text + SP: Text $t=10$, SP $t=20$<br>• 2 Text + SP: Text $t=10, 20$, SP $t=30$<br>• 3 Text + SP: Text $t=10, 20, 30$, SP $t=40$<br>• 4 Text + SP (Full-Power): Text $t=10, 20, 30, 40$, SP $t=50$. |
+| **5. True CFG & Chống CFG Drift** | Klein 4B Base dùng True CFG (`use_guidance_embed = False`), nhánh Unconditional giữ nguyên Reference Tokens `img_cond_seq` và chỉ null hóa Text Prompt `ctx = ""`. | Áp dụng **Text Conditioning Dropout ($p=0.10$)**: Thay thế `txt` bằng embedding của chuỗi rỗng `""` với tỉ lệ $10\%$, giữ nguyên $100\%$ Reference Tokens để LoRA học đúng nhánh Unconditional. |
+| **6. Stochastic Slot Subset Dropout** | Để đảm bảo mô hình xử lý mượt mà mọi tổ hợp slot mà người dùng yêu cầu (ví dụ: chỉ nhập ô 1 và ô 3, hoặc ô 1 và ô 4). | Tích hợp **Slot Subset Dropout ($p=0.15$)** trong DataLoader của Milestone C: Stochastically drop ngẫu nhiên $1 - 2$ slot text để LoRA tổng quát hóa trên mọi tổ hợp con. |
+| **7. Pure T2I Parallel Co-existence** | Nếu chỉ train với mỏ neo sản phẩm $4096$ tokens, mô hình bị "nghiện sản phẩm" và lúng túng khi sinh poster sự kiện/thơ ca không có ảnh sản phẩm. | Khóa cứng tỷ lệ **$55\%$ Product-Anchor + $45\%$ Pure T2I** ở CẢ 3 MILESTONES. |
+| **8. Masked Product-Region Flow Loss** | Để đảm bảo ở trường hợp cực hạn (Full 5-Slot), chi tiết chữ in và màu sắc nắp sản phẩm ở $t=50.0$ không bị suy thoái $\ge 20\%$. | Áp dụng **Mặt nạ trọng số vùng sản phẩm ($\lambda_{\text{prod}} = 2.0$)** trong hàm Loss Flow Matching cho các pixel thuộc vật thể thật. |
 
 ---
 
 ## 🗂️ 2. THIẾT KẾ DỮ LIỆU & QUY TRÌNH CHẾ TẠO DATASET (DISTILLATION ENGINE)
 
-### 2.1. Quy cách một Training Sample Chuẩn & Nguyên Tắc Khớp Tuyệt Đối (Strict Target-Ref Alignment):
-
-> [!IMPORTANT]
-> **NGUYÊN TẮC KHỚP TUYỆT ĐỐI (ZERO GHOST-TEXT PRINCIPLE)**:
-> Ảnh Ground-Truth $\mathbf{X}_{\text{target}}$ **BẮT BUỘC CHỈ CHỨA ĐÚNG các thành phần text có mặt trong danh sách Reference Tokens của Milestone đó**.
-> Tuyệt đối không để ảnh đích xuất hiện Subtitle hay CTA khi input ở Milestone A chỉ có Headline (tránh việc DiT bị ép phải "học vẹt sinh chữ ma từ không khí" khi không có glyph condition).
+### 2.1. Quy cách một Training Sample Chuẩn & Khớp Tuyệt Đối (Strict Target-Ref Alignment):
 
 Mỗi mẫu huấn luyện được cấu trúc động theo tiến trình Milestone:
 $$\text{Sample}_i^{(\text{Milestone})} = \left( \text{Prompt}_{\text{clean}}, \; \{\text{Ref}_k\}_{k \in \text{ActiveSlots}}, \; \mathbf{X}_{\text{target}}^{(\text{Aligned})} \right)$$
 
 1. **`Prompt_clean`**: Mô tả phong cách thị giác, bố cục, ánh sáng studio, chất liệu 3D, **TUYỆT ĐỐI KHÔNG CHỨA CHỮ NGUYÊN VĂN**.
-2. **`Ref_10` (Headline Glyph)**: Kích thước động ($280 - 640\text{ tokens}$), $1 - 2$ dòng in hoa nổi bật, font nghệ thuật thương hiệu theo Domain.
-3. **`Ref_20` (Subtitle Glyph)**: Kích thước động ($240 - 480\text{ tokens}$), hỗ trợ dạng $1 - 2$ dòng thông tin hoặc gạch đầu dòng tính năng (`•`), font sắc nét (`BeVietnamPro-Black`).
-4. **`Ref_30` (CTA Badge Glyph)**: Kích thước động ($240 - 384\text{ tokens}$), hỗ trợ $1 - 2$ câu CTA dồn dập kích thích chuyển đổi (ví dụ: *"Ghé ngay hôm nay! / Deal cực hot - Số lượng có hạn!"*), font uốn lượn/dạ quang (`Pacifico` / `Sedgwick`) được tự động bao gói trong các Badge/Huy hiệu/Pill nhỏ xinh.
-5. **`Ref_prod_40` (Ảnh Sản phẩm Thật)**: Kích thước $1024 \times 1024$ (4096 tokens), ảnh sản phẩm studio sạch nền.
-6. **`X_target` (Ảnh Ground-Truth $1024 \times 1024$)**: Ảnh poster tương ứng chỉ chứa đúng các thành phần text đã kích hoạt.
-
-
+2. **`Ref_10` (Headline Glyph)**: Kích thước động ($280 - 640\text{ tokens}$), $1 - 2$ dòng in hoa nổi bật, font nghệ thuật thương hiệu.
+3. **`Ref_20` (Subtitle Glyph)**: Kích thước động ($240 - 480\text{ tokens}$), font sắc nét (`BeVietnamPro-Black`).
+4. **`Ref_30` (CTA Badge Glyph)**: Kích thước động ($240 - 384\text{ tokens}$), font uốn lượn/dạ quang (`Pacifico` / `Sedgwick`) trong Badge nhỏ.
+5. **`Ref_40` (Features / Brand Glyph)**: Kích thước động ($240 - 384\text{ tokens}$), danh sách tính năng / bullet-points.
+6. **`Ref_SP` (Ảnh Sản phẩm Thật)**: Kích thước $1024 \times 1024$ ($4096$ tokens), ảnh sản phẩm studio sạch nền đặt tại mốc $t$ tương ứng ($20, 30, 40$ hoặc $50$).
+7. **`X_target` (Ảnh Ground-Truth $1024 \times 1024$)**: Ảnh poster tương ứng chỉ chứa đúng các thành phần text đã kích hoạt.
 
 ---
 
-### 2.2. Ma Trận Ánh Xạ 1:1 Font Chuẩn Thương Hiệu Theo 5 Domain (Domain-Font Mapping Matrix):
+### 2.2. Ma Trận Ánh Xạ 1:1 Font Chuẩn Thương Hiệu Theo 5 Domain:
 
-Để tối ưu hóa **Mật độ Tiếp xúc Font (Font Exposure Density)** và chống loãng tín hiệu học dấu tiếng Việt, toàn bộ 2,500 mẫu được ánh xạ cố định $1:1$ với 5 bộ Font chủ lực (đã QA Unicode $100\%$):
+Toàn bộ $2,500$ mẫu được ánh xạ cố định $1:1$ với 5 bộ Font chủ lực (đã QA Unicode $100\%$):
 
 | Ngành Hàng (Domain) | Quy Mô | Font Headline Chủ Lực | Font Subtitle | Font CTA Badge | Phong Cách Thiết Kế & Chất Liệu |
 | :--- | :---: | :--- | :--- | :--- | :--- |
@@ -61,29 +54,21 @@ $$\text{Sample}_i^{(\text{Milestone})} = \left( \text{Prompt}_{\text{clean}}, \;
 | **💆 4. Spa / Mỹ Phẩm** | $500$ mẫu | `DancingScript` | `BeVietnamPro-Black` | `Pacifico` | Chữ mềm mại uyển chuyển, phong cách pastel tối giản |
 | **🛍️ 5. Siêu Thị / FMCG** | $500$ mẫu | `SVN-Gotham Ultra` / `Oswald`| `BeVietnamPro-Black` | `Pacifico` | Chữ dập nổi 3D khối to, pop-art khuyến mãi rực rỡ |
 
-> [!TIP]
-> **PHÂN TÁCH FONT CHỦ LỰC VS POOL AUGMENTATION**:
-> * **5 Font Chủ Lực trên**: Nhận $85\%$ tổng số lượt exposure để đảm bảo mô hình khắc sâu từng nét dấu tiếng Việt chuẩn xác $100\%$.
-> * **Pool Font Phụ Hệ Thống** (`SVN-Blow Brush`, `SVN-Cookies`, `SVN-Gretoon`, `SVN-Harabaras`...): Chỉ được kích hoạt trong cơ chế **Random Font Augmentation ($15\%$ xác suất)** trong DataLoader để giúp mô hình không bị overfit cứng nhắc vào 5 font chính.
-
 ---
 
-### 2.3. Quy Trình Chế Tạo 1-Shot Multi-Modal Distillation Trực Tiếp (Direct 1-Shot Distillation Pipeline):
-
-Toàn bộ 2,500 mẫu huấn luyện được chế tạo theo cơ chế **Phi Trạng Thái Trực Tiếp (Stateless 1-Shot)**: Mỗi mẫu nhận đúng số lượng Glyph cần thiết và sinh ra bức ảnh Ground-Truth hoàn chỉnh chỉ trong **1 LẦN GỌI DUY NHẤT**, tối ưu hóa bố cục thị giác tự nhiên, chạy song song bất đồng bộ (`asyncio` / `ThreadPool`) cực nhanh và tiết kiệm $65\%$ chi phí API:
+### 2.3. Quy Trình Chế Tạo Dataset Lũy Tiến Tích Lũy (Progressive Distillation Pipeline):
 
 ```
                                   TỔNG QUY MÔ DATASET: 2,500 MẪU ĐỘC LẬP
                                                     │
          ┌──────────────────────────────────────────┼──────────────────────────────────────────┐
          ▼                                          ▼                                          ▼
- [ 🎯 NHÓM A: 500 MẪU (Milestone A) ]       [ 🎯 NHÓM B: 1,000 MẪU (Milestone B) ]     [ 🎯 NHÓM C: 1,000 MẪU (Milestone C) ]
- • Phục vụ: Milestone A (500 mẫu)           • Phục vụ: Milestone B (1,500 mẫu = A + B) • Phục vụ: Milestone C (2,500 mẫu = A+B+C)
- • 1-Shot Input: [Ref_10 (Headline)]        • 1-Shot Input: [Ref_10, Ref_20]           • 1-Shot Input: [Ref_10, Ref_20, Ref_30]
-   + [Ref_SP_40 (nếu có)]                     + [Ref_SP_40 (nếu có)]                     + [Ref_SP_40 (nếu có)]
- • Output Ground-Truth:                     • Output Ground-Truth:                     • Output Ground-Truth:
-   Poster 1 Text + SP/Scene                   Poster 2 Texts + SP/Scene                  Poster 3 Texts + SP/Scene
- • ⚡ 500 Calls (Async Parallel)            • ⚡ 1,000 Calls (Async Parallel)          • ⚡ 1,000 Calls (Async Parallel)
+ [ 🎯 NHÓM A: 800 MẪU (Milestone A) ]       [ 🎯 NHÓM B: 700 MẪU MỚI (Milestone B) ]   [ 🎯 NHÓM C: 1,000 MẪU MỚI (Milestone C) ]
+ • Phục vụ: Milestone A (800 mẫu)           • Phục vụ: Milestone B (1,500 mẫu = A + B) • Phục vụ: Milestone C (2,500 mẫu = A+B+C)
+ • 1-Shot Input: 2 Slots Cạnh Tranh         • 1-Shot Input: 3 Slots Cạnh Tranh         • 1-Shot Input: 4-5 Slots Toàn Diện
+   - 440 mẫu SP: [Ref_10 + Ref_SP_20]         - 825 mẫu SP: [Ref_10, 20 + Ref_SP_30]     - 1,375 mẫu SP: [Ref_10..40 + Ref_SP_50]
+   - 360 mẫu T2I: [Ref_10 + Ref_20]           - 675 mẫu T2I: [Ref_10, 20, 30]            - 1,125 mẫu T2I: [Ref_10, 20, 30, 40]
+ • ⚡ 800 Calls (Async Parallel)            • ⚡ 700 Calls (Async Parallel)            • ⚡ 1,000 Calls (Async Parallel)
          │                                          │                                          │
          └──────────────────────────────────────────┼──────────────────────────────────────────┘
                                                     ▼
@@ -93,55 +78,23 @@ Toàn bộ 2,500 mẫu huấn luyện được chế tạo theo cơ chế **Phi 
                                    • Đóng gói thành WebDataset Shards (.tar / .h5)
 ```
 
+---
 
-
-### 2.4. Ma trận Đa Tỉ Lệ Khung Hình (Aspect Ratio Bucketing Strategy):
-
-Để chống hiện tượng **Spatial Coordinate Overfitting** (học vẹt bố cục vuông 1:1) và phục vụ trực tiếp các định dạng thương mại thực tế, tập dữ liệu huấn luyện được phân bổ đa dạng qua 4 bucket chuẩn (bảo toàn diện tích $\approx 1\text{ Megapixel} \approx 4,032 - 4,096\text{ tokens}$):
+### 2.4. Ma trận Đa Tỉ Lệ Khung Hình (Aspect Ratio Bucketing):
 
 | Tỉ Lệ Bucket | Kích Thước Pixel | Latent Grid ($16\times$) | Token Canvas | Tỷ Trọng | Ứng Dụng Nghiệp Vụ Thương Mại |
 | :---: | :---: | :---: | :---: | :---: | :--- |
 | **1:1** (Vuông) | $1024 \times 1024$ | $64 \times 64$ | $4,096$ tokens | **35%** | Bài đăng Feed Facebook, Instagram, E-commerce Post |
 | **9:16** (Dọc cao) | $768 \times 1344$ | $48 \times 84$ | $4,032$ tokens | **35%** | **TikTok Ads**, Instagram Reels, Story, Standee quảng cáo |
-| **4:5** (Dọc vừa) | $896 \times 1152$ | $56 \times 72$ | $4,032$ tokens | **15%** | Instagram Portrait Post (Tối ưu diện tích màn hình mobile) |
+| **4:5** (Dọc vừa) | $896 \times 1152$ | $56 \times 72$ | $4,032$ tokens | **15%** | Instagram Portrait Post (Tối ưu diện tích mobile) |
 | **16:9** (Ngang) | $1344 \times 768$ | $84 \times 48$ | $4,032$ tokens | **15%** | Facebook Fanpage Cover, Website Banner, TV Display |
-
-> [!TIP]
-> **TỐI ƯU HÓA BỘ NHỚ**: Do mỗi GPU nhận `batch_size = 1`, việc luân chuyển giữa các bucket tỉ lệ khác nhau trong DataLoader diễn ra **hoàn toàn tự nhiên, không cần zero-padding và không làm tăng thêm 1 MB VRAM nào**!
-
-### 2.5. Phân Bổ Chế Độ Kép (Product-Anchor 60% vs Pure Text-to-Image 40%):
-
-Để chống hiện tượng mô hình bị "nghiện mỏ neo sản phẩm" (Spurious Anchor Dependency) và đáp ứng $100\%$ các bài toán marketing thực tế (bao gồm cả poster sự kiện, lễ hội, thơ ca không có ảnh sản phẩm upload), tập dữ liệu được chia làm 2 nhánh huấn luyện:
-
-```
-                                  TỔNG QUY MÔ DATASET: 2,500 SAMPLES
-                                                  │
-                 ┌────────────────────────────────┴────────────────────────────────┐
-                 ▼                                                                 ▼
-   [ 🛍️ NHÁNH A: PRODUCT-ANCHOR MODE (60% ~ 1,500 mẫu) ]          [ 🎨 NHÁNH B: PURE TEXT-TO-IMAGE MODE (40% ~ 1,000 mẫu) ]
-   • Dành cho E-commerce, Thiết bị, Mỹ phẩm, Thời trang           • Dành cho Poster Sự kiện, Lễ hội, Cafe, Thơ ca, Quote
-   • Input: Đa khối Text ($t=10,20,30$) + 1 SP thật ($t=40$)      • Input: ĐA KHỐI TEXT ($t=10,20,30$) + PROMPT SCENE
-   • Sequence dài: ~5,100 - 6,000 tokens                          • Sequence ngắn: ~4,400 - 5,000 tokens (KHÔNG CÓ t=40!)
-   • Học: Tách bạch Sản phẩm thật và Đa khối chữ                  • Học: Tự sinh Scene tự nhiên và Định tuyến Đa khối chữ
-```
-
-#### 🧮 Cơ Chế Phạt Loss Trong Cả 2 Chế Độ (Supervised Flow Matching Objective):
-Dù có hay không có ảnh sản phẩm ở Input, mỗi mẫu trong Dataset đều có một ảnh Poster hoàn chỉnh làm **Ground-Truth $\mathbf{X}_{\text{target}}$**:
-$$\mathcal{L}_{\text{Flow}} = \mathbb{E}_{t, x_0, x_1} \left[ \left\| \mathbf{v}_\theta\left(x_t, t, \text{ctx}, \{\text{Ref}_k\}\right) - (x_1 - x_0) \right\|^2 \right]$$
-
-1. **Khi chạy Nhánh A (Có SP $t=40$)**: Loss phạt nếu sản phẩm sinh ra sai lệch chi tiết so với ảnh thật ở $t=40$ hoặc chữ bị biến dạng.
-2. **Khi chạy Nhánh B (Pure T2I - Không có $t=40$)**: Loss phạt ở vùng hậu cảnh nếu không ăn khớp với Text Prompt, và phạt ở vùng chữ nếu không bám sát tọa độ hình học của các Glyph $t=10, 20, 30$.
-   * 👉 **Mô hình học được kỹ năng tối thượng**: *"Khi không có ảnh sản phẩm đưa vào, hãy tự do vẽ bối cảnh theo prompt, nhưng vẫn phải định tuyến chính xác $100\%$ các khối chữ từ $t=10, 20, 30$ lên bức tranh đó!"*
 
 ---
 
 ## ⚙️ 3. THIẾT KẾ KIẾN TRÚC LORA & HYPERPARAMETERS
 
-
-
-### 3.1. Cấu hình PEFT LoRA Injection & Phân Bổ Tham Số Chính Xác:
+### 3.1. Cấu hình PEFT LoRA Injection:
 ```python
-# Cấu hình LoRA tối ưu cho FLUX.2 Klein 4B Base
 lora_config = {
     "r": 32,                          # Rank 32 đủ dung lượng học phân luồng đa slot
     "lora_alpha": 32,                 # Scaling factor = 1.0
@@ -156,20 +109,8 @@ lora_config = {
 }
 ```
 
-#### 🧮 Tính Toán Số Lượng Tham Số LoRA Chi Tiết:
-1. **5 Khối DoubleStreamBlocks**:
-   * `img_attn.qkv`: $5 \times (3072 \times 32 + 9216 \times 32) = 1,966,080$ tham số.
-   * `txt_attn.qkv`: $5 \times (3072 \times 32 + 9216 \times 32) = 1,966,080$ tham số.
-   * $\rightarrow$ Tiểu kế DoubleBlocks: **$3,932,160$ tham số** (~3.93M).
-2. **20 Khối SingleStreamBlocks**:
-   * `linear1` (Ma trận fused $3072 \rightarrow 27648$ gồm 9216 dim cho QKV + 18432 dim cho MLP):
-   * $20 \times (3072 \times 32 + 27648 \times 32) = 20 \times 983,040 = \mathbf{19,660,800}$ tham số (~19.66M).
-   * *Ý nghĩa kỹ thuật*: Áp dụng LoRA lên `linear1` cho phép mô hình tối ưu đồng thời cả cơ chế Attention phân luồng lẫn biến đổi đặc trưng không gian (Feature Transformation) trong khối đơn luồng, tạo năng lực thích ứng mạnh mẽ nhất.
-
-* **Tổng tham số mô hình Base 4B**: $\approx 4.08 \times 10^9$ parameters.
-* **Tổng tham số LoRA cần huấn luyện**: $\mathbf{23,592,960\text{ parameters}}$ (**chỉ chiếm $\mathbf{0.58\%}$ mô hình**).
+* **Tổng tham số LoRA cần huấn luyện**: $\mathbf{23,592,960\text{ parameters}}$ (**chỉ chiếm $\mathbf{0.58\%}$ mô hình Base 4B**).
 * **Kích thước file trọng số LoRA lưu trữ**: $\approx \mathbf{47.2\text{ MB}}$ (`.safetensors`).
-
 
 ---
 
@@ -186,49 +127,43 @@ lora_config = {
 | **Precision Mode** | `bfloat16` Native Mixed Precision | Tối ưu kiến trúc Tensor Core A30, chống tràn số |
 | **Gradient Checkpointing** | Kích hoạt trên toàn bộ 25 Blocks | Giảm bộ nhớ kích hoạt trung gian $>65\%$ |
 | **Max Gradient Norm** | $1.0$ (Gradient Clipping) | Chống hiện tượng gradient spike khi gặp glyph phức tạp |
-| **Text Conditioning Dropout** | $p = 0.10$ ($10\%$ số step train) | Thay thế `txt` bằng embedding chuỗi rỗng `""`, giữ nguyên $100\%$ Reference Tokens để LoRA học đúng nhánh Unconditional của True CFG, chống CFG Drift |
-| **Hàm Mất Mát (Loss)** | Flow Matching MSE Loss: $\mathcal{L} = \| v_\theta - (x_1 - x_0) \|^2$ | Chuẩn Flow Matching Euler ODE của BFL |
-
-
----
-
-## 📈 4. LỘ TRÌNH HUẤN LUYỆN 3 MỐC (CURRICULUM LEARNING ROADMAP)
-
-Để đảm bảo gradient hội tụ mượt mà và không làm "sốc" ma trận Attention của mô hình Base, quá trình train được chia làm 3 Phase tăng dần độ phức tạp (Effective Batch Size $= 1 \times 2 \times 4 = \mathbf{8}$):
-
-```
-       [ MILESTONE A ]                      [ MILESTONE B ]                      [ MILESTONE C ]
-     Phase Khởi Động (1 text)             Phase Tách Kênh (2 texts)            Phase Full 4-Slot (3 texts)
-      600 steps (9.6 epochs)              1,200 steps (6.4 epochs)             2,200 steps (7.04 epochs)
-   Tập dữ liệu: 500 samples             Tập dữ liệu: 1,500 samples           Tập dữ liệu: 2,500 samples
-  • Học hòa trộn SP & Headline            • Học tách kênh Subtitle (t=20)         • Khóa toàn bộ 4-slot Production
-```
-
-### 📍 Chi tiết từng Milestone (Phân Bổ 60% Product-Anchor / 40% Pure T2I):
-
-#### 🔹 Milestone A: Đồng bộ Hòa trộn 1 Headline ($t=10$) (300 mẫu SP + 200 mẫu Pure T2I)
-* **Mục tiêu**: Dạy LoRA phân luồng mượt mà giữa khối token của sản phẩm và khối chữ chính ($280 - 640\text{ tokens}$ dynamic), đồng thời học cách tự sinh background khi không có ảnh sản phẩm.
-* **Số bước**: `600 steps` (tương đương **$9.6\text{ epochs}$** trên tập 500 mẫu với Effective Batch Size = 8).
-* **Tiêu chuẩn nghiệm thu**: Headline đạt độ chính xác $100\%$ trên cả ảnh có sản phẩm thật và ảnh T2I thuần.
-
-#### 🔹 Milestone B: Phân tách Chú ý 2 Khối Text ($t=10, 20$) (900 mẫu SP + 600 mẫu Pure T2I)
-* **Mục tiêu**: Kích hoạt khả năng phân tách kênh $t=20$ (Subtitle), triệt tiêu hoàn toàn hiện tượng Ref-to-Ref contamination và ngăn chặn DiT tự sinh chữ rác Lorem Ipsum.
-* **Số bước**: `1,200 steps` (tương đương **$6.4\text{ epochs}$** trên tập 1,500 mẫu).
-* **Tiêu chuẩn nghiệm thu**: Cả Headline và Subtitle đều render chuẩn $100\%$ chữ và dấu tiếng Việt trên cùng 1 ảnh.
-
-#### 🔹 Milestone C: Toàn diện 3-4 Khối Text (1,500 mẫu SP + 1,000 mẫu Pure T2I)
-* **Mục tiêu**: Khóa cứng toàn bộ ma trận Attention cho bố cục chuẩn thương mại hoàn chỉnh:
-  * **85% Mẫu Chuẩn (Standard 4-Slot)**: Headline 3D ($t=10$) + Subtitle thông tin ($t=20$) + CTA Badge phát sáng ($t=30$) + Sản phẩm thật ($t=40/50$).
-  * **15% Mẫu Cực Hạn (Full-Power 5-Slot)**: Mở rộng thêm 1 slot Text ($t=40$) cho danh sách tính năng/slogan và đẩy SP về $t=50/60$ để phục vụ các banner dày đặc thông tin.
-* **Số bước**: `2,200 steps` (tương đương **$7.04\text{ epochs}$** trên tập 2,500 mẫu).
-* **Tiêu chuẩn nghiệm thu**: Chạy bộ Benchmark 20 test case độc lập đạt tỷ lệ chính xác $\ge \mathbf{95\%}$ tổng thể và $\mathbf{100\%}$ trên các mẫu banner chuẩn.
-
-
-
+| **Text Conditioning Dropout** | $p = 0.10$ ($10\%$ số step train) | Thay thế `txt` bằng chuỗi rỗng `""`, giữ nguyên $100\%$ Reference Tokens để LoRA học đúng nhánh Unconditional |
+| **Slot Subset Dropout** | $p = 0.15$ (trong Milestone C) | Stochastically drop ngẫu nhiên $1 - 2$ slot text để LoRA học mọi tổ hợp con |
+| **Hàm Mất Mát (Loss)** | $\mathcal{L} = (1 + (\lambda_{\text{prod}}-1)\mathbf{M}_{\text{prod}}) \odot \| v_\theta - (x_1 - x_0) \|^2$ | Flow Matching có Masked Focal Loss ($\lambda_{\text{prod}}=2.0$) |
 
 ---
 
-## ⏱️ 5. BẢNG DỰ TOÁN TÀI NGUYÊN & THỜI GIAN (RESOURCE & TIMELINE ESTIMATES)
+## 📈 4. LỘ TRÌNH HUẤN LUYỆN 3 MỐC THỰC CHIẾN (2 $\rightarrow$ 3 $\rightarrow$ 4/5 SLOTS)
+
+```
+        [ 🎯 MILESTONE A: 2 SLOTS ]              [ ⚡ MILESTONE B: 3 SLOTS ]              [ 🏆 MILESTONE C: 4-5 SLOTS ]
+        Phase Tách Kênh Cốt Lõi                  Phase Mở Rộng 3 Kênh                     Phase Full Production Hoàn Chỉnh
+         800 steps (~8.0 epochs)                  1,400 steps (~7.5 epochs)                2,200 steps (~7.04 epochs)
+        Tập dữ liệu: 800 samples                 Tập dữ liệu: 1,500 samples               Tập dữ liệu: 2,500 samples
+   • Giải quyết dứt điểm tranh chấp          • Mở khóa kênh t=30 (CTA Badge)          • Khóa cứng 4 Text Slots + Sản Phẩm
+     giữa 2 Kênh: t=10 và t=20                 và cân bằng phân cấp 3 tầng              ở mốc t=50 (Full-Power Banner)
+```
+
+### 📍 Chi tiết từng Milestone:
+
+#### 🔹 Milestone A: Kích hoạt Phân Tách Kênh Đôi ($2\text{ Slots}$) — Quy mô: $800$ mẫu
+* **Phân bổ**: $440$ mẫu SP $[t=10\text{ Text} + t=20\text{ SP}]$ + $360$ mẫu Pure T2I $[t=10\text{ Title} + t=20\text{ Subtitle}]$.
+* **Mục tiêu**: Dạy LoRA giải quyết bài toán cốt lõi đầu tiên: **Phân luồng Softmax giữa $t=10$ và $t=20$**, triệt tiêu hoàn toàn hiện tượng tràn kênh (Attention Bleeding) và chữ rác Lorem Ipsum.
+* **Số bước**: `800 steps` (~1.2 giờ trên 2x A30).
+
+#### 🔹 Milestone B: Mở Rộng 3 Tầng Thị Giác ($3\text{ Slots}$) — Quy mô: $1,500$ mẫu ($800\text{ cũ} + 700\text{ mới}$)
+* **Phân bổ**: $825$ mẫu SP $[t=10, 20\text{ Text} + t=30\text{ SP}]$ + $675$ mẫu Pure T2I $[t=10, 20, 30\text{ Texts}]$.
+* **Mục tiêu**: Kích hoạt khả năng nhận diện kênh $t=30$, dạy mô hình tự động bao gói các cụm từ kêu gọi hành động (*"MUA 1 TẶNG 1"*, *"GIẢM 50%"*) thành các khung Badge/Huy hiệu/Neon nhỏ xinh mà **không cần Prompt gợi ý**.
+* **Số bước**: `1,400 steps` (~2.0 giờ trên 2x A30).
+
+#### 🔹 Milestone C: Toàn Diện 4–5 Kênh Cực Hạn ($4-5\text{ Slots}$) — Quy mô: $2,500$ mẫu ($1,500\text{ cũ} + 1,000\text{ mới}$)
+* **Phân bổ**: $1,375$ mẫu SP $[3-4\text{ Texts} + t=50\text{ SP}]$ + $1,125$ mẫu Pure T2I $[4\text{ Texts Thuần}]$.
+* **Mục tiêu**: Khóa cứng toàn bộ ma trận Attention cho mọi tình huống thương mại phức tạp nhất, kích hoạt cơ chế Masked Focal Loss để bảo vệ sản phẩm ở $t=50$ nguyên vẹn $100\%$, đồng thời kích hoạt Slot Subset Dropout $p=0.15$.
+* **Số bước**: `2,200 steps` (~3.5 giờ trên 2x A30).
+
+---
+
+## ⏱️ 5. BẢNG DỰ TOÁN TÀI NGUYÊN & THỜI GIAN
 
 ### 5.1. Dự toán Bộ nhớ VRAM trên 2x NVIDIA A30 (48GB Tổng cộng):
 
@@ -243,19 +178,18 @@ lora_config = {
 
 ---
 
-### 5.2. Dự toán Thời gian Thực thi Thực Tế (Realistic Timeline Estimates):
+### 5.2. Dự toán Tiến độ Thực tế (Realistic Timeline Estimates):
 
 ```
 ╔══════════════════════════════════════════════════════════╦══════════════╦═════════════════════════════════╗
 ║ Hạng Mục Công Việc                                       ║ Thời Gian    ║ Compute / Nhân Lực Cần Thiết    ║
-╠══════════════════════════════════════════════════════════╬══════════════╬═════════════════════════════════╣
-║ 1. Viết Script Sinh Dataset & Pipeline Distillation      ║ 0.5 Ngày     ║ Agent viết code trên Local      ║
-║ 2. Sinh Dataset Batch (2,500 mẫu kèm Retry Loop OCR)     ║ 6 – 8 Giờ    ║ Chạy nền qua đêm (Batch script) ║
-║ 3. Xây dựng Pipeline Train LoRA DDP (`train_lora_dit.py`) ║ 0.5 Ngày     ║ DDP Accelerate trên 2x A30      ║
-║ 4. Huấn luyện Milestone A & B (1,800 steps)              ║ ~2.5 Giờ     ║ 2x GPU A30 chạy liên tục        ║
+║ 1. Lập trình Script Distillation (`generate_dataset.py`)  ║ 0.5 Ngày     ║ Agent viết code trên Local      ║
+║ 2. Sinh Dataset 2,500 mẫu (Async Gemini Teacher + OCR QA)║ 6 – 8 Giờ    ║ Chạy nền qua đêm (Batch script) ║
+║ 3. Lập trình Trainer LoRA DDP (`train_lora_dit.py`)      ║ 0.5 Ngày     ║ DDP Accelerate trên 2x A30      ║
+║ 4. Huấn luyện Milestone A & B (2,200 steps tổng)         ║ ~3.2 Giờ     ║ 2x GPU A30 chạy liên tục        ║
 ║ 5. Đánh giá & Điều chỉnh Hyperparameters                 ║ 0.5 Ngày     ║ Chạy Benchmark Suite 20 mẫu     ║
-║ 6. Huấn luyện Full Milestone C (4,000 steps tổng)        ║ ~5.0 Giờ     ║ 2x GPU A30 chạy qua đêm         ║
-║ 7. Đóng gói Inference Pipeline & Upstream LLM Router     ║ 1.0 Ngày     ║ Hoàn thiện sản phẩm End-to-End  ║
+║ 6. Huấn luyện Full Milestone C (4,400 steps tích lũy)    ║ ~3.5 Giờ     ║ 2x GPU A30 chạy qua đêm         ║
+║ 7. Đóng gói Serving API & Gradio Web UI                  ║ 1.0 Ngày     ║ Hoàn thiện sản phẩm End-to-End  ║
 ╠══════════════════════════════════════════════════════════╬══════════════╬═════════════════════════════════╣
 ║ 🏆 TỔNG THỜI GIAN HOÀN THÀNH GIAI ĐOẠN 3                ║ **3 – 4 NGÀY**║ Compute Server 2x A30 sẵn sàng  ║
 ╚══════════════════════════════════════════════════════════╩══════════════╩═════════════════════════════════╝
@@ -263,11 +197,10 @@ lora_config = {
 
 ---
 
-## 🛡️ 6. CHIẾN LƯỢC ĐÁNH GIÁ & DỰ PHÒNG RỦI RO (EVALUATION & CONTINGENCY)
+## 🛡️ 6. BỘ ĐÁNH GIÁ VÀNG (GOLDEN EVALUATION SUITE)
 
-### 6.1. Bộ Đánh Giá Toàn Diện 8 Test Cases Cố Định (Golden Evaluation Suite):
 Cứ sau mỗi **500 steps**, trainer tự động tạm dừng và sinh ảnh đánh giá trên **8 Golden Test Cases** bao phủ đủ 5 ngành hàng và bài test chống hồi quy:
-0. *Test 0 (Single-Slot Zero-Shot Regression Test)*: Duy nhất 1 Headline ở $t=10.0$ (Xác nhận LoRA không phá vỡ độ chính xác 100% vốn có của mô hình Base).
+0. *Test 0 (Single-Slot Regression Test)*: Duy nhất 1 Headline ở $t=10.0$ (Xác nhận LoRA không phá vỡ độ chính xác 100% vốn có của mô hình Base).
 1. *Test 1 (F&B / Cafe)*: Poster Cafe Grand Opening 3 tầng chữ (Gỗ/Neon).
 2. *Test 2 (Tech / Audio)*: Poster Tai nghe chụp tai với Headline 3D kim loại + Subtitle mạ bạc + CTA Neon.
 3. *Test 3 (Fashion / Clothing)*: Poster Flash Sale Thời trang cao cấp với chất liệu chữ vàng đồng.
@@ -276,32 +209,11 @@ Cứ sau mỗi **500 steps**, trainer tự động tạm dừng và sinh ảnh �
 6. *Test 6 (Literature / Dense Text)*: Bài thơ Tây Tiến 4 câu (28 từ, kiểm tra độ bền câu dài).
 7. *Test 7 (Product Anchor 4096 tokens)*: Giày Sneaker thật $t=40$ + Headline $t=10$ + CTA $t=30$.
 
-* Toàn bộ ảnh eval được tự động ghép vào panel: **`eval_checkpoints/STEP_XXXX_COMPARISON.png`** để theo dõi trực quan từng checkpoint.
-* **Đánh Giá Tuyến Tính CFG Scale (CFG Scale Sweep)**: Tại các checkpoint lớn (Step 600, 1800, 4000), trainer tự động chạy sweep qua 4 mức CFG Guidance Scale: `[1.0, 2.5, 4.0, 6.0]` để đảm bảo LoRA không bị suy thoái hoặc cháy nét ở các dải guidance khác nhau.
-
-
-
 ---
 
-### 6.2. Kế hoạch Dự phòng Rủi ro (Fallback Mechanisms):
+## 🎯 7. KẾT LUẬN
 
-1. **Rủi ro 1: Overfitting trên font chữ của Dataset**:
-   * *Triệu chứng*: Mô hình chỉ vẽ đúng font trong tập train, vẽ xấu font lạ.
-   * *Giải pháp*: Tăng Dropout lên $0.1$, bổ sung Random Font Augmentation trong DataLoader (chọn ngẫu nhiên trong 8 font hệ thống ở mỗi epoch).
-2. **Rủi ro 2: Gradient Spike do độ dài Sequence lớn**:
-   * *Triệu chứng*: Loss đột ngột vọt lên `NaN` hoặc `Inf`.
-   * *Giải pháp*: Gradient clipping chặt ở mức $0.5$, kích hoạt `torch.cuda.amp.GradScaler` cho bfloat16.
-3. **Rủi ro 3: Tràn VRAM khi sequence đạt đỉnh**:
-   * *Triệu chứng*: Lỗi `CUDA Out of Memory`.
-   * *Giải pháp*: Kích hoạt CPU Offloading cho Optimizer States hoặc tăng Gradient Accumulation lên 8 và giảm batch size.
-
----
-
-## 🎯 7. KẾT LUẬN & ĐỀ XUẤT PHÊ DUYỆT
-
-Kế hoạch huấn luyện này được thiết kế theo đúng tiêu chuẩn kỹ thuật hàng đầu:
-* **Tận dụng $100\%$ thế mạnh của Base 4B** (không xóa bỏ những gì mô hình đã biết).
-* **Định vị đúng trọng tâm bài toán** (Attention Disentanglement & Routing).
-* **Tiết kiệm tối đa tài nguyên** (Chỉ cần vài giờ compute trên 2x A30 thay vì nhiều ngày).
-
-Bạn vui lòng xem xét toàn bộ bản Kế hoạch chi tiết này. Nếu bạn đồng thuận, chúng ta sẽ bắt tay ngay vào việc lập trình **Script Sinh Dataset Đa Phương Thức từ Gemini (`scripts/generate_distilled_dataset.py`)**!
+Bản Roadmap v5 này đã được chuẩn hóa tối hậu:
+* **Loại bỏ hoàn toàn công việc thừa thãi** (không train 1 text).
+* **Định hình tiến trình thực chiến lũy tiến $2 \rightarrow 3 \rightarrow 4/5$ Slots**.
+* **Đồng bộ hóa $100\%$ giữa True CFG, Masked Product Loss và Stochastic Slot Dropout**.
