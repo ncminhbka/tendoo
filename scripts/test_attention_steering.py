@@ -399,18 +399,16 @@ class AttentionSteeringManager:
             if not cfg.active or cfg.mode == "none":
                 return self.orig_causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens, kv_cache)
 
-            # --- Pass 2, 3, 4: Unified Joint SDPA with Proper Causal Masking ---
+            # Full Joint Attention Additive Mask: shape (1, 1, seq_len, seq_len)
+            # Default 0.0 PRESERVES 100% OF BFL'S BIDIRECTIONAL JOINT DYNAMICS across all tokens:
+            # (TXT <-> REF, REF <-> CANVAS, CANVAS <-> CANVAS, TXT <-> CANVAS)
             attn_bias = torch.zeros((1, 1, seq_len, seq_len), dtype=q.dtype, device=q.device)
 
-            # Causal Isolation for Ref Tokens:
-            # Ref tokens must ONLY self-attend to reference keys [r10_start:r20_end].
-            # Block Ref queries from attending to Txt [0:c_start] and Canvas [c_start:r10_start]:
-            attn_bias[:, :, r10_start:r20_end, :r10_start] = -10000.0
-
             if cfg.mode == "null_test":
-                # Pass 2: Null Control.
-                # Canvas -> Ref has 0.0 bias (unsteered). Txt and Canvas attend to all keys naturally.
+                # Pass 2: Null Control with True Full Bidirectional Joint Attention (Bias=0.0).
+                # Must be 100% bitwise/mathematically identical to Pass 1!
                 pass
+
 
             elif cfg.mode == "boost_only":
                 # Amplify Canvas -> Slot 20 keys uniformly
