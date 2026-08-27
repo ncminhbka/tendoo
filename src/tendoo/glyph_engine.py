@@ -17,13 +17,13 @@ MATHEMATICAL & ARCHITECTURAL FOUNDATIONS (MANDATORY TECHNICAL LAWS):
        L_ref = lat_w * lat_h = (width // 16) * (height // 16)
    - ALL glyph dimensions (width, height) MUST be strictly snapped to integer multiples of 16.
 
-2. Rule 22: Nyquist-Shannon Sampling & Anti-Aliasing Floor (Character-Level):
-   - At font size <= 30pt, Vietnamese diacritic marks (sắc, huyền, hỏi, ngã, nặng, mũ, râu)
-     have a physical height < 8px (< 0.50 latent token).
-   - In 50-step ODE flow matching, sub-Nyquist features (< 0.50 token) suffer from spatial
-     quantization aliasing, causing spiky/jagged edges and diacritic degradation.
-   - Every font has an immutable minimum font size floor (S_floor >= 36pt - 48pt) to guarantee
-     diacritics receive >= 0.70 latent tokens, achieving silk-smooth 100% rendering.
+2. Empirically-Derived DiT Denoise Resolution Floor (Calibrated via Isolation Sweeps):
+   - VAE Roundtrip tests proved that the AutoEncoder latent space preserves text cleanly down to 20pt.
+   - However, during 50-step ODE flow matching, DiT attention dynamics smooth or mispredict ultra-fine
+     latent features if characters fall below an empirical threshold, causing jagged/spiky diacritic artifacts.
+   - We establish an empirical resolution floor per font archetype (calibrated via probe_dit_font_resolution_floor.py)
+     to guarantee ODE trajectories denoise with 100% smooth, crisp contours without wasting token budget.
+
 
 3. Rule 25: Optimal Tight-Crop Sizing Law (Zero Size Bias & Maximum Speed):
    - Glyph boxes scale dynamically and purely based on ACTUAL TEXT LENGTH and NUMBER OF LINES.
