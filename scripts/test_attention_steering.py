@@ -321,59 +321,71 @@ class AttentionSteeringManager:
             if not cfg.active or cfg.mode == "none" or kv_cache is not None:
                 return self.orig_causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens, kv_cache)
 
-            ref_start = num_txt_tokens
-            ref_end = num_txt_tokens + num_ref_tokens
+            seq_len = q.shape[2]
+            n_txt = cfg.num_txt
+            n_canvas = cfg.num_canvas
+            n_ref10 = cfg.num_ref10
+            n_ref20 = cfg.num_ref20
+            n_ref_total = n_ref10 + n_ref20
 
-            q_txt = q[:, :, :ref_start, :]
-            q_ref = q[:, :, ref_start:ref_end, :]
-            q_img = q[:, :, ref_end:, :]
-            k_txt = k[:, :, :ref_start, :]
-            v_txt = v[:, :, :ref_start, :]
-            k_ref = k[:, :, ref_start:ref_end, :]
-            v_ref = v[:, :, ref_start:ref_end, :]
-            k_img = k[:, :, ref_end:, :]
-            v_img = v[:, :, ref_end:, :]
+            # Debug assertion to strictly guarantee token sequence layout: [TXT][CANVAS][REF10][REF20]
+            assert seq_len == n_txt + n_canvas + n_ref_total, (
+                f"❌ Slicing Mismatch: seq_len={seq_len} != txt({n_txt}) + canvas({n_canvas}) + ref({n_ref_total})"
+            )
 
-            q_txt_img = torch.cat([q_txt, q_img], dim=2)
-            k_all = torch.cat([k_txt, k_ref, k_img], dim=2)
-            v_all = torch.cat([v_txt, v_ref, v_img], dim=2)
-
-            seq_q = q_txt_img.shape[2]
-            seq_k = k_all.shape[2]
-
-            # Build additive float attention bias
-            attn_bias = torch.zeros((seq_q, seq_k), dtype=q.dtype, device=q.device)
-
-            c_start = cfg.num_txt
-            c_end = cfg.num_txt + cfg.num_canvas
+            c_start = n_txt
+            c_end = n_txt + n_canvas
             r10_start = c_end
-            r10_end = r10_start + cfg.num_ref10
+            r10_end = r10_start + n_ref10
             r20_start = r10_end
-            r20_end = r20_start + cfg.num_ref20
+            r20_end = r20_start + n_ref20
 
-            # Compute normalized height y for each canvas token
-            h_coords = torch.arange(cfg.lat_h, device=q.device, dtype=torch.float32)
-            w_coords = torch.arange(cfg.lat_w, device=q.device, dtype=torch.float32)
-            y_grid = (h_coords.unsqueeze(1).expand(cfg.lat_h, cfg.lat_w).flatten() + 0.5) / float(cfg.lat_h)
+            # Exact token partition matching physical concatenation order
+            q_txt = q[:, :, :c_start, :]
+            q_canvas = q[:, :, c_start:c_end, :]
+            q_ref = q[:, :, c_end:, :]
+
+            k_txt = k[:, :, :c_start, :]
+            k_canvas = k[:, :, c_start:c_end, :]
+            k_ref = k[:, :, c_end:, :]
+
+            v_txt = v[:, :, :c_start, :]
+            v_canvas = v[:, :, c_start:c_end, :]
+            v_ref = v[:, :, c_end:, :]
+
+            # --- 1. REF TOKENS: Pure Self-Attention ---
+            # Ref tokens only attend to themselves to prevent canvas noise from corrupting clean glyphs
+            attn_ref = F.scaled_dot_product_attention(q_ref, k_ref, v_ref, is_causal=False)
+
+            # --- 2. TXT TOKENS: Standard Bidirectional Attention to [TXT, CANVAS] ---
+            k_txt_canvas = torch.cat([k_txt, k_canvas], dim=2)
+            v_txt_canvas = torch.cat([v_txt, v_canvas], dim=2)
+            attn_txt = F.scaled_dot_product_attention(q_txt, k_txt_canvas, v_txt_canvas, is_causal=False)
+
+            # --- 3. CANVAS TOKENS: Full Cross-Attention with Steered Regional Logit Bias ---
+            k_all = torch.cat([k_txt, k_canvas, k_ref], dim=2)
+            v_all = torch.cat([v_txt, v_canvas, v_ref], dim=2)
+
+            # Construct bias mask specifically for canvas queries: shape (1, 1, n_canvas, seq_len)
+            attn_bias = torch.zeros((1, 1, n_canvas, seq_len), dtype=q.dtype, device=q.device)
 
             curr_t = cfg.current_timestep
 
             if cfg.mode == "boost_only":
-                # Uniformly amplify Slot 20 everywhere on canvas
-                attn_bias[c_start:c_end, r20_start:r20_end] = cfg.boost_val_20
+                attn_bias[:, :, :, r20_start:r20_end] = cfg.boost_val_20
 
             elif cfg.mode in ["soft_regional", "scheduled_soft_regional"]:
-                # Soft Sigmoid Spatial Transition:
-                # w_20 goes from 0 (top of canvas) to 1 (bottom of canvas)
+                h_coords = torch.arange(cfg.lat_h, device=q.device, dtype=torch.float32)
+                y_grid = (h_coords.unsqueeze(1).expand(cfg.lat_h, cfg.lat_w).flatten() + 0.5) / float(cfg.lat_h)
+
+                # Sigmoid transition: 0 (top) -> 1 (bottom)
                 w_20 = torch.sigmoid(cfg.sharpness * (y_grid - cfg.split_y))
                 w_10 = 1.0 - w_20
 
-                # Compute soft bias using user's context-preserving negative bias (e.g. -3.0)
-                # Inside region -> boost_val (+2.0); Outside region -> suppress_val (-3.0)
+                # User's brilliant recommendation: retain context with suppress_val (-3.0)
                 bias_10 = cfg.suppress_val + (cfg.boost_val_10 - cfg.suppress_val) * w_10
                 bias_20 = cfg.suppress_val + (cfg.boost_val_20 - cfg.suppress_val) * w_20
 
-                # Timestep scheduling factor
                 time_scale = 1.0
                 if cfg.mode == "scheduled_soft_regional":
                     if curr_t > cfg.t_start:
@@ -383,24 +395,20 @@ class AttentionSteeringManager:
                     else:
                         time_scale = 1.0
 
-                bias_10 = (bias_10 * time_scale).to(dtype=q.dtype).unsqueeze(1)
-                bias_20 = (bias_20 * time_scale).to(dtype=q.dtype).unsqueeze(1)
+                bias_10 = (bias_10 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
+                bias_20 = (bias_20 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
 
-                attn_bias[c_start:c_end, r10_start:r10_end] = bias_10
-                attn_bias[c_start:c_end, r20_start:r20_end] = bias_20
+                attn_bias[:, :, :, r10_start:r10_end] = bias_10
+                attn_bias[:, :, :, r20_start:r20_end] = bias_20
 
-            # Execute attention with additive bias
-            attn_mask = attn_bias.unsqueeze(0).unsqueeze(0)  # (1, 1, seq_q, seq_k)
-            attn_txt_img = F.scaled_dot_product_attention(
-                q_txt_img, k_all, v_all, attn_mask=attn_mask, is_causal=False
+            attn_canvas = F.scaled_dot_product_attention(
+                q_canvas, k_all, v_all, attn_mask=attn_bias, is_causal=False
             )
 
-            attn_txt = attn_txt_img[:, :, :ref_start, :]
-            attn_img = attn_txt_img[:, :, ref_start:, :]
-
-            attn_ref = F.scaled_dot_product_attention(q_ref, k_ref, v_ref, is_causal=False)
-            out = torch.cat([attn_txt, attn_ref, attn_img], dim=2)
+            # Recombine in strict physical sequence order: [TXT, CANVAS, REF]
+            out = torch.cat([attn_txt, attn_canvas, attn_ref], dim=2)
             return rearrange(out, "b h n d -> b n (h d)")
+
 
         flux_model.causal_attn_fn = steered_causal_attn_fn
         return self
@@ -595,7 +603,11 @@ def run_benchmark(
     text_subtitle: str = "ĐẬM ĐÀ HƯƠNG VỊ VIỆT",
     font_title: str = "playfair",
     font_subtitle: str = "bevietnam",
-    prompt: str = "Poster quảng cáo nghệ thuật sang trọng trên nền quầy bar gỗ mộc mạc cổ điển, ánh sáng ven tương phản cao, dòng chữ tiêu đề 3D mạ vàng đồng cổ sắc nét ở phía trên, dòng chữ slogan phong cách thanh lịch hiện đại ở phía dưới, hạt cà phê rơi xung quanh, chất lượng điện ảnh 8k",
+    prompt: str = (
+        "Poster quảng cáo quầy bar cà phê gỗ mộc mạc cổ điển, ánh sáng ven ấm áp tương phản cao, "
+        "dòng chữ tiêu đề 3D mạ vàng đồng cổ sắc nét nổi bật ở phía trên, dòng chữ slogan màu trắng sắc nét "
+        "ở chân quầy bar phía dưới, bố cục sạch sẽ gọn gàng, không có chữ ký, không có watermark, không có chữ trang trí thừa"
+    ),
     width: int = 576,
     height: int = 1024,
     num_steps: int = 50,
@@ -621,7 +633,7 @@ def run_benchmark(
     lat_w = width // 16
 
     print("=" * 80)
-    print(" 🚀 TENDOO AI: TRAINING-FREE ATTENTION STEERING BENCHMARK")
+    print(" 🚀 TENDOO AI: TRAINING-FREE ATTENTION STEERING BENCHMARK (V2 SLICING)")
     print("=" * 80)
     print(f"📝 Title (Slot 10, Top)   : '{text_title}' (Font: {font_title})")
     print(f"📝 Subtitle (Slot 20, Btm): '{text_subtitle}' (Font: {font_subtitle})")
@@ -656,9 +668,10 @@ def run_benchmark(
     glyph_sub = create_glyph_image(
         text=text_subtitle,
         target_width=min(width - 64, 512),
-        target_height=160,
+        target_height=224,  # Upgraded to 224 according to Glyph Scaling Law for 2-line diacritic retention
         font_path=resolved_font_sub,
     )
+
 
     glyph_title.save(out_path / "glyph_title_t10_preview.png")
     glyph_sub.save(out_path / "glyph_subtitle_t20_preview.png")
@@ -805,9 +818,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "--prompt",
         type=str,
-        default="Poster quảng cáo nghệ thuật sang trọng trên nền quầy bar gỗ mộc mạc cổ điển, ánh sáng ven tương phản cao, dòng chữ tiêu đề 3D mạ vàng đồng cổ sắc nét ở phía trên, dòng chữ slogan phong cách thanh lịch hiện đại ở phía dưới, hạt cà phê rơi xung quanh, chất lượng điện ảnh 8k",
+        default=(
+            "Poster quảng cáo quầy bar cà phê gỗ mộc mạc cổ điển, ánh sáng ven ấm áp tương phản cao, "
+            "dòng chữ tiêu đề 3D mạ vàng đồng cổ sắc nét nổi bật ở phía trên, dòng chữ slogan màu trắng sắc nét "
+            "ở chân quầy bar phía dưới, bố cục sạch sẽ gọn gàng, không có chữ ký, không có watermark, không có chữ trang trí thừa"
+        ),
         help="Text prompt (describes material, optics, surfaces; NO literal text repetition)",
     )
+
+
     parser.add_argument("--width", type=int, default=576, help="Canvas width (default: 576 for 9:16)")
     parser.add_argument("--height", type=int, default=1024, help="Canvas height (default: 1024 for 9:16)")
     parser.add_argument("--steps", type=int, default=50, help="Euler ODE steps (default: 50)")
