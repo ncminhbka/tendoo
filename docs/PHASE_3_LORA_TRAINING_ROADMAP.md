@@ -43,6 +43,7 @@ Mỗi mẫu huấn luyện được cấu trúc động theo tiến trình Miles
 6. **`Ref_SP` (Ảnh Sản phẩm Thật)**: Kích thước $1024 \times 1024$ ($4096$ tokens), ảnh sản phẩm studio sạch nền đặt tại mốc $t$ tương ứng ($20, 30, 40$ hoặc $50$).
 7. **`X_target` (Ảnh Ground-Truth $1024 \times 1024$)**: Ảnh poster tương ứng chỉ chứa đúng các thành phần text đã kích hoạt.
 
+
 ---
 
 ### 2.2. Ma Trận Ánh Xạ 1:1 Font Chuẩn Thương Hiệu Theo 5 Domain:
@@ -59,7 +60,23 @@ Toàn bộ $2,500$ mẫu được ánh xạ cố định $1:1$ với 5 bộ Font
 
 ---
 
-### 2.3. Quy Trình Chế Tạo Dataset Lũy Tiến Tích Lũy (Progressive Distillation Pipeline):
+### 2.3. Ma Trận Đa Dạng Hóa Topology Bố Cục (Spatial Layout Topology Distribution):
+
+Để đảm bảo LoRA không bị "học vẹt" một công thức poster xếp chồng dọc (Top-Mid-Bottom) duy nhất, mà thực sự làm chủ **Năng Lực Phân Luồng Chú Ý Đa Slot Tổng Quát (Universal N-Slot Spatial Routing)**, toàn bộ $2,500$ mẫu huấn luyện được phân bổ nghiêm ngặt theo **4 Dạng Topology Bố Cục**:
+
+| Dạng Topology Bố Cục | Tỷ Trọng | Quy Mô | Cấu Trúc Phân Bổ Không Gian | Nguồn Mẫu & Use-case Nghiệp Vụ Viettel |
+| :--- | :---: | :---: | :--- | :--- |
+| **1. Poster Dọc Cổ Điển**<br>*(Classic Vertical Stack)* | **35%** | $875$ mẫu | Xếp chồng tuần tự theo trục dọc: Đỉnh (Header lớn) $\rightarrow$ Giữa (Sản phẩm / Slogan) $\rightarrow$ Đáy (CTA Badge / Giá tiền). | Standee hội nghị, Poster sự kiện, Banner F&B trà sữa, Flash Sale siêu thị. |
+| **2. Phân Tách Trái - Phải**<br>*(Horizontal Split / Feedback Card)* | **25%** | $625$ mẫu | Chia đôi bố cục theo trục ngang: Nửa trái (Ảnh Before/After, Sản phẩm) $\longleftrightarrow$ Nửa phải (Tiêu đề + Đánh giá 5 sao + Đoạn quote feedback + Badge giảm giá). | Trích xuất từ 11 prompt tester (`prompt_test.txt`): Khách hàng Gym/PT, Spa thú cưng, Khóa học tiếng Anh, Sofa thông minh, Dọn nhà, Nha khoa. |
+| **3. Lưới Đều / Menu Danh Mục**<br>*(Equal Grid / Feature Matrix)* | **20%** | $500$ mẫu | Các khối chữ có cỡ tương đương nhau (không có "Hero Title" áp đảo), phân bổ dạng ma trận $2 \times 2$ hoặc danh mục menu $1$ cột đều đặn. | Menu quán ăn/cà phê, Bảng so sánh gói cước Viettel 5G, Bảng thông số kỹ thuật smartwatch (chống nước, đo nhịp tim, pin). |
+| **4. Tự Do Bất Đối Xứng & Chữ Nổi**<br>*(Asymmetric Kinetic / Floating Overlap)* | **20%** | $500$ mẫu | Bố cục tự do phi đối xứng: Chữ đặt lệch góc (Top-Left + Mid-Left như Prompt 1), chữ nổi trên khoảng trống âm (Negative Space), badge chéo góc. | Banner tin tuyển dụng (Recruitment), Banner khai trương (Grand Opening), Quảng cáo thời trang dạo phố, Poster nghệ thuật hiện đại. |
+
+> 💡 **Ý nghĩa Sống Còn**: Không làm tăng kích thước dataset (vẫn $2,500$ mẫu), nhưng buộc DiT phải hiểu: *"Tọa độ $t=10, 20, 30, 40$ là các kênh định tuyến độc lập, có thể xuất hiện ở BẤT KỲ ĐÂU trên ảnh theo yêu cầu của Prompt, chứ không nhất thiết $t=10$ là phải nằm ở trên đỉnh!"*
+
+
+---
+
+### 2.4. Quy Trình Chế Tạo Dataset Lũy Tiến Tích Lũy (Progressive Distillation Pipeline):
 
 ```
                                   TỔNG QUY MÔ DATASET: 2,500 MẪU ĐỘC LẬP
@@ -71,6 +88,28 @@ Toàn bộ $2,500$ mẫu được ánh xạ cố định $1:1$ với 5 bộ Font
  • 1-Shot Input: 2 Slots Cạnh Tranh         • 1-Shot Input: 3 Slots Cạnh Tranh         • 1-Shot Input: 4-5 Slots Toàn Diện
    - 440 mẫu SP: [Ref_10 + Ref_SP_20]         - 825 mẫu SP: [Ref_10, 20 + Ref_SP_30]     - 1,375 mẫu SP: [Ref_10..40 + Ref_SP_50]
    - 360 mẫu T2I: [Ref_10 + Ref_20]           - 675 mẫu T2I: [Ref_10, 20, 30]            - 1,125 mẫu T2I: [Ref_10, 20, 30, 40]
+ • Bao gồm đủ cả 4 Dạng Topology           • Bao gồm đủ cả 4 Dạng Topology           • Bao gồm đủ cả 4 Dạng Topology
+ • ⚡ 800 Calls (Async Parallel)            • ⚡ 700 Calls (Async Parallel)            • ⚡ 1,000 Calls (Async Parallel)
+         │                                          │                                          │
+         └──────────────────────────────────────────┼──────────────────────────────────────────┘
+                                                    ▼
+                                   [ AUTOMATED QUALITY ASSURANCE FILTER ]
+                                   • OCR Check: Khớp chính xác ký tự tiếng Việt >= 98%
+                                   • Độ phân giải chuẩn hóa theo 4 Aspect Ratio Buckets
+                                   • Đóng gói thành WebDataset Shards (.tar / .h5)
+```
+
+---
+
+### 2.5. Ma trận Đa Tỉ Lệ Khung Hình (Aspect Ratio Bucketing):
+
+| Tỉ Lệ Bucket | Kích Thước Pixel | Latent Grid ($16\times$) | Token Canvas | Tỷ Trọng | Ứng Dụng Nghiệp Vụ Thương Mại |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **1:1** (Vuông) | $1024 \times 1024$ | $64 \times 64$ | $4,096$ tokens | **35%** | Bài đăng Feed Facebook, Instagram, E-commerce Post |
+| **9:16** (Dọc cao) | $768 \times 1344$ | $48 \times 84$ | $4,032$ tokens | **35%** | **TikTok Ads**, Instagram Reels, Story, Standee quảng cáo |
+| **4:5** (Dọc vừa) | $896 \times 1152$ | $56 \times 72$ | $4,032$ tokens | **15%** | Instagram Portrait Post (Tối ưu diện tích mobile) |
+| **16:9** (Ngang) | $1344 \times 768$ | $84 \times 48$ | $4,032$ tokens | **15%** | Facebook Fanpage Cover, Website Banner, TV Display |
+T2I: [Ref_10 + Ref_20]           - 675 mẫu T2I: [Ref_10, 20, 30]            - 1,125 mẫu T2I: [Ref_10, 20, 30, 40]
  • ⚡ 800 Calls (Async Parallel)            • ⚡ 700 Calls (Async Parallel)            • ⚡ 1,000 Calls (Async Parallel)
          │                                          │                                          │
          └──────────────────────────────────────────┼──────────────────────────────────────────┘

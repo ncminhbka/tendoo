@@ -322,3 +322,17 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
         $$\text{box\_h} \ge N \times 144 - 160\text{px}\quad \text{(Ngưỡng tối ưu đạt độ mịn lụa 100\% - Silk-Smooth Golden Target)}$$
       - Đảm bảo font size trong Binary Search không bao giờ rơi xuống dưới ngưỡng an toàn $36\text{pt}$!
 
+23. **ĐỊNH LUẬT ĐA DẠNG HÓA TOPOLOGY BỐ CỤC ĐỂ PHÂN LUỒNG CHÚ Ý TỔNG QUÁT (THE TOPOLOGICAL DIVERSITY & UNIVERSAL ATTENTION ROUTING LAW)**:
+    - **Bản chất Khoa học**:
+      + Nếu toàn bộ dataset chỉ dùng một mẫu bố cục xếp chồng dọc cổ điển (Đỉnh: Header $\rightarrow$ Giữa: Slogan $\rightarrow$ Đáy: CTA), mạng Attention của DiT sẽ vô tình "học vẹt" mối tương quan giả (Spurious Correlation) rằng: $t=10.0$ bắt buộc phải nằm ở trên đỉnh, $t=30.0$ bắt buộc phải nằm ở đáy.
+      + Khi người dùng yêu cầu bài toán thực tế khác (như Prompt 1: Title ở góc trên bên trái, Subtitle ở giữa bên trái; hay bài toán Card Feedback: nửa trái là ảnh, nửa phải là 4 khối text), mô hình sẽ bị bối rối và vẽ sai vị trí.
+    - **Quy chuẩn 4 Dạng Topology Bắt Buộc trong Dataset 2.500 Mẫu**:
+      1. **Poster Dọc Cổ Điển ($35\%$ - $875$ mẫu)**: Xếp chồng dọc Top-Mid-Bottom (Standee, Flash Sale, Sự kiện).
+      2. **Phân Tách Trái - Phải ($25\%$ - $625$ mẫu)**: Nửa trái là Sản phẩm / Ảnh Before-After $\longleftrightarrow$ Nửa phải là 4 tầng thông tin (Card Feedback Gym, Spa, Khóa học, Nha khoa dựa trên `prompt_test.txt`).
+      3. **Lưới Đều / Menu Ma Trận ($20\%$ - $500$ mẫu)**: Các khối chữ có cỡ tương đương nhau không có Hero Title áp đảo (Menu cà phê/trà sữa, Bảng so sánh cước 5G Viettel, Bảng thông số kỹ thuật).
+      4. **Tự Do Bất Đối Xứng & Chữ Nổi ($20\%$ - $500$ mẫu)**: Chữ đặt lệch góc, nổi trên khoảng trống âm (Negative space), typography động (Tin tuyển dụng, Khai trương, Thời trang).
+    - **Ý nghĩa Thực thi**:
+      + Giữ nguyên tiến trình curriculum $2 \rightarrow 3 \rightarrow 4/5$ slots và quy mô ngân sách $2,500$ mẫu.
+      + Giúp DiT làm chủ cơ chế Attention Routing như một **năng lực không gian tổng quát (Universal Spatial Capability)**, phục vụ trọn vẹn mọi yêu cầu đồ họa đa dạng trong thực tế của Viettel.
+
+
