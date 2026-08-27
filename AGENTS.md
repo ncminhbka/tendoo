@@ -275,10 +275,9 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + **Case 1 (Prompt thuần, không vật thể)**: Lệnh Prompt bảo vẽ "chữ siêu nhỏ" đứng tự do $\rightarrow$ **THẤT BẠI HOÀN TOÀN, CHỮ VẪN TO NGUYÊN VẸN** theo kích thước Glyph! (Khẳng định: Prompt thuần từ ngữ trừu tượng bất lực trong việc tự co nhỏ Glyph to).
       + **Case 2 (Ép chữ qua Vật thể có kích thước vừa vặn - Tách cà phê sứ)**: Khi gắn chữ vào một vật thể có kích thước vật lý cụ thể trong thế giới thực $\rightarrow$ **THÀNH CÔNG 100%, CHỮ ĐÚNG VÀ CO NHỎ TỰ NHIÊN** theo tỷ lệ của tách cà phê! (Khẳng định: Vật thể đỡ đóng vai trò là "Thước đo tỷ lệ phối cảnh 3D" để DiT neo và co nhỏ chữ).
       + **Case 3 (Ép chữ qua Vật thể siêu nhỏ - Tem nhãn mini trên gói cafe)**: Khi vật thể quá nhỏ khiến diện tích thực tế của chữ trên Canvas bị ép xuống dưới ngưỡng giải mã của VAE ($16\times$) $\rightarrow$ **CHỮ BỊ SAI/VỠ NÉT**!
-    - **Quy tắc Vàng cho Hệ thống Tendoo AI**:
-      + Muốn chữ to (Headline): Dùng Prompt miêu tả chữ là chủ thể chính (Headline / Banner) hoặc đứng tự do.
-      + Muốn chữ nhỏ tinh tế: **BẮT BUỘC GẮN CHỮ LÊN MỘT VẬT THỂ ĐỠ CỤ THỂ** (bìa sách, thân chai lọ, tách cafe, tấm biển hiệu) thay vì chỉ dùng từ ngữ "tiny/small" đơn độc.
-      + Đảm bảo vật thể đỡ chiếm diện tích hiển thị đủ lớn trên Canvas để chiều cao nét chữ sau khi co nhỏ đạt tối thiểu **$\ge 24 - 32\text{px}$**, tránh sụp đổ độ phân giải VAE.
+    - **Quan sát Thực nghiệm Cần Lưu Ý**:
+      + Prompt thuần dùng từ ngữ trừu tượng ("tiny/small") không tự co nhỏ được Glyph to nếu không có bối cảnh bố cục giới hạn.
+      + Nếu chữ bị co nhỏ dưới ngưỡng phân giải hiển thị trên Canvas (chiều cao nét chữ rơi xuống dưới $\sim 20 - 24\text{px}$), bộ giải mã VAE sẽ không đủ thông tin latent dẫn đến nét chữ bị vỡ hoặc sai chính tả.
       + Khi muốn chữ uốn lượn (Trái Đất, ruy băng): Glyph bắt buộc là 1 dòng dài chiều ngang (1D Manifold).
 
 21. **ĐỊNH LUẬT CẠNH TRANH KHÔNG GIAN BỐ CỤC VÀ ĐỘ NÉT 100% CỦA VĂN BẢN ĐA DÒNG (THE SPATIAL REAL-ESTATE COMPETITION & MULTI-LINE TEXT LAW)**:
