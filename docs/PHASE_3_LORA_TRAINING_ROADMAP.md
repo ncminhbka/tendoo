@@ -31,29 +31,42 @@ Dựa trên 61 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp61
 
 ### 2.1. Quy cách một Training Sample Chuẩn & Khớp Tuyệt Đối (Strict Target-Ref Alignment):
 
-Mỗi mẫu huấn luyện được cấu trúc động theo tiến trình Milestone:
-1. **`Prompt_clean` (Nguyên Tắc Khai Báo Vai Trò & Chất Liệu - Role & Material Prompting Rule)**:
-   * ❌ **ĐIỀU CẤM**: Tuyệt đối **KHÔNG lặp lại nội dung chữ nguyên văn** (ví dụ cấm ghi `'Cà phê sữa đá'`, `'Giảm 50%'`) để triệt tiêu $100\%$ xung đột ngữ nghĩa (Semantic Clash) từ Text Encoder Qwen3.
-   * ✅ **ĐIỀU BẮT BUỘC**: Bắt buộc **nhắc nhở mô hình về sự tồn tại của các khối chữ thông qua vai trò và chất liệu/vật lý/ánh sáng/màu sắc** tương ứng với từng slot (ví dụ: *"dòng chữ tiêu đề 3D dập nổi mạ vàng đồng cổ sắc nét"*, *"chữ slogan đèn neon phát quang màu xanh ngọc"*, *"chữ huy hiệu chuyển đổi mạ bạc dạ quang"*).
-   * 💡 **Ý nghĩa**: Glyph VAE cung cấp **100% Khung Xương Hình Học & Chính Tả**, Text Prompt cung cấp **100% Phần Hồn, Ánh Sáng & Chất Liệu** đắp lên khung xương đó.
-2. **`Ref_10` (Slot 1 Glyph)**: Kích thước Tight-Crop vừa đủ theo nội dung thực tế ($80 - 640\text{ tokens}$).
-3. **`Ref_20` (Slot 2 Glyph)**: Kích thước Tight-Crop vừa đủ theo nội dung thực tế ($80 - 480\text{ tokens}$).
-4. **`Ref_30` (Slot 3 Glyph)**: Kích thước Tight-Crop vừa đủ theo nội dung thực tế ($80 - 480\text{ tokens}$).
-5. **`Ref_40` (Slot 4 Glyph)**: Kích thước Tight-Crop vừa đủ theo nội dung thực tế ($80 - 384\text{ tokens}$).
-6. **`Ref_SP` (Ảnh Sản phẩm Thật)**: Kích thước $1024 \times 1024$ ($4096$ tokens), ảnh sản phẩm studio sạch nền đặt tại mốc $t$ tương ứng ($20, 30, 40$ hoặc $50$).
-7. **`X_target` (Ảnh Ground-Truth $1024 \times 1024$)**: Ảnh poster tương ứng chỉ chứa đúng các thành phần text đã kích hoạt.
+Mỗi mẫu huấn luyện được cấu trúc động và chuẩn hóa đa tầng:
 
-> ⚡ **Quy Tắc Tight-Crop Vừa Đủ (Zero-Size-Bias & Max-Efficiency Principle)**:
-> - Tuyệt đối không phình to kích thước Glyph nhân tạo! Kích thước Box được tính toán **vừa vặn với số lượng từ và số dòng thực tế**, miễn sao cỡ font đạt ngưỡng $\ge 36 - 44\text{pt}$ chống gai nét (Rule 22).
-> - Phân loại kích thước Token thực tế:
->   * *1 dòng ngắn ($1 - 3$ từ)* (Badge, CTA, Brand name): Chỉ **$80 - 140\text{ tokens}$** (giảm $\sim 70\%$ so với định mức cũ!).
->   * *1 dòng vừa ($4 - 6$ từ)* (Slogan, Title 1 dòng): Chỉ **$130 - 200\text{ tokens}$**.
->   * *2 dòng ($6 - 10$ từ)* (Title 2 dòng, Subhead): **$220 - 320\text{ tokens}$**.
->   * *Đoạn dài ($3 - 4$ dòng / $15 - 25$ từ)* (Quote feedback, bài thơ): **$380 - 640\text{ tokens}$**.
-> - **Lợi ích vượt trội**:
->   1. **Triệt tiêu Size Bias**: Bất kỳ slot nào ($t=10$ hay $t=30$) đều có thể là chữ ngắn hoặc đoạn dài, DiT không bị "học vẹt" rằng token nhiều là Header!
->   2. **Tiết kiệm $>60\%$ Sequence Length**: Tổng cả 4 slot text chỉ tốn $\sim 500 - 750\text{ tokens}$ (thay vì gần $2,000$ tokens cũ).
->   3. **Tăng tốc độ Train & Inference gấp 2 - 3 lần**, tiết kiệm VRAM tối đa trên 2x A30!
+#### 1. `Prompt_clean` — Cấu Trúc 3 Thành Phần Bắt Buộc (The 3-Component Grounding Rule):
+* ⚠️ **SỰ THẬT KIẾN TRÚC SỐNG CÒN**: Trong hàm `encode_glyph_to_incontext_tokens`, toạ độ RoPE `h_coords` và `w_coords` của Reference Token **chỉ là toạ độ nội bộ trong chính bounding-box của glyph ($0 \rightarrow H_{\text{glyph}}, 0 \rightarrow W_{\text{glyph}}$), HOÀN TOÀN KHÔNG MANG TOẠ ĐỘ TUYỆT ĐỐI TRÊN CANVAS $1024 \times 1024$!**
+  - Bản thân Glyph Token **không thể tự biết** nó phải xuất hiện ở góc trên, ở giữa hay ở đáy canvas.
+  - Quyết định vị trí đặt chữ thuộc về **sự tương tác Attention giữa Canvas và Text Prompt qua Qwen3**.
+  - Toàn bộ 21 prompt thực tế của tester (`prompt_test.txt`) đều chứa từ chỉ vị trí tường minh. Nếu training data chỉ dùng từ `"poster/banner"` chung chung, mô hình sẽ mất khả năng điều khiển vị trí theo ý muốn người dùng!
+
+* ✅ **3 THÀNH PHẦN BẮT BUỘC TRONG PROMPT CHO MỖI SLOT**:
+  1. **Chỉ Dẫn Vị Trí Tường Minh (Explicit Spatial Anchor)**: Bắt buộc mô tả vị trí thực tế trên layout: *"ở góc trên bên trái"*, *"ở giữa bên trái"*, *"ở trung tâm phía trên"*, *"ở góc dưới bên phải"*, *"nằm ở chân poster"*.
+  2. **Quy Mô & Vai Trò (Scale & Role Descriptor)**: Giữ các từ định lượng quy mô thị giác: *"dòng chữ tiêu đề lớn nổi bật"*, *"dòng chữ phụ thanh mảnh tinh tế"*, *"huy hiệu ưu đãi nhỏ nhắn"*, *"đoạn trích dẫn nhận xét chi tiết"*. *(Đây là kênh tín hiệu ngữ nghĩa độc lập qua Qwen3, không mâu thuẫn với việc tối ưu token glyph)*.
+  3. **Vật Lý, Chất Liệu & Quang Học (Material & Optics)**: *"dập nổi mạ vàng đồng"*, *"đèn neon phát quang xanh ngọc"*, *"khắc chìm trên gỗ"*, *"đổ bóng studio tương phản cao"*.
+* ❌ **ĐIỀU CẤM KỴ**: Tuyệt đối **KHÔNG lặp lại nội dung chữ nguyên văn** để triệt tiêu $100\%$ xung đột biểu diễn (Representation Clash) từ Qwen3.
+
+---
+
+#### 2. Hàm Sizing Phổ Quát Dùng Chung Cho Mọi Slot (`compute_optimal_glyph_box`):
+* Bỏ hoàn toàn việc gán cứng range token theo slot (`Ref_10` to, `Ref_30` nhỏ). **Mọi slot ($t=10, 20, 30, 40$) đều sử dụng chung 1 hàm sizing phổ quát duy nhất**, chỉ phụ thuộc vào:
+  1. **Độ dài ký tự & số dòng thực tế** của mẫu đó.
+  2. **Ngưỡng sàn vật lý riêng của từng Font (Per-Font Minimum Floor)**:
+     - *Nhóm A (Đậm nét, chịu nén cực tốt)*: `BeVietnamPro-Black`, `Anton-Regular`, `SVN-Gotham Ultra`, `SVN-Lolapeluza Black` $\rightarrow$ **Floor = $36\text{pt}$**.
+     - *Nhóm B (Serif & Condensed)*: `PlayfairDisplay`, `Oswald`, `SVN-Harabaras` $\rightarrow$ **Floor = $40\text{pt}$**.
+     - *Nhóm C (Nét mảnh, Script, Cọ vẽ - Cần floor cao hơn để VAE không nuốt nét thanh)*: `DancingScript`, `Pacifico`, `SedgwickAveDisplay`, `SVN-Blow Brush`, `SVN-Clementine` $\rightarrow$ **Floor = $44 - 48\text{pt}$**.
+
+* **Kích thước Token thực tế sau Tight-Crop**:
+  - *1 dòng ngắn ($1 - 3$ từ)* (Badge, CTA, Brand Name): **$80 - 140\text{ tokens}$**.
+  - *1 dòng vừa ($4 - 6$ từ)* (Slogan 1 dòng, Tiêu đề ngắn): **$130 - 200\text{ tokens}$**.
+  - *2 dòng ($6 - 10$ từ)* (Tiêu đề 2 dòng, Subhead): **$220 - 320\text{ tokens}$**.
+  - *Đoạn dài ($3 - 4$ dòng / $15 - 25$ từ)* (Quote feedback, bài thơ): **$380 - 640\text{ tokens}$**.
+
+* 💡 **Ý nghĩa Toán Học**:
+  - **Tín hiệu phân luồng danh tính (Slot Identity)** đến **DUY NHẤT từ RoPE Time Offset ($t=10, 20, 30, 40$)**, đúng theo thiết kế ban đầu.
+  - **Tín hiệu vị trí và kích thước thị giác** đến từ **Prompt Qwen3**.
+  - **Tín hiệu hình học và chính tả** đến từ **Glyph VAE tối ưu**.
+  - Ba trục tín hiệu hoàn toàn độc lập, trực giao và không gây nhiễu lẫn nhau!
+
 
 
 

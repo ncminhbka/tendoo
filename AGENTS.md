@@ -360,6 +360,26 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + Tăng tốc độ huấn luyện và suy luận phục vụ gấp $2 - 3$ lần trên hạ tầng 2x NVIDIA A30.
       + Triệt tiêu hoàn toàn Size Bias, cho phép bất kỳ slot nào cũng có thể đóng vai trò Header to, Quote dài hay Badge nhỏ tùy theo prompt!
 
+26. **ĐỊNH LUẬT TÍCH HỢP TỌA ĐỘ KHÔNG GIAN TRONG PROMPT VÀ HÀM SIZING TRỰC GIAO (THE PROMPT-SPATIAL GROUNDING & UNIVERSAL SIZING LAW)**:
+    - **Sự Thật Kiến Trúc Cốt Tử**:
+      + Trong hàm `encode_glyph_to_incontext_tokens`, toạ độ RoPE `h_coords` và `w_coords` của Reference Token chỉ là **toạ độ nội bộ trong bounding-box của glyph ($0 \rightarrow H_{\text{glyph}}, 0 \rightarrow W_{\text{glyph}}$), HOÀN TOÀN KHÔNG CÓ toạ độ tuyệt đối trên Canvas $1024 \times 1024$**.
+      + Nghĩa là bản thân Glyph Token **không tự biết nó nằm ở đâu trên ảnh**. Quyết định vị trí đặt chữ trên Canvas thuộc về **sự tương tác Attention giữa Canvas và Text Prompt qua Qwen3**.
+      + Toàn bộ 21 prompt thực tế của tester (`prompt_test.txt`) đều chứa từ chỉ vị trí tường minh (*"ở góc trên bên trái"*, *"ở giữa bên trái"*, *"ở đáy góc phải"*). Nếu training data chỉ dùng từ `"poster/banner"` chung chung, mô hình sẽ mất khả năng điều khiển vị trí theo ý muốn người dùng!
+    - **Cấu Trúc 3 Thành Phần Bắt Buộc Trong Prompt Huấn Luyện**:
+      1. **Chỉ Dẫn Vị Trí Tường Minh (Explicit Spatial Anchor)**: *"ở góc trên bên trái"*, *"ở giữa bên trái"*, *"ở trung tâm phía trên"*, *"ở đáy poster"*.
+      2. **Quy Mô & Vai Trò (Scale & Role Descriptor)**: *"dòng chữ tiêu đề lớn"*, *"dòng chữ phụ thanh mảnh"*, *"huy hiệu ưu đãi nhỏ nhắn"*, *"đoạn trích dẫn nhận xét"*.
+      3. **Vật Lý, Chất Liệu & Quang Học (Material & Optics)**: *"dập nổi mạ vàng"*, *"đèn neon phát quang"*, *"khắc chìm trên gỗ"*, *"đổ bóng studio 3D"*.
+    - **Hàm Sizing Phổ Quát Dùng Chung Cho Mọi Slot (`compute_optimal_glyph_box`)**:
+      + Bỏ hoàn toàn range token theo slot. Mọi slot đều dùng chung 1 hàm sizing, phụ thuộc vào độ dài ký tự và **ngưỡng sàn riêng của từng font (Per-Font Minimum Floor)**:
+        * *Nhóm A (Đậm nét: `BeVietnamPro-Black`, `Anton`, `Gotham`)*: Floor = $36\text{pt}$.
+        * *Nhóm B (Serif & Condensed: `PlayfairDisplay`, `Oswald`)*: Floor = $40\text{pt}$.
+        * *Nhóm C (Nét mảnh, Script, Cọ vẽ: `DancingScript`, `Pacifico`, `Sedgwick`, `Blow Brush`)*: Floor = $44 - 48\text{pt}$ (tránh bị VAE nuốt nét thanh).
+    - **Phân Định Tam Hợp Bất Biến**:
+      + **Prompt Qwen3**: Định hướng **Vị trí không gian** và **Kích thước thị giác**.
+      + **RoPE Time Offset ($t=10, 20, 30, 40$)**: Định danh **Kênh phân luồng độc lập**.
+      + **Glyph VAE**: Bảo toàn **100% Hình học và Chính tả**.
+
+
 
 
 
