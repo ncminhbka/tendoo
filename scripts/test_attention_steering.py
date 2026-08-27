@@ -340,39 +340,21 @@ class AttentionSteeringManager:
             r20_start = r10_end
             r20_end = r20_start + n_ref20
 
-            # Exact token partition matching physical concatenation order
-            q_txt = q[:, :, :c_start, :]
-            q_canvas = q[:, :, c_start:c_end, :]
-            q_ref = q[:, :, c_end:, :]
-
-            k_txt = k[:, :, :c_start, :]
-            k_canvas = k[:, :, c_start:c_end, :]
-            k_ref = k[:, :, c_end:, :]
-
-            v_txt = v[:, :, :c_start, :]
-            v_canvas = v[:, :, c_start:c_end, :]
-            v_ref = v[:, :, c_end:, :]
-
-            # --- 1. REF TOKENS: Pure Self-Attention ---
-            # Ref tokens only attend to themselves to prevent canvas noise from corrupting clean glyphs
-            attn_ref = F.scaled_dot_product_attention(q_ref, k_ref, v_ref, is_causal=False)
-
-            # --- 2. TXT TOKENS: Standard Bidirectional Attention to [TXT, CANVAS] ---
-            k_txt_canvas = torch.cat([k_txt, k_canvas], dim=2)
-            v_txt_canvas = torch.cat([v_txt, v_canvas], dim=2)
-            attn_txt = F.scaled_dot_product_attention(q_txt, k_txt_canvas, v_txt_canvas, is_causal=False)
-
-            # --- 3. CANVAS TOKENS: Full Cross-Attention with Steered Regional Logit Bias ---
-            k_all = torch.cat([k_txt, k_canvas, k_ref], dim=2)
-            v_all = torch.cat([v_txt, v_canvas, v_ref], dim=2)
-
-            # Construct bias mask specifically for canvas queries: shape (1, 1, n_canvas, seq_len)
-            attn_bias = torch.zeros((1, 1, n_canvas, seq_len), dtype=q.dtype, device=q.device)
+            # Full Joint Attention Additive Mask: shape (1, 1, seq_len, seq_len)
+            # Default 0.0 PRESERVES 100% OF BFL'S BIDIRECTIONAL JOINT DYNAMICS across all tokens:
+            # (TXT <-> REF, REF <-> CANVAS, CANVAS <-> CANVAS, TXT <-> CANVAS)
+            attn_bias = torch.zeros((1, 1, seq_len, seq_len), dtype=q.dtype, device=q.device)
 
             curr_t = cfg.current_timestep
 
-            if cfg.mode == "boost_only":
-                attn_bias[:, :, :, r20_start:r20_end] = cfg.boost_val_20
+            if cfg.mode == "null_test":
+                # Pass 0 / Null Control: bias is strictly 0.0 everywhere.
+                # Must be 100% bitwise equivalent to Pass 1 (Vanilla)!
+                pass
+
+            elif cfg.mode == "boost_only":
+                # Amplify Canvas -> Slot 20 keys uniformly
+                attn_bias[:, :, c_start:c_end, r20_start:r20_end] = cfg.boost_val_20
 
             elif cfg.mode in ["soft_regional", "scheduled_soft_regional"]:
                 h_coords = torch.arange(cfg.lat_h, device=q.device, dtype=torch.float32)
@@ -398,16 +380,15 @@ class AttentionSteeringManager:
                 bias_10 = (bias_10 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
                 bias_20 = (bias_20 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
 
-                attn_bias[:, :, :, r10_start:r10_end] = bias_10
-                attn_bias[:, :, :, r20_start:r20_end] = bias_20
+                # ONLY steer the interaction between Canvas queries and Ref keys!
+                # All other interactions (Txt <-> Ref, Ref <-> Canvas, etc.) remain 0.0!
+                attn_bias[:, :, c_start:c_end, r10_start:r10_end] = bias_10
+                attn_bias[:, :, c_start:c_end, r20_start:r20_end] = bias_20
 
-            attn_canvas = F.scaled_dot_product_attention(
-                q_canvas, k_all, v_all, attn_mask=attn_bias, is_causal=False
-            )
-
-            # Recombine in strict physical sequence order: [TXT, CANVAS, REF]
-            out = torch.cat([attn_txt, attn_canvas, attn_ref], dim=2)
+            # Execute SINGLE FULL JOINT ATTENTION CALL preserving FLUX.2's architecture
+            out = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_bias, is_causal=False)
             return rearrange(out, "b h n d -> b n (h d)")
+
 
 
         flux_model.causal_attn_fn = steered_causal_attn_fn
@@ -480,14 +461,14 @@ BENCHMARK_SUITE = [
     {
         "id": "pass1_baseline_vanilla",
         "title": "Pass 1: Baseline (Vanilla)",
-        "subtitle": "No Attention Intervention (Current Softmax Competition)",
+        "subtitle": "Standard BFL Attention Fallback (Current Softmax Competition)",
         "mode": "none",
     },
     {
-        "id": "pass2_boost_only",
-        "title": "Pass 2: Pure Logit Boost",
-        "subtitle": "Global Beta_20 = +2.0 (No Spatial Masking)",
-        "mode": "boost_only",
+        "id": "pass2_null_control",
+        "title": "Pass 2: Null Control (Bias=0.0)",
+        "subtitle": "Steered Code Path with Bias=0.0 (Proves Zero Divergence from Baseline)",
+        "mode": "null_test",
     },
     {
         "id": "pass3_soft_regional",
@@ -502,6 +483,7 @@ BENCHMARK_SUITE = [
         "mode": "scheduled_soft_regional",
     },
 ]
+
 
 
 def stitch_4way_comparison_panel(
@@ -843,7 +825,7 @@ if __name__ == "__main__":
         "--mode",
         type=str,
         default="all",
-        choices=["all", "baseline", "boost", "regional", "scheduled"],
+        choices=["all", "baseline", "null", "boost", "regional", "scheduled"],
         help="Execution mode (default: all)",
     )
     parser.add_argument(
