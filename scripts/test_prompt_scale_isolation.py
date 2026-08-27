@@ -197,38 +197,39 @@ def encode_glyph_to_incontext_tokens(
 # 3 Prompt Variations testing scale control across identical Glyph tokens
 SCALE_TEST_CASES = [
     {
-        "id": "scale_giant_headline",
-        "title": "CASE 1: CHỮ KHỔNG LỒ (GIANT HEADLINE)",
-        "subtitle": "Text is the Monumental Hero Subject",
+        "id": "scale_pure_prompt_abstract",
+        "title": "CASE 1: PROMPT THUẦN (KHÔNG VẬT THỂ)",
+        "subtitle": "Pure Abstract Text Descriptor (No Object Container)",
         "prompt": (
-            "Poster quảng cáo cà phê nghệ thuật hiện đại, dòng chữ tiêu đề 3D khổng lồ choán ngợp ở trung tâm poster "
-            "mạ vàng ánh kim phát sáng rực rỡ sắc nét tinh xảo (giant monumental 3D golden headline typography filling the poster), "
-            "hậu cảnh không gian quán cafe tối mờ phía sau, ánh sáng studio tương phản cao, đổ bóng chân thực, chi tiết sắc nét 8k"
+            "Poster quảng cáo cà phê nghệ thuật phong cách tối giản, dòng chữ tiêu đề 3D kích thước siêu nhỏ thanh mảnh tinh tế "
+            "màu vàng kim mạ kim loại (tiny subtle delicate small 3D golden typography), "
+            "không gian nền quán cafe tối mờ phía sau, ánh sáng studio tương phản cao, đổ bóng chân thực, chi tiết sắc nét 8k"
         ),
-        "tag_color": (255, 215, 80),
+        "tag_color": (255, 120, 120),
     },
     {
-        "id": "scale_medium_signboard",
-        "title": "CASE 2: CHỮ VỪA VẶN (STORE SIGNBOARD)",
-        "subtitle": "Text is on a Physical Wooden Storefront Sign",
-        "prompt": (
-            "Góc phố cổ Hà Nội yên bình buổi sớm mai với ánh nắng le lói, trước hiên quán cafe có treo một tấm biển hiệu gỗ sồi hình chữ nhật phẳng cổ kính, "
-            "trên mặt biển gỗ là dòng chữ 3D mạ đồng nổi bật sắc nét tinh xảo (medium-sized 3D bronze typography on rectangular wooden signboard), "
-            "ánh sáng sớm chiếu rọi chân thực, phong cách điện ảnh ấm cúng"
-        ),
-        "tag_color": (255, 160, 80),
-    },
-    {
-        "id": "scale_small_cup_label",
-        "title": "CASE 3: CHỮ NHỎ (TINY CUP LABEL)",
-        "subtitle": "Text is a Subtle Delicate Brand Label on a Cup",
+        "id": "scale_object_bound_cup",
+        "title": "CASE 2: ÉP QUA VẬT THỂ (TÁCH CÀ PHÊ)",
+        "subtitle": "Object-Bound Carrier / Printed on Ceramic Cup",
         "prompt": (
             "Góc chụp cận cảnh nghệ thuật một tách cà phê gốm sứ trắng cao cấp bốc khói nghi ngút trên mặt bàn gỗ mộc, "
             "trên bề mặt thân tách cà phê có in dòng chữ thương hiệu kích thước nhỏ thanh mảnh tinh tế mạ vàng ánh kim "
-            "(small delicate minimalist brand typography printed on the side of the ceramic coffee cup), "
+            "(small delicate brand typography printed on the side of the ceramic coffee cup), "
             "ánh sáng studio tương phản cao, đổ bóng chân thực, độ sâu trường ảnh nông bokeh, chi tiết sắc nét"
         ),
         "tag_color": (100, 220, 255),
+    },
+    {
+        "id": "scale_object_bound_label",
+        "title": "CASE 3: ÉP QUA TEM NHÃN (MINI LABEL)",
+        "subtitle": "Object-Bound Carrier / Mini Label Sticker on Bag",
+        "prompt": (
+            "Gói hạt cà phê rang mộc giấy kraft cao cấp đặt trên bàn gỗ phong cách vintage ấm cúng, "
+            "trên chiếc tem nhãn giấy nhỏ hình chữ nhật dán ở giữa gói cà phê có in dòng chữ thương hiệu kích thước nhỏ thanh mảnh sắc nét "
+            "(small minimalist typography on a tiny rectangular paper label sticker), "
+            "ánh sáng dịu tương phản cao, đổ bóng chân thực, chi tiết sắc nét 8k"
+        ),
+        "tag_color": (150, 255, 150),
     },
 ]
 
@@ -271,7 +272,7 @@ def stitch_3_panel_comparison(
 
     # 1. Main Header
     draw.rectangle([0, 0, total_w, header_bar_h], fill=(20, 24, 34), outline=(38, 44, 60), width=2)
-    title_text = "THỰC NGHIỆM CÔ LẬP: KIỂM CHỨNG KHẢ NĂNG ĐIỀU CHỈNH KÍCH THƯỚC CHỮ BẰNG PROMPT"
+    title_text = "SO SÁNH CÔ LẬP: PROMPT THUẦN vs ÉP QUA VẬT THỂ ĐỂ TẠO CHỮ NHỎ"
     bbox_t = font_title.getbbox(title_text)
     draw.text(((total_w - (bbox_t[2] - bbox_t[0])) // 2, 16), title_text, fill=(255, 215, 80), font=font_title)
 
@@ -279,7 +280,7 @@ def stitch_3_panel_comparison(
     bbox_s1 = font_sub.getbbox(sub_1)
     draw.text(((total_w - (bbox_s1[2] - bbox_s1[0])) // 2, 54), sub_1, fill=(195, 205, 225), font=font_sub)
 
-    sub_2 = "Biến thay đổi duy nhất: Prompt điều khiển vật chứa (Khổng lồ choán ngợp vs Biển hiệu gỗ vừa vặn vs Nhãn nhỏ trên tách cafe)"
+    sub_2 = "Đối chứng: Case 1 (Chỉ bảo 'chữ siêu nhỏ', không vật thể) vs Case 2 (Ép lên tách cafe) vs Case 3 (Ép lên tem nhãn)"
     bbox_s2 = font_sub.getbbox(sub_2)
     draw.text(((total_w - (bbox_s2[2] - bbox_s2[0])) // 2, 80), sub_2, fill=(150, 235, 175), font=font_sub)
 
