@@ -27,7 +27,7 @@ import sys
 import time
 import math
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # Auto-configure PYTHONPATH to include src/
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -281,7 +281,7 @@ def encode_glyph_to_incontext_tokens(
 @dataclass
 class AttentionSteeringConfig:
     """Configuration state for runtime attention steering."""
-    mode: str = "none"  # "none", "boost_only", "soft_regional", "scheduled_soft_regional"
+    mode: str = "none"  # "none", "null_test", "boost_only", "soft_regional", "scheduled_soft_regional"
     active: bool = False
     current_timestep: float = 1.0
 
@@ -300,9 +300,33 @@ class AttentionSteeringConfig:
     split_y: float = 0.48            # Normalized vertical boundary between Title and Subtitle
     sharpness: float = 14.0          # Sigmoid sharpness factor for smooth transition
     t_start: float = 0.85            # Timestep threshold to start active steering
-    # Quantitative Attention Visualization
+    t_end: float = 0.20              # Timestep threshold to ramp down steering for pure optical shading
+
+    # Quantitative Attention Visualization & Layer-Averaging
     dump_attn: bool = False
     recorded_attn_stats: dict | None = None
+    _accum_map10: list = field(default_factory=list)
+    _accum_map20: list = field(default_factory=list)
+    _accum_logit10: list = field(default_factory=list)
+    _accum_logit20: list = field(default_factory=list)
+
+    def finalize_stats(self) -> dict | None:
+        """Aggregates and averages sampled attention metrics across all captured DiT layers."""
+        if len(self._accum_logit10) == 0:
+            return None
+        mean_10 = float(np.mean(self._accum_logit10))
+        mean_20 = float(np.mean(self._accum_logit20))
+        map_10 = np.mean(self._accum_map10, axis=0)
+        map_20 = np.mean(self._accum_map20, axis=0)
+        self.recorded_attn_stats = {
+            "map_10": map_10,
+            "map_20": map_20,
+            "mean_logit_10": mean_10,
+            "mean_logit_20": mean_20,
+            "logit_gap": mean_10 - mean_20,
+            "num_layers_sampled": len(self._accum_logit10),
+        }
+        return self.recorded_attn_stats
 
 
 class AttentionSteeringManager:
@@ -324,9 +348,6 @@ class AttentionSteeringManager:
             num_ref_tokens: int,
             kv_cache: dict | None = None,
         ) -> torch.Tensor:
-            # Fallback to standard attention if disabled and not dumping attention
-            if (not cfg.active or cfg.mode == "none") and not cfg.dump_attn:
-                return self.orig_causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens, kv_cache)
             if kv_cache is not None:
                 return self.orig_causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens, kv_cache)
 
@@ -348,17 +369,47 @@ class AttentionSteeringManager:
             r10_end = r10_start + n_ref10
             r20_start = r10_end
             r20_end = r20_start + n_ref20
-
-            # Full Joint Attention Additive Mask: shape (1, 1, seq_len, seq_len)
-            # Default 0.0 PRESERVES 100% OF BFL'S BIDIRECTIONAL JOINT DYNAMICS across all tokens:
-            # (TXT <-> REF, REF <-> CANVAS, CANVAS <-> CANVAS, TXT <-> CANVAS)
-            attn_bias = torch.zeros((1, 1, seq_len, seq_len), dtype=q.dtype, device=q.device)
-
             curr_t = cfg.current_timestep
 
-            if cfg.mode == "null_test" or cfg.mode == "none":
-                # Pass 0 / Null Control: bias is strictly 0.0 everywhere.
-                # Must be 100% bitwise equivalent to Pass 1 (Vanilla)!
+            # --- Quantitative Attention Measurement Hook (Multi-layer accumulation across t in [0.70, 0.85]) ---
+            if cfg.dump_attn and (0.70 <= curr_t <= 0.85):
+                with torch.no_grad():
+                    b_idx = 1 if q.shape[0] > 1 else 0
+                    q_c = q[b_idx : b_idx + 1, :, c_start:c_end, :]
+                    k_r10 = k[b_idx : b_idx + 1, :, r10_start:r10_end, :]
+                    k_r20 = k[b_idx : b_idx + 1, :, r20_start:r20_end, :]
+
+                    head_dim = q.shape[-1]
+                    scale = 1.0 / math.sqrt(head_dim)
+                    num_heads = q.shape[1]
+
+                    sim_10 = torch.einsum("b h c d, b h r d -> c r", q_c, k_r10) * scale / num_heads
+                    sim_20 = torch.einsum("b h c d, b h r d -> c r", q_c, k_r20) * scale / num_heads
+
+                    map_10 = sim_10.mean(dim=-1).view(cfg.lat_h, cfg.lat_w).float().cpu().numpy()
+                    map_20 = sim_20.mean(dim=-1).view(cfg.lat_h, cfg.lat_w).float().cpu().numpy()
+
+                    cfg._accum_map10.append(map_10)
+                    cfg._accum_map20.append(map_20)
+                    cfg._accum_logit10.append(float(sim_10.mean().item()))
+                    cfg._accum_logit20.append(float(sim_20.mean().item()))
+
+            # --- Pass 1: Strict Unconditional Fallback to Native BFL Attention ---
+            # Guarantees zero circular comparison: Pass 1 ALWAYS runs native BFL orig_causal_attn_fn!
+            if not cfg.active or cfg.mode == "none":
+                return self.orig_causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens, kv_cache)
+
+            # --- Pass 2, 3, 4: Unified Joint SDPA with Proper Causal Masking ---
+            attn_bias = torch.zeros((1, 1, seq_len, seq_len), dtype=q.dtype, device=q.device)
+
+            # Causal Isolation for Ref Tokens:
+            # Ref tokens must ONLY self-attend to reference keys [r10_start:r20_end].
+            # Block Ref queries from attending to Txt [0:c_start] and Canvas [c_start:r10_start]:
+            attn_bias[:, :, r10_start:r20_end, :r10_start] = -10000.0
+
+            if cfg.mode == "null_test":
+                # Pass 2: Null Control.
+                # Canvas -> Ref has 0.0 bias (unsteered). Txt and Canvas attend to all keys naturally.
                 pass
 
             elif cfg.mode == "boost_only":
@@ -390,44 +441,13 @@ class AttentionSteeringManager:
                 bias_20 = (bias_20 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
 
                 # ONLY steer the interaction between Canvas queries and Ref keys!
-                # All other interactions (Txt <-> Ref, Ref <-> Canvas, etc.) remain 0.0!
                 attn_bias[:, :, c_start:c_end, r10_start:r10_end] = bias_10
                 attn_bias[:, :, c_start:c_end, r20_start:r20_end] = bias_20
 
-            # --- Quantitative Attention Measurement & Visualization Hook ---
-            if cfg.dump_attn and cfg.recorded_attn_stats is None and curr_t <= 0.85:
-                with torch.no_grad():
-                    b_idx = 1 if q.shape[0] > 1 else 0
-                    q_c = q[b_idx : b_idx + 1, :, c_start:c_end, :]
-                    k_r10 = k[b_idx : b_idx + 1, :, r10_start:r10_end, :]
-                    k_r20 = k[b_idx : b_idx + 1, :, r20_start:r20_end, :]
-
-                    head_dim = q.shape[-1]
-                    scale = 1.0 / math.sqrt(head_dim)
-                    num_heads = q.shape[1]
-
-                    # Similarity across heads
-                    sim_10 = torch.einsum("b h c d, b h r d -> c r", q_c, k_r10) * scale / num_heads
-                    sim_20 = torch.einsum("b h c d, b h r d -> c r", q_c, k_r20) * scale / num_heads
-
-                    map_10 = sim_10.mean(dim=-1).view(cfg.lat_h, cfg.lat_w).float().cpu().numpy()
-                    map_20 = sim_20.mean(dim=-1).view(cfg.lat_h, cfg.lat_w).float().cpu().numpy()
-
-                    mean_logit_10 = float(sim_10.mean().item())
-                    mean_logit_20 = float(sim_20.mean().item())
-                    logit_gap = mean_logit_10 - mean_logit_20
-
-                    cfg.recorded_attn_stats = {
-                        "map_10": map_10,
-                        "map_20": map_20,
-                        "mean_logit_10": mean_logit_10,
-                        "mean_logit_20": mean_logit_20,
-                        "logit_gap": logit_gap,
-                    }
-
-            # Execute SINGLE FULL JOINT ATTENTION CALL preserving FLUX.2's architecture
+            # Execute SINGLE FULL JOINT ATTENTION CALL with true causal isolation for ref
             out = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_bias, is_causal=False)
             return rearrange(out, "b h n d -> b n (h d)")
+
 
 
 
@@ -838,9 +858,10 @@ def run_benchmark(
         print(f"   ✅ Finished in {elapsed:.2f}s | Saved: {pass_file.name}")
 
         # Quantitative attention analysis and heatmap export
-        if pass_cfg.dump_attn and pass_cfg.recorded_attn_stats is not None:
-            stats = pass_cfg.recorded_attn_stats
-            print(f"   📊 [ATTENTION METRICS - {sc['title']}]")
+        stats = pass_cfg.finalize_stats() if pass_cfg.dump_attn else None
+        if stats is not None:
+            print(f"   📊 [LAYER-AVERAGED ATTENTION METRICS - {sc['title']}]")
+            print(f"      • Captured DiT Layers           : {stats['num_layers_sampled']}")
             print(f"      • Canvas -> Ref10 (Title)   Logit: {stats['mean_logit_10']:+.4f}")
             print(f"      • Canvas -> Ref20 (Subtitle) Logit: {stats['mean_logit_20']:+.4f}")
             print(f"      • Intrinsic Logit Gap (ΔS)       : {stats['logit_gap']:+.4f}")
@@ -851,6 +872,7 @@ def run_benchmark(
             save_attention_heatmap(stats["map_10"], hm10_path, title=f"{sc['title']} -> Title (t=10)")
             save_attention_heatmap(stats["map_20"], hm20_path, title=f"{sc['title']} -> Subtitle (t=20)")
             print(f"      🖼️ Heatmaps saved: {hm10_path.name} & {hm20_path.name}")
+
 
         results.append((sc, pass_img))
 
