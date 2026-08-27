@@ -134,6 +134,8 @@ def create_glyph_image(
     best_lines = None
     best_size = 0
 
+    spacing_ratio = 0.32 if len(candidate_layouts[0]) >= 2 else 0.20
+
     for lines in candidate_layouts:
         low, high = 14, 200
         opt_font = None
@@ -156,8 +158,8 @@ def create_glyph_image(
                 max_line_w = max(max_line_w, lw)
                 total_h += lh
 
-            line_spacing = int(mid_size * 0.20) * (len(lines) - 1)
-            total_h += line_spacing
+            curr_spacing = int(mid_size * spacing_ratio) * (len(lines) - 1)
+            total_h += curr_spacing
 
             if max_line_w <= max_w and total_h <= max_h:
                 opt_font = test_font
@@ -183,11 +185,12 @@ def create_glyph_image(
         line_widths.append(bbox[2] - bbox[0])
         line_heights.append(bbox[3] - bbox[1])
 
-    line_spacing = int(best_size * 0.20)
+    line_spacing = int(best_size * spacing_ratio)
     total_block_h = sum(line_heights) + line_spacing * (len(best_lines) - 1)
     total_block_w = max(line_widths)
 
-    if tight_crop:
+    if tight_crop and len(best_lines) == 1:
+        # Single-line: tight crop height and width
         pad_x = max(10, int(total_block_w * padding_ratio))
         pad_y = max(8, int(total_block_h * padding_ratio))
         final_w = total_block_w + 2 * pad_x
@@ -195,6 +198,7 @@ def create_glyph_image(
         final_w = max(32, ((final_w + 15) // 16) * 16)
         final_h = max(32, ((final_h + 15) // 16) * 16)
     else:
+        # Multi-line (>= 2 lines): PRESERVE ENVELOPE HEIGHT to guarantee latent tokens per line
         final_w = envelope_w
         final_h = envelope_h
 
