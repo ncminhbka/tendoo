@@ -379,6 +379,18 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + **Phân tầng nghịch đảo này PHẢI ĐƯỢC ĐƯA VÀO NGAY TỪ MILESTONE A (2 SLOTS)**!
       + Tuyệt đối không dồn tới Milestone C, nhằm triệt tiêu liên kết giả ngay từ gốc rễ, đảm bảo các milestone sau kế thừa một bộ khung chú ý hoàn toàn sạch và tổng quát.
 
+28. **TUYỆT ĐỐI CẤM VIẾT CODE OUTPUT FILE HTML TRÊN SERVER (THE FORBIDDEN SERVER HTML OUTPUT LAW)**:
+    - **Nguyên nhân & Thực tế kiểm nghiệm**:
+      + Môi trường JupyterLab trên server mạng nội bộ không có web server phục vụ file HTML phụ thuộc (bị lỗi relative image paths, preview HTML bị trắng hoặc không mở được).
+      + Việc cố tình sinh file HTML gây lãng phí công sức và ức chế trải nghiệm người dùng.
+    - **Quy tắc bắt buộc từ nay về sau**:
+      + **TUYỆT ĐỐI KHÔNG VIẾT CODE SINH RA CÁC FILE `.html` TRÊN SERVER NỮA**.
+      + Mọi script kiểm thử, suy luận, đánh giá hoặc báo cáo chạy trên server **CHỈ ĐƯỢC PHÉP XUẤT 3 LOẠI ĐẦU RA**:
+        1. Bảng tóm tắt định dạng ASCII sạch sẽ in trực tiếp ra Terminal để đọc ngay lập tức.
+        2. File dữ liệu có cấu trúc chuẩn (`.json`, `.jsonl`, `.csv`).
+        3. Các file ảnh `.png` / `.jpg` độc lập để mở xem trực tiếp trong Image Viewer tích hợp sẵn của JupyterLab.
+
+
 
 
 

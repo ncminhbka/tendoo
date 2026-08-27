@@ -91,8 +91,9 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "BeVietnamPro-Black.ttf",
         "archetype": "Clean Sans-Serif",
         "tier": "Tier A (Heavy / Dense)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 32,  # Empirically validated on 2x A30 (DiT 50-step ODE denoise floor)
         "default_line_spacing": 0.22,
+
         "description": "Commercial workhorse for clean, hyper-legible body, subtitles, and modern ads.",
     },
     "anton": {

@@ -289,72 +289,24 @@ def run_di_isolation_sweep(
                 "denoise_time": round(denoise_time, 2),
             })
 
-    # Save manifest and HTML report
+    # Save manifest JSON
     manifest_path = out_path / "sweep_manifest.json"
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(results_manifest, f, ensure_ascii=False, indent=2)
 
-    html_path = out_path / "comparison_report.html"
-    generate_html_report(results_manifest, html_path, text)
-    print("\n" + "=" * 80)
-    print(f"[OK] Lean Sweep Completed! Manifest: {manifest_path}")
-    print(f"[*] Visual HTML Report: {html_path.resolve()}")
-    print("=" * 80 + "\n")
+    # Print clean Terminal Summary Table
+    print("\n" + "=" * 90)
+    print(" [*] TENDOO AI - DIT RESOLUTION FLOOR PROBE RESULTS SUMMARY")
+    print("=" * 90)
+    header = f"{'Font':<14} | {'Tier':<22} | {'Size':<8} | {'Tokens':<8} | {'Denoise Time':<14} | {'Output Image':<25}"
+    print(header)
+    print("-" * 90)
+    for r in results_manifest:
+        print(f"{r['font'].upper():<14} | {r['tier']:<22} | {r['size_pt']}pt{'':<4} | {r['tokens']:<8} | {r['denoise_time']}s{'':<8} | {r['image_file']:<25}")
+    print("=" * 90)
+    print(f"[+] All images saved in: {out_path.resolve()}")
+    print(f"[+] Manifest saved in  : {manifest_path.resolve()}\n")
 
-
-def generate_html_report(manifest: List[dict], html_path: Path, text: str):
-    """Generates a clean HTML visual grid for side-by-side inspection in JupyterLab."""
-    html = f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Tendoo AI - Lean DiT Resolution Floor Probe</title>
-    <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #121212; color: #eee; padding: 24px; }}
-        h1 {{ color: #4CAF50; margin-bottom: 8px; }}
-        table {{ border-collapse: collapse; width: 100%; margin-top: 20px; }}
-        th, td {{ border: 1px solid #333; padding: 12px; text-align: center; vertical-align: middle; }}
-        th {{ background: #1e1e1e; color: #bbb; font-weight: 600; }}
-        tr:nth-child(even) {{ background: #181818; }}
-        img {{ max-width: 240px; height: auto; border-radius: 6px; border: 1px solid #444; transition: transform 0.2s; }}
-        img:hover {{ transform: scale(1.05); }}
-        .badge {{ padding: 6px 12px; border-radius: 4px; font-weight: bold; background: #2e7d32; color: #fff; font-size: 14px; }}
-    </style>
-</head>
-<body>
-    <h1>🔬 Tendoo AI - Lean DiT Font Resolution Floor Probe</h1>
-    <p><b>Target Text:</b> "{text}" | <b>Canvas:</b> 576x1024 | <b>ODE Steps:</b> 50 | <b>CFG:</b> 4.0</p>
-    <p><i>Click any image to inspect full-resolution. Identify where diacritics transition from jagged to silk-smooth:</i></p>
-    <table>
-        <tr>
-            <th>Font</th>
-            <th>Tier</th>
-            <th>Size (pt)</th>
-            <th>Glyph Input</th>
-            <th>Tokens</th>
-            <th>DiT 50-step Output Image</th>
-            <th>Denoise Time</th>
-        </tr>
-    """
-    for r in manifest:
-        html += f"""
-        <tr>
-            <td><b>{r['font'].upper()}</b></td>
-            <td>{r['tier']}</td>
-            <td><span class="badge">{r['size_pt']}pt</span></td>
-            <td><img src="{r['glyph_file']}" alt="Glyph"></td>
-            <td>{r['tokens']}</td>
-            <td><a href="{r['image_file']}" target="_blank"><img src="{r['image_file']}" alt="DiT Output"></a></td>
-            <td>{r['denoise_time']}s</td>
-        </tr>
-        """
-    html += """
-    </table>
-</body>
-</html>
-    """
-    with open(html_path, "w", encoding="utf-8") as f:
-        f.write(html)
 
 
 def main():
