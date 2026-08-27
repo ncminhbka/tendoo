@@ -522,14 +522,20 @@ BENCHMARK_SUITE = [
     {
         "id": "pass1_baseline_vanilla",
         "title": "Pass 1: Baseline (Vanilla)",
-        "subtitle": "Standard BFL Attention Fallback (Current Softmax Competition)",
+        "subtitle": "Standard BFL Attention Fallback (Full Bidirectional Joint Attention)",
         "mode": "none",
     },
     {
         "id": "pass2_null_control",
         "title": "Pass 2: Null Control (Bias=0.0)",
-        "subtitle": "Steered Code Path with Bias=0.0 (Proves Zero Divergence from Baseline)",
+        "subtitle": "Steered Code Path with Bias=0.0 (Sanity Check)",
         "mode": "null_test",
+    },
+    {
+        "id": "pass_boost_only",
+        "title": "Pass: Pure Logit Boost",
+        "subtitle": "Global Beta_20 = +2.0 (No Spatial Masking)",
+        "mode": "boost_only",
     },
     {
         "id": "pass3_soft_regional",
@@ -544,6 +550,7 @@ BENCHMARK_SUITE = [
         "mode": "scheduled_soft_regional",
     },
 ]
+
 
 
 
@@ -572,15 +579,17 @@ def save_attention_heatmap(
         img.save(str(out_path))
 
 
-def stitch_4way_comparison_panel(
+def stitch_comparison_panel(
     results: list[tuple[dict, Image.Image]],
     output_path: str,
     title_text: str,
     subtitle_text: str,
     prompt_text: str,
 ):
-    """Stitches a side-by-side 4-column master comparison panel with descriptive headers."""
-    assert len(results) == 4
+    """Stitches a side-by-side master comparison panel with descriptive headers."""
+    num_cols = len(results)
+    if num_cols < 2:
+        return
     col_w, col_h = results[0][1].size
 
     header_h = 170
@@ -588,11 +597,12 @@ def stitch_4way_comparison_panel(
     margin = 20
     spacing = 16
 
-    total_w = margin * 2 + col_w * 4 + spacing * 3
+    total_w = margin * 2 + col_w * num_cols + spacing * (num_cols - 1)
     total_h = header_h + col_h + footer_h + margin * 2
 
     canvas = Image.new("RGB", (total_w, total_h), color=(15, 17, 23))
     draw = ImageDraw.Draw(canvas)
+
 
     try:
         font_main = ImageFont.truetype(FONT_REGISTRY["bevietnam"], 32)
@@ -877,10 +887,10 @@ def run_benchmark(
         results.append((sc, pass_img))
 
     # 5. Master Panel Stitching
-    if len(results) == 4:
-        print("\n[4/4] Stitching Master 4-Way Comparison Panel...")
+    if len(results) >= 2:
+        print(f"\n[4/4] Stitching Master Comparison Panel ({len(results)} columns)...")
         master_panel_file = out_path / "ATTENTION_STEERING_COMPARISON.png"
-        stitch_4way_comparison_panel(
+        stitch_comparison_panel(
             results=results,
             output_path=str(master_panel_file),
             title_text=text_title,
@@ -893,9 +903,10 @@ def run_benchmark(
     print("🎉 ATTENTION STEERING BENCHMARK COMPLETED SUCCESSFULLY!")
     print(f"⏱️ Total Time: {total_elapsed:.2f}s")
     print(f"📁 Output Directory: {out_path.resolve()}")
-    if len(results) == 4:
+    if len(results) >= 2:
         print(f"📊 Master Grid Image: {out_path / 'ATTENTION_STEERING_COMPARISON.png'}")
     print("=" * 80 + "\n")
+
 
 
 if __name__ == "__main__":
