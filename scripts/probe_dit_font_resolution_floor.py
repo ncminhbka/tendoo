@@ -1,28 +1,31 @@
 #!/usr/bin/env python3
 """
 ====================================================================================================
-TENDOO AI - EMPIRICAL DiT FONT RESOLUTION FLOOR PROBE
+TENDOO AI - LEAN DiT FONT RESOLUTION FLOOR PROBE (3 CRITICAL POINTS)
 ====================================================================================================
 Script: scripts/probe_dit_font_resolution_floor.py
 Purpose:
-    Rigorously measures the TRUE empirical resolution threshold where FLUX.2 Klein 4B Base DiT
-    50-step ODE flow matching denoise begins to produce spiky/jagged edges or diacritic distortions.
+    Fast, focused probe testing ONLY 3 critical boundary points: [24pt, 32pt, 40pt]
+    to immediately identify the empirical resolution threshold of FLUX.2 Klein 4B Base DiT
+    in under 2 minutes (3 runs total).
 
-Mathematical Truth to Validate:
-    - VAE Roundtrip Probe already proved: AutoEncoder cleanly reconstructs down to 20pt.
-    - Therefore, spikiness is 100% a DiT ODE denoise sensitivity, NOT a VAE compression limit.
-    - This script sweeps font sizes [20pt, 24pt, 28pt, 32pt, 36pt, 42pt, 48pt] in isolation (t=10.0)
-      to discover the EXACT empirical boundary for each font archetype.
+Default Configuration:
+    - Font   : BeVietnamPro-Black (Standard Workhorse Sans)
+    - Sizes  : 24pt (Small), 32pt (Boundary), 40pt (Safe) -> Total: 3 runs!
+    - Canvas : 576 x 1024 (Standard 9:16 poster, low VRAM, fast denoise)
+    - ODE    : 50 steps, CFG = 4.0
 
 Usage on Remote Server (2x A30):
-    python scripts/probe_dit_font_resolution_floor.py --font bevietnam --sizes 20 24 28 32 36 42 48
-    python scripts/probe_dit_font_resolution_floor.py --all_tiers --output_dir output_dit_floor
+    python scripts/probe_dit_font_resolution_floor.py
+    # Optional: Test Playfair instead
+    python scripts/probe_dit_font_resolution_floor.py --font playfair
 ====================================================================================================
 """
 
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import os
 import sys
@@ -62,7 +65,6 @@ from flux2.util import (
     load_flow_model,
     load_qwen3_embedder,
 )
-
 from src.tendoo.glyph_engine import FONT_REGISTRY, FONT_TIERS, resolve_font_path
 
 
@@ -86,14 +88,13 @@ def render_single_line_glyph(
     raw_w = tw + 2 * padding_px
     raw_h = th + 2 * padding_px
 
-    # Guarantee minimum height for baseline descenders & snap to 16
+    # Snap dimensions to 16px multiples
     snapped_w = int(np.ceil(raw_w / 16.0) * 16)
     snapped_h = int(np.ceil(max(raw_h, 80) / 16.0) * 16)
 
     img = Image.new("RGB", (snapped_w, snapped_h), color=(0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    # Offset to keep baseline and accents safe
     x = (snapped_w - tw) // 2 - bbox[0]
     y = (snapped_h - th) // 2 - bbox[1]
     draw.text((x, y), text, font=font, fill=(255, 255, 255))
@@ -148,7 +149,7 @@ def run_di_isolation_sweep(
     guidance: float = 4.0,
     seed: int = 42,
 ):
-    """Executes full DiT isolation sweep across font sizes."""
+    """Executes lean DiT isolation sweep across 3 font sizes."""
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
@@ -159,22 +160,21 @@ def run_di_isolation_sweep(
         device_dit = torch.device("cuda:0")
         device_ae = torch.device("cuda:1")
         device_te = torch.device("cuda:1")
-    elif num_gpus == 1:
+        print(f"  -> Dual GPU: DiT on GPU 0, VAE/TextEncoder on GPU 1")
+    else:
         device_dit = torch.device("cuda:0")
         device_ae = torch.device("cuda:0")
         device_te = torch.device("cuda:0")
-    else:
-        print("[!] CUDA is not available. This test requires GPU execution on server.")
-        return
+        print(f"  -> Single GPU: All models on {device_dit}")
 
     if checkpoint_dir:
         os.environ["PERSISTENT_DATA_DIR"] = checkpoint_dir
 
-    print("\n[1/4] Loading AutoEncoder (VAE) and DiT Base 4B...")
+    print("\n[1/3] Loading AutoEncoder (VAE) and DiT Base 4B...")
     ae = load_ae(model_name, device=device_ae)
     model = load_flow_model(model_name, device=device_dit)
 
-    print("\n[2/4] Encoding Text Prompt via Qwen3-4B-FP8...")
+    print("\n[2/3] Encoding Text Prompt via Qwen3-4B-FP8...")
     text_encoder = load_qwen3_embedder(variant="4B", device=device_te)
     with torch.no_grad():
         txt = text_encoder(["", prompt])
@@ -182,31 +182,28 @@ def run_di_isolation_sweep(
         txt = txt.to(device_dit)
         txt_ids = txt_ids.to(device_dit)
 
-    # Aggressively offload text_encoder to CPU and run gc.collect to completely wipe VRAM on device_te / GPU 1
+    # Completely offload and purge text_encoder to guarantee 100% VRAM free on GPU 1
     try:
         text_encoder.model.to("cpu")
     except Exception:
         pass
     del text_encoder
-    import gc
     gc.collect()
     torch.cuda.empty_cache()
 
     if torch.cuda.is_available():
         free_bytes, total_bytes = torch.cuda.mem_get_info(device_ae)
-        print(f"  -> Purged Text Encoder from GPU! Free VRAM on {device_ae}: {free_bytes / (1024**3):.2f} / {total_bytes / (1024**3):.2f} GiB")
+        print(f"  -> Successfully purged Qwen3! Free VRAM on {device_ae}: {free_bytes / (1024**3):.2f} / {total_bytes / (1024**3):.2f} GiB")
 
-    # Prepare Canvas Dimensions
+    # Prepare Canvas Dimensions (576x1024 = 2304 tokens, 2x faster, minimal VRAM)
     width = (width // 16) * 16
     height = (height // 16) * 16
     lat_w, lat_h = width // 16, height // 16
 
     results_manifest = []
 
-
-
-    print("\n[3/4] Beginning DiT Isolation Resolution Sweep across Fonts & Sizes...")
     total_runs = len(fonts_to_test) * len(sizes_to_test)
+    print(f"\n[3/3] Running Lean DiT Sweep ({total_runs} run(s) total: sizes {sizes_to_test} pt)...")
     run_idx = 0
 
     for font_key in fonts_to_test:
@@ -219,7 +216,7 @@ def run_di_isolation_sweep(
 
         for pt in sizes_to_test:
             run_idx += 1
-            print(f"\n--- [{run_idx}/{total_runs}] Testing {font_alias.upper()} @ {pt}pt ---")
+            print(f"\n>>> [{run_idx}/{total_runs}] Testing {font_alias.upper()} @ {pt}pt...")
 
             # 1. Render glyph bitmap
             glyph_img, g_w, g_h, g_tokens = render_single_line_glyph(
@@ -227,7 +224,7 @@ def run_di_isolation_sweep(
             )
             glyph_preview_path = out_path / f"glyph_{font_alias}_{pt}pt.png"
             glyph_img.save(glyph_preview_path)
-            print(f"  -> Glyph: {g_w}x{g_h}px ({g_tokens} tokens) saved to {glyph_preview_path.name}")
+            print(f"  -> Glyph: {g_w}x{g_h}px ({g_tokens} tokens) saved: {glyph_preview_path.name}")
 
             # 2. Encode to In-Context Ref Tokens at t=10.0
             ref_tokens, ref_ids = encode_glyph_to_ref_tokens(
@@ -263,6 +260,7 @@ def run_di_isolation_sweep(
 
             # 5. Decode to Pixel Space
             torch.cuda.empty_cache()
+            out_latent = rearrange(out_latent, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
             out_latent = out_latent.to(device=device_ae, dtype=torch.bfloat16)
             with torch.no_grad():
                 out_tensor = ae.decode(out_latent)
@@ -275,10 +273,10 @@ def run_di_isolation_sweep(
             res_img.save(out_file)
             print(f"  -> Generated Image in {denoise_time:.2f}s saved: {out_file.name}")
 
-            # Free loop tensors from VRAM
+            # Clean memory
             del out_latent, out_tensor, z_init, img_tokens, img_ids, ref_tokens, ref_ids
+            gc.collect()
             torch.cuda.empty_cache()
-
 
             results_manifest.append({
                 "font": font_alias,
@@ -291,14 +289,17 @@ def run_di_isolation_sweep(
                 "denoise_time": round(denoise_time, 2),
             })
 
-    # [4/4] Save manifest and HTML report
+    # Save manifest and HTML report
     manifest_path = out_path / "sweep_manifest.json"
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(results_manifest, f, ensure_ascii=False, indent=2)
 
     html_path = out_path / "comparison_report.html"
     generate_html_report(results_manifest, html_path, text)
-    print(f"\n[OK] DiT Resolution Sweep Completed! Manifest: {manifest_path}, HTML: {html_path}\n")
+    print("\n" + "=" * 80)
+    print(f"[OK] Lean Sweep Completed! Manifest: {manifest_path}")
+    print(f"[*] Visual HTML Report: {html_path.resolve()}")
+    print("=" * 80 + "\n")
 
 
 def generate_html_report(manifest: List[dict], html_path: Path, text: str):
@@ -307,22 +308,23 @@ def generate_html_report(manifest: List[dict], html_path: Path, text: str):
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Tendoo AI - DiT Font Resolution Floor Empirical Sweep</title>
+    <title>Tendoo AI - Lean DiT Resolution Floor Probe</title>
     <style>
-        body {{ font-family: Arial, sans-serif; background: #121212; color: #eee; padding: 20px; }}
-        h1 {{ color: #4CAF50; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #121212; color: #eee; padding: 24px; }}
+        h1 {{ color: #4CAF50; margin-bottom: 8px; }}
         table {{ border-collapse: collapse; width: 100%; margin-top: 20px; }}
         th, td {{ border: 1px solid #333; padding: 12px; text-align: center; vertical-align: middle; }}
-        th {{ background: #1e1e1e; color: #bbb; }}
+        th {{ background: #1e1e1e; color: #bbb; font-weight: 600; }}
         tr:nth-child(even) {{ background: #181818; }}
-        img {{ max-width: 280px; height: auto; border-radius: 4px; border: 1px solid #444; }}
-        .badge {{ padding: 4px 8px; border-radius: 4px; font-weight: bold; background: #2e7d32; color: #fff; }}
+        img {{ max-width: 240px; height: auto; border-radius: 6px; border: 1px solid #444; transition: transform 0.2s; }}
+        img:hover {{ transform: scale(1.05); }}
+        .badge {{ padding: 6px 12px; border-radius: 4px; font-weight: bold; background: #2e7d32; color: #fff; font-size: 14px; }}
     </style>
 </head>
 <body>
-    <h1>🔬 Tendoo AI - DiT Font Resolution Floor Empirical Sweep</h1>
-    <p><b>Target Text:</b> "{text}" | <b>Canvas:</b> 1024x1024 | <b>ODE Steps:</b> 50 | <b>CFG:</b> 4.0</p>
-    <p><i>Objective: Inspect generated images to identify the exact font size (pt) where DiT output transitions from jagged/spiky to silk-smooth.</i></p>
+    <h1>🔬 Tendoo AI - Lean DiT Font Resolution Floor Probe</h1>
+    <p><b>Target Text:</b> "{text}" | <b>Canvas:</b> 576x1024 | <b>ODE Steps:</b> 50 | <b>CFG:</b> 4.0</p>
+    <p><i>Click any image to inspect full-resolution. Identify where diacritics transition from jagged to silk-smooth:</i></p>
     <table>
         <tr>
             <th>Font</th>
@@ -356,28 +358,22 @@ def generate_html_report(manifest: List[dict], html_path: Path, text: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Tendoo AI DiT Font Resolution Floor Probe")
-    parser.add_argument("--font", type=str, default="bevietnam", help="Single font to test")
-    parser.add_argument("--sizes", type=int, nargs="+", default=[20, 24, 28, 32, 36, 42, 48], help="Font sizes to sweep")
-    parser.add_argument("--all_tiers", action="store_true", help="Test representative font from all 3 tiers")
+    parser = argparse.ArgumentParser(description="Tendoo AI Lean DiT Font Resolution Floor Probe")
+    parser.add_argument("--font", type=str, default="bevietnam", help="Font to test (default: bevietnam)")
+    parser.add_argument("--sizes", type=int, nargs="+", default=[24, 32, 40], help="Critical test sizes in pt (default: 24 32 40)")
     parser.add_argument("--text", type=str, default="TÔI YÊU VIỆT NAM", help="Vietnamese test phrase")
     parser.add_argument("--output_dir", type=str, default="output_dit_floor", help="Output directory")
     parser.add_argument("--width", type=int, default=576, help="Canvas width (default: 576)")
     parser.add_argument("--height", type=int, default=1024, help="Canvas height (default: 1024)")
     parser.add_argument("--checkpoint_dir", type=str, default=None, help="Path to FLUX.2 checkpoints")
-    parser.add_argument("--steps", type=int, default=50, help="ODE denoise steps")
-    parser.add_argument("--guidance", type=float, default=4.0, help="CFG guidance")
+    parser.add_argument("--steps", type=int, default=50, help="ODE denoise steps (default: 50)")
+    parser.add_argument("--guidance", type=float, default=4.0, help="CFG guidance (default: 4.0)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
 
     args = parser.parse_args()
 
-    if args.all_tiers:
-        fonts = ["bevietnam", "playfair", "pacifico"]
-    else:
-        fonts = [args.font]
-
     run_di_isolation_sweep(
-        fonts_to_test=fonts,
+        fonts_to_test=[args.font],
         sizes_to_test=args.sizes,
         text=args.text,
         output_dir=args.output_dir,
@@ -388,7 +384,6 @@ def main():
         guidance=args.guidance,
         seed=args.seed,
     )
-
 
 
 if __name__ == "__main__":
