@@ -270,14 +270,16 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + Từ khóa chỉ vai trò/chất liệu (`dòng chữ tiêu đề`, `chữ 3D`, `đèn neon`, `mạ vàng`) trong Prompt đóng vai trò là **"Thụ thể kích hoạt (Semantic Activation Receptor)"** để bật công tắc Attention liên kết giữa Prompt và Glyph VAE.
       + Tuyệt đối không cần gượng ép đưa "bảng gỗ/khung biển" vào Prompt. Chữ 3D hoàn toàn có thể đứng tự do trong không gian.
 
-20. **ĐỊNH LUẬT BẢO TOÀN TỈ LỆ GLYPH VÀ ĐỒNG HÌNH ĐƯỜNG CONG (THE GLYPH SCALE CONSERVATION & TOPOLOGICAL CONTINUITY LAW)**:
-    - **Phát hiện thực nghiệm đối chứng**:
-      + **Bảo toàn Tỉ lệ Kích thước (Scale Conservation)**: Kích thước ký tự trên Glyph VAE gần như được bảo toàn nguyên vẹn trong ảnh sinh ra. Prompt chứa từ khóa ("small", "tiny", "micro") gặp khó khăn lớn nếu Glyph vốn đã to (kiểu header). Ngược lại, khi Glyph được render với chữ nhỏ sẵn (như bài thơ Tây Tiến), DiT vẽ ra chữ nhỏ tinh tế cực kỳ chuẩn xác.
-      + **Tính Liên tục Tô-pô Dải Ngang cho Chữ Uốn Lượn (Topological Continuity)**: Khi muốn tạo chữ uốn lượn quanh đường tròn (xích đạo Trái Đất, dải ruy băng, vỏ quả bóng), Glyph **BẮT BUỘC PHẢI LÀ MỘT DÒNG DÀI LIÊN TỤC (1D Manifold)**, không được ngắt dòng. Khối chữ nhiều dòng (2D Grid) sẽ bị xung đột không gian và cản trở việc uốn cong liên tục.
-    - **Quy tắc Kiến trúc Hệ thống Tendoo AI**:
-      + Muốn chữ to (Headline): Render Glyph to ($\ge 50 - 70\text{px}$).
-      + Muốn chữ nhỏ (Specs / Annotations / Disclaimer): Định hình kích thước nhỏ ngay từ Glyph Engine ($\sim 24 - 32\text{px}$) thay vì dựa dẫm vào Prompt.
-      + Muốn chữ uốn cong / ôm vật thể: Format chuỗi text thành 1 dòng đơn dài chiều ngang.
+20. **ĐỊNH LUẬT CO GIÃN TỶ LỆ QUA VẬT THỂ ĐỠ VÀ NGƯỠNG PHÂN GIẢI VAE (THE OBJECT-BOUND SCALE MODULATION & VAE RESOLUTION BOUND LAW)**:
+    - **Kiểm chứng thực nghiệm đối chứng cô lập 3 Case (`test_prompt_scale_isolation.py`)**:
+      + **Case 1 (Prompt thuần, không vật thể)**: Lệnh Prompt bảo vẽ "chữ siêu nhỏ" đứng tự do $\rightarrow$ **THẤT BẠI HOÀN TOÀN, CHỮ VẪN TO NGUYÊN VẸN** theo kích thước Glyph! (Khẳng định: Prompt thuần từ ngữ trừu tượng bất lực trong việc tự co nhỏ Glyph to).
+      + **Case 2 (Ép chữ qua Vật thể có kích thước vừa vặn - Tách cà phê sứ)**: Khi gắn chữ vào một vật thể có kích thước vật lý cụ thể trong thế giới thực $\rightarrow$ **THÀNH CÔNG 100%, CHỮ ĐÚNG VÀ CO NHỎ TỰ NHIÊN** theo tỷ lệ của tách cà phê! (Khẳng định: Vật thể đỡ đóng vai trò là "Thước đo tỷ lệ phối cảnh 3D" để DiT neo và co nhỏ chữ).
+      + **Case 3 (Ép chữ qua Vật thể siêu nhỏ - Tem nhãn mini trên gói cafe)**: Khi vật thể quá nhỏ khiến diện tích thực tế của chữ trên Canvas bị ép xuống dưới ngưỡng giải mã của VAE ($16\times$) $\rightarrow$ **CHỮ BỊ SAI/VỠ NÉT**!
+    - **Quy tắc Vàng cho Hệ thống Tendoo AI**:
+      + Muốn chữ to (Headline): Dùng Prompt miêu tả chữ là chủ thể chính (Headline / Banner) hoặc đứng tự do.
+      + Muốn chữ nhỏ tinh tế: **BẮT BUỘC GẮN CHỮ LÊN MỘT VẬT THỂ ĐỠ CỤ THỂ** (bìa sách, thân chai lọ, tách cafe, tấm biển hiệu) thay vì chỉ dùng từ ngữ "tiny/small" đơn độc.
+      + Đảm bảo vật thể đỡ chiếm diện tích hiển thị đủ lớn trên Canvas để chiều cao nét chữ sau khi co nhỏ đạt tối thiểu **$\ge 24 - 32\text{px}$**, tránh sụp đổ độ phân giải VAE.
+      + Khi muốn chữ uốn lượn (Trái Đất, ruy băng): Glyph bắt buộc là 1 dòng dài chiều ngang (1D Manifold).
 
 21. **ĐỊNH LUẬT CẠNH TRANH KHÔNG GIAN BỐ CỤC VÀ ĐỘ NÉT 100% CỦA VĂN BẢN ĐA DÒNG (THE SPATIAL REAL-ESTATE COMPETITION & MULTI-LINE TEXT LAW)**:
     - **Kiểm chứng thực nghiệm trực tiếp (`test_perfume_916_bevietnam_split.png`)**:
