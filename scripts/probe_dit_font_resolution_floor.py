@@ -20,12 +20,15 @@ Usage on Remote Server (2x A30):
 ====================================================================================================
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import os
 import sys
 import time
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # Add project root to sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -52,13 +55,14 @@ import torch
 from einops import rearrange
 from PIL import Image, ImageDraw, ImageFont
 
-from flux2.model import AutoEncoder
+from flux2.autoencoder import AutoEncoder
 from flux2.sampling import batched_prc_txt, denoise_cfg, get_schedule, prc_img
 from flux2.util import (
     load_ae,
     load_flow_model,
     load_qwen3_embedder,
 )
+
 from src.tendoo.glyph_engine import FONT_REGISTRY, FONT_TIERS, resolve_font_path
 
 
