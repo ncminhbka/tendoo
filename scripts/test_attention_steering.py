@@ -25,6 +25,7 @@ import argparse
 import os
 import sys
 import time
+import math
 from pathlib import Path
 from dataclasses import dataclass
 
@@ -106,6 +107,7 @@ def create_glyph_image(
     text_color: tuple[int, int, int] = (255, 255, 255),
     padding_ratio: float = 0.08,
     tight_crop: bool = True,
+    force_single_line: bool = False,
 ) -> Image.Image:
     """
     Renders TRUE TIGHT-CROP Vietnamese glyph bitmap with automatic line wrapping,
@@ -124,7 +126,9 @@ def create_glyph_image(
 
     text = text.replace("\\n", "\n")
 
-    if "\n" in text:
+    if force_single_line:
+        candidate_layouts = [[text.replace("\n", " ").strip()]]
+    elif "\n" in text:
         candidate_layouts = [[line.strip() for line in text.split("\n") if line.strip()]]
     else:
         words = text.split()
@@ -137,6 +141,7 @@ def create_glyph_image(
             p2 = 2 * len(words) // 3
             candidate_layouts.append([" ".join(words[:p1]), " ".join(words[p1:p2]), " ".join(words[p2:])])
         candidate_layouts.append([text])
+
 
     best_font = None
     best_lines = None
@@ -295,7 +300,9 @@ class AttentionSteeringConfig:
     split_y: float = 0.48            # Normalized vertical boundary between Title and Subtitle
     sharpness: float = 14.0          # Sigmoid sharpness factor for smooth transition
     t_start: float = 0.85            # Timestep threshold to start active steering
-    t_end: float = 0.20              # Timestep threshold to ramp down steering for pure optical shading
+    # Quantitative Attention Visualization
+    dump_attn: bool = False
+    recorded_attn_stats: dict | None = None
 
 
 class AttentionSteeringManager:
@@ -317,8 +324,10 @@ class AttentionSteeringManager:
             num_ref_tokens: int,
             kv_cache: dict | None = None,
         ) -> torch.Tensor:
-            # Fallback to standard attention if disabled or cached
-            if not cfg.active or cfg.mode == "none" or kv_cache is not None:
+            # Fallback to standard attention if disabled and not dumping attention
+            if (not cfg.active or cfg.mode == "none") and not cfg.dump_attn:
+                return self.orig_causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens, kv_cache)
+            if kv_cache is not None:
                 return self.orig_causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens, kv_cache)
 
             seq_len = q.shape[2]
@@ -347,7 +356,7 @@ class AttentionSteeringManager:
 
             curr_t = cfg.current_timestep
 
-            if cfg.mode == "null_test":
+            if cfg.mode == "null_test" or cfg.mode == "none":
                 # Pass 0 / Null Control: bias is strictly 0.0 everywhere.
                 # Must be 100% bitwise equivalent to Pass 1 (Vanilla)!
                 pass
@@ -385,9 +394,41 @@ class AttentionSteeringManager:
                 attn_bias[:, :, c_start:c_end, r10_start:r10_end] = bias_10
                 attn_bias[:, :, c_start:c_end, r20_start:r20_end] = bias_20
 
+            # --- Quantitative Attention Measurement & Visualization Hook ---
+            if cfg.dump_attn and cfg.recorded_attn_stats is None and curr_t <= 0.85:
+                with torch.no_grad():
+                    b_idx = 1 if q.shape[0] > 1 else 0
+                    q_c = q[b_idx : b_idx + 1, :, c_start:c_end, :]
+                    k_r10 = k[b_idx : b_idx + 1, :, r10_start:r10_end, :]
+                    k_r20 = k[b_idx : b_idx + 1, :, r20_start:r20_end, :]
+
+                    head_dim = q.shape[-1]
+                    scale = 1.0 / math.sqrt(head_dim)
+                    num_heads = q.shape[1]
+
+                    # Similarity across heads
+                    sim_10 = torch.einsum("b h c d, b h r d -> c r", q_c, k_r10) * scale / num_heads
+                    sim_20 = torch.einsum("b h c d, b h r d -> c r", q_c, k_r20) * scale / num_heads
+
+                    map_10 = sim_10.mean(dim=-1).view(cfg.lat_h, cfg.lat_w).float().cpu().numpy()
+                    map_20 = sim_20.mean(dim=-1).view(cfg.lat_h, cfg.lat_w).float().cpu().numpy()
+
+                    mean_logit_10 = float(sim_10.mean().item())
+                    mean_logit_20 = float(sim_20.mean().item())
+                    logit_gap = mean_logit_10 - mean_logit_20
+
+                    cfg.recorded_attn_stats = {
+                        "map_10": map_10,
+                        "map_20": map_20,
+                        "mean_logit_10": mean_logit_10,
+                        "mean_logit_20": mean_logit_20,
+                        "logit_gap": logit_gap,
+                    }
+
             # Execute SINGLE FULL JOINT ATTENTION CALL preserving FLUX.2's architecture
             out = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_bias, is_causal=False)
             return rearrange(out, "b h n d -> b n (h d)")
+
 
 
 
@@ -484,6 +525,31 @@ BENCHMARK_SUITE = [
     },
 ]
 
+
+
+def save_attention_heatmap(
+    heatmap_2d: np.ndarray,
+    out_path: str | Path,
+    title: str = "Attention Logits Map",
+    cmap_name: str = "magma",
+):
+    """Saves a 2D attention logit map as an upsampled, colorized heatmap PNG."""
+    try:
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(figsize=(4, 7), dpi=150)
+        im = ax.imshow(heatmap_2d, cmap=cmap_name, aspect="auto")
+        ax.set_title(title, fontsize=10, fontweight="bold", pad=10)
+        ax.axis("off")
+        fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        plt.tight_layout()
+        plt.savefig(str(out_path), bbox_inches="tight")
+        plt.close(fig)
+    except Exception:
+        # Fallback to pure PIL grayscale if matplotlib is not available
+        norm = (heatmap_2d - heatmap_2d.min()) / (heatmap_2d.max() - heatmap_2d.min() + 1e-6)
+        img = Image.fromarray((norm * 255).astype(np.uint8))
+        img = img.resize((360, 640), Image.Resampling.BILINEAR)
+        img.save(str(out_path))
 
 
 def stitch_4way_comparison_panel(
@@ -603,6 +669,8 @@ def run_benchmark(
     model_name: str = "flux.2-klein-base-4b",
     checkpoint_dir: str | None = None,
     mode_select: str = "all",
+    single_line_sub: bool = True,
+    dump_attn: bool = True,
 ):
     """Executes the Training-Free Attention Steering Benchmark."""
     start_total = time.time()
@@ -618,11 +686,11 @@ def run_benchmark(
     print(" 🚀 TENDOO AI: TRAINING-FREE ATTENTION STEERING BENCHMARK (V2 SLICING)")
     print("=" * 80)
     print(f"📝 Title (Slot 10, Top)   : '{text_title}' (Font: {font_title})")
-    print(f"📝 Subtitle (Slot 20, Btm): '{text_subtitle}' (Font: {font_subtitle})")
+    print(f"📝 Subtitle (Slot 20, Btm): '{text_subtitle}' (Font: {font_subtitle}, SingleLine: {single_line_sub})")
     print(f"📐 Canvas Resolution      : {width}x{height} pixels (Latent: {lat_h}x{lat_w} = {lat_h * lat_w} tokens)")
     print(f"⚙️ Hyperparams            : Boost = +{boost_val_20}, Suppress = {suppress_val}, Split Y = {split_y}, Sharpness = {sharpness}")
     print(f"⚙️ Sampling               : {num_steps} steps, CFG = {guidance}, Seed = {seed}")
-    print(f"🎯 Target Model           : {model_name}")
+    print(f"🎯 Target Model           : {model_name} | Dump Attn: {dump_attn}")
     print("=" * 80)
 
     # 1. Device Allocation
@@ -649,10 +717,12 @@ def run_benchmark(
     )
     glyph_sub = create_glyph_image(
         text=text_subtitle,
-        target_width=min(width - 64, 512),
-        target_height=224,  # Upgraded to 224 according to Glyph Scaling Law for 2-line diacritic retention
+        target_width=min(width - 32, 544) if single_line_sub else min(width - 64, 512),
+        target_height=144 if single_line_sub else 224,
         font_path=resolved_font_sub,
+        force_single_line=single_line_sub,
     )
+
 
 
     glyph_title.save(out_path / "glyph_title_t10_preview.png")
@@ -737,6 +807,7 @@ def run_benchmark(
             suppress_val=suppress_val,
             split_y=split_y,
             sharpness=sharpness,
+            dump_attn=dump_attn,
         )
 
         t_pass_start = time.time()
@@ -765,6 +836,22 @@ def run_benchmark(
         pass_file = out_path / f"{sc['id']}.png"
         pass_img.save(pass_file)
         print(f"   ✅ Finished in {elapsed:.2f}s | Saved: {pass_file.name}")
+
+        # Quantitative attention analysis and heatmap export
+        if pass_cfg.dump_attn and pass_cfg.recorded_attn_stats is not None:
+            stats = pass_cfg.recorded_attn_stats
+            print(f"   📊 [ATTENTION METRICS - {sc['title']}]")
+            print(f"      • Canvas -> Ref10 (Title)   Logit: {stats['mean_logit_10']:+.4f}")
+            print(f"      • Canvas -> Ref20 (Subtitle) Logit: {stats['mean_logit_20']:+.4f}")
+            print(f"      • Intrinsic Logit Gap (ΔS)       : {stats['logit_gap']:+.4f}")
+            print(f"      • Optimal Compensatory Beta (β*) : {stats['logit_gap']:+.4f}")
+
+            hm10_path = out_path / f"attn_heatmap_{sc['id']}_title.png"
+            hm20_path = out_path / f"attn_heatmap_{sc['id']}_subtitle.png"
+            save_attention_heatmap(stats["map_10"], hm10_path, title=f"{sc['title']} -> Title (t=10)")
+            save_attention_heatmap(stats["map_20"], hm20_path, title=f"{sc['title']} -> Subtitle (t=20)")
+            print(f"      🖼️ Heatmaps saved: {hm10_path.name} & {hm20_path.name}")
+
         results.append((sc, pass_img))
 
     # 5. Master Panel Stitching
@@ -808,7 +895,6 @@ if __name__ == "__main__":
         help="Text prompt (describes material, optics, surfaces; NO literal text repetition)",
     )
 
-
     parser.add_argument("--width", type=int, default=576, help="Canvas width (default: 576 for 9:16)")
     parser.add_argument("--height", type=int, default=1024, help="Canvas height (default: 1024 for 9:16)")
     parser.add_argument("--steps", type=int, default=50, help="Euler ODE steps (default: 50)")
@@ -836,6 +922,10 @@ if __name__ == "__main__":
     )
     parser.add_argument("--model_name", type=str, default="flux.2-klein-base-4b", help="FLUX.2 model variant")
     parser.add_argument("--checkpoint_dir", type=str, default=None, help="Path to persistent-data")
+    parser.add_argument("--single_line_sub", action="store_true", default=True, help="Force subtitle glyph onto single line")
+    parser.add_argument("--no_single_line_sub", action="store_false", dest="single_line_sub", help="Allow multi-line wrapping for subtitle")
+    parser.add_argument("--dump_attn", action="store_true", default=True, help="Record and visualize quantitative attention heatmaps")
+    parser.add_argument("--no_dump_attn", action="store_false", dest="dump_attn", help="Disable attention visualization")
 
     args = parser.parse_args()
 
@@ -858,4 +948,7 @@ if __name__ == "__main__":
         model_name=args.model_name,
         checkpoint_dir=args.checkpoint_dir,
         mode_select=args.mode,
+        single_line_sub=args.single_line_sub,
+        dump_attn=args.dump_attn,
     )
+
