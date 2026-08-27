@@ -107,6 +107,7 @@ def create_glyph_image(
     text_color: tuple[int, int, int] = (255, 255, 255),
     padding_ratio: float = 0.08,
     tight_crop: bool = True,
+    force_single_line: bool = False,
 ) -> Image.Image:
     """
     Renders TRUE TIGHT-CROP Vietnamese glyph bitmap with automatic line wrapping,
@@ -127,6 +128,8 @@ def create_glyph_image(
 
     if "\n" in text:
         candidate_layouts = [[line.strip() for line in text.split("\n") if line.strip()]]
+    elif force_single_line:
+        candidate_layouts = [[text]]
     else:
         words = text.split()
         candidate_layouts = []
@@ -138,6 +141,7 @@ def create_glyph_image(
             p2 = 2 * len(words) // 3
             candidate_layouts.append([" ".join(words[:p1]), " ".join(words[p1:p2]), " ".join(words[p2:])])
         candidate_layouts.append([text])
+
 
     best_font = None
     best_lines = None
@@ -302,6 +306,7 @@ def run_demo(
     num_steps: int = 50,
     guidance: float = 4.0,
     seed: int = 42,
+    single_line: bool = False,
 ):
     """
     Executes end-to-end Tendoo AI pipeline on FLUX.2 Klein 4B Base.
@@ -315,7 +320,7 @@ def run_demo(
     print("=" * 80)
     print(" 🚀 TENDOO AI: EXECUTIVE POSTER GENERATOR")
     print("=" * 80)
-    print(f"📝 Text Input     : '{text}'")
+    print(f"📝 Text Input     : '{text}' (SingleLine: {single_line})")
     print(f"🧭 Text Time (t)  : {t_text}")
     print(f"🔤 Font Selected  : {Path(resolved_font).name}")
     print(f"📐 Canvas Size    : {width}x{height} pixels (Divisible by 16)")
@@ -342,7 +347,10 @@ def run_demo(
     # 1. Render Glyph Bitmap with Intelligent Auto-Scaling for Multi-line / Poems
     print("\n[1/5] Generating Vietnamese Orthographic Glyph...")
     raw_lines = [l.strip() for l in text.replace("\\n", "\n").split("\n") if l.strip()]
-    num_lines = len(raw_lines) if len(raw_lines) > 1 else (2 if len(text.split()) >= 4 else 1)
+    if single_line:
+        num_lines = 1
+    else:
+        num_lines = len(raw_lines) if len(raw_lines) > 1 else (2 if len(text.split()) >= 4 else 1)
 
     if box_w is None:
         calc_w = min(width - 64, 896 if num_lines >= 3 else 512)
@@ -361,6 +369,7 @@ def run_demo(
         target_width=calc_w,
         target_height=calc_h,
         font_path=resolved_font,
+        force_single_line=single_line,
     )
     glyph_preview = Path(output_path).stem + "_glyph_preview.png"
     glyph_img.save(glyph_preview)
@@ -466,6 +475,7 @@ if __name__ == "__main__":
     parser.add_argument("--box_w", type=int, default=None, help="Optional custom Glyph Box width (default: auto)")
     parser.add_argument("--box_h", type=int, default=None, help="Optional custom Glyph Box height (default: auto)")
     parser.add_argument("--font", type=str, default="bevietnam", help="Font alias (playfair, bevietnam, anton, pacifico, graffiti, dancing, oswald) or path")
+    parser.add_argument("--single_line", action="store_true", help="Force text to render on a single line without wrapping")
     parser.add_argument("--output", type=str, default="demo_output.png", help="Output image file path")
     parser.add_argument("--model_name", type=str, default="flux.2-klein-base-4b", help="FLUX.2 model variant")
     parser.add_argument("--checkpoint_dir", type=str, default=None, help="Path to persistent-data")
@@ -486,6 +496,7 @@ if __name__ == "__main__":
         box_w=args.box_w,
         box_h=args.box_h,
         font=args.font,
+        single_line=args.single_line,
         output_path=args.output,
         model_name=args.model_name,
         checkpoint_dir=args.checkpoint_dir,
@@ -493,4 +504,5 @@ if __name__ == "__main__":
         guidance=args.guidance,
         seed=args.seed,
     )
+
 
