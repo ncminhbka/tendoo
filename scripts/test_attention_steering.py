@@ -290,14 +290,18 @@ class AttentionSteeringConfig:
     num_canvas: int = 2304
     num_ref10: int = 300
     num_ref20: int = 300
+    num_ref30: int = 0
     lat_h: int = 64
     lat_w: int = 36
 
     # Steering hyperparameters
     boost_val_10: float = 0.0
     boost_val_20: float = 2.0
+    boost_val_30: float = 2.0
     suppress_val: float = -3.0       # Small negative bias to retain style context while preventing collision
-    split_y: float = 0.48            # Normalized vertical boundary between Title and Subtitle
+    split_y1: float = 0.33           # Top boundary (Title vs Subtitle)
+    split_y2: float = 0.68           # Bottom boundary (Subtitle vs CTA)
+    split_y: float = 0.48            # Fallback 2-slot boundary
     sharpness: float = 14.0          # Sigmoid sharpness factor for smooth transition
     t_start: float = 0.85            # Timestep threshold to start active steering
     t_end: float = 0.20              # Timestep threshold to ramp down steering for pure optical shading
@@ -307,8 +311,10 @@ class AttentionSteeringConfig:
     recorded_attn_stats: dict | None = None
     _accum_map10: list = field(default_factory=list)
     _accum_map20: list = field(default_factory=list)
+    _accum_map30: list = field(default_factory=list)
     _accum_logit10: list = field(default_factory=list)
     _accum_logit20: list = field(default_factory=list)
+    _accum_logit30: list = field(default_factory=list)
 
     def finalize_stats(self) -> dict | None:
         """Aggregates and averages sampled attention metrics across all captured DiT layers."""
@@ -318,7 +324,7 @@ class AttentionSteeringConfig:
         mean_20 = float(np.mean(self._accum_logit20))
         map_10 = np.mean(self._accum_map10, axis=0)
         map_20 = np.mean(self._accum_map20, axis=0)
-        self.recorded_attn_stats = {
+        res = {
             "map_10": map_10,
             "map_20": map_20,
             "mean_logit_10": mean_10,
@@ -326,6 +332,13 @@ class AttentionSteeringConfig:
             "logit_gap": mean_10 - mean_20,
             "num_layers_sampled": len(self._accum_logit10),
         }
+        if len(self._accum_logit30) > 0:
+            mean_30 = float(np.mean(self._accum_logit30))
+            map_30 = np.mean(self._accum_map30, axis=0)
+            res["map_30"] = map_30
+            res["mean_logit_30"] = mean_30
+            res["logit_gap_30"] = mean_10 - mean_30
+        self.recorded_attn_stats = res
         return self.recorded_attn_stats
 
 
@@ -356,9 +369,10 @@ class AttentionSteeringManager:
             n_canvas = cfg.num_canvas
             n_ref10 = cfg.num_ref10
             n_ref20 = cfg.num_ref20
-            n_ref_total = n_ref10 + n_ref20
+            n_ref30 = cfg.num_ref30
+            n_ref_total = n_ref10 + n_ref20 + n_ref30
 
-            # Debug assertion to strictly guarantee token sequence layout: [TXT][CANVAS][REF10][REF20]
+            # Debug assertion to strictly guarantee token sequence layout: [TXT][CANVAS][REF10][REF20][REF30]
             assert seq_len == n_txt + n_canvas + n_ref_total, (
                 f"❌ Slicing Mismatch: seq_len={seq_len} != txt({n_txt}) + canvas({n_canvas}) + ref({n_ref_total})"
             )
@@ -369,6 +383,8 @@ class AttentionSteeringManager:
             r10_end = r10_start + n_ref10
             r20_start = r10_end
             r20_end = r20_start + n_ref20
+            r30_start = r20_end
+            r30_end = r30_start + n_ref30
             curr_t = cfg.current_timestep
 
             # --- Quantitative Attention Measurement Hook (Multi-layer accumulation across t in [0.70, 0.85]) ---
@@ -394,37 +410,34 @@ class AttentionSteeringManager:
                     cfg._accum_logit10.append(float(sim_10.mean().item()))
                     cfg._accum_logit20.append(float(sim_20.mean().item()))
 
+                    if n_ref30 > 0:
+                        k_r30 = k[b_idx : b_idx + 1, :, r30_start:r30_end, :]
+                        sim_30 = torch.einsum("b h c d, b h r d -> c r", q_c, k_r30) * scale / num_heads
+                        map_30 = sim_30.mean(dim=-1).view(cfg.lat_h, cfg.lat_w).float().cpu().numpy()
+                        cfg._accum_map30.append(map_30)
+                        cfg._accum_logit30.append(float(sim_30.mean().item()))
+
             # --- Pass 1: Strict Unconditional Fallback to Native BFL Attention ---
-            # Guarantees zero circular comparison: Pass 1 ALWAYS runs native BFL orig_causal_attn_fn!
             if not cfg.active or cfg.mode == "none":
                 return self.orig_causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens, kv_cache)
 
             # Full Joint Attention Additive Mask: shape (1, 1, seq_len, seq_len)
             # Default 0.0 PRESERVES 100% OF BFL'S BIDIRECTIONAL JOINT DYNAMICS across all tokens:
-            # (TXT <-> REF, REF <-> CANVAS, CANVAS <-> CANVAS, TXT <-> CANVAS)
             attn_bias = torch.zeros((1, 1, seq_len, seq_len), dtype=q.dtype, device=q.device)
 
             if cfg.mode == "null_test":
-                # Pass 2: Null Control with True Full Bidirectional Joint Attention (Bias=0.0).
-                # Must be 100% bitwise/mathematically identical to Pass 1!
+                # Pass: Null Control with True Full Bidirectional Joint Attention (Bias=0.0).
                 pass
 
-
             elif cfg.mode == "boost_only":
-                # Amplify Canvas -> Slot 20 keys uniformly
+                # Amplify Canvas -> Slot 20 and Slot 30 keys uniformly
                 attn_bias[:, :, c_start:c_end, r20_start:r20_end] = cfg.boost_val_20
+                if n_ref30 > 0:
+                    attn_bias[:, :, c_start:c_end, r30_start:r30_end] = cfg.boost_val_30
 
             elif cfg.mode in ["soft_regional", "scheduled_soft_regional"]:
                 h_coords = torch.arange(cfg.lat_h, device=q.device, dtype=torch.float32)
                 y_grid = (h_coords.unsqueeze(1).expand(cfg.lat_h, cfg.lat_w).flatten() + 0.5) / float(cfg.lat_h)
-
-                # Sigmoid transition: 0 (top) -> 1 (bottom)
-                w_20 = torch.sigmoid(cfg.sharpness * (y_grid - cfg.split_y))
-                w_10 = 1.0 - w_20
-
-                # User's brilliant recommendation: retain context with suppress_val (-3.0)
-                bias_10 = cfg.suppress_val + (cfg.boost_val_10 - cfg.suppress_val) * w_10
-                bias_20 = cfg.suppress_val + (cfg.boost_val_20 - cfg.suppress_val) * w_20
 
                 time_scale = 1.0
                 if cfg.mode == "scheduled_soft_regional":
@@ -435,16 +448,44 @@ class AttentionSteeringManager:
                     else:
                         time_scale = 1.0
 
-                bias_10 = (bias_10 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
-                bias_20 = (bias_20 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
+                if n_ref30 > 0:
+                    # 3-Way Soft Sigmoid Partition of Unity: w10 + w20 + w30 == 1.0 everywhere
+                    s1 = torch.sigmoid(cfg.sharpness * (y_grid - cfg.split_y1))
+                    s2 = torch.sigmoid(cfg.sharpness * (y_grid - cfg.split_y2))
 
-                # ONLY steer the interaction between Canvas queries and Ref keys!
-                attn_bias[:, :, c_start:c_end, r10_start:r10_end] = bias_10
-                attn_bias[:, :, c_start:c_end, r20_start:r20_end] = bias_20
+                    w_10 = 1.0 - s1
+                    w_20 = s1 * (1.0 - s2)
+                    w_30 = s2
 
-            # Execute SINGLE FULL JOINT ATTENTION CALL with true causal isolation for ref
+                    bias_10 = cfg.suppress_val + (cfg.boost_val_10 - cfg.suppress_val) * w_10
+                    bias_20 = cfg.suppress_val + (cfg.boost_val_20 - cfg.suppress_val) * w_20
+                    bias_30 = cfg.suppress_val + (cfg.boost_val_30 - cfg.suppress_val) * w_30
+
+                    bias_10 = (bias_10 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
+                    bias_20 = (bias_20 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
+                    bias_30 = (bias_30 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
+
+                    attn_bias[:, :, c_start:c_end, r10_start:r10_end] = bias_10
+                    attn_bias[:, :, c_start:c_end, r20_start:r20_end] = bias_20
+                    attn_bias[:, :, c_start:c_end, r30_start:r30_end] = bias_30
+                else:
+                    # 2-Way Soft Sigmoid Transition: 0 (top) -> 1 (bottom)
+                    w_20 = torch.sigmoid(cfg.sharpness * (y_grid - cfg.split_y))
+                    w_10 = 1.0 - w_20
+
+                    bias_10 = cfg.suppress_val + (cfg.boost_val_10 - cfg.suppress_val) * w_10
+                    bias_20 = cfg.suppress_val + (cfg.boost_val_20 - cfg.suppress_val) * w_20
+
+                    bias_10 = (bias_10 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
+                    bias_20 = (bias_20 * time_scale).to(dtype=q.dtype).view(1, 1, n_canvas, 1)
+
+                    attn_bias[:, :, c_start:c_end, r10_start:r10_end] = bias_10
+                    attn_bias[:, :, c_start:c_end, r20_start:r20_end] = bias_20
+
+            # Execute SINGLE FULL JOINT ATTENTION CALL with true bidirectional dynamics
             out = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_bias, is_causal=False)
             return rearrange(out, "b h n d -> b n (h d)")
+
 
 
 
@@ -520,34 +561,29 @@ BENCHMARK_SUITE = [
     {
         "id": "pass1_baseline_vanilla",
         "title": "Pass 1: Baseline (Vanilla)",
-        "subtitle": "Standard BFL Attention Fallback (Full Bidirectional Joint Attention)",
+        "subtitle": "Standard BFL Full Bidirectional Joint Attention",
         "mode": "none",
     },
     {
-        "id": "pass2_null_control",
-        "title": "Pass 2: Null Control (Bias=0.0)",
-        "subtitle": "Steered Code Path with Bias=0.0 (Sanity Check)",
-        "mode": "null_test",
-    },
-    {
-        "id": "pass_boost_only",
-        "title": "Pass: Pure Logit Boost",
-        "subtitle": "Global Beta_20 = +2.0 (No Spatial Masking)",
+        "id": "pass2_boost_only",
+        "title": "Pass 2: Pure Logit Boost",
+        "subtitle": "Uniform Beta (+2.0 on Slots 20 & 30, No Spatial Masking)",
         "mode": "boost_only",
     },
     {
         "id": "pass3_soft_regional",
         "title": "Pass 3: Soft Regional Routing",
-        "subtitle": "Top vs Bottom Sigmoid (+2.0 inside, -3.0 context bias)",
+        "subtitle": "3-Way Soft Sigmoid (+2.0 inside region, -3.0 context bias)",
         "mode": "soft_regional",
     },
     {
         "id": "pass4_scheduled_soft_regional",
         "title": "Pass 4: Scheduled Soft Regional",
-        "subtitle": "Sigmoid Routing Scheduled on Timesteps [0.85, 0.20]",
+        "subtitle": "3-Way Sigmoid Routing Scheduled on Timesteps [0.85, 0.20]",
         "mode": "scheduled_soft_regional",
     },
 ]
+
 
 
 
@@ -671,26 +707,33 @@ def stitch_comparison_panel(
     )
 
     canvas.save(output_path)
-    print(f"📊 Master 4-Way Comparison Panel saved: {output_path}")
+    print(f"📊 Master Comparison Panel saved: {output_path}")
 
 
 def run_benchmark(
     text_title: str = "CÀ PHÊ SỮA ĐÁ",
     text_subtitle: str = "ĐẬM ĐÀ HƯƠNG VỊ VIỆT",
+    text_cta: str = "MUA 1 TẶNG 1",
     font_title: str = "playfair",
     font_subtitle: str = "bevietnam",
+    font_cta: str = "bevietnam",
     prompt: str = (
         "Poster quảng cáo quầy bar cà phê gỗ mộc mạc cổ điển, ánh sáng ven ấm áp tương phản cao, "
-        "dòng chữ tiêu đề 3D mạ vàng đồng cổ sắc nét nổi bật ở phía trên, dòng chữ slogan màu trắng sắc nét "
-        "ở chân quầy bar phía dưới, bố cục sạch sẽ gọn gàng, không có chữ ký, không có watermark, không có chữ trang trí thừa"
+        "dòng chữ tiêu đề 3D mạ vàng đồng cổ sắc nét nổi bật ở phía trên, dòng chữ phụ giới thiệu phong vị tinh tế khắc trên gờ gỗ ở giữa quầy bar, "
+        "và dòng chữ thông báo ưu đãi chữ trắng sắc nét trên bảng đế ở chân quầy bar, "
+        "bố cục sạch sẽ gọn gàng, không có chữ ký, không có watermark, không có chữ trang trí thừa, độ sâu trường ảnh điện ảnh"
     ),
     width: int = 576,
     height: int = 1024,
     num_steps: int = 50,
     guidance: float = 4.5,
     seed: int = 42,
+    boost_val_10: float = 0.0,
     boost_val_20: float = 2.0,
+    boost_val_30: float = 2.0,
     suppress_val: float = -3.0,
+    split_y1: float = 0.33,
+    split_y2: float = 0.68,
     split_y: float = 0.48,
     sharpness: float = 14.0,
     output_dir: str = "output_attention_steering_benchmark",
@@ -711,14 +754,16 @@ def run_benchmark(
     lat_w = width // 16
 
     print("=" * 80)
-    print(" 🚀 TENDOO AI: TRAINING-FREE ATTENTION STEERING BENCHMARK (V2 SLICING)")
+    print(" 🚀 TENDOO AI: TRAINING-FREE ATTENTION STEERING BENCHMARK (3-SLOT MULTI-BLOCK)")
     print("=" * 80)
     print(f"📝 Title (Slot 10, Top)   : '{text_title}' (Font: {font_title})")
-    print(f"📝 Subtitle (Slot 20, Btm): '{text_subtitle}' (Font: {font_subtitle}, SingleLine: {single_line_sub})")
+    print(f"📝 Subtitle (Slot 20, Mid): '{text_subtitle}' (Font: {font_subtitle}, SingleLine: {single_line_sub})")
+    if text_cta:
+        print(f"📝 CTA Badge (Slot 30, Btm): '{text_cta}' (Font: {font_cta})")
     print(f"📐 Canvas Resolution      : {width}x{height} pixels (Latent: {lat_h}x{lat_w} = {lat_h * lat_w} tokens)")
-    print(f"⚙️ Hyperparams            : Boost = +{boost_val_20}, Suppress = {suppress_val}, Split Y = {split_y}, Sharpness = {sharpness}")
+    print(f"⚙️ Hyperparams            : Boost 20/30 = +{boost_val_20}/+{boost_val_30}, Suppress = {suppress_val}, Splits = [{split_y1}, {split_y2}], Sharpness = {sharpness}")
     print(f"⚙️ Sampling               : {num_steps} steps, CFG = {guidance}, Seed = {seed}")
-    print(f"🎯 Target Model           : {model_name} | Dump Attn: {dump_attn}")
+    print(f"🎯 Target Model           : {model_name} | Mode: {mode_select} | Dump Attn: {dump_attn}")
     print("=" * 80)
 
     # 1. Device Allocation
@@ -736,6 +781,7 @@ def run_benchmark(
     print("\n[1/4] Generating In-Context Vietnamese Glyphs...")
     resolved_font_title = resolve_font_path(font_title)
     resolved_font_sub = resolve_font_path(font_subtitle)
+    resolved_font_cta = resolve_font_path(font_cta)
 
     glyph_title = create_glyph_image(
         text=text_title,
@@ -750,11 +796,20 @@ def run_benchmark(
         font_path=resolved_font_sub,
         force_single_line=single_line_sub,
     )
-
-
-
     glyph_title.save(out_path / "glyph_title_t10_preview.png")
     glyph_sub.save(out_path / "glyph_subtitle_t20_preview.png")
+
+    glyph_cta = None
+    if text_cta:
+        glyph_cta = create_glyph_image(
+            text=text_cta,
+            target_width=min(width - 48, 480),
+            target_height=144,
+            font_path=resolved_font_cta,
+            force_single_line=True,
+        )
+        glyph_cta.save(out_path / "glyph_cta_t30_preview.png")
+
     print("  -> Saved glyph previews to disk.")
 
     # 3. Load Models
@@ -787,17 +842,27 @@ def run_benchmark(
         ae=ae, glyph_img=glyph_sub, t_offset=20.0, device=device_ae
     )
 
-    all_ref_tokens = torch.cat([ref_tokens_10, ref_tokens_20], dim=1).to(device_dit)
-    all_ref_ids = torch.cat([ref_ids_10, ref_ids_20], dim=1).to(device_dit)
-
     num_ref10 = ref_tokens_10.shape[1]
     num_ref20 = ref_tokens_20.shape[1]
+    num_ref30 = 0
+
+    if glyph_cta is not None:
+        ref_tokens_30, ref_ids_30 = encode_glyph_to_incontext_tokens(
+            ae=ae, glyph_img=glyph_cta, t_offset=30.0, device=device_ae
+        )
+        all_ref_tokens = torch.cat([ref_tokens_10, ref_tokens_20, ref_tokens_30], dim=1).to(device_dit)
+        all_ref_ids = torch.cat([ref_ids_10, ref_ids_20, ref_ids_30], dim=1).to(device_dit)
+        num_ref30 = ref_tokens_30.shape[1]
+        print(f"  -> Reference Tokens: Slot 10 = {num_ref10} tokens, Slot 20 = {num_ref20} tokens, Slot 30 = {num_ref30} tokens")
+    else:
+        all_ref_tokens = torch.cat([ref_tokens_10, ref_tokens_20], dim=1).to(device_dit)
+        all_ref_ids = torch.cat([ref_ids_10, ref_ids_20], dim=1).to(device_dit)
+        print(f"  -> Reference Tokens: Slot 10 = {num_ref10} tokens, Slot 20 = {num_ref20} tokens")
+
     num_canvas = lat_h * lat_w
     num_txt = txt.shape[1]
-
-    print(f"  -> Reference Tokens: Slot 10 = {num_ref10} tokens, Slot 20 = {num_ref20} tokens")
     print(f"  -> Canvas Tokens   : {num_canvas} tokens (Grid {lat_h}x{lat_w})")
-    print(f"  -> Total Combined Sequence: {num_txt + num_canvas + num_ref10 + num_ref20} tokens")
+    print(f"  -> Total Combined Sequence: {num_txt + num_canvas + num_ref10 + num_ref20 + num_ref30} tokens")
 
     # Fixed Initial Latent Noise (Strict Identical Noise across all passes)
     torch.manual_seed(seed)
@@ -810,7 +875,13 @@ def run_benchmark(
 
     # 4. Execute Benchmark Passes
     print("\n[3/4] Running Benchmark Passes...")
-    test_cases = BENCHMARK_SUITE if mode_select == "all" else [c for c in BENCHMARK_SUITE if mode_select in c["id"]]
+    if mode_select == "all":
+        test_cases = BENCHMARK_SUITE
+    elif mode_select == "steering":
+        # Exactly the 3 Boost Steering methods requested by the user!
+        test_cases = [c for c in BENCHMARK_SUITE if c["mode"] in ["boost_only", "soft_regional", "scheduled_soft_regional"]]
+    else:
+        test_cases = [c for c in BENCHMARK_SUITE if mode_select in c["id"] or mode_select == c["mode"]]
 
     results = []
 
@@ -828,11 +899,15 @@ def run_benchmark(
             num_canvas=num_canvas,
             num_ref10=num_ref10,
             num_ref20=num_ref20,
+            num_ref30=num_ref30,
             lat_h=lat_h,
             lat_w=lat_w,
-            boost_val_10=0.0,
+            boost_val_10=boost_val_10,
             boost_val_20=boost_val_20,
+            boost_val_30=boost_val_30,
             suppress_val=suppress_val,
+            split_y1=split_y1,
+            split_y2=split_y2,
             split_y=split_y,
             sharpness=sharpness,
             dump_attn=dump_attn,
@@ -872,15 +947,20 @@ def run_benchmark(
             print(f"      • Captured DiT Layers           : {stats['num_layers_sampled']}")
             print(f"      • Canvas -> Ref10 (Title)   Logit: {stats['mean_logit_10']:+.4f}")
             print(f"      • Canvas -> Ref20 (Subtitle) Logit: {stats['mean_logit_20']:+.4f}")
+            if "mean_logit_30" in stats:
+                print(f"      • Canvas -> Ref30 (CTA)      Logit: {stats['mean_logit_30']:+.4f}")
             print(f"      • Intrinsic Logit Gap (ΔS)       : {stats['logit_gap']:+.4f}")
-            print(f"      • Optimal Compensatory Beta (β*) : {stats['logit_gap']:+.4f}")
 
             hm10_path = out_path / f"attn_heatmap_{sc['id']}_title.png"
             hm20_path = out_path / f"attn_heatmap_{sc['id']}_subtitle.png"
             save_attention_heatmap(stats["map_10"], hm10_path, title=f"{sc['title']} -> Title (t=10)")
             save_attention_heatmap(stats["map_20"], hm20_path, title=f"{sc['title']} -> Subtitle (t=20)")
-            print(f"      🖼️ Heatmaps saved: {hm10_path.name} & {hm20_path.name}")
-
+            if "map_30" in stats:
+                hm30_path = out_path / f"attn_heatmap_{sc['id']}_cta.png"
+                save_attention_heatmap(stats["map_30"], hm30_path, title=f"{sc['title']} -> CTA (t=30)")
+                print(f"      🖼️ Heatmaps saved: {hm10_path.name}, {hm20_path.name} & {hm30_path.name}")
+            else:
+                print(f"      🖼️ Heatmaps saved: {hm10_path.name} & {hm20_path.name}")
 
         results.append((sc, pass_img))
 
@@ -906,22 +986,24 @@ def run_benchmark(
     print("=" * 80 + "\n")
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Tendoo AI - Training-Free Attention Steering Benchmark"
     )
     parser.add_argument("--text_title", type=str, default="CÀ PHÊ SỮA ĐÁ", help="Headline text (Slot 10, Top)")
-    parser.add_argument("--text_subtitle", type=str, default="ĐẬM ĐÀ HƯƠNG VỊ VIỆT", help="Subtitle text (Slot 20, Bottom)")
+    parser.add_argument("--text_subtitle", type=str, default="ĐẬM ĐÀ HƯƠNG VỊ VIỆT", help="Subtitle text (Slot 20, Mid)")
+    parser.add_argument("--text_cta", type=str, default="MUA 1 TẶNG 1", help="CTA Badge text (Slot 30, Btm)")
     parser.add_argument("--font_title", type=str, default="playfair", help="Font alias for Title")
     parser.add_argument("--font_subtitle", type=str, default="bevietnam", help="Font alias for Subtitle")
+    parser.add_argument("--font_cta", type=str, default="bevietnam", help="Font alias for CTA")
     parser.add_argument(
         "--prompt",
         type=str,
         default=(
             "Poster quảng cáo quầy bar cà phê gỗ mộc mạc cổ điển, ánh sáng ven ấm áp tương phản cao, "
-            "dòng chữ tiêu đề 3D mạ vàng đồng cổ sắc nét nổi bật ở phía trên, dòng chữ slogan màu trắng sắc nét "
-            "ở chân quầy bar phía dưới, bố cục sạch sẽ gọn gàng, không có chữ ký, không có watermark, không có chữ trang trí thừa"
+            "dòng chữ tiêu đề 3D mạ vàng đồng cổ sắc nét nổi bật ở phía trên, dòng chữ phụ giới thiệu phong vị tinh tế khắc trên gờ gỗ ở giữa quầy bar, "
+            "và dòng chữ thông báo ưu đãi chữ trắng sắc nét trên bảng đế ở chân quầy bar, "
+            "bố cục sạch sẽ gọn gàng, không có chữ ký, không có watermark, không có chữ trang trí thừa, độ sâu trường ảnh điện ảnh"
         ),
         help="Text prompt (describes material, optics, surfaces; NO literal text repetition)",
     )
@@ -933,17 +1015,19 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
 
     # Steering parameters
-    parser.add_argument("--boost_val", type=float, default=2.0, help="Positive boost beta for Slot 20 (default: 2.0)")
+    parser.add_argument("--boost_val", type=float, default=2.0, help="Positive boost beta for Subtitle & CTA (default: 2.0)")
     parser.add_argument("--suppress_val", type=float, default=-3.0, help="Negative bias for non-target region (default: -3.0)")
-    parser.add_argument("--split_y", type=float, default=0.48, help="Vertical split threshold (default: 0.48)")
+    parser.add_argument("--split_y1", type=float, default=0.33, help="Boundary between Top and Mid (default: 0.33)")
+    parser.add_argument("--split_y2", type=float, default=0.68, help="Boundary between Mid and Btm (default: 0.68)")
+    parser.add_argument("--split_y", type=float, default=0.48, help="Fallback 2-slot vertical split (default: 0.48)")
     parser.add_argument("--sharpness", type=float, default=14.0, help="Sigmoid transition sharpness (default: 14.0)")
 
     parser.add_argument(
         "--mode",
         type=str,
-        default="all",
-        choices=["all", "baseline", "null", "boost", "regional", "scheduled"],
-        help="Execution mode (default: all)",
+        default="steering",
+        choices=["all", "steering", "baseline", "boost", "regional", "scheduled"],
+        help="Execution mode (default: steering for the 3 boost steering passes)",
     )
     parser.add_argument(
         "--output_dir",
@@ -963,16 +1047,22 @@ if __name__ == "__main__":
     run_benchmark(
         text_title=args.text_title,
         text_subtitle=args.text_subtitle,
+        text_cta=args.text_cta,
         font_title=args.font_title,
         font_subtitle=args.font_subtitle,
+        font_cta=args.font_cta,
         prompt=args.prompt,
         width=args.width,
         height=args.height,
         num_steps=args.steps,
         guidance=args.guidance,
         seed=args.seed,
+        boost_val_10=0.0,
         boost_val_20=args.boost_val,
+        boost_val_30=args.boost_val,
         suppress_val=args.suppress_val,
+        split_y1=args.split_y1,
+        split_y2=args.split_y2,
         split_y=args.split_y,
         sharpness=args.sharpness,
         output_dir=args.output_dir,
@@ -982,4 +1072,5 @@ if __name__ == "__main__":
         single_line_sub=args.single_line_sub,
         dump_attn=args.dump_attn,
     )
+
 
