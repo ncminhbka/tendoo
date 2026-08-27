@@ -379,6 +379,21 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + **RoPE Time Offset ($t=10, 20, 30, 40$)**: Định danh **Kênh phân luồng độc lập**.
       + **Glyph VAE**: Bảo toàn **100% Hình học và Chính tả**.
 
+27. **ĐỊNH LUẬT HUẤN LUYỆN NĂNG LỰC CẠNH TRANH VÀ PHÂN TẦNG ĐỘ DÀI VĂN BẢN (THE COMPETITIVE ATTENTION TRAINING & STRATIFIED LENGTH INVARIANCE LAW)**:
+    - **Tuyên Ngôn Cốt Lõi**:
+      + **CHÚNG TA HUẤN LUYỆN NĂNG LỰC CẠNH TRANH, TUYỆT ĐỐI KHÔNG HUẤN LUYỆN POSTER OVERFIT!**
+      + Mô hình Base 4B đã có sẵn năng lực đọc-viết tiếng Việt zero-shot với bất kỳ độ dài text nào khi ở trạng thái cô lập (Probe Suite 1).
+      + LoRA chỉ làm một nhiệm vụ duy nhất: **Giải quyết tranh chấp Softmax khi nhiều slot cùng hoạt động đồng thời (Attention Disentanglement)**, hoàn toàn không phụ thuộc vào việc slot đó mang câu ngắn hay câu dài.
+    - **Nguy Cơ Của Việc Overfit Cấu Trúc Poster**:
+      + Nếu gán cứng $t=10$ luôn là chữ ngắn ($3 - 4$ từ) và $t=20$ luôn là chữ dài ($2$ dòng), mô hình sẽ học vẹt **liên kết giả thứ hai (`slot \Longleftrightarrow \text{length}`)**, khiến nó không thể vẽ được câu triết lý thương hiệu dài ở Title hay vẽ được từ ngắn ở Subhead.
+    - **Quy Chuẩn Phân Tầng Vàng 75/25 (Golden Stratified Ratio)**:
+      + **75% – 80% Phân bố tự nhiên thương mại**: Phục vụ tối ưu cho sản xuất thực tế ($t=10$ Title ngắn/vừa, $t=20$ Subtitle vừa, $t=30$ CTA ngắn, $t=40$ Features dài).
+      + **20% – 25% Chủ đích nghịch đảo độ dài**: $t=10$ Title dài bất thường ($10 - 18$ từ / $2 - 3$ dòng), $t=20$ Subtitle cực ngắn ($1 - 2$ từ: *"SIÊU NHẸ"*, *"PRO"*), $t=30$ CTA dài hơn Title ($8 - 12$ từ: *"NHỮNG VẬT BẤT LY THÂN CỦA BẠN"*).
+    - **Quy Tắc Thực Thi Bắt Buộc**:
+      + **Phân tầng nghịch đảo này PHẢI ĐƯỢC ĐƯA VÀO NGAY TỪ MILESTONE A (2 SLOTS)**!
+      + Tuyệt đối không dồn tới Milestone C, nhằm triệt tiêu liên kết giả ngay từ gốc rễ, đảm bảo các milestone sau kế thừa một bộ khung chú ý hoàn toàn sạch và tổng quát.
+
+
 
 
 

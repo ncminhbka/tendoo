@@ -1,10 +1,15 @@
-# 🎯 KẾ HOẠCH & LỘ TRÌNH HUẤN LUYỆN LORA DiT 4B BASE (PHASE 3 MASTER ROADMAP - BẢN v5 CHUẨN HÓA TOÀN DIỆN)
+# 🎯 KẾ HOẠCH & LỘ TRÌNH HUẤN LUYỆN LORA DiT 4B BASE (PHASE 3 MASTER ROADMAP - BẢN v6 TỐI HẬU)
+## ⚔️ TÔN CHỈ CỐT LÕI: HUẤN LUYỆN NĂNG LỰC CẠNH TRANH (COMPETITIVE ATTENTION ROUTING), CHỐNG HỌC VẸT POSTER (ZERO POSTER-OVERFIT)
 
-- **Dự án**: Tendoo AI – Hệ Thống Sinh Banner Quảng Cáo Thương Mại Đa Khối Chữ Tiếng Việt
+> ⚡ **TUYÊN NGÔN KỸ THUẬT BẤT BIẾN**:
+> - **Mô hình Base 4B đã có sẵn $100\%$ năng lực đọc-viết tiếng Việt zero-shot** ở mọi độ dài text và mọi font khi ở trạng thái cô lập (đã kiểm chứng $100\%$ qua Probe Suite 1).
+> - Do đó, **Tendoo AI TUYỆT ĐỐI KHÔNG huấn luyện LoRA để "học vẹt một công thức poster cố định"** (ví dụ: cấm kỵ việc mặc định $t=10$ luôn là chữ ngắn ở trên đỉnh, $t=20$ luôn là 2 dòng ở giữa, $t=30$ luôn là nút CTA ở đáy).
+> - **MỤC TIÊU DUY NHẤT CỦA LORA**: Huấn luyện **Năng Lực Giải Quyết Cạnh Tranh Không Gian (Spatial Attention Routing & Disentanglement)**: Khi có nhiều slot cùng kích hoạt đồng thời ($t=10, 20, 30, 40, 50$), mạng Attention tự động phân luồng tách bạch từng thực thể, đưa đúng chữ vào đúng vị trí và quy mô mà Prompt yêu cầu, bất kể câu ngắn hay câu dài!
+
 - **Mô hình Mục Tiêu Duy Nhất**: **`FLUX.2-klein-base-4B`** (Bản Base 50-step, True CFG = 4.0 - 4.5).
 - **Hạ tầng Thực thi**: **2x NVIDIA A30 (24GB VRAM $\times 2 = 48$GB VRAM)**, Ampere Architecture, DDP (`accelerate`).
-- **Bản chất Toán học Cốt lõi**: Huấn luyện bài toán **Định Tuyến & Phân Tách Chú Ý (Attention Disentanglement & Routing)** trên không gian 4D RoPE, giải quyết hiện tượng tranh chấp Softmax và rò rỉ đặc trưng Ref-to-Ref mà **KHÔNG CẦN DẠY LẠI BIỂU DIỄN CHỮ TỪ ĐẦU**.
-- **Tiến trình Curriculum Đột phá (Bản v5)**: Lũy tiến theo độ phức tạp cạnh tranh thực tế **$2\text{ Slots} \longrightarrow 3\text{ Slots} \longrightarrow 4-5\text{ Slots}$** (Bỏ qua bài toán 1 text đơn lẻ vì mô hình Base đã đạt $100\%$ zero-shot).
+- **Tiến trình Curriculum Lũy Tiến Cạnh Tranh**: **$2\text{ Slots} \longrightarrow 3\text{ Slots} \longrightarrow 4-5\text{ Slots}$** (Độ khó cạnh tranh tăng dần, không lãng phí tài nguyên vào bài toán 1 text đơn lẻ).
+
 
 ---
 
@@ -109,7 +114,39 @@ Do đó, toàn bộ $2,500$ mẫu huấn luyện áp dụng cơ chế **Trực G
 
 ---
 
-### 2.4. Quy Trình Chế Tạo Dataset Lũy Tiến Tích Lũy (Progressive Distillation Pipeline):
+### 2.4. Ma Trận Phân Tầng Độ Dài Văn Bản Có Kiểm Soát (Stratified Text-Length Invariance Matrix):
+
+> ⚔️ **VÌ SAO PHẢI "MỞ KHÓA" ĐỘ DÀI CÓ KIỂM SOÁT (STRATIFIED) NGAY TỪ ĐẦU?**
+> - **Bằng chứng từ Probe Suite 1**: Một khối chữ đứng riêng lẻ ở bất kỳ $t$ nào ($10, 20, 30, 40$) đều render chính xác $100\%$ bất kể câu ngắn hay câu dài. Năng lực hiểu độ dài đã có sẵn trong mô hình Base!
+> - LoRA chỉ cần học: **Giải quyết cạnh tranh khi nhiều slot cùng hoạt động (Attention Disentanglement)**, hoàn toàn không phụ thuộc vào độ dài text.
+> - **Nguy cơ nếu overfit**: Nếu cố định $t=10$ luôn là $3-4$ từ ngắn và $t=20$ luôn là $2$ dòng dài, chúng ta sẽ tiêm vào mô hình một **liên kết giả chết người thứ hai (`slot \Longleftrightarrow \text{length}`)**, biến mô hình thành cỗ máy học vẹt poster!
+> - **Vì sao không random đều 100%?**: Vì phân bố thực tế có độ lệch tự nhiên (`prompt_test.txt`: headline thường súc tích, quote/bullet-point thường dài). Random đều sẽ pha loãng ngân sách gradient trên các tổ hợp phi thực tế.
+
+Do đó, toàn bộ $2,500$ mẫu huấn luyện áp dụng **Tỷ Lệ Phân Tầng Vàng 75/25 (Golden Stratified Length Ratio)**:
+
+| Phân Tầng Độ Dài (Stratum) | Tỷ Trọng | Cấu Trúc Độ Dài Các Slot | Mục Tiêu & Cơ Sở Khoa Học |
+| :--- | :---: | :--- | :--- |
+| **1. Phân Bố Tự Nhiên Thương Mại**<br>*(Canonical Commercial Skew)* | **75% – 80%** | • $t=10$ Headline: Ngắn – Vừa ($2 - 6$ từ, $1 - 2$ dòng).<br>• $t=20$ Subtitle: Vừa ($4 - 8$ từ, $1 - 2$ dòng).<br>• $t=30$ CTA Badge: Ngắn gọn, súc tích ($1 - 4$ từ, 1 dòng).<br>• $t=40$ Features / Quote: Dài, danh sách tính năng ($8 - 25$ từ, $2 - 4$ dòng). | Khớp $100\%$ với phân bố sử dụng thực tế trong sản xuất và các prompt thương mại của tester. |
+| **2. Chủ Đích Nghịch Đảo Độ Dài**<br>*(Inverted Counter-Skew)* | **20% – 25%** | • **$t=10$ Headline Dài Bất Thường**: $10 - 18$ từ / 3 dòng (Triết lý thương hiệu, trích dẫn tri ân).<br>• **$t=20$ Subtitle Cực Ngắn**: $1 - 2$ từ (*"SIÊU NHẸ"*, *"PRO"*, *"5G"*).<br>• **$t=30$ CTA Dài Hơn Headline**: $8 - 12$ từ (*"NHỮNG VẬT BẤT LY THÂN CỦA BẠN"*).<br>• **$t=40$ Features Cực Ngắn**: $1 - 3$ từ (*"PIN 14 NGÀY"*). | **Phá vỡ vĩnh viễn liên kết giả `slot \Longleftrightarrow \text{length}`**, buộc Attention Heads học đúng nguyên tắc: *"Vai trò chỉ do RoPE time offset và Prompt quyết định, không phụ thuộc vào độ dài câu!"* |
+
+> 🚨 **QUY TẮC KHẮC CỐT GHI TÂM**: **Phân tầng nghịch đảo này PHẢI ĐƯỢC ĐƯA VÀO NGAY TỪ MILESTONE A (2 SLOTS)**! Tuyệt đối không dồn tới Milestone C, vì nếu để mô hình học sai tương quan `slot \Longleftrightarrow \text{length}` ở bài toán 2 slots, các milestone 3-4-5 slots sau đó sẽ kế thừa và khuếch đại sai lệch, rất khó khắc phục!
+
+---
+
+### 2.5. Ma trận Đa Tỉ Lệ Khung Hình (Aspect Ratio Bucketing):
+
+Toàn bộ $2,500$ mẫu được phân bổ đều đặn theo 4 tỉ lệ hiển thị thực tế:
+
+| Tỉ Lệ Bucket | Kích Thước Pixel | Latent Grid ($16\times$) | Token Canvas | Tỷ Trọng | Ứng Dụng Nghiệp Vụ Thương Mại Viettel |
+| :---: | :---: | :---: | :---: | :---: | :--- |
+| **1:1** (Vuông) | $1024 \times 1024$ | $64 \times 64$ | $4,096$ tokens | **35%** | Bài đăng Feed Facebook, Instagram, E-commerce Post |
+| **9:16** (Dọc cao) | $768 \times 1344$ | $48 \times 84$ | $4,032$ tokens | **35%** | **TikTok Ads**, Instagram Reels, Story, Standee quảng cáo Viettel |
+| **4:5** (Dọc vừa) | $896 \times 1152$ | $56 \times 72$ | $4,032$ tokens | **15%** | Instagram Portrait Post (Tối ưu diện tích màn hình mobile) |
+| **16:9** (Ngang) | $1344 \times 768$ | $84 \times 48$ | $4,032$ tokens | **15%** | Facebook Fanpage Cover, Website Banner, TV Display, Trình chiếu |
+
+---
+
+### 2.6. Quy Trình Chế Tạo Dataset Lũy Tiến Tích Lũy (Progressive Curriculum Pipeline):
 
 ```
                                   TỔNG QUY MÔ DATASET: 2,500 MẪU ĐỘC LẬP
@@ -121,8 +158,8 @@ Do đó, toàn bộ $2,500$ mẫu huấn luyện áp dụng cơ chế **Trực G
  • 1-Shot Input: 2 Slots Cạnh Tranh         • 1-Shot Input: 3 Slots Cạnh Tranh         • 1-Shot Input: 4-5 Slots Toàn Diện
    - 440 mẫu SP: [Ref_10 + Ref_SP_20]         - 825 mẫu SP: [Ref_10, 20 + Ref_SP_30]     - 1,375 mẫu SP: [Ref_10..40 + Ref_SP_50]
    - 360 mẫu T2I: [Ref_10 + Ref_20]           - 675 mẫu T2I: [Ref_10, 20, 30]            - 1,125 mẫu T2I: [Ref_10, 20, 30, 40]
- • Bao gồm đủ cả 4 Dạng Topology           • Bao gồm đủ cả 4 Dạng Topology           • Bao gồm đủ cả 4 Dạng Topology
- • ⚡ 800 Calls (Async Parallel)            • ⚡ 700 Calls (Async Parallel)            • ⚡ 1,000 Calls (Async Parallel)
+ • 4 Topologies + 16 Fonts Trực Giao        • 4 Topologies + 16 Fonts Trực Giao        • 4 Topologies + 16 Fonts Trực Giao
+ • 75% Tự Nhiên + 25% Đảo Lệch Độ Dài      • 75% Tự Nhiên + 25% Đảo Lệch Độ Dài      • 75% Tự Nhiên + 25% Đảo Lệch Độ Dài
          │                                          │                                          │
          └──────────────────────────────────────────┼──────────────────────────────────────────┘
                                                     ▼
@@ -132,37 +169,6 @@ Do đó, toàn bộ $2,500$ mẫu huấn luyện áp dụng cơ chế **Trực G
                                    • Đóng gói thành WebDataset Shards (.tar / .h5)
 ```
 
----
-
-### 2.5. Ma trận Đa Tỉ Lệ Khung Hình (Aspect Ratio Bucketing):
-
-| Tỉ Lệ Bucket | Kích Thước Pixel | Latent Grid ($16\times$) | Token Canvas | Tỷ Trọng | Ứng Dụng Nghiệp Vụ Thương Mại |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **1:1** (Vuông) | $1024 \times 1024$ | $64 \times 64$ | $4,096$ tokens | **35%** | Bài đăng Feed Facebook, Instagram, E-commerce Post |
-| **9:16** (Dọc cao) | $768 \times 1344$ | $48 \times 84$ | $4,032$ tokens | **35%** | **TikTok Ads**, Instagram Reels, Story, Standee quảng cáo |
-| **4:5** (Dọc vừa) | $896 \times 1152$ | $56 \times 72$ | $4,032$ tokens | **15%** | Instagram Portrait Post (Tối ưu diện tích mobile) |
-| **16:9** (Ngang) | $1344 \times 768$ | $84 \times 48$ | $4,032$ tokens | **15%** | Facebook Fanpage Cover, Website Banner, TV Display |
-T2I: [Ref_10 + Ref_20]           - 675 mẫu T2I: [Ref_10, 20, 30]            - 1,125 mẫu T2I: [Ref_10, 20, 30, 40]
- • ⚡ 800 Calls (Async Parallel)            • ⚡ 700 Calls (Async Parallel)            • ⚡ 1,000 Calls (Async Parallel)
-         │                                          │                                          │
-         └──────────────────────────────────────────┼──────────────────────────────────────────┘
-                                                    ▼
-                                   [ AUTOMATED QUALITY ASSURANCE FILTER ]
-                                   • OCR Check: Khớp chính xác ký tự tiếng Việt >= 98%
-                                   • Độ phân giải chuẩn hóa theo 4 Aspect Ratio Buckets
-                                   • Đóng gói thành WebDataset Shards (.tar / .h5)
-```
-
----
-
-### 2.4. Ma trận Đa Tỉ Lệ Khung Hình (Aspect Ratio Bucketing):
-
-| Tỉ Lệ Bucket | Kích Thước Pixel | Latent Grid ($16\times$) | Token Canvas | Tỷ Trọng | Ứng Dụng Nghiệp Vụ Thương Mại |
-| :---: | :---: | :---: | :---: | :---: | :--- |
-| **1:1** (Vuông) | $1024 \times 1024$ | $64 \times 64$ | $4,096$ tokens | **35%** | Bài đăng Feed Facebook, Instagram, E-commerce Post |
-| **9:16** (Dọc cao) | $768 \times 1344$ | $48 \times 84$ | $4,032$ tokens | **35%** | **TikTok Ads**, Instagram Reels, Story, Standee quảng cáo |
-| **4:5** (Dọc vừa) | $896 \times 1152$ | $56 \times 72$ | $4,032$ tokens | **15%** | Instagram Portrait Post (Tối ưu diện tích mobile) |
-| **16:9** (Ngang) | $1344 \times 768$ | $84 \times 48$ | $4,032$ tokens | **15%** | Facebook Fanpage Cover, Website Banner, TV Display |
 
 ---
 
@@ -197,7 +203,7 @@ lora_config = {
 | **Weight Decay** | $0.01$ | Chống overfit trên các font hiếm |
 | **Learning Rate** | $1.0 \times 10^{-4}$ | Tốc độ tối ưu cho LoRA Rank 32 |
 | **LR Scheduler** | `CosineAnnealingLR` với 150 warmup steps | Đảm bảo ổn định ở các step đầu |
-| **Batch Size per GPU** | $1$ sample ($1024 \times 1024$) | Do độ dài chuỗi sequence dài $\sim 10,208$ tokens |
+| **Batch Size per GPU** | $1$ sample ($1024 \times 1024$) | Nhờ Tight-Crop, Sequence Length chỉ còn $\sim 9,450$ tokens (tiết kiệm VRAM, an toàn tuyệt đối) |
 | **Gradient Accumulation** | $4$ steps | Tạo Effective Batch Size $= 1 \times 2 \times 4 = \mathbf{8}$ |
 | **Precision Mode** | `bfloat16` Native Mixed Precision | Tối ưu kiến trúc Tensor Core A30, chống tràn số |
 | **Gradient Checkpointing** | Kích hoạt trên toàn bộ 25 Blocks | Giảm bộ nhớ kích hoạt trung gian $>65\%$ |
@@ -224,6 +230,9 @@ lora_config = {
 #### 🔹 Milestone A: Kích hoạt Phân Tách Kênh Đôi ($2\text{ Slots}$) — Quy mô: $800$ mẫu
 * **Phân bổ**: $440$ mẫu SP $[t=10\text{ Text} + t=20\text{ SP}]$ + $360$ mẫu Pure T2I $[t=10\text{ Title} + t=20\text{ Subtitle}]$.
 * **Mục tiêu**: Dạy LoRA giải quyết bài toán cốt lõi đầu tiên: **Phân luồng Softmax giữa $t=10$ và $t=20$**, triệt tiêu hoàn toàn hiện tượng tràn kênh (Attention Bleeding) và chữ rác Lorem Ipsum.
+* **Đặc Điểm Phân Tầng Độ Dài (Bắt Buộc Ngay Từ Milestone A)**:
+  - **75% mẫu tự nhiên**: $t=10$ Title ngắn/vừa ($3 - 6$ từ), $t=20$ Subtitle vừa ($5 - 8$ từ).
+  - **25% mẫu nghịch đảo độ dài**: $t=10$ Title dài bất thường ($12 - 15$ từ / $2 - 3$ dòng), $t=20$ Subtitle cực ngắn ($1 - 2$ từ) hoặc ngược lại $\implies$ **Phá vỡ vĩnh viễn định kiến `slot \Longleftrightarrow \text{length}` ngay từ gốc!**
 * **Số bước**: `800 steps` (~1.2 giờ trên 2x A30).
 
 #### 🔹 Milestone B: Mở Rộng 3 Tầng Thị Giác ($3\text{ Slots}$) — Quy mô: $1,500$ mẫu ($800\text{ cũ} + 700\text{ mới}$)
@@ -247,9 +256,10 @@ lora_config = {
 | **Trọng số DiT 4B Base (BF16)** | $8.2\text{ GB}$ | $8.2\text{ GB}$ | Đóng băng 100% gradient |
 | **Trọng số LoRA + Optimizer States** | $1.2\text{ GB}$ | $1.2\text{ GB}$ | AdamW states (FP32 master weights) |
 | **Latent Cache + Text Embeddings** | $1.5\text{ GB}$ | $1.5\text{ GB}$ | Pre-computed embeddings |
-| **Activations (Gradient Checkpointed)** | $6.8\text{ GB}$ | $6.8\text{ GB}$ | Sequence dài 10,208 tokens |
-| **CUDA Workspace & PyTorch Overhead** | $1.2\text{ GB}$ | $1.2\text{ GB}$ | Bộ đệm phân mảnh |
-| 📊 **TỔNG VRAM SỬ DỤNG MỖI GPU** | **$18.9\text{ GB}$ / $24\text{ GB}$** | **$18.9\text{ GB}$ / $24\text{ GB}$** | 🟢 **Dư an toàn $\approx 5.1\text{ GB}$ Headroom!** |
+| **Activations (Gradient Checkpointed)** | $6.2\text{ GB}$ | $6.2\text{ GB}$ | Sequence dài $\sim 9,450$ tokens |
+| **CUDA Workspace & PyTorch Overhead** | $1.0\text{ GB}$ | $1.0\text{ GB}$ | Bộ đệm phân mảnh |
+| 📊 **TỔNG VRAM SỬ DỤNG MỖI GPU** | **$18.1\text{ GB}$ / $24\text{ GB}$** | **$18.1\text{ GB}$ / $24\text{ GB}$** | 🟢 **Dư an toàn $\approx 5.9\text{ GB}$ Headroom!** |
+
 
 ---
 
