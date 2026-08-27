@@ -344,5 +344,22 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + Bất kỳ font chữ nào cũng xuất hiện ngẫu nhiên và bình đẳng trong mọi ngành hàng (Fashion dùng cả Sans/Bold, Tech dùng cả Serif/Sans, F&B dùng cả Rounded/Brush/Serif).
       + Mỗi font chỉ cần xuất hiện từ $50 - 150$ mẫu trải đều là đủ để triệt tiêu hoàn toàn liên kết giả, giải phóng năng lực tổng quát hóa tối đa cho LoRA.
 
+25. **ĐỊNH LUẬT TIGHT-CROP VỪA ĐỦ ĐỂ TRIỆT TIÊU ĐỊNH KIẾN KÍCH THƯỚC VÀ TỐI ƯU HÓA TOKEN (THE OPTIMAL TIGHT-CROP & SIZE-BIAS ELIMINATION LAW)**:
+    - **Bản chất Khoa học**:
+      + Nếu cố tình phóng to Glyph Box nhân tạo ($400 - 640\text{ tokens}$ cho mỗi slot text), tổng chiều dài chuỗi Reference cho 4 Text + 1 Sản phẩm sẽ bị đội lên gần $2,000\text{ tokens}$ (tổng sequence length vượt $10,500\text{ tokens}$), gây nghẽn bộ nhớ VRAM và làm chậm hàm Attention bình phương $\mathcal{O}(L^2)$ tới $3\times$.
+      + Nguy hại hơn, việc cố định `Ref_10` to và `Ref_30` nhỏ sẽ tiêm vào DiT một **định kiến ngầm về kích thước (Size Bias)**: Mô hình ngộ nhận rằng slot có nhiều token bắt buộc phải là Header lớn, gây sai lệch khi gặp bài toán Menu (các món bằng nhau) hoặc bài toán Card Feedback (đoạn quote ở Slot 3 có nhiều chữ hơn Header ở Slot 1).
+    - **Quy chuẩn Tight-Crop Vừa Đủ**:
+      + Nhờ thực nghiệm kiểm chứng (`exp_small_text_test.png`), một khối text 1 dòng chỉ cần **$80 - 140\text{ tokens}$** (đảm bảo font size $\ge 36 - 44\text{pt}$, $\text{box\_h} \ge 128\text{px}$) là đã đạt độ phân giải tối ưu chống gai nét.
+      + Kích thước Token được co dãn thuần túy theo **độ dài từ và số dòng thực tế**, không phân biệt Header hay CTA:
+        * *1 dòng ngắn ($1 - 3$ từ)*: $80 - 140\text{ tokens}$.
+        * *1 dòng vừa ($4 - 6$ từ)*: $130 - 200\text{ tokens}$.
+        * *2 dòng ($6 - 10$ từ)*: $220 - 320\text{ tokens}$.
+        * *Đoạn dài ($3 - 4$ dòng / $15 - 25$ từ)*: $380 - 640\text{ tokens}$.
+    - **Lợi ích Thực thi**:
+      + Tiết kiệm $>60\%$ sequence length (tổng 4 slot text chỉ chiếm $\sim 500 - 750\text{ tokens}$).
+      + Tăng tốc độ huấn luyện và suy luận phục vụ gấp $2 - 3$ lần trên hạ tầng 2x NVIDIA A30.
+      + Triệt tiêu hoàn toàn Size Bias, cho phép bất kỳ slot nào cũng có thể đóng vai trò Header to, Quote dài hay Badge nhỏ tùy theo prompt!
+
+
 
 
