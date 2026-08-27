@@ -278,3 +278,15 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + Muốn chữ to (Headline): Render Glyph to ($\ge 50 - 70\text{px}$).
       + Muốn chữ nhỏ (Specs / Annotations / Disclaimer): Định hình kích thước nhỏ ngay từ Glyph Engine ($\sim 24 - 32\text{px}$) thay vì dựa dẫm vào Prompt.
       + Muốn chữ uốn cong / ôm vật thể: Format chuỗi text thành 1 dòng đơn dài chiều ngang.
+
+21. **ĐỊNH LUẬT CẠNH TRANH KHÔNG GIAN BỐ CỤC VÀ ĐỘ NÉT 100% CỦA VĂN BẢN ĐA DÒNG (THE SPATIAL REAL-ESTATE COMPETITION & MULTI-LINE TEXT LAW)**:
+    - **Kiểm chứng thực nghiệm trực tiếp (`test_perfume_916_bevietnam_split.png`)**:
+      + **Chữ đạt độ chính xác 100%**: Khi Glyph bảo toàn chiều cao `box_h=448px`, khoảng cách dòng $32\%$ và dùng font nét dày (`bevietnam`), mô hình vẽ **ĐÚNG 100% CẢ 4 DÒNG CHỮ**, bao gồm cả dòng `"Mua 1 tặng 1"` và ngày tháng `"Đến hết ngày 26/5"`.
+      + **Hiện tượng Cạnh tranh Không gian (Spatial Real-Estate Trade-Off)**:
+        * Khi khối chữ 4 dòng chiếm `box_h = 448px` trên Canvas 9:16 ($576 \times 1024$), khối text chiếm tới $\sim 70\%$ diện tích nửa dưới của poster.
+        * Chủ thể sản phẩm (chai nước hoa) bị đẩy dồn lên trên và co lại chỉ chiếm $\sim 30\%$ diện tích nửa trên ("lọ nước hoa bị lùn đi").
+    - **Bản chất Khoa học & Quy tắc Thiết kế Hệ thống**:
+      + **Tổng diện tích Canvas là hữu hạn ($100\%$)**: Khối lượng token và chiều cao của Glyph Box quyết định trực tiếp "thị phần không gian" (spatial real-estate) trên bức ảnh sinh ra.
+      + **Muốn Sản phẩm To nổi bật ($\ge 60\%$) + Text Đa Dòng Nhỏ Tinh Tế ($\le 40\%$)**:
+        * Hoặc chuyển sang Canvas vuông $1:1$ ($1024 \times 1024$) hoặc $4:5$ ($896 \times 1120$) để có bề ngang rộng hơn cho text dàn trải mà không lấn chiếm chiều dọc.
+        * Hoặc dùng cơ chế **In-Context Product Reference Image ($t=60.0$)** để khóa cứng tỷ lệ và hình dáng chai nước hoa, ngăn không cho DiT tự ý thu nhỏ chai nước hoa!
