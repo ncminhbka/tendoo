@@ -241,12 +241,18 @@ def run_unified_layout_experiment(
     with torch.no_grad():
         glyph_latent = ae.encode(glyph_tensor)[0]
 
-    # Standard In-Context 4D RoPE at t=10.0 (Starting at h=0, w=0, 100% In-Distribution)
-    ref_tokens, ref_ids = prc_img(glyph_latent, t_coord=torch.tensor([10.0]))
-    ref_tokens = ref_tokens.unsqueeze(0).to(device_dit, dtype=torch.bfloat16)
-    ref_ids = ref_ids.unsqueeze(0).to(device_dit)
+    _, g_lat_h, g_lat_w = glyph_latent.shape
+    ref_tokens = rearrange(glyph_latent, "c h w -> (h w) c").unsqueeze(0).to(device_dit, dtype=torch.bfloat16)
+
+    # Clean float32 RoPE coordinates for reference at t=10.0 (prevents cartesian_prod meshgrid dtype error)
+    t_c = torch.tensor([10.0], dtype=torch.float32, device=device_dit)
+    h_c = torch.arange(g_lat_h, dtype=torch.float32, device=device_dit)
+    w_c = torch.arange(g_lat_w, dtype=torch.float32, device=device_dit)
+    l_c = torch.arange(1, dtype=torch.float32, device=device_dit)
+    ref_ids = torch.cartesian_prod(t_c, h_c, w_c, l_c).unsqueeze(0).to(device_dit)
 
     num_ref = ref_tokens.shape[1]
+
     print(f"  -> Reference Sequence: {num_ref} tokens (Latent: {lat_h}x{lat_w} at t=10.0)")
     print(f"  -> Canvas Sequence   : {num_canvas} tokens (Latent: {lat_h}x{lat_w})")
     print(f"  -> Total Combined    : {txt.shape[1] + num_canvas + num_ref} tokens")
