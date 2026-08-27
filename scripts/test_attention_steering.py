@@ -422,15 +422,25 @@ def denoise_steered_cfg(
     img_cond_seq_ids: torch.Tensor,
     steering_cfg: AttentionSteeringConfig,
 ) -> torch.Tensor:
-    """Executes Euler ODE Flow Matching with active attention steering updates."""
-    guidance_vec = torch.full((img.shape[0],), guidance, device=img.device, dtype=img.dtype)
+    """Executes Euler ODE Flow Matching with True CFG and active attention steering updates."""
+    # Duplicate img and img_ids across batch dimension for CFG [uncond, cond]
+    img = torch.cat([img, img], dim=0)
+    img_ids = torch.cat([img_ids, img_ids], dim=0)
 
-    img_input = torch.cat((img, img_cond_seq), dim=1)
-    img_input_ids = torch.cat((img_ids, img_cond_seq_ids), dim=1)
+    if img_cond_seq is not None:
+        assert img_cond_seq_ids is not None
+        img_cond_seq = torch.cat([img_cond_seq, img_cond_seq], dim=0)
+        img_cond_seq_ids = torch.cat([img_cond_seq_ids, img_cond_seq_ids], dim=0)
 
     for t_curr, t_prev in zip(timesteps[:-1], timesteps[1:]):
         steering_cfg.current_timestep = float(t_curr)
         t_vec = torch.full((img.shape[0],), t_curr, dtype=img.dtype, device=img.device)
+
+        img_input = img
+        img_input_ids = img_ids
+        if img_cond_seq is not None:
+            img_input = torch.cat((img_input, img_cond_seq), dim=1)
+            img_input_ids = torch.cat((img_input_ids, img_cond_seq_ids), dim=1)
 
         pred = model(
             x=img_input,
@@ -438,13 +448,20 @@ def denoise_steered_cfg(
             timesteps=t_vec,
             ctx=txt,
             ctx_ids=txt_ids,
-            guidance=guidance_vec,
+            guidance=None,
         )
 
-        pred = pred[:, : img.shape[1]]
+        if img_cond_seq is not None:
+            pred = pred[:, : img.shape[1]]
+
+        pred_uncond, pred_cond = pred.chunk(2)
+        pred = pred_uncond + guidance * (pred_cond - pred_uncond)
+        pred = torch.cat([pred, pred], dim=0)
+
         img = img + (t_prev - t_curr) * pred
 
-    return img
+    return img.chunk(2)[0]
+
 
 
 # ==============================================================================
