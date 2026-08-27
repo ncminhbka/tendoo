@@ -46,17 +46,24 @@ Mỗi mẫu huấn luyện được cấu trúc động theo tiến trình Miles
 
 ---
 
-### 2.2. Ma Trận Ánh Xạ 1:1 Font Chuẩn Thương Hiệu Theo 5 Domain:
+### 2.2. Ma Trận Phân Bổ Font Trực Giao & Chống Liên Kết Giả (Orthogonal Font-Domain Decoupling):
 
-Toàn bộ $2,500$ mẫu được ánh xạ cố định $1:1$ với 5 bộ Font chủ lực (đã QA Unicode $100\%$):
+> ⚠️ **BÀI HỌC CỐT TỬ**: Nếu cố định cứng $1:1$ giữa Ngành hàng và Font chữ (Thời trang luôn đi với `Playfair`, F&B luôn đi với `Sedgwick`, Công nghệ luôn đi với `Anton`), mô hình DiT sẽ bị **học vẹt mối liên kết giả (Spurious Correlation)**: Nó tưởng rằng *"chữ serif mạ vàng $\Longleftrightarrow$ bối cảnh thời trang"* thay vì học **năng lực đọc-viết Glyph tổng quát**.
+> 
+> Trong khi đó, **mô hình Base vốn đã có sẵn năng lực tái tạo font zero-shot 100%** (đã chứng minh qua Probe Suite 1). Nhiệm vụ của LoRA là **phân luồng không gian đa slot**, tuyệt đối không phải dạy lại font chữ.
 
-| Ngành Hàng (Domain) | Quy Mô | Font Headline Chủ Lực | Font Subtitle | Font CTA Badge | Phong Cách Thiết Kế & Chất Liệu |
-| :--- | :---: | :--- | :--- | :--- | :--- |
-| **☕ 1. F&B / Cafe** | $500$ mẫu | `SedgwickAveDisplay` | `BeVietnamPro-Black` | `Pacifico` | Chữ khắc gỗ 3D mộc mạc, neon cafe ấm cúng |
-| **📱 2. Công Nghệ / Tech** | $500$ mẫu | `Anton-Regular` | `BeVietnamPro-Black` | `Pacifico` | Chữ kim loại vát cạnh, đèn LED, chrome bóng bẩy |
-| **👗 3. Thời Trang / Fashion**| $500$ mẫu | `PlayfairDisplay` | `BeVietnamPro-Black` | `Pacifico` | Chữ Serif mạ vàng gold, sang trọng, thanh lịch |
-| **💆 4. Spa / Mỹ Phẩm** | $500$ mẫu | `DancingScript` | `BeVietnamPro-Black` | `Pacifico` | Chữ mềm mại uyển chuyển, phong cách pastel tối giản |
-| **🛍️ 5. Siêu Thị / FMCG** | $500$ mẫu | `SVN-Gotham Ultra` / `Oswald`| `BeVietnamPro-Black` | `Pacifico` | Chữ dập nổi 3D khối to, pop-art khuyến mãi rực rỡ |
+Do đó, toàn bộ $2,500$ mẫu huấn luyện áp dụng cơ chế **Trực Giao Hóa Hoàn Toàn (Zero Mutual Information $I(\text{Font}; \text{Domain}) = 0$)**: Bất kỳ font chữ nào cũng có xác suất xuất hiện bình đẳng ở mọi ngành hàng. Hệ thống huy động trọn vẹn **Pool 16 Font Unicode Tiếng Việt** sẵn có trong kho:
+
+| Nhóm Hình Thái Font (Archetypes) | Tỷ Trọng | Danh Sách Font Thực Tế trong `fonts/` | Phân Bổ Đa Ngành Hàng (Cross-Domain Presence) |
+| :--- | :---: | :--- | :--- |
+| **1. Clean Sans-Serif**<br>*(Hiện đại, đa dụng, dễ đọc)* | **30%** | `BeVietnamPro-Black`, `SVN-Gotham Ultra`, `SVN-Harabaras`, `Oswald` | Xuất hiện ở: Cả Công nghệ, Thời trang tối giản, FMCG, Bài post feedback Gym/Sofa. |
+| **2. Editorial Serif**<br>*(Sang trọng, thanh lịch, cổ điển)* | **20%** | `PlayfairDisplay` | Xuất hiện ở: Cả Thời trang Haute-Couture, Menu Cà phê Vintage, Đồng hồ Luxury, Glamping. |
+| **3. Bold Display / Heavy**<br>*(Khỏe khoắn, dập nổi, giật gân)* | **20%** | `Anton-Regular`, `SVN-Lolapeluza Black`, `SVN-Gretoon` | Xuất hiện ở: Cả Tech 5G, Flash Sale Siêu thị, Poster Thể thao, Tiêu đề Tuyển dụng. |
+| **4. Script / Calligraphy**<br>*(Mềm mại, cảm xúc, uyển chuyển)* | **15%** | `DancingScript`, `Pacifico`, `SVN-Clementine` | Xuất hiện ở: Cả Spa/Mỹ phẩm, Tiệm Bánh/Trà, Studio Cưới, Lời tri ân khách hàng. |
+| **5. Brush / Rounded / Playful**<br>*(Trẻ trung, đường phố, mùa hè)* | **15%** | `SedgwickAveDisplay`, `SVN-Blow Brush`, `SVN-Cookies`, `SVN-Grocery Rounded`, `SVN-Holidays` | Xuất hiện ở: Cả Quán Cafe Street-style, Banner Khai Trương, Đồ ăn vặt, Đồ chơi trẻ em. |
+
+> 🎯 **Quy tắc phân bổ Dataset**: Mỗi font trong pool 16 font chỉ cần xuất hiện từ $50 - 150$ mẫu ngẫu nhiên trải đều qua các domain là đủ để triệt tiêu vĩnh viễn liên kết giả, giúp LoRA tập trung $100\%$ gradient vào bài toán phân luồng Attention đa slot!
+
 
 ---
 

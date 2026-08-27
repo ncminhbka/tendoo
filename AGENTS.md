@@ -335,4 +335,14 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + Giữ nguyên tiến trình curriculum $2 \rightarrow 3 \rightarrow 4/5$ slots và quy mô ngân sách $2,500$ mẫu.
       + Giúp DiT làm chủ cơ chế Attention Routing như một **năng lực không gian tổng quát (Universal Spatial Capability)**, phục vụ trọn vẹn mọi yêu cầu đồ họa đa dạng trong thực tế của Viettel.
 
+24. **ĐỊNH LUẬT TRỰC GIAO HÓA FONT VÀ NGÀNH HÀNG ĐỂ CHỐNG LIÊN KẾT GIẢ (THE ORTHOGONAL FONT-DOMAIN DECOUPLING & ZERO-SPURIOUS CORRELATION LAW)**:
+    - **Bản chất Khoa học**:
+      + Cố định cứng $1:1$ giữa Ngành hàng và Font chữ (Thời trang luôn đi với Serif `Playfair`, F&B luôn đi với `Sedgwick`, Tech luôn đi với `Anton`) sẽ tiêm vào mô hình một **liên kết giả (Spurious Correlation)** nguy hại: Mô hình tưởng rằng *"chữ serif mạ vàng $\Longleftrightarrow$ bối cảnh thời trang"*, khiến nó mất khả năng vẽ chữ Serif trên đồ công nghệ hay vẽ chữ Sans trên đồ thời trang.
+      + Mô hình Base vốn dĩ đã có sẵn năng lực tái tạo font zero-shot $100\%$ (chứng minh qua Probe Suite 1). Bài toán cốt lõi của LoRA là **phân luồng không gian đa slot**, tuyệt đối không phải "dạy font".
+    - **Quy chuẩn Trực Giao Hóa ($I(\text{Font}; \text{Domain}) = 0$)**:
+      + Huy động toàn bộ **Pool 16 Font Unicode Tiếng Việt** sẵn có trong `fonts/` (Sans-Serif, Editorial Serif, Heavy Display, Script/Calligraphy, Brush/Rounded).
+      + Bất kỳ font chữ nào cũng xuất hiện ngẫu nhiên và bình đẳng trong mọi ngành hàng (Fashion dùng cả Sans/Bold, Tech dùng cả Serif/Sans, F&B dùng cả Rounded/Brush/Serif).
+      + Mỗi font chỉ cần xuất hiện từ $50 - 150$ mẫu trải đều là đủ để triệt tiêu hoàn toàn liên kết giả, giải phóng năng lực tổng quát hóa tối đa cho LoRA.
+
+
 
