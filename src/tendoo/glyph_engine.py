@@ -380,6 +380,18 @@ def auto_wrap_text(
         p2 = 2 * n_words // 3
         return [" ".join(words[:p1]), " ".join(words[p1:p2]), " ".join(words[p2:])]
 
+    # Target 4 lines for 19-32 words (e.g. detailed commercial feedback quotes)
+    if target_lines == 4 or (target_lines is None and 19 <= n_words <= 32):
+        p1 = n_words // 4
+        p2 = 2 * n_words // 4
+        p3 = 3 * n_words // 4
+        return [
+            " ".join(words[:p1]),
+            " ".join(words[p1:p2]),
+            " ".join(words[p2:p3]),
+            " ".join(words[p3:]),
+        ]
+
     # Multi-line greedily bounded by max_line_width_px
     if max_line_width_px is not None and max_line_width_px > 0:
         lines = []
@@ -397,9 +409,13 @@ def auto_wrap_text(
             lines.append(" ".join(curr))
         return lines
 
-    # Default fallback: 2 balanced lines
-    mid = n_words // 2
-    return [" ".join(words[:mid]), " ".join(words[mid:])]
+    # Default fallback for >32 words: chunk by 6-7 words per line
+    chunk_size = max(5, int(math.ceil(n_words / 5.0)))
+    lines = []
+    for i in range(0, n_words, chunk_size):
+        lines.append(" ".join(words[i : i + chunk_size]))
+    return lines
+
 
 
 def compute_optimal_glyph_box(
