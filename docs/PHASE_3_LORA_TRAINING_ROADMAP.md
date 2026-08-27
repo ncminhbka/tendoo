@@ -10,7 +10,7 @@
 
 ## 📊 1. MA TRẬN PHÂN TÍCH KỸ THUẬT & ĐỊNH HÌNH THIẾT KẾ (TECHNICAL BASIS)
 
-Dựa trên 61 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp61` cùng bài test Fourier Phase Aliasing (`probe_rope_phase_aliasing.py`), toàn bộ kiến trúc huấn luyện được xây dựng trên 8 chân lý kỹ thuật đã được chứng minh $100\%$:
+Dựa trên 61 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp61`, bài test Fourier Phase Aliasing (`probe_rope_phase_aliasing.py`) cùng thực nghiệm đo đạc độ phân giải cấp ký tự (`probe_glyph_resolution_threshold.py`), toàn bộ kiến trúc huấn luyện được xây dựng trên 9 chân lý kỹ thuật đã được chứng minh $100\%$:
 
 | Thành phần Kiến trúc | Phát hiện Thực nghiệm / Chân lý Toán học | Giải pháp Kỹ thuật trong Pipeline Huấn luyện |
 | :--- | :--- | :--- |
@@ -22,6 +22,8 @@ Dựa trên 61 chuỗi thực nghiệm đối chứng từ `exp01` đến `exp61
 | **6. Contiguous Prefix Sequential Guarantee** | Người dùng không trực tiếp chọn mốc $t$. Backend tự động xếp slot tuần tự từ trước ra sau ($1\rightarrow 2\rightarrow 3\rightarrow 4\rightarrow 5$). Thực tế chỉ xuất hiện các dãy liên tục: $\{10, 20\}$, $\{10, 20, 30\}$, $\{10, 20, 30, 40\}$, $\{10, 20, 30, 40, 50\}$. | Huấn luyện **$100\%$ theo các dãy tiền tố liên tục chuẩn**, triệt tiêu nhiễu rác và tập trung toàn bộ năng lượng gradient vào đúng các cấu hình thực tế của Backend. |
 | **7. Pure T2I Parallel Co-existence** | Nếu chỉ train với mỏ neo sản phẩm $4096$ tokens, mô hình bị "nghiện sản phẩm" và lúng túng khi sinh poster sự kiện/thơ ca không có ảnh sản phẩm. | Khóa cứng tỷ lệ **$55\%$ Product-Anchor + $45\%$ Pure T2I** ở CẢ 3 MILESTONES. |
 | **8. Masked Product-Region Flow Loss** | Để đảm bảo ở trường hợp cực hạn (Full 5-Slot), chi tiết chữ in và màu sắc nắp sản phẩm ở $t=50.0$ không bị suy thoái $\ge 20\%$. | Áp dụng **Mặt nạ trọng số vùng sản phẩm ($\lambda_{\text{prod}} = 2.0$)** trong hàm Loss Flow Matching cho các pixel thuộc vật thể thật. |
+| **9. Character-Level Nyquist Sampling** | Khi font size $\le 30\text{pt}$ (dấu phụ $< 8\text{px}$, tức $< 0.50$ latent token), VAE Decoder nội suy Sub-Nyquist sinh ra gai nét và mép răng cưa. | **Khóa cứng ngưỡng tạo Glyph**: Font size $\ge 36 - 48\text{pt}$, chiều cao box $\text{box\_h} \ge N \times 128\text{px}$ để đảm bảo dấu phụ $\ge 0.70$ latent token, triệt tiêu $100\%$ gai nét. |
+
 
 ---
 

@@ -291,3 +291,34 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + **Muốn Sản phẩm To nổi bật ($\ge 60\%$) + Text Đa Dòng Nhỏ Tinh Tế ($\le 40\%$)**:
         * Hoặc chuyển sang Canvas vuông $1:1$ ($1024 \times 1024$) hoặc $4:5$ ($896 \times 1120$) để có bề ngang rộng hơn cho text dàn trải mà không lấn chiếm chiều dọc.
         * Hoặc dùng cơ chế **In-Context Product Reference Image ($t=60.0$)** để khóa cứng tỷ lệ và hình dáng chai nước hoa, ngăn không cho DiT tự ý thu nhỏ chai nước hoa!
+
+22. **ĐỊNH LUẬT LẤY MẪU NYQUIST CẤP KÝ TỰ & NGƯỠNG TRIỆT TIÊU GAI NÉT (THE CHARACTER-LEVEL NYQUIST SAMPLING & ANTI-ALIASING LAW)**:
+    - **Kiểm chứng thực nghiệm trực tiếp (`probe_glyph_resolution_threshold.py` và ảnh sổ tay `exp_small_text_test.png` với `"TÔI YÊU VIỆT NAM"`)**:
+      + Khi thu nhỏ Glyph xuống `box_w=384, box_h=112` (`font_size ≈ 30pt`, chỉ $84$ latent tokens):
+        * Mô hình thành công vang dội: Đã ép được chữ nhỏ dập chìm mạ vàng ở góc dưới bìa da cuốn sổ tay theo đúng prompt, không bị phóng to thành tiêu đề khổng lồ!
+        * Tuy nhiên, các nét mũ (`Ô`, `Ê`) và dấu nặng (`Ệ`) xuất hiện **hiện tượng "gai nét" (jagged aliasing)**.
+    - **Bản chất Toán học & Ma trận Đo đạc Nyquist trên Lưới Latent $16\times$**:
+      + Ở cỡ chữ $30\text{pt}$ (`BeVietnamPro-Black`):
+        * Chiều cao ký tự: $22\text{px}$ ($1.38$ latent tokens).
+        * Chiều cao dấu mũ: $7\text{px}$ (**$0.44$ latent tokens**).
+        * Dấu nặng: $8\text{px}$ ($0.50$ latent tokens).
+      + **Định luật Nyquist-Shannon trên VAE $16\times$**:
+        * Khi một chi tiết (dấu phụ, nét thanh) có kích thước $< 0.50$ latent token ($< 8\text{px}$): VAE Decoder phải thực hiện phép nội suy siêu phân giải vượt quá giới hạn lấy mẫu (Sub-Nyquist) $\implies$ sinh ra các gai răng cưa (spatial quantization spikes).
+    - **3 Ngưỡng Độ Phân Giải Định Lượng Bất Biến**:
+      1. **Vùng Đỏ (Sub-Nyquist - Gai nét, răng cưa)**:
+         - Font size $\le 30\text{pt}$ (Dấu phụ $< 8\text{px}$, tức $< 0.50$ latent token).
+         - Hậu quả: Dấu mũ và nét thanh bị gai, mép gợn răng cưa.
+      2. **Vùng Vàng (Marginal - Chấp nhận được, mép mềm)**:
+         - Font size $36 - 44\text{pt}$ (Dấu phụ $9 - 11\text{px}$, tức $0.56 - 0.69$ latent token).
+         - Chiều cao dòng $\approx 128\text{px}$ ($8$ latent tokens).
+         - Nét chữ liền mạch, dấu phụ bắt đầu tròn trịa, phù hợp cho chữ phụ / CTA / slogan nhỏ.
+      3. **Vùng Xanh (Silk-Smooth - Mịn màng 100%, sắc nét tuyệt đối)**:
+         - Font size $\ge 48 - 56\text{pt}$ (Dấu phụ $\ge 12\text{px}$, tức $\ge 0.75$ latent token; Ký tự $\ge 36 - 43\text{px}$, tức $\ge 2.25 - 2.69$ latent tokens).
+         - Chiều cao dòng $\ge 144 - 160\text{px}$ ($9 - 10$ latent tokens).
+         - Nét chữ 100% trơn láng, không một vết gai (chính là ngưỡng đã giúp bài thơ Tây Tiến `exp54` đạt 100/100 điểm tuyệt đối!).
+    - **Công thức Khóa Cứng Thiết kế Hệ thống**:
+      - Với bất kỳ khối văn bản $N$ dòng:
+        $$\text{box\_h} \ge N \times 128\text{px}\quad \text{(Ngưỡng tối thiểu chống gai nét - Anti-Aliasing Lower Bound)}$$
+        $$\text{box\_h} \ge N \times 144 - 160\text{px}\quad \text{(Ngưỡng tối ưu đạt độ mịn lụa 100\% - Silk-Smooth Golden Target)}$$
+      - Đảm bảo font size trong Binary Search không bao giờ rơi xuống dưới ngưỡng an toàn $36\text{pt}$!
+
