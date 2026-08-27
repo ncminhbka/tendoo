@@ -180,9 +180,11 @@ def run_di_isolation_sweep(
         txt = txt.to(device_dit)
         txt_ids = txt_ids.to(device_dit)
 
-    if num_gpus < 2:
-        del text_encoder
-        torch.cuda.empty_cache()
+    # Clean up text_encoder immediately to free ~18GB VRAM on device_te / GPU 1
+    del text_encoder
+    torch.cuda.empty_cache()
+
+
 
     # Prepare Canvas (1024x1024)
     canvas_w, canvas_h = 1024, 1024
@@ -247,6 +249,7 @@ def run_di_isolation_sweep(
             denoise_time = time.time() - t0
 
             # 5. Decode to Pixel Space
+            torch.cuda.empty_cache()
             out_latent = out_latent.to(device=device_ae, dtype=torch.bfloat16)
             with torch.no_grad():
                 out_tensor = ae.decode(out_latent)
@@ -258,6 +261,11 @@ def run_di_isolation_sweep(
             out_file = out_path / f"dit_denoise_{font_alias}_{pt}pt.png"
             res_img.save(out_file)
             print(f"  -> Generated Image in {denoise_time:.2f}s saved: {out_file.name}")
+
+            # Free loop tensors from VRAM
+            del out_latent, out_tensor, z_init, img_tokens, img_ids, ref_tokens, ref_ids
+            torch.cuda.empty_cache()
+
 
             results_manifest.append({
                 "font": font_alias,
