@@ -142,6 +142,8 @@ def run_di_isolation_sweep(
     output_dir: str = "output_dit_floor",
     model_name: str = "flux.2-klein-base-4b",
     checkpoint_dir: Optional[str] = None,
+    width: int = 576,
+    height: int = 1024,
     num_steps: int = 50,
     guidance: float = 4.0,
     seed: int = 42,
@@ -180,17 +182,28 @@ def run_di_isolation_sweep(
         txt = txt.to(device_dit)
         txt_ids = txt_ids.to(device_dit)
 
-    # Clean up text_encoder immediately to free ~18GB VRAM on device_te / GPU 1
+    # Aggressively offload text_encoder to CPU and run gc.collect to completely wipe VRAM on device_te / GPU 1
+    try:
+        text_encoder.model.to("cpu")
+    except Exception:
+        pass
     del text_encoder
+    import gc
+    gc.collect()
     torch.cuda.empty_cache()
 
+    if torch.cuda.is_available():
+        free_bytes, total_bytes = torch.cuda.mem_get_info(device_ae)
+        print(f"  -> Purged Text Encoder from GPU! Free VRAM on {device_ae}: {free_bytes / (1024**3):.2f} / {total_bytes / (1024**3):.2f} GiB")
 
-
-    # Prepare Canvas (1024x1024)
-    canvas_w, canvas_h = 1024, 1024
-    lat_w, lat_h = canvas_w // 16, canvas_h // 16
+    # Prepare Canvas Dimensions
+    width = (width // 16) * 16
+    height = (height // 16) * 16
+    lat_w, lat_h = width // 16, height // 16
 
     results_manifest = []
+
+
 
     print("\n[3/4] Beginning DiT Isolation Resolution Sweep across Fonts & Sizes...")
     total_runs = len(fonts_to_test) * len(sizes_to_test)
@@ -349,6 +362,8 @@ def main():
     parser.add_argument("--all_tiers", action="store_true", help="Test representative font from all 3 tiers")
     parser.add_argument("--text", type=str, default="TÔI YÊU VIỆT NAM", help="Vietnamese test phrase")
     parser.add_argument("--output_dir", type=str, default="output_dit_floor", help="Output directory")
+    parser.add_argument("--width", type=int, default=576, help="Canvas width (default: 576)")
+    parser.add_argument("--height", type=int, default=1024, help="Canvas height (default: 1024)")
     parser.add_argument("--checkpoint_dir", type=str, default=None, help="Path to FLUX.2 checkpoints")
     parser.add_argument("--steps", type=int, default=50, help="ODE denoise steps")
     parser.add_argument("--guidance", type=float, default=4.0, help="CFG guidance")
@@ -367,10 +382,13 @@ def main():
         text=args.text,
         output_dir=args.output_dir,
         checkpoint_dir=args.checkpoint_dir,
+        width=args.width,
+        height=args.height,
         num_steps=args.steps,
         guidance=args.guidance,
         seed=args.seed,
     )
+
 
 
 if __name__ == "__main__":
