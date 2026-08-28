@@ -317,6 +317,52 @@ def _pick_product_for_domain(domain: str) -> Optional[Path]:
     return random.choice(files) if files else None
 
 
+# ==================================================================================================
+# 6. BUSINESS USE-CASE QUOTA MATRIX (SUB-PLAN 1.1: 800-SAMPLE GROUND TRUTH ALLOCATION)
+# ==================================================================================================
+# Target sample counts for I2I (55% = 440 total per Sub-plan Table 1.1)
+I2I_USE_CASE_TARGETS: List[Tuple[str, int]] = [
+    ("hero_product", 170),        # 21.25% of total
+    ("flash_sale", 90),           # 11.25% of total
+    ("customer_feedback", 60),    # 7.50% of total
+    ("opening_banner", 40),       # 5.00% of total
+    ("two_step_guide", 30),       # 3.75% of total
+    ("creative_quote", 30),       # 3.75% of total
+    ("recruitment", 20),          # 2.50% of total
+]
+
+# Target sample counts for Pure T2I (45% = 360 total per Sub-plan Table 1.1)
+T2I_USE_CASE_TARGETS: List[Tuple[str, int]] = [
+    ("flash_sale", 80),           # 10.00% of total
+    ("recruitment", 70),          # 8.75% of total
+    ("opening_banner", 60),       # 7.50% of total
+    ("customer_feedback", 50),    # 6.25% of total
+    ("two_step_guide", 50),       # 6.25% of total
+    ("creative_quote", 50),       # 6.25% of total
+]
+
+
+def determine_use_case(sample_id: int, total_samples: int, is_i2i: bool) -> str:
+    i2i_cutoff = round(total_samples * 0.55)
+    targets = I2I_USE_CASE_TARGETS if is_i2i else T2I_USE_CASE_TARGETS
+    total_weight = sum(w for _, w in targets)
+
+    if is_i2i:
+        rel_idx = sample_id - 1
+        sample_span = max(1, i2i_cutoff)
+    else:
+        rel_idx = sample_id - i2i_cutoff - 1
+        sample_span = max(1, total_samples - i2i_cutoff)
+
+    progress = (rel_idx + 0.5) / sample_span
+    acc = 0.0
+    for uc, weight in targets:
+        acc += weight / total_weight
+        if progress < acc:
+            return uc
+    return targets[-1][0]
+
+
 def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
     # 1. Modality: 55% I2I / 45% T2I, proportional to total_samples (fixes the hardcoded-800 bug)
     i2i_cutoff = round(total_samples * 0.55)
@@ -331,13 +377,16 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
     font1, font2 = sample_orthogonal_fonts()
     floor1, floor2 = get_font_floor(font1), get_font_floor(font2)
 
-    # 4. Length Stratum: 75% standard commercial, 25% inverted (Golden 75/25 Ratio per subplan)
+    # 4. Determine Use-Case based on Sub-plan 1.1 Matrix
+    use_case = determine_use_case(sample_id, total_samples, is_i2i)
+
+    # 5. Length Stratum: 75% standard commercial, 25% inverted (Golden 75/25 Ratio per subplan)
     # Standard: Slot 1 short/medium (2-5 words), Slot 2 medium/long (4-12 words)
     # Inverted: Slot 1 long (8-16 words, 2-3 lines), Slot 2 short punchy badge (1-3 words)
     is_inverted = (random.random() < 0.25)
     length_stratum = "inverted" if is_inverted else "standard"
 
-    # 5. Cohort: ~12.5% known-hard stress reproductions, rest standard
+    # 6. Cohort: ~12.5% known-hard stress reproductions, rest standard
     is_known_hard = (sample_id % 8 == 0)
     cohort = "known_hard" if is_known_hard else "standard"
 
@@ -346,29 +395,32 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
     if is_known_hard:
         pair = random.choice(KNOWN_HARD_PAIRS)
         text1, text2, domain = pair["text1"], pair["text2"], pair["domain"]
-        use_case = "known_hard"
         if is_i2i:
             product_path = _pick_product_for_domain(domain)
     elif is_i2i:
         # I2I ALWAYS has 2 text slots + 1 product slot (per corrected architecture).
         domain = random.choice(list(PRODUCT_TEXT_CORPUS.keys()))
         stem = random.choice(list(PRODUCT_TEXT_CORPUS[domain].keys()))
-        options = PRODUCT_TEXT_CORPUS[domain][stem][length_stratum]
-        text1, text2 = random.choice(options)
         prod_folder = PROJECT_ROOT / "data" / "products" / domain
         candidates = list(prod_folder.glob(f"{stem}.*"))
         product_path = candidates[0] if candidates else _pick_product_for_domain(domain)
-        use_case = "hero_product" if sample_id <= round(i2i_cutoff * 170 / 440) else "flash_sale"
+
+        if use_case in ["hero_product", "flash_sale"]:
+            options = PRODUCT_TEXT_CORPUS[domain][stem][length_stratum]
+            text1, text2 = random.choice(options)
+        else:
+            # Other 5 use cases in I2I (customer_feedback, opening_banner, recruitment, two_step_guide, creative_quote)
+            # take text from GENERAL_T2I_CORPUS while displaying the real product photo!
+            options = GENERAL_T2I_CORPUS[use_case][length_stratum]
+            text1, text2 = random.choice(options)
     else:
-        # Pure T2I: 55% commercial (2 text slots, no product), 45% non-commercial general use cases.
-        if random.random() < 0.55:
+        # Pure T2I: 2 text slots, no product.
+        if use_case == "flash_sale":
             domain = random.choice(list(PRODUCT_TEXT_CORPUS.keys()))
             stem = random.choice(list(PRODUCT_TEXT_CORPUS[domain].keys()))
             options = PRODUCT_TEXT_CORPUS[domain][stem][length_stratum]
             text1, text2 = random.choice(options)
-            use_case = "flash_sale"
         else:
-            use_case = random.choice(list(GENERAL_T2I_CORPUS.keys()))
             domain = "general_" + use_case
             options = GENERAL_T2I_CORPUS[use_case][length_stratum]
             text1, text2 = random.choice(options)
