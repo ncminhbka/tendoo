@@ -251,6 +251,10 @@ assets/
 !images/
 !images/*
 
+# Allow curated product reference packshots in data/products/
+!data/products/
+!data/products/**
+
 # Allow curated typography fonts in fonts/
 !fonts/
 !fonts/*

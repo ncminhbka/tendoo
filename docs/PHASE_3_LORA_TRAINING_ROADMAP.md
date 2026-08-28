@@ -169,6 +169,7 @@ Toàn bộ $2,500$ mẫu được phân bổ đều đặn theo 4 tỉ lệ hi�
                                    • Đóng gói thành WebDataset Shards (.tar / .h5)
 ```
 
+> 📌 **Chi tiết triển khai kỹ thuật Milestone A**: Xem toàn bộ đặc tả ma trận đa chiều, kho 50 sản phẩm tuyển chọn và quy trình chế tạo dữ liệu tại [`docs/SUBPLAN_MILESTONE_A_DATA_PIPELINE.md`](file:///d:/Viettel%20Telecom/Tendoo%20AI/docs/SUBPLAN_MILESTONE_A_DATA_PIPELINE.md).
 
 ---
 
