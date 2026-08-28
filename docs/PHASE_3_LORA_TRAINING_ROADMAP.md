@@ -56,10 +56,9 @@ Mỗi mẫu huấn luyện được cấu trúc động và chuẩn hóa đa t�
 #### 2. Hàm Sizing Phổ Quát Dùng Chung Cho Mọi Slot (`compute_optimal_glyph_box`):
 * Bỏ hoàn toàn việc gán cứng range token theo slot (`Ref_10` to, `Ref_30` nhỏ). **Mọi slot ($t=10, 20, 30, 40$) đều sử dụng chung 1 hàm sizing phổ quát duy nhất**, chỉ phụ thuộc vào:
   1. **Độ dài ký tự & số dòng thực tế** của mẫu đó.
-  2. **Ngưỡng sàn vật lý riêng của từng Font (Per-Font Minimum Floor)**:
-     - *Nhóm A (Đậm nét, chịu nén cực tốt)*: `BeVietnamPro-Black`, `Anton-Regular`, `SVN-Gotham Ultra`, `SVN-Lolapeluza Black` $\rightarrow$ **Floor = $36\text{pt}$**.
-     - *Nhóm B (Serif & Condensed)*: `PlayfairDisplay`, `Oswald`, `SVN-Harabaras` $\rightarrow$ **Floor = $40\text{pt}$**.
-     - *Nhóm C (Nét mảnh, Script, Cọ vẽ - Cần floor cao hơn để VAE không nuốt nét thanh)*: `DancingScript`, `Pacifico`, `SedgwickAveDisplay`, `SVN-Blow Brush`, `SVN-Clementine` $\rightarrow$ **Floor = $44 - 48\text{pt}$**.
+  2. **Ngưỡng sàn vật lý riêng của từng Font (Per-Font Minimum Floor - KHÓA CỨNG CHÍNH THỨC)**:
+     - **`BeVietnamPro-Black`**: **Floor = $32\text{pt}$** (Đã kiểm chứng đối chứng 2x A30 trên cả văn bản ngắn và bài thơ 4 dòng, bảo toàn nét tuyệt đối).
+     - **Toàn bộ 15 font còn lại** (`anton`, `gotham`, `lolapeluza`, `gretoon`, `playfair`, `oswald`, `harabaras`, `dancing`, `pacifico`, `sedgwick`, `blowbrush`, `clementine`, `cookies`, `grocery`, `holidays`): **Floor = $36\text{pt}$** (Khóa cứng bất biến toàn bộ Display, Serif, Brush và Script, loại bỏ ước lượng phỏng đoán).
 
 * **Kích thước Token thực tế sau Tight-Crop**:
   - *1 dòng ngắn ($1 - 3$ từ)* (Badge, CTA, Brand Name): **$80 - 140\text{ tokens}$**.

@@ -80,22 +80,22 @@ FONTS_DIR = PROJECT_ROOT / "fonts"
 # ==================================================================================================
 # 1. PER-FONT FLOOR REGISTRY & ARCHETYPES (16 QA-VERIFIED VIETNAMESE UNICODE FONTS)
 # ==================================================================================================
-# Archetype Tiers define the minimum safe font size (pt) to prevent VAE feature collapse:
-# - Tier A (Floor 36pt): Heavy display, bold sans-serif with thick diacritics. Highly resilient.
-# - Tier B (Floor 40pt): Classical serifs and condensed sans. Moderate stroke contrast.
-# - Tier C (Floor 44-48pt): Scripts, delicate hairlines, and brush textures. Requires higher floor.
+# Dual Floor Architecture (OFFICIALLY LOCKED):
+# - BeVietnamPro-Black: Floor 32pt (High-density sans-serif workhorse)
+# - All other 15 fonts: Floor 36pt (Uniformly locked across all display, serif, brush, and script styles)
 
 FONT_TIERS: Dict[str, Dict[str, Any]] = {
-    # Tier A: Heavy Display / Bold Sans (Floor: 36pt)
+    # Workhorse Clean Sans-Serif (Floor: 32pt)
     "bevietnam": {
         "file": "BeVietnamPro-Black.ttf",
         "archetype": "Clean Sans-Serif",
         "tier": "Tier A (Heavy / Dense)",
         "min_floor_pt": 32,  # Empirically validated on 2x A30 (DiT 50-step ODE denoise floor)
         "default_line_spacing": 0.22,
-
         "description": "Commercial workhorse for clean, hyper-legible body, subtitles, and modern ads.",
     },
+
+    # All Other 15 Fonts (Floor: 36pt Locked)
     "anton": {
         "file": "Anton-Regular.ttf",
         "archetype": "Bold Heavy Display",
@@ -128,13 +128,11 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "default_line_spacing": 0.22,
         "description": "Pop-art, 3D extruded comic font for FMCG, snacks, and youthful campaigns.",
     },
-
-    # Tier B: Editorial Serif & Condensed (Floor: 40pt)
     "playfair": {
         "file": "PlayfairDisplay.ttf",
         "archetype": "Editorial Serif",
         "tier": "Tier B (Serif / Medium)",
-        "min_floor_pt": 40,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.26,
         "description": "Luxury serif with sharp contrast, ideal for fashion, jewelry, and literature.",
     },
@@ -142,7 +140,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "Oswald.ttf",
         "archetype": "Condensed Gothic Sans",
         "tier": "Tier B (Serif / Medium)",
-        "min_floor_pt": 40,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.20,
         "description": "Tall, elegant condensed font for specifications, sports gear, and modern posters.",
     },
@@ -150,17 +148,15 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Harabaras.ttf",
         "archetype": "Geometric Medium Sans",
         "tier": "Tier B (Serif / Medium)",
-        "min_floor_pt": 40,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.22,
         "description": "Friendly, modern geometric branding for startups, apps, and consumer tech.",
     },
-
-    # Tier C: Delicate Scripts, Brush & Rounded (Floor: 44 - 48pt)
     "dancing": {
         "file": "DancingScript.ttf",
         "archetype": "Cursive Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 48,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.32,
         "description": "Fluid, emotional cursive script for spa, cosmetics, bridal, and organic lifestyle.",
     },
@@ -168,7 +164,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "Pacifico-Regular.ttf",
         "archetype": "Brush Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 44,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.28,
         "description": "Casual retro brush script, world-class for CTA badges, food trucks, and summer ads.",
     },
@@ -176,7 +172,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SedgwickAveDisplay-Regular.ttf",
         "archetype": "Graffiti / Street Brush",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 44,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.25,
         "description": "Urban street graffiti with organic splatter vibes for streetwear and youth culture.",
     },
@@ -184,7 +180,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SedgwickAveDisplay-Regular.ttf",
         "archetype": "Graffiti / Street Brush",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 44,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.25,
         "description": "Alias for sedgwick.",
     },
@@ -192,7 +188,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Blow Brush.ttf",
         "archetype": "Marker / Street Art",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 46,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.26,
         "description": "Handmade dry-marker brush typography with energetic motion.",
     },
@@ -200,7 +196,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Blow Brush.ttf",
         "archetype": "Marker / Street Art",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 46,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.26,
         "description": "Alias for blowbrush.",
     },
@@ -208,7 +204,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Clementine.ttf",
         "archetype": "Calligraphy Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 48,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.32,
         "description": "Sophisticated wedding and boutique calligraphy with sweeping ascenders/descenders.",
     },
@@ -216,7 +212,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Cookies.ttf",
         "archetype": "Chunky Rounded Display",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 44,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.24,
         "description": "Soft, rounded bubbly letters for confectionery, bakery, toys, and kids products.",
     },
@@ -224,7 +220,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Grocery Rounded.ttf",
         "archetype": "Handwritten Store Display",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 44,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.24,
         "description": "Vintage chalkboard / grocery sign lettering for organic markets and rustic cafes.",
     },
@@ -232,7 +228,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Holidays.ttf",
         "archetype": "Festive Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 44,
+        "min_floor_pt": 36,
         "default_line_spacing": 0.28,
         "description": "Joyful seasonal typography for Tet, festivals, promotions, and celebrations.",
     },

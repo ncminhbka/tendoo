@@ -267,7 +267,9 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
     - **KẾT QUẢ THỰC NGHIỆM CHỐT HẠ TRÊN 2x A30 (Validated Ground Truth)**:
       + Đã thực nghiệm đối chứng trực tiếp giữa **Text ngắn (1 dòng / 4 từ)** và **Text dài (4 câu thơ / 28 từ / 119 ký tự)** qua script `test_short_vs_long_text_floor.py`.
       + **Kết luận**: Cả ở $32\text{pt}$ và $40\text{pt}$, mô hình DiT Base 4B đều vẽ ổn định, trơn láng và sắc nét $100\%$ không bị biến dạng dấu phụ dù là câu ngắn hay đoạn thơ 4 dòng!
-      + **KHÓA CỨNG CHÍNH THỨC**: Sàn tối thiểu của `BeVietnamPro-Black` được chốt bất biến tại **$32\text{pt}$** (tiết kiệm thêm $\sim 20\%$ sequence tokens so với mức ước lượng $36\text{pt}$ ban đầu mà vẫn đảm bảo độ mịn lụa tuyệt đối).
+      + **KHÓA CỨNG CHÍNH THỨC (OFFICIALLY LOCKED DUAL-FLOOR ARCHITECTURE)**:
+        * Sàn tối thiểu của **`BeVietnamPro-Black`** được chốt bất biến tại **$32\text{pt}$** (tiết kiệm thêm $\sim 20\%$ sequence tokens mà vẫn đảm bảo độ mịn lụa tuyệt đối).
+        * Sàn tối thiểu của **toàn bộ 15 font còn lại** (`anton`, `gotham`, `lolapeluza`, `gretoon`, `playfair`, `oswald`, `harabaras`, `dancing`, `pacifico`, `sedgwick`, `blowbrush`, `clementine`, `cookies`, `grocery`, `holidays`) được chốt khóa cứng bất biến tại **$36\text{pt}$** (loại bỏ hoàn toàn các ước lượng phỏng đoán 40-48pt trước đây, tối ưu hóa triệt để token budget và sequence length cho toàn bộ pipeline huấn luyện Giai đoạn 3).
 
 
 
