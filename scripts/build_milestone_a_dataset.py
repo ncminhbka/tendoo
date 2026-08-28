@@ -129,120 +129,13 @@ def sample_aspect_ratio() -> str:
 
 
 # ==================================================================================================
-# 4. PRODUCT <-> TEXT PAIRING (explicit, filename-keyed -- not positional/fragile)
+# 4. PRODUCT <-> TEXT PAIRING & GENERAL T2I CORPUS (HIGH-DIVERSITY MULTI-ANGLE & STRATIFIED)
 # ==================================================================================================
-# Each entry: filename stem (must exist as <stem>.<ext> under data/products/<domain>/) -> (title, subtitle)
-PRODUCT_TEXT_MAP: Dict[str, Dict[str, Tuple[str, str]]] = {
-    "cosmetics": {
-        "01_nuoc_hoa_luxury": ("NƯỚC HOA CAO CẤP", "Hương thơm quý phái\nLưu hương 24 giờ"),
-        "02_serum_duong_am": ("SERUM DƯỠNG ẨM", "Căng bóng mịn màng\nCấp ẩm chuyên sâu"),
-        "03_kem_duong_da": ("KEM DƯỠNG TRẮNG", "Trẻ hóa làn da\nMờ thâm nám tự nhiên"),
-        "04_son_moi_matte": ("SON MÔI MỊN LÌ", "Sắc đỏ thời thượng\nChuẩn màu lâu trôi"),
-        "05_kem_chong_nang": ("KEM CHỐNG NẮNG", "Bảo vệ tối ưu SPF50+\nKháng nước kiềm dầu"),
-        "06_sua_rua_mat": ("SỮA RỬA MẶT", "Sạch sâu dịu nhẹ\nCân bằng độ ẩm tự nhiên"),
-        "07_phan_nuoc_cushion": ("PHẤN NƯỚC CUSHION", "Lớp nền mỏng mịn\nChe phủ hoàn hảo suốt ngày"),
-        "08_dau_goi_dau": ("DẦU GỘI DƯỠNG CHẤT", "Bồng bềnh suôn mượt\nChiết xuất tinh dầu tự nhiên"),
-    },
-    "fnb": {
-        "09_phin_cafe_nhom": ("CÀ PHÊ PHIN NGUYÊN CHẤT", "Đậm đà phong vị Việt\nHương thơm nồng nàn truyền thống"),
-        "10_tui_cafe_rang_moc": ("HẠT ROBUSTA RANG MỘC", "Hương vị nguyên bản\nRang xay thủ công tinh tế"),
-        "11_lon_nuoc_tang_luc": ("BẬT TUNG NĂNG LƯỢNG", "Sảng khoái tức thì\nTỉnh táo chinh phục thử thách"),
-        "12_chai_tra_xanh": ("TRÀ XANH THANH MÁT", "Chiết xuất lá trà tươi\nThanh lọc cơ thể mỗi ngày"),
-        "13_hop_sua_hat": ("SỮA HẠT DINH DƯỠNG", "Thuần khiết tự nhiên\nGiàu canxi không đường"),
-        "14_lon_bia_craft": ("BIA THỦ CÔNG CAO CẤP", "Hương hoa bia sảng khoái\nMen bia ủ mộc thượng hạng"),
-        "15_chai_ruou_vang": ("VANG ĐỎ THƯỢNG HẠNG", "Ủ thùng gỗ sồi lâu năm\nNồng nàn đẳng cấp quý phái"),
-    },
-    "tech": {
-        "16_tai_nghe_tws": ("TAI NGHE CHỐNG ỒN", "Âm bass sống động\nPin 30 giờ liên tục"),
-        "17_smartwatch": ("ĐỒNG HỒ THÔNG MINH", "Theo dõi sức khỏe 24/7\nKháng nước chuẩn 5ATM"),
-        "18_loa_bluetooth": ("LOA BLUETOOTH DI ĐỘNG", "Âm thanh vòm 360 độ\nKhuấy động mọi bữa tiệc"),
-        "19_chuot_gaming": ("CHUỘT GAMING KHÔNG DÂY", "Độ nhạy cực cao\nThiết kế công thái học đỉnh cao"),
-        "20_ban_phim_co": ("BÀN PHÍM CƠ CAO CẤP", "Gõ phím êm ái\nĐèn nền RGB rực rỡ"),
-        "21_sac_du_phong": ("SẠC NHANH ĐA NĂNG", "Công suất 65W vượt trội\nNhỏ gọn tiện lợi mang đi"),
-        "22_tay_cam_game": ("TAY CẦM CHƠI GAME", "Rung phản hồi chân thực\nKhông độ trễ trên mọi thiết bị"),
-    },
-    "fashion": {
-        "23_giay_sneaker_bitis": ("GIÀY THỂ THAO NĂNG ĐỘNG", "Siêu nhẹ êm chân\nBước đi bứt phá tự tin"),
-        "24_kinh_mat_thoi_trang": ("KÍNH RÂM THỜI THƯỢNG", "Chống tia UV400\nTôn vinh phong cách cá nhân"),
-        "25_dong_ho_kim_loai": ("ĐỒNG HỒ KIM LOẠI SANG TRỌNG", "Đẳng cấp quý ông\nBộ máy cơ học chuẩn xác"),
-        "26_tui_xach_da": ("TÚI XÁCH DA THẬT", "Chất da cao cấp\nTinh tế từng đường kim mũi chỉ"),
-        "27_vi_da_nam": ("VÍ DA CẦM TAY", "Da bò nguyên tấm\nBền đẹp cùng thời gian"),
-        "28_non_la_viet_nam": ("NÓN LÁ DUYÊN DÁNG", "Nét đẹp truyền thống\nHồn quê đất Việt ngàn năm"),
-    },
-    "home": {
-        "29_binh_giu_nhiet": ("BÌNH GIỮ NHIỆT INOX", "Giữ nhiệt suốt 24 giờ\nThép không gỉ an toàn"),
-        "30_may_say_toc": ("MÁY SẤY TÓC ION ÂM", "Sấy khô siêu tốc\nBảo vệ tóc bóng mượt"),
-        "31_ban_ui_hoi_nuoc": ("BÀN ỦI HƠI NƯỚC", "Phẳng phiu tức thì\nKháng khuẩn 99% áo quần"),
-        "32_may_xay_sinh_to": ("MÁY XAY SINH TỐ MINI", "Xay nhuyễn mịn đa năng\nSống khỏe tươi vui mỗi ngày"),
-        "33_noi_chien_khong_dau": ("NỒI CHIÊN KHÔNG DẦU", "Giảm 85% chất béo\nChín vàng giòn rụm thơm ngon"),
-        "34_den_ban_led": ("ĐÈN BÀN CHỐNG CẬN", "Ánh sáng dịu mắt\nTùy chỉnh 3 chế độ thông minh"),
-    },
-    "fmcg": {
-        "35_mi_hao_hao": ("MÌ HẢO HẢO TÔM CHUA CAY", "Sợi mì dai giòn đậm vị\nHương vị quốc dân gắn kết"),
-        "36_hop_tra_sen_tay_ho": ("TRÀ SEN TÂY HỒ", "Hương sen thanh khiết\nTinh hoa trà búp Tân Cương"),
-        "37_chai_nuoc_mam_phu_quoc": ("NƯỚC MẮM CỐT PHÚ QUỐC", "Đậm đà vị cá cơm truyền thống\nỦ chượp ròng rã tự nhiên"),
-        "38_hop_cao_sao_vang": ("CAO SAO VÀNG CỔ ĐIỂN", "Tinh dầu tràm quế tự nhiên\nThương hiệu vượt thời gian"),
-        "39_hu_yen_sao_khanh_hoa": ("YẾN SÀO KHÁNH HÒA", "Bồi bổ sức khỏe tinh anh\nQuà tặng trân quý cho gia đình"),
-        "40_hop_banh_quy_bo": ("BÁNH QUY BƠ THƯỢNG HẠNG", "Thơm lừng bơ sữa nguyên chất\nGiòn tan tròn vị yêu thương"),
-    },
-    "telecom_viettel": {
-        "41_modem_wifi6_viettel": ("MODEM HOME WIFI 6", "Phủ sóng toàn diện ngôi nhà\nTốc độ Gigabit không giật lag"),
-        "42_phoi_sim_5g_viettel": ("SIM VIETTEL 5G SIÊU TỐC", "Tốc độ vượt trội kết nối tương lai\nƯu đãi data không giới hạn"),
-        "43_smart_camera_viettel": ("CAMERA THÔNG MINH VIETTEL", "Hình ảnh 2K sắc nét ban đêm\nLưu trữ đám mây bảo mật tuyệt đối"),
-        "44_thiet_bi_v_tracking": ("ĐỊNH VỊ V-TRACKING", "Giám sát hành trình 24/7\nQuản lý phương tiện thông minh"),
-        "45_hop_tv360_box": ("TRUYỀN HÌNH TV360", "Thế giới giải trí không giới hạn\nHàng trăm kênh truyền hình chuẩn HD"),
-    },
-    "fitness": {
-        "46_binh_lac_shaker": ("BÌNH LẮC SHAKER THỂ THAO", "Khuấy tan bột siêu nhanh\nNhựa nguyên sinh an toàn sức khỏe"),
-        "47_tham_yoga": ("THẢM TẬP YOGA CAO CẤP", "Độ bám sàn chống trơn trượt\nÊm ái trong từng chuyển động"),
-        "48_gang_tay_gym": ("GĂNG TAY TẬP TẠ", "Bảo vệ cổ tay vững chắc\nThoáng khí chống chai tay"),
-        "49_con_lan_massage": ("CON LĂN MASSAGE GIÃN CƠ", "Giảm căng cứng cơ bắp\nPhục hồi thần tốc sau luyện tập"),
-        "50_day_nhay_toc_do": ("DÂY NHẢY TỐC ĐỘ CAO", "Lõi cáp thép bền bỉ\nĐốt cháy calo rèn luyện sức bền"),
-    },
-}
+try:
+    from scripts.corpus_milestone_a import PRODUCT_TEXT_CORPUS, GENERAL_T2I_CORPUS
+except ImportError:
+    from corpus_milestone_a import PRODUCT_TEXT_CORPUS, GENERAL_T2I_CORPUS
 
-# Extra domain-level text pairs NOT tied to any specific product photo -- usable for pure T2I
-# commercial samples in that domain (no product slot needed).
-DOMAIN_GENERAL_TEXT_POOL: Dict[str, List[Tuple[str, str]]] = {
-    "cosmetics": [
-        ("TINH CHẤT PHỤC HỒI", "Tái tạo tế bào da\nNgăn ngừa lão hóa sớm"),
-        ("MẶT NẠ DƯỠNG DA", "Thư giãn làn da\nCung cấp vitamin tức thì"),
-    ],
-    "fnb": [
-        ("TRÀ HOA CÚC MẬT ONG", "Thanh nhiệt an thần\nVị ngọt dịu nhẹ tự nhiên"),
-        ("NƯỚC ÉP TRÁI CÂY TƯƠI", "100% nguyên chất\nBổ sung năng lượng tức thì"),
-    ],
-    "tech": [("CỦ SẠC CÔNG NGHỆ GAN", "Tản nhiệt thông minh\nBảo vệ thiết bị tối đa")],
-    "fashion": [("ÁO KHOÁC GIÓ THỜI TRANG", "Chống thấm nước nhẹ\nGiữ ấm cản gió tối đa")],
-}
-
-# Non-commercial T2I use cases (recruitment, guide, quote, opening) -- always pure T2I, no product.
-GENERAL_T2I_CORPUS: Dict[str, List[Tuple[str, str]]] = {
-    "recruitment": [
-        ("KỸ SƯ TRÍ TUỆ NHÂN TẠO", "Thu nhập hấp dẫn\nMôi trường sáng tạo mở"),
-        ("CHUYÊN VIÊN MARKETING", "Phát triển tiềm năng\nĐãi ngộ cạnh tranh hàng đầu"),
-        ("LẬP TRÌNH VIÊN BACKEND", "Làm việc linh hoạt\nDự án quy mô triệu người dùng"),
-        ("TRƯỞNG NHÓM KINH DOANH", "Lương thưởng không giới hạn\nLộ trình thăng tiến rõ ràng"),
-        ("QUẢN LÝ DỰ ÁN CÔNG NGHỆ", "Văn hóa chủ động bứt phá\nChế độ bảo hiểm toàn diện"),
-    ],
-    "two_step_guide": [
-        ("BƯỚC 1: ĐĂNG KÝ TÀI KHOẢN", "BƯỚC 2: BẮT ĐẦU TRẢI NGHIỆM\nHoàn toàn miễn phí"),
-        ("BƯỚC 1: TẢI ỨNG DỤNG", "BƯỚC 2: NHẬN NGAY VOUCHER 50K\nÁp dụng cho đơn đầu tiên"),
-        ("BƯỚC 1: QUÉT MÃ QR CODE", "BƯỚC 2: THANH TOÁN TỨC THÌ\nAn toàn và tiện lợi"),
-        ("BƯỚC 1: CHỌN SẢN PHẨM YÊU THÍCH", "BƯỚC 2: XÁC NHẬN GIAO HÀNG TẬN NƠI\nĐổi trả trong 7 ngày"),
-    ],
-    "creative_quote": [
-        ("HÃY THEO ĐUỔI ĐAM MÊ", "Thành công sẽ luôn mỉm cười\nKiên trì tạo nên sự khác biệt"),
-        ("BƯỚC ĐI TẠO NÊN HÀNH TRÌNH", "Mỗi ngày là một khởi đầu mới\nĐừng ngại vượt qua thử thách"),
-        ("SÁNG TẠO KHÔNG GIỚI HẠN", "Tự tin khẳng định bản sắc\nVươn tới những đỉnh cao mới"),
-        ("HẠNH PHÚC TỪ NHỮNG ĐIỀU GIẢN ĐƠN", "Trân trọng từng khoảnh khắc\nSống trọn vẹn mỗi phút giây"),
-    ],
-    "opening_banner": [
-        ("TƯNG BỪNG KHAI TRƯƠNG", "Giảm giá 30% toàn bộ dịch vụ\nChào đón khách hàng tuần đầu tiên"),
-        ("ĐẠI TIỆC MỞ BÁN", "Quà tặng đặc biệt cho 100 khách đầu tiên\nCơ hội trúng thưởng hấp dẫn"),
-        ("RA MẮT KHÔNG GIAN MỚI", "Trải nghiệm dịch vụ đẳng cấp\nƯu đãi độc quyền khai trương"),
-    ],
-}
 
 # Known-hard concurrency stress pairs, reproducing configurations that broke in earlier probing.
 # Each carries an explicit, semantically sane domain (used only to pick a plausible product for I2I).
@@ -438,12 +331,17 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
     font1, font2 = sample_orthogonal_fonts()
     floor1, floor2 = get_font_floor(font1), get_font_floor(font2)
 
-    # 4. Cohort: ~12.5% known-hard stress reproductions, rest standard
+    # 4. Length Stratum: 75% standard commercial, 25% inverted (Golden 75/25 Ratio per subplan)
+    # Standard: Slot 1 short/medium (2-5 words), Slot 2 medium/long (4-12 words)
+    # Inverted: Slot 1 long (8-16 words, 2-3 lines), Slot 2 short punchy badge (1-3 words)
+    is_inverted = (random.random() < 0.25)
+    length_stratum = "inverted" if is_inverted else "standard"
+
+    # 5. Cohort: ~12.5% known-hard stress reproductions, rest standard
     is_known_hard = (sample_id % 8 == 0)
     cohort = "known_hard" if is_known_hard else "standard"
 
     product_path: Optional[Path] = None
-    split = "train"
 
     if is_known_hard:
         pair = random.choice(KNOWN_HARD_PAIRS)
@@ -453,8 +351,10 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
             product_path = _pick_product_for_domain(domain)
     elif is_i2i:
         # I2I ALWAYS has 2 text slots + 1 product slot (per corrected architecture).
-        domain = random.choice(list(PRODUCT_TEXT_MAP.keys()))
-        stem, (text1, text2) = random.choice(list(PRODUCT_TEXT_MAP[domain].items()))
+        domain = random.choice(list(PRODUCT_TEXT_CORPUS.keys()))
+        stem = random.choice(list(PRODUCT_TEXT_CORPUS[domain].keys()))
+        options = PRODUCT_TEXT_CORPUS[domain][stem][length_stratum]
+        text1, text2 = random.choice(options)
         prod_folder = PROJECT_ROOT / "data" / "products" / domain
         candidates = list(prod_folder.glob(f"{stem}.*"))
         product_path = candidates[0] if candidates else _pick_product_for_domain(domain)
@@ -462,18 +362,21 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
     else:
         # Pure T2I: 55% commercial (2 text slots, no product), 45% non-commercial general use cases.
         if random.random() < 0.55:
-            domain = random.choice(list(PRODUCT_TEXT_MAP.keys()))
-            pool = list(PRODUCT_TEXT_MAP[domain].values()) + DOMAIN_GENERAL_TEXT_POOL.get(domain, [])
-            text1, text2 = random.choice(pool)
+            domain = random.choice(list(PRODUCT_TEXT_CORPUS.keys()))
+            stem = random.choice(list(PRODUCT_TEXT_CORPUS[domain].keys()))
+            options = PRODUCT_TEXT_CORPUS[domain][stem][length_stratum]
+            text1, text2 = random.choice(options)
             use_case = "flash_sale"
         else:
             use_case = random.choice(list(GENERAL_T2I_CORPUS.keys()))
             domain = "general_" + use_case
-            text1, text2 = random.choice(GENERAL_T2I_CORPUS[use_case])
+            options = GENERAL_T2I_CORPUS[use_case][length_stratum]
+            text1, text2 = random.choice(options)
 
     return {
         "id": f"sample_{sample_id:04d}",
         "cohort": cohort,
+        "length_stratum": length_stratum,
         "modality": modality,
         "use_case": use_case,
         "domain": domain,
@@ -639,7 +542,7 @@ def main():
             spec = sample_dataset_spec(idx, total_samples)
             has_product = spec["modality"] == "i2i" and spec.get("product_path") is not None
             prompt_clean = build_clean_prompt(spec["text1"], spec["text2"], has_product, args.llm_prompts)
-            print(f"\n--- [SAMPLE #{spec['id']}] cohort={spec['cohort']} ---")
+            print(f"\n--- [SAMPLE #{spec['id']}] cohort={spec['cohort']} stratum={spec['length_stratum']} ---")
             print(f" Modality: {spec['modality']} | Use Case: {spec['use_case']} | Domain: {spec['domain']} | AR: {spec['aspect_ratio']} ({spec['width']}x{spec['height']})")
             print(f" Slot t=10.0 (text1): '{spec['text1']}' [Font: {spec['font1']} @ {spec['floor1']}pt]")
             print(f" Slot t=20.0 (text2): '{spec['text2'].replace(chr(10), ' / ')}' [Font: {spec['font2']} @ {spec['floor2']}pt]")
@@ -669,7 +572,7 @@ def main():
             continue
 
         spec = sample_dataset_spec(idx, total_samples)
-        print(f"[{idx:04d}/{total_samples:04d}] {sample_id} ({spec['modality']} | {spec['use_case']} | {spec['aspect_ratio']})...")
+        print(f"[{idx:04d}/{total_samples:04d}] {sample_id} ({spec['modality']} | {spec['use_case']} | {spec['aspect_ratio']} | {spec['length_stratum']})...")
 
         g1_path, g2_path, g1_info, g2_info = render_and_save_glyphs(spec, glyphs_dir)
         has_product = spec["modality"] == "i2i" and spec.get("product_path") is not None
@@ -701,6 +604,7 @@ def main():
         record = {
             "id": spec["id"],
             "cohort": spec["cohort"],
+            "length_stratum": spec["length_stratum"],
             "modality": spec["modality"],
             "use_case": spec["use_case"],
             "domain": spec["domain"],
