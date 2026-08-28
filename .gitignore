@@ -251,9 +251,8 @@ assets/
 !images/
 !images/*
 
-# Allow curated product reference packshots in data/products/
-!data/products/
-!data/products/**
+# Ignore generated datasets and products (stored on Hugging Face Hub)
+data/
 
 # Allow curated typography fonts in fonts/
 !fonts/

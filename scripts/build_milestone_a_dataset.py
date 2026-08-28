@@ -338,11 +338,100 @@ def sample_dataset_spec(sample_id: int, total_samples: int = 800) -> Dict:
     }
 
 
+def render_and_save_glyphs(spec: Dict, glyphs_dir: Path) -> Tuple[Path, Path, Dict, Dict]:
+    """Renders locked tight-crop glyphs for Slot 1 and Slot 2 according to font floors."""
+    sid = spec["id"]
+    g1_path = glyphs_dir / f"glyph_{sid}_slot10.png"
+    g2_path = glyphs_dir / f"glyph_{sid}_slot20.png"
+
+    g1_info = glyph_engine.render(
+        text=spec["text1"],
+        font_name_or_path=spec["font1"],
+        font_size_pt=spec["floor1"],
+        auto_size=True,
+    )
+    g1_info.image.save(g1_path)
+
+    g2_info = glyph_engine.render(
+        text=spec["text2"],
+        font_name_or_path=spec["font2"],
+        font_size_pt=spec["floor2"],
+        auto_size=True,
+    )
+    g2_info.image.save(g2_path)
+
+    return g1_path, g2_path, g1_info.__dict__, g2_info.__dict__
+
+
+def generate_target_image(spec: Dict, targets_dir: Path, delay: float = 9.5) -> Path:
+    """Calls OpenAI gpt-image-2 to generate ground-truth image and resizes to exact bucket dimensions."""
+    from PIL import Image
+    import io
+
+    sid = spec["id"]
+    target_path = targets_dir / f"target_{sid}.png"
+
+    if target_path.exists() and target_path.stat().st_size > 10000:
+        return target_path
+
+    # Build Teacher Prompt with explicit line structure
+    t1_lines = spec["text1"].split("\n")
+    t2_lines = spec["text2"].split("\n")
+
+    t1_desc = f"At top, {len(t1_lines)} line(s): '{' / '.join(t1_lines)}'"
+    t2_desc = f"Below it, {len(t2_lines)} line(s): '{' / '.join(t2_lines)}'"
+
+    teacher_prompt = (
+        f"Commercial advertising graphic poster for {spec['use_case']} ({spec['domain']}). "
+        f"{t1_desc}. {t2_desc}. "
+        f"Professional graphic typography design, high contrast, sharp studio lighting, commercial photography."
+    )
+
+    # Pick closest OpenAI size
+    ar = spec["aspect_ratio"]
+    if ar == "1:1":
+        api_size = "1024x1024"
+    elif ar in ["9:16", "4:5"]:
+        api_size = "1024x1536"
+    else:
+        api_size = "1536x1024"
+
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            res = client.images.generate(
+                model="gpt-image-2",
+                prompt=teacher_prompt,
+                quality="low",
+                size=api_size,
+            )
+            raw_bytes = base64.b64decode(res.data[0].b64_json)
+            img = Image.open(io.BytesIO(raw_bytes))
+
+            # Resize with Lanczos to exact canonical bucket dimensions (multiples of 16)
+            target_w, target_h = spec["width"], spec["height"]
+            img_resized = img.resize((target_w, target_h), Image.Resampling.LANCZOS)
+            img_resized.save(target_path)
+
+            time.sleep(delay)
+            return target_path
+        except Exception as e:
+            if "429" in str(e) or "rate_limit" in str(e).lower():
+                print(f" [429 RATE LIMIT] Backoff 12s (attempt {attempt+1}/{max_retries})...")
+                time.sleep(12.0)
+            else:
+                raise e
+
+    raise RuntimeError(f"Failed to generate target for {sid}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Tendoo AI - Master Dataset Synthesis Engine")
     parser.add_argument("--smoke", action="store_true", help="Run Smoke Test (10 samples)")
     parser.add_argument("--pilot", action="store_true", help="Run Pilot Test (60 samples)")
     parser.add_argument("--count", type=int, default=None, help="Custom sample count")
+    parser.add_argument("--execute", action="store_true", help="Actually execute API calls and glyph rendering (default: dry-run)")
+    parser.add_argument("--delay", type=float, default=9.5, help="Delay in seconds between API requests (default: 9.5s)")
     args = parser.parse_args()
 
     target_count = 10 if args.smoke else (60 if args.pilot else (args.count or 800))
@@ -357,21 +446,97 @@ def main():
 
     print("=" * 90)
     print(f" [*] TENDOO AI - MILESTONE A DATASET GENERATOR (TARGET COUNT: {target_count})")
+    print(f" [*] MODE: {'EXECUTE (API + GLYPHS)' if args.execute else 'DRY RUN (SPECIFICATION VERIFICATION)'}")
     print(f" [*] OUTPUT DIRECTORY: {output_dir}")
     print("=" * 90)
 
-    # Demo dry-run of specifications
-    print(" [*] Pre-generating dataset specifications and verifying typography pipeline...")
-    for idx in range(1, min(5, target_count + 1)):
+    if not args.execute:
+        # Dry-run inspection
+        print(" [*] Pre-generating dataset specifications and verifying typography pipeline...")
+        for idx in range(1, min(6, target_count + 1)):
+            spec = sample_dataset_spec(idx, target_count)
+            print(f"\n--- [SAMPLE #{spec['id']}] ---")
+            print(f" Modality: {spec['modality']} | Use Case: {spec['use_case']} | AR: {spec['aspect_ratio']} ({spec['width']}x{spec['height']})")
+            print(f" Slot 1 (t=10.0): '{spec['text1']}' [Font: {spec['font1']} @ {spec['floor1']}pt]")
+            print(f" Slot 2 (t=20.0): '{spec['text2'].replace(chr(10), ' / ')}' [Font: {spec['font2']} @ {spec['floor2']}pt]")
+            print(f" Student Clean Prompt: {spec['prompt_clean']}")
+        print("\n" + "=" * 90)
+        print(" [OK] Dry-run passed. To generate real data, run with '--execute'.")
+        print("=" * 90)
+        return
+
+    # Real execution
+    existing_ids = set()
+    if manifest_path.exists():
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        record = json.loads(line)
+                        existing_ids.add(record["id"])
+                    except Exception:
+                        pass
+    print(f" [*] Found {len(existing_ids)} existing records in manifest. Resuming...")
+
+    success_count = len(existing_ids)
+    for idx in range(1, target_count + 1):
+        sample_id = f"sample_{idx:04d}"
+        if sample_id in existing_ids:
+            continue
+
         spec = sample_dataset_spec(idx, target_count)
-        print(f"\n--- [SAMPLE #{spec['id']}] ---")
-        print(f" Modality: {spec['modality']} | Use Case: {spec['use_case']} | AR: {spec['aspect_ratio']} ({spec['width']}x{spec['height']})")
-        print(f" Slot 1 (t=10.0): '{spec['text1']}' [Font: {spec['font1']} @ {spec['floor1']}pt]")
-        print(f" Slot 2 (t=20.0): '{spec['text2'].replace(chr(10), ' / ')}' [Font: {spec['font2']} @ {spec['floor2']}pt]")
-        print(f" Student Clean Prompt: {spec['prompt_clean']}")
+        print(f"[{idx:04d}/{target_count:04d}] Processing {sample_id} ({spec['modality']} | {spec['use_case']} | {spec['aspect_ratio']})...")
+
+        # 1. Render Glyphs
+        g1_path, g2_path, g1_meta, g2_meta = render_and_save_glyphs(spec, glyphs_dir)
+
+        # 2. Generate Target Image via API
+        target_path = generate_target_image(spec, targets_dir, delay=args.delay)
+
+        # 3. Assemble Manifest Record
+        record = {
+            "id": spec["id"],
+            "modality": spec["modality"],
+            "use_case": spec["use_case"],
+            "domain": spec["domain"],
+            "aspect_ratio": spec["aspect_ratio"],
+            "width": spec["width"],
+            "height": spec["height"],
+            "prompt_clean": spec["prompt_clean"],
+            "target_image": str(target_path.relative_to(PROJECT_ROOT)).replace("\\", "/"),
+            "slots": [
+                {
+                    "time_offset": 10.0,
+                    "glyph_path": str(g1_path.relative_to(PROJECT_ROOT)).replace("\\", "/"),
+                    "font": spec["font1"],
+                    "font_size_pt": spec["floor1"],
+                    "text": spec["text1"],
+                    "width_px": g1_meta["width_px"],
+                    "height_px": g1_meta["height_px"],
+                    "token_count": g1_meta["token_count"],
+                },
+                {
+                    "time_offset": 20.0,
+                    "glyph_path": str(g2_path.relative_to(PROJECT_ROOT)).replace("\\", "/"),
+                    "font": spec["font2"],
+                    "font_size_pt": spec["floor2"],
+                    "text": spec["text2"],
+                    "width_px": g2_meta["width_px"],
+                    "height_px": g2_meta["height_px"],
+                    "token_count": g2_meta["token_count"],
+                }
+            ]
+        }
+
+        with open(manifest_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+        success_count += 1
+        print(f"   ===> [OK] {sample_id} saved successfully! (Total completed: {success_count})")
 
     print("\n" + "=" * 90)
-    print(" [OK] Pipeline specifications verified. Ready for batch generation execution.")
+    print(f" [*] BATCH COMPLETE: {success_count}/{target_count} samples generated in: {output_dir}")
+    print(f" [*] Manifest: {manifest_path}")
     print("=" * 90)
 
 
