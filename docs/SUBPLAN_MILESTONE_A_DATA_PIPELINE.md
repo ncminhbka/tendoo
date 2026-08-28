@@ -286,7 +286,6 @@ data/milestone_a/
 {
   "id": "sample_0001",
   "cohort": "standard",
-  "split": "train",
   "modality": "i2i",
   "use_case": "hero_product",
   "domain": "cosmetics",
