@@ -835,10 +835,10 @@ def _clean_product_name(product_path: Path) -> str:
 def _format_lines_desc(lines: List[str], position: str, font_style: str) -> str:
     n = len(lines)
     if n == 1:
-        return f"{position}, on 1 single line {font_style}: '{lines[0]}'"
+        return f"{position}, on 1 single line {font_style}: \"{lines[0]}\""
     else:
-        line_specs = ", ".join(f"Line {i+1}: '{line}'" for i, line in enumerate(lines))
-        return f"{position}, stacked vertically on {n} lines ({line_specs}) {font_style}"
+        line_specs = " and ".join(f"line {i+1} reads \"{line}\"" for i, line in enumerate(lines))
+        return f"{position}, stacked vertically on {n} distinct lines (where {line_specs}) {font_style}"
 
 
 def _build_teacher_prompt(spec: Dict, g1_lines: List[str], g2_lines: List[str]) -> str:
@@ -858,6 +858,7 @@ def _build_teacher_prompt(spec: Dict, g1_lines: List[str], g2_lines: List[str]) 
     negative_rule = (
         "CRITICAL TYPOGRAPHY RESTRICTION: Render ONLY the exact text specified above, with fully correct "
         "Vietnamese diacritics (tone marks) -- do not drop, alter, or simplify any dấu. "
+        "DO NOT render metadata labels like 'line 1' or delimiter symbols like slashes '/', hyphens, or bullet points. "
         "DO NOT add any other words, badges, discount numbers, phone numbers, website URLs, or decorative "
         "gibberish text. There must be ZERO extraneous text anywhere on the canvas."
     )
