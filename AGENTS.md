@@ -118,10 +118,6 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
 5. **BẮT BUỘC PHÂN TÁCH TIME OFFSET ($t=10, 20...$) KÈM ĐỊNH HƯỚNG BỀ MẶT CHO ĐA THỰC THỂ (MULTI-ENTITY DISAMBIGUATION RULE)**:
    - **Nguyên nhân**:
      - Nếu gộp các khối text độc lập về cùng mốc $t=10.0$ tại $(0, 0)$, DiT thấy tọa độ không-thời gian trùng lặp $\rightarrow$ Trộn lẫn từ ngữ của 2 câu thành chuỗi lai tạp và in đè lên nhau.
-     - Nếu tách mốc $t=10.0$ và $t=20.0$ nhưng KHÔNG có 2 bề mặt vật thể rõ ràng trong Prompt $\rightarrow$ Khối $t=20.0$ bị suy hao và biến mất.
-   - **Quy tắc bắt buộc**:
-     - Mỗi thực thể độc lập (Sản phẩm, Tiêu đề, Slogan) **BẮT BUỘC mang Time Offset riêng**: Thực thể 1 ở $t=10.0$, Thực thể 2 ở $t=20.0$, Thực thể 3 ở $t=30.0$.
-     - Prompt **BẮT BUỘC định hình 2 bề mặt vật thể riêng biệt** tương ứng (ví dụ: *biển hiệu trên cao* cho $t=10.0$ và *màn hình đế bục/thân sản phẩm* cho $t=20.0$).
      - Đảm bảo từng Glyph đạt độ phân giải $\ge 10-12$ latent tokens height ($160-192\text{px}$) để tín hiệu ở $t=20.0$ sắc nét $100\%$.
 
 6. **TUYỆT ĐỐI KHÔNG ĐƯA TỈ LỆ KHUNG HÌNH VÀ THÔNG SỐ ĐỘ PHÂN GIẢI VÀO PROMPT (DIMENSIONS / RESOLUTION POLLUTION)**:
@@ -130,13 +126,6 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
 
 7. **BẮT BUỘC TUÂN THỦ CÁC MỐC TIME OFFSET TIỀN HUẤN LUYỆN ($t \in \{10.0, 20.0, 30.0\}$) (CANONICAL PRETRAINED OFFSETS RULE)**:
    - **Nguyên nhân**: BFL tiền huấn luyện FLUX.2 độc quyền với các mốc thời gian rời rạc $t = 10 \times k$ ($10.0, 20.0, 30.0$). Trọng số của các Attention Heads đã được tối ưu sâu để nhận diện $t=10.0$ là kênh tham chiếu chính. Khi đưa vào các mốc $t < 10.0$ (như $t=5.0$), mô hình hoàn toàn không có biểu diễn tiền huấn luyện (Out-of-Distribution) nên sẽ bỏ qua $t=5.0$ và dồn toàn bộ sự chú ý vào $t=10.0$.
-   - **Quy tắc bắt buộc & Định hướng Huấn luyện LoRA (Giai đoạn 3)**:
-     - Cả trong suy luận (Inference) và huấn luyện LoRA (Training): **TUYỆT ĐỐI KHÔNG DÙNG $t < 10.0$**.
-     - Bắt buộc chuẩn hóa 3 kênh thời gian:
-       + **Kênh 1 ($t = 10.0$)**: Ảnh Sản phẩm chính HOẶC Tiêu đề chính (Title).
-       + **Kênh 2 ($t = 20.0$)**: Slogan phụ HOẶC Biển hiệu 2.
-       + **Kênh 3 ($t = 30.0$)**: Logo / Tem nhãn thương hiệu.
-     - **Mục tiêu của LoRA DiT 4B (Giai đoạn 3)**: Tái cân bằng ma trận Attention Query/Key trên đúng các mốc $10.0, 20.0, 30.0$ này để biến kênh $t=20.0$ và $t=30.0$ thành vững chắc $100\%$ mà không phụ thuộc vào câu từ của Prompt.
 
 8. **KHỐI LƯỢNG TOKEN & TIỀM NĂNG TIẾP NHẬN ĐA PHƯƠNG THỨC Ở CÁC MỐC THỜI GIAN XA (TOKEN MASS & MULTI-MODAL TIME HORIZON RULE)**:
    - **Phát hiện thực nghiệm đối chứng (`exp44` vs `exp45`)**:
@@ -154,7 +143,7 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
 10. **QUY LUẬT VÀNG ĐƠN KHỐI ($t=10.0$) VS ĐA KHỐI ($\ge 2$ TEXTS) TRÊN DiT BASE 4B (SINGLE-TEXT ABSOLUTE PRESERVATION LAW)**:
     - **Khẳng định thực nghiệm $100\%$ (Kiểm chứng qua exp49 - exp51)**:
       + Khi chỉ có **DUY NHẤT 1 KHỐI TEXT đặt tại $t=10.0$**: Chữ **LUÔN LUÔN ĐƯỢC GIỮ ĐẸP VÀ CHUẨN XÁC TUYỆT ĐỐI $100\%$**, biến hóa xuất sắc theo mọi chất liệu và ánh sáng trong Prompt (chữ vàng dập nổi 3D, đèn neon phát quang, đổ bóng studio).
-      + Khi có **TỪ 2 KHỐI TEXT TRỞ LÊN ($\ge 2$ texts)** trên mô hình Base 4B zero-shot: Kết quả **CỰC KỲ LUNG LAY, lúc được lúc không** và phụ thuộc nặng nề vào việc prompt có mô tả chính xác bề mặt vật thể hay không.
+      + Khi có **TỪ 2 KHỐI TEXT TRỞ LÊN ($\ge 2$ texts)** trên mô hình Base 4B zero-shot: Kết quả **CỰC KỲ LUNG LAY, lúc được lúc không**
     - **Tầm quan trọng sống còn của LoRA (Giai đoạn 3)**:
       + Mô hình Base 4B nguyên bản đã đủ $100\%$ độ tin cậy cho bài toán: **1 Ảnh Sản phẩm ($t=60$) + 1 Dòng Chữ Chính ($t=10$)**.
       + Để mở rộng năng lực phục vụ **Đa khối Text ($\ge 2$ texts)** đạt chuẩn $100\%$ bất chấp prompt tự nhiên, bắt buộc phải hoàn thành **Huấn luyện LoRA DiT 4B ở Giai đoạn 3**.
@@ -208,23 +197,8 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + **Cơ chế 2 (Nghẽn cục bộ vị trí / Dấu phụ phức tạp)**: Khối Subtitle `"CHỐNG ỒN CHỦ ĐỘNG"` tại $t=20$ không tự khỏi khi tăng token, cần phân lập giữa đặc thù RoPE $t=20$ và cụm 4 dấu phụ liên tiếp `Ố-Ồ-Ủ-Ộ`.
     - **Định hướng công bố khoa học**: Mọi báo cáo kỹ thuật và pipeline huấn luyện LoRA cần kết hợp cả 2 trục: Chuẩn hóa kích thước Token Mass tối thiểu và Tinh chỉnh Attention Routing phân luồng.
 
-15. **ĐỊNH LUẬT CHẠM TRẦN HEURISTIC ZERO-SHOT & TÍNH TẤT YẾU CỦA LORA (THE ZERO-SHOT HEURISTIC CEILING LAW)**:
-    - **Phát hiện thực nghiệm (`exp60` vs `exp61`)**:
-      + Mô hình Base 4B vẽ được dấu kép phức tạp (minh chứng: `"CHỐNG"` ở `exp60` Pass C đẹp $100\%$).
-      + Nhưng khi đưa vào bài toán thương mại đầy đủ (3 Text + 1 Sản phẩm thật): Mọi mẹo Prompting, Whitelist bề mặt vật đỡ (ruy băng, kính mờ, bảng kim loại) đều **hoàn toàn bất lực trong việc ép DiT Base định tuyến đúng dòng chữ giữa**.
-    - **Kết luận tối hậu cho Giai đoạn 3**:
-      + Các giải pháp Heuristic "rẻ/miễn phí" đã chạm trần vật lý của mô hình Base.
-      + **Huấn luyện LoRA DiT 4B Base (Giai đoạn 3) là giải pháp DUY NHẤT, BẮT BUỘC VÀ TẤT YẾU** để biến FLUX.2 thành cỗ máy sản xuất Banner thương mại 4-slot đạt chuẩn $100\%$.
 
-16. **QUY LUẬT PHÂN CẤP THỊ GIÁC 3 TẦNG & BỐ CỤC TỰ NHIÊN TRONG BANNER THƯƠNG MẠI (THE 3-TIER TYPOGRAPHIC HIERARCHY LAW)**:
-    - **Phát hiện từ thực tế nghiệp vụ & Thử nghiệm Prompt**:
-      + **Tầng 1 (Slot $t=10.0$ - Headline / Bắt mắt tức thì)**: Đóng vai trò tiêu đề chính, chữ nổi 3D lớn nhất, dập nổi kim loại/vàng gold/neon, chiếm $45\%$ trọng tâm thị giác.
-      + **Tầng 2 (Slot $t=20.0$ - Subtitle / Thông tin bổ trợ)**: Đóng vai trò cung cấp thông tin chi tiết (thời gian, chất lượng, thông số), chữ vừa, sắc nét, thanh lịch, chiếm $30\%$ trọng tâm thị giác.
-      + **Tầng 3 (Slot $t=30.0$ - CTA Badge / Kêu gọi hành động)**: Đóng vai trò kích thích chuyển đổi, thường gồm nhiều cụm từ ngắn gọn ("Ghé ngay hôm nay!", "Deal cực hot - Số lượng có hạn!"), chữ nhỏ hơn, trình bày dưới dạng **Huy hiệu / Badge / Khung neon / Sticker nhỏ xinh** ở các góc hoặc chân đế sản phẩm, chiếm $25\%$ trọng tâm thị giác.
-      + Do toàn bộ tập dữ liệu Ground-Truth từ Gemini Teacher được cấu trúc chuẩn hóa theo đúng phân cấp 3 tầng này, LoRA sẽ tự động học được mối liên kết không gian:
-        * Tọa độ $t=10 \rightarrow$ Phóng to kích thước, dập nổi 3D ở phần trên/trung tâm.
-        * Tọa độ $t=20 \rightarrow$ Nét thẳng, thanh mảnh, nằm liền kề dưới tiêu đề.
-        * Tọa độ $t=30 \rightarrow$ Tự động bao gói thành các khung huy hiệu (Badge/Neon Pill) nhỏ xinh ở các góc.
+
 
 17. **ĐỊNH LUẬT BỘI SỐ 10 TIỀN HUẤN LUYỆN THẮNG TUYỆT ĐỐI GIẢ THUYẾT GÓC QUAY TOÁN HỌC (CANONICAL PRETRAINED DISCRETE OFFSETS SUPREMACY LAW)**:
     - **Kiểm chứng thực nghiệm trực tiếp (`probe_rope_phase_aliasing.py`)**:
@@ -280,17 +254,7 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + Nếu chữ bị co nhỏ dưới ngưỡng phân giải hiển thị trên Canvas (chiều cao nét chữ rơi xuống dưới $\sim 20 - 24\text{px}$), bộ giải mã VAE sẽ không đủ thông tin latent dẫn đến nét chữ bị vỡ hoặc sai chính tả.
       + Khi muốn chữ uốn lượn (Trái Đất, ruy băng): Glyph bắt buộc là 1 dòng dài chiều ngang (1D Manifold).
 
-21. **ĐỊNH LUẬT CẠNH TRANH KHÔNG GIAN BỐ CỤC VÀ ĐỘ NÉT 100% CỦA VĂN BẢN ĐA DÒNG (THE SPATIAL REAL-ESTATE COMPETITION & MULTI-LINE TEXT LAW)**:
-    - **Kiểm chứng thực nghiệm trực tiếp (`test_perfume_916_bevietnam_split.png`)**:
-      + **Chữ đạt độ chính xác 100%**: Khi Glyph bảo toàn chiều cao `box_h=448px`, khoảng cách dòng $32\%$ và dùng font nét dày (`bevietnam`), mô hình vẽ **ĐÚNG 100% CẢ 4 DÒNG CHỮ**, bao gồm cả dòng `"Mua 1 tặng 1"` và ngày tháng `"Đến hết ngày 26/5"`.
-      + **Hiện tượng Cạnh tranh Không gian (Spatial Real-Estate Trade-Off)**:
-        * Khi khối chữ 4 dòng chiếm `box_h = 448px` trên Canvas 9:16 ($576 \times 1024$), khối text chiếm tới $\sim 70\%$ diện tích nửa dưới của poster.
-        * Chủ thể sản phẩm (chai nước hoa) bị đẩy dồn lên trên và co lại chỉ chiếm $\sim 30\%$ diện tích nửa trên ("lọ nước hoa bị lùn đi").
-    - **Bản chất Khoa học & Quy tắc Thiết kế Hệ thống**:
-      + **Tổng diện tích Canvas là hữu hạn ($100\%$)**: Khối lượng token và chiều cao của Glyph Box quyết định trực tiếp "thị phần không gian" (spatial real-estate) trên bức ảnh sinh ra.
-      + **Muốn Sản phẩm To nổi bật ($\ge 60\%$) + Text Đa Dòng Nhỏ Tinh Tế ($\le 40\%$)**:
-        * Hoặc chuyển sang Canvas vuông $1:1$ ($1024 \times 1024$) hoặc $4:5$ ($896 \times 1120$) để có bề ngang rộng hơn cho text dàn trải mà không lấn chiếm chiều dọc.
-        * Hoặc dùng cơ chế **In-Context Product Reference Image ($t=60.0$)** để khóa cứng tỷ lệ và hình dáng chai nước hoa, ngăn không cho DiT tự ý thu nhỏ chai nước hoa!
+
 
 22. **NGƯỠNG PHÂN GIẢI THỰC NGHIỆM TRONG ODE DENOISE CỦA DiT & BÀI HỌC BÁC BỎ GIẢ THUYẾT (THE EMPIRICAL DiT DENOISE RESOLUTION FLOOR & FALSIFICATION LAW)**:
     - **Bài Học Cảnh Tỉnh Về "Bẫy Ẩn Dụ Khoa Học"**:

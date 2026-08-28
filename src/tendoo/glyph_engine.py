@@ -438,26 +438,15 @@ def compute_optimal_glyph_box(
     min_floor = meta["min_floor_pt"]
     spacing_ratio = meta["default_line_spacing"]
 
-    # Choose font size: if not given, choose a crisp, comfortable size above floor
+    # Set font size to exact font min_floor by default, or validate against min_floor
     if font_size_pt is None:
-        words = text.split()
-        if len(words) <= 3:
-            # Punchy badge / CTA / brand
-            font_size_pt = max(min_floor, 44)
-        elif len(words) <= 7:
-            # Medium headline or slogan
-            font_size_pt = max(min_floor, 48)
-        else:
-            # Longer quote / description
-            font_size_pt = max(min_floor, 40)
-    else:
-        # Enforce Nyquist minimum floor
-        if font_size_pt < min_floor:
-            logger.debug(
-                f"Requested font size {font_size_pt}pt is below {meta['tier']} floor ({min_floor}pt). "
-                f"Auto-elevating to {min_floor}pt to prevent spiky edges."
-            )
-            font_size_pt = min_floor
+        font_size_pt = min_floor
+    elif font_size_pt < min_floor:
+        logger.debug(
+            f"Requested font size {font_size_pt}pt is below {meta['tier']} floor ({min_floor}pt). "
+            f"Auto-elevating to {min_floor}pt to prevent spiky edges."
+        )
+        font_size_pt = min_floor
 
     lines = auto_wrap_text(
         text=text,
@@ -495,9 +484,9 @@ def compute_optimal_glyph_box(
     final_w = int(math.ceil(total_w / 16.0) * 16)
     final_h = int(math.ceil(total_h / 16.0) * 16)
 
-    # Hard architectural limits
-    final_w = max(32, min(1024, final_w))
-    final_h = max(32, min(1024, final_h))
+    # Enforce minimum lower bound for VAE patch (No arbitrary 1024px ceiling)
+    final_w = max(32, final_w)
+    final_h = max(32, final_h)
 
     return final_w, final_h, font_size_pt, lines
 
