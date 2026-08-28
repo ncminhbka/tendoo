@@ -342,15 +342,17 @@ LLM_SYSTEM_PROMPT = """Bạn là chuyên gia Art Director biên soạn prompt m�
 Mục tiêu: Viết MỘT đoạn văn ngắn gọn (3-4 câu) bằng tiếng Việt mô tả bối cảnh, chất liệu, ánh sáng và vị trí của các thành phần poster.
 
 QUY TẮC BẮT BUỘC ĐỂ GIỮ CHUẨN MỎ NEO KHÔNG GIAN (VI PHẠM LÀ HỎNG DỮ LIỆU):
-1. BẮT BUỘC có thẻ "(1)" đứng trước mô tả của khối chữ thứ nhất (tiêu đề chính).
-2. BẮT BUỘC có thẻ "(2)" đứng trước mô tả của khối chữ thứ hai (phụ đề/slogan).
+1. BẮT BUỘC có thẻ "(1)" đứng trước câu mô tả HÌNH THỨC của khối chữ thứ nhất (tiêu đề chính): Vị trí ở đâu trên canvas, làm bằng chất liệu gì (acrylic, kim loại dập nổi 3D, neon phát sáng, mạ vàng, khắc gỗ...), hiệu ứng đổ bóng ra sao.
+2. BẮT BUỘC có thẻ "(2)" đứng trước câu mô tả HÌNH THỨC của khối chữ thứ hai (phụ đề/slogan): Vị trí bên dưới, chất liệu (decal mờ, chữ trắng thanh mảnh, viền led...), cách bố trí.
 {product_rule}
-3. TUYỆT ĐỐI KHÔNG LẶP LẠI BẤT KỲ TỪ NÀO trong nội dung chữ được cung cấp (Representation Clash).
+3. CẢNH BÁO QUAN TRỌNG VỀ NỘI DUNG CHỮ:
+   - TUYỆT ĐỐI KHÔNG ĐƯỢC TỰ BỊA RA CÂU CHỮ / SLOGAN GIẢ (Không được viết kiểu: '(1) Nước hoa quyến rũ', '(2) Mua ngay hôm nay').
+   - CHỈ MÔ TẢ HÌNH THỨC VẬT LÝ CỦA NÉT CHỮ (Ví dụ ĐÚNG: '(1) Tiêu đề chính chữ nổi mạ vàng 3D sang trọng đặt ở phía trên...', '(2) Dòng phụ đề màu trắng thanh lịch đổ bóng mờ ở phía dưới...').
 4. KHÔNG dùng các từ ngữ sáo rỗng (như 'bữa tiệc thị giác', 'tinh hoa hội tụ', 'đẹp lung linh', 'tuyệt mỹ').
-5. TẬP TRUNG 100% VÀO VẬT LÝ VÀ QUANG HỌC: Chất liệu chế tác (acrylic, kim loại dập nổi 3D, neon uốn lượn, mạ vàng, khắc gỗ...), hướng chiếu sáng (key light, rim light, spotlight, softbox), đổ bóng và độ tương phản.
-6. CÂU VĂN TỰ NHIÊN, KHÔNG RẬP KHUÔN: Biến hóa cấu trúc câu xung quanh thẻ (1) và (2), không viết rập khuôn máy móc.
+5. TẬP TRUNG 100% VÀO VẬT LÝ VÀ QUANG HỌC: Chất liệu chế tác, hướng chiếu sáng (key light, rim light, spotlight, softbox), đổ bóng và độ tương phản.
+6. CÂU VĂN TỰ NHIÊN, UYỂN CHUYỂN, KHÔNG RẬP KHUÔN: Biến hóa cấu trúc câu xung quanh thẻ (1) và (2), không viết rập khuôn máy móc.
 7. TUYỆT ĐỐI KHÔNG ghi độ phân giải hay tỉ lệ khung hình (như '1024x1024', '9:16', '4k', '8k').
-8. Trả về DUY NHẤT đoạn văn bản hoàn chỉnh, không giải thích, không tiêu đề."""
+8. Trả về DUY NHẤT một đoạn văn xuôi hoàn chỉnh, không gạch đầu dòng, không tiêu đề."""
 
 
 def llm_clean_prompt(spec: Dict, has_product: bool, max_retries: int = 3) -> Optional[str]:
@@ -364,13 +366,18 @@ def llm_clean_prompt(spec: Dict, has_product: bool, max_retries: int = 3) -> Opt
     style_seed = random.choice(DYNAMIC_STYLE_SEEDS)
     syntax_hint = random.choice(SYNTACTIC_FLOW_HINTS)
 
+    num_words_1 = len(text1.split())
+    num_lines_1 = len(text1.split("\n"))
+    num_words_2 = len(text2.split())
+    num_lines_2 = len(text2.split("\n"))
+
     user_msg = (
         f"Ngành hàng/Domain: {spec.get('domain', 'general')}\n"
         f"Mục đích poster (Use-Case): {spec.get('use_case', 'commercial')}\n"
         f"Gợi ý phong cách nghệ thuật: {style_seed}\n"
         f"Gợi ý cấu trúc câu: {syntax_hint}\n"
-        f"Nội dung chữ thứ nhất (TUYỆT ĐỐI KHÔNG ĐƯỢC LẶP LẠI TỪ NÀO): {text1}\n"
-        f"Nội dung chữ thứ hai (TUYỆT ĐỐI KHÔNG ĐƯỢC LẶP LẠI TỪ NÀO): {text2}\n"
+        f"Đặc điểm khối chữ (1): Tiêu đề chính ({num_words_1} từ, {num_lines_1} dòng)\n"
+        f"Đặc điểm khối chữ (2): Phụ đề bổ trợ ({num_words_2} từ, {num_lines_2} dòng)\n"
         f"Có sản phẩm thật trong ảnh: {'Có (cần thẻ (3))' if has_product else 'Không'}"
     )
 
