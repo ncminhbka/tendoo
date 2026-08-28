@@ -180,8 +180,27 @@ FONT_STYLE_DESCRIPTORS = {
 }
 
 # ==================================================================================================
-# 5. STUDENT CLEAN-PROMPT BUILDER (RULE: never leak literal text; must carry (1)/(2) tags)
+# 5. STUDENT CLEAN-PROMPT BUILDER (RULE: never leak literal text; keep (1)/(2)/(3) spatial anchors)
 # ==================================================================================================
+DYNAMIC_STYLE_SEEDS = [
+    "Phong cách studio thương mại cao cấp với bệ trưng bày hình khối mạ chrome tối giản, ánh sáng tương phát điện ảnh.",
+    "Phong cách công nghệ hiện đại Cyberpunk với ánh sáng neon dịu, phông nền gradient trừu tượng sắc sảo.",
+    "Phong cách Bắc Âu Scandinavian thanh lịch, ánh sáng ban mai tự nhiên dịu nhẹ, tone màu gỗ và pastel trang nhã.",
+    "Phong cách tạp chí thời trang quốc tế Editorial/Vogue, bố cục bất đối xứng tinh tế, tương phản kịch tính.",
+    "Phong cách ẩm thực và đời sống ấm cúng, bề mặt gỗ mộc mạc, ánh sáng mềm tôn vinh độ tươi ngon.",
+    "Phong cách Retro Vintage hoài niệm thập niên 90, hạt grain điện ảnh nhẹ, màu sắc cổ điển sang trọng.",
+    "Phong cách thiết kế phẳng Bauhaus hiện đại, các mảng màu hình học cân đối, không gian thoáng đãng.",
+    "Phong cách Zen tối giản Nhật Bản, phông nền sa thạch trung tính, ánh sáng xiên đổ bóng tự nhiên dài.",
+]
+
+SYNTACTIC_FLOW_HINTS = [
+    "Khởi đầu câu bằng vị trí không gian rồi đến chất liệu và vai trò khối chữ (ví dụ: 'Ở phần trên cùng, tiêu đề chính được chế tác bằng...').",
+    "Khởi đầu câu bằng chất liệu chế tác rồi mới đến vị trí (ví dụ: 'Sử dụng chữ kim loại mạ vàng sang trọng, tiêu đề chính tọa lạc tại...').",
+    "Tập trung miêu tả hiệu ứng quang học và đổ bóng studio của khối chữ trước khi mô tả vị trí.",
+    "Sử dụng câu ghép mô tả sự chuyển tiếp tự nhiên giữa tiêu đề chính và phụ đề bổ trợ.",
+    "Mô tả trực diện phong cách typography hiện đại với sự hòa quyện giữa chất liệu chữ và phông nền studio.",
+]
+
 ENV_SETTINGS = [
     "Bối cảnh studio thương mại hiện đại với bệ trưng bày hình khối tối giản",
     "Không gian chụp ảnh sản phẩm chuyên nghiệp phong cách Bắc Âu trang nhã",
@@ -189,43 +208,98 @@ ENV_SETTINGS = [
     "Không gian nội thất sang trọng với ánh sáng tự nhiên dịu nhẹ",
     "Bối cảnh công nghệ hiện đại với hiệu ứng ánh sáng gradient tinh tế",
     "Bố cục poster đồ họa thương mại cao cấp với các mảng màu cân đối",
+    "Không gian tối giản hiện đại với phông nền bê tông mài và gỗ sáng màu",
+    "Phông nền đen mờ sang trọng tôn vinh tối đa các chi tiết phản quang",
 ]
+
 ROLE_DESCRIPTORS_1 = [
     "Khối tiêu đề chính", "Dòng chữ thông điệp nổi bật", "Tiêu đề vị trí",
     "Khối tên thương hiệu chính", "Dòng chữ chủ đề lớn", "Tiêu đề thông điệp",
 ]
+
 ROLE_DESCRIPTORS_2 = [
     "Dòng phụ đề bổ trợ", "Khối thông tin chi tiết 2 dòng", "Dòng chú thích nội dung",
     "Khối thông điệp phụ", "Khối quyền lợi đãi ngộ", "Dòng slogan ngắn gọn",
 ]
+
 POSITION_DESCRIPTORS_1 = [
     "ở phía trên chính giữa", "ở phần trên cùng của bố cục", "ở góc trên cân đối",
-    "ở vị trí trung tâm phía trên", "chạy ngang phần trên canvas",
+    "ở vị trí trung tâm phía trên", "chạy ngang phần trên canvas", "tọa lạc trang trọng ở nửa trên",
 ]
+
 POSITION_DESCRIPTORS_2 = [
     "ở phía dưới chính giữa", "ở phần chân đế bên dưới", "nằm ngay bên dưới tiêu đề",
-    "ở nửa dưới của poster", "ở vị trí góc dưới thanh lịch",
+    "ở nửa dưới của poster", "ở vị trí góc dưới thanh lịch", "bố trí cân xứng ở phần chân poster",
 ]
-MATERIALS = [
-    "chữ kim loại dập nổi 3D mạ vàng sang trọng",
-    "chữ phát sáng hiệu ứng đèn neon hiện đại",
+
+MATERIALS_TITLE = [
+    "chữ kim loại dập nổi 3D mạ vàng ánh kim sang trọng",
+    "chữ phát sáng hiệu ứng đèn neon uốn lượn hiện đại rực rỡ",
+    "chữ in nổi chất liệu acrylic cao cấp trong suốt bóng bẩy",
+    "chữ kim loại chrome bạc phản chiếu ánh sáng studio sắc nét",
+    "chữ vàng đồng cổ điển ánh kim dập nổi tương phản cao",
+    "nét chữ typography đậm đà phong cách hiện đại dập chìm",
+    "chữ sơn mài đen bóng viền kim loại sang trọng",
+    "chữ gỗ khắc mộc tinh xảo với vân gỗ tự nhiên ấm áp",
+]
+
+MATERIALS_SUBTITLE = [
     "nét chữ màu trắng thanh lịch đổ bóng studio mềm mại",
-    "chữ in nổi 3D chất liệu acrylic cao cấp sắc nét",
+    "chữ decal mờ tinh giản với độ tương phản sắc nét",
+    "dòng chữ màu bạc ánh kim thanh mảnh trang nhã",
     "chữ khắc chìm phong cách tối giản tương phản rõ ràng",
-    "chữ màu vàng đồng cổ điển ánh kim rực rỡ",
-    "nét chữ đậm đà phong cách typography hiện đại",
+    "nét chữ phát quang viền led dịu mắt tạo chiều sâu không gian",
+    "chữ màu vàng nhạt tinh tế hài hòa với bố cục",
 ]
+
 PHOTOGRAPHY_LIGHTING = [
     "Ánh sáng studio tương phản cao, đổ bóng tự nhiên sắc nét, phong cách nhiếp ảnh thương mại chuẩn mực.",
     "Ánh sáng tự nhiên dịu mắt, độ chi tiết cao, màu sắc hài hòa sống động.",
     "Ánh sáng spotlight tập trung vào chủ thể, chiều sâu trường ảnh mượt mà.",
     "Phong cách thiết kế poster quảng cáo thương mại cao cấp, bố cục cân xứng hoàn hảo.",
+    "Ánh sáng viền rim-light sắc sảo tách bạch chủ thể trên nền tối, tạo chiều sâu quang học tinh tế.",
+    "Ánh sáng khuếch tán softbox đa chiều, loại bỏ phản chiếu gắt, tôn vinh chất liệu chân thực.",
 ]
 
-PRODUCT_ROLE_DESCRIPTORS = [
-    "Sản phẩm được đặt làm tiêu điểm trung tâm",
-    "Sản phẩm nổi bật ở phần dưới khung hình",
-    "Sản phẩm được trưng bày trang trọng giữa khung hình",
+PRODUCT_PATTERNS = [
+    "(3) Sản phẩm thật được đặt trang trọng làm tiêu điểm trung tâm, đón ánh sáng studio nổi bật toàn bộ kiểu dáng.",
+    "(3) Ở vị trí trọng tâm khung hình, sản phẩm thật nổi bật với độ sắc nét và chi tiết bề mặt chân thực.",
+    "(3) Sản phẩm thật được trưng bày ngay ngắn ở phần chân đế, tạo liên kết thị giác hài hòa với các khối chữ.",
+    "(3) Đặt tại trung tâm bố cục, sản phẩm thật bắt sáng tự nhiên với chiều sâu trường ảnh mượt mà.",
+]
+
+# 6 diverse syntactic patterns for (1) and (2) in combinatorial fallback
+COMBINATORIAL_PATTERNS = [
+    # Pattern 1: Vị trí trước
+    lambda r1, p1, m1, r2, p2, m2: (
+        f"(1) {p1.capitalize()}, {r1.lower()} được chế tác tinh xảo bằng {m1}. "
+        f"(2) {p2.capitalize()}, {r2.lower()} nổi bật với {m2}."
+    ),
+    # Pattern 2: Chất liệu trước
+    lambda r1, p1, m1, r2, p2, m2: (
+        f"(1) Sử dụng {m1}, {r1.lower()} được bố trí trang nhã {p1}. "
+        f"(2) {r2.capitalize()} với {m2} được đặt {p2} tạo điểm nhấn cân đối."
+    ),
+    # Pattern 3: Động từ thị giác / ánh sáng
+    lambda r1, p1, m1, r2, p2, m2: (
+        f"(1) {r1} làm bằng {m1} thu hút ánh nhìn {p1}. "
+        f"(2) Đi kèm ngay {p2} là {r2.lower()} mang {m2} bổ trợ thông tin rõ nét."
+    ),
+    # Pattern 4: Thiết kế bố cục cân đối
+    lambda r1, p1, m1, r2, p2, m2: (
+        f"(1) Thiết kế bố trí {r1.lower()} bằng {m1} tọa lạc {p1}. "
+        f"(2) Nửa dưới khung hình đón nhận {r2.lower()} {p2} với {m2} thanh lịch."
+    ),
+    # Pattern 5: Mô tả trực diện tinh tế
+    lambda r1, p1, m1, r2, p2, m2: (
+        f"(1) {r1} {p1} làm nổi bật hiệu ứng {m1}. "
+        f"(2) {r2} {p2} trình bày bằng {m2} sắc sảo và mạch lạc."
+    ),
+    # Pattern 6: Tương phản sáng tối / studio
+    lambda r1, p1, m1, r2, p2, m2: (
+        f"(1) Ánh sáng tôn vinh {r1.lower()} mang {m1} hiện diện {p1}. "
+        f"(2) Hòa quyện cùng tổng thể, {r2.lower()} {p2} thể hiện bằng {m2} tinh tế."
+    ),
 ]
 
 
@@ -236,55 +310,70 @@ def _leaks(candidate: str, *texts: str) -> bool:
             line = line.strip()
             if line and line.lower() in cand_low:
                 return True
+    # Also forbid dimension/resolution leaks
+    for forbidden in ["1024x1024", "768x1344", "896x1152", "1344x768", "9:16", "16:9", "4:5", "1:1", "4k", "8k"]:
+        if forbidden in cand_low:
+            return True
     return False
 
 
-def combinatorial_clean_prompt(text1: str, text2: str, has_product: bool) -> str:
+def combinatorial_clean_prompt(spec: Dict, has_product: bool) -> str:
+    text1, text2 = spec["text1"], spec["text2"]
     env = random.choice(ENV_SETTINGS)
-    r1, p1, m1 = random.choice(ROLE_DESCRIPTORS_1), random.choice(POSITION_DESCRIPTORS_1), random.choice(MATERIALS)
-    r2, p2, m2 = random.choice(ROLE_DESCRIPTORS_2), random.choice(POSITION_DESCRIPTORS_2), random.choice(MATERIALS)
+    r1, p1, m1 = random.choice(ROLE_DESCRIPTORS_1), random.choice(POSITION_DESCRIPTORS_1), random.choice(MATERIALS_TITLE)
+    r2, p2, m2 = random.choice(ROLE_DESCRIPTORS_2), random.choice(POSITION_DESCRIPTORS_2), random.choice(MATERIALS_SUBTITLE)
     light = random.choice(PHOTOGRAPHY_LIGHTING)
-    parts = [
-        f"{env}.",
-        f"(1) {r1} {p1} {m1}.",
-        f"(2) {r2} {p2} {m2}.",
-    ]
+    pattern_fn = random.choice(COMBINATORIAL_PATTERNS)
+    typography_part = pattern_fn(r1, p1, m1, r2, p2, m2)
+
+    parts = [f"{env}.", typography_part]
     if has_product:
-        parts.append(f"(3) {random.choice(PRODUCT_ROLE_DESCRIPTORS)}.")
+        parts.append(random.choice(PRODUCT_PATTERNS))
     parts.append(light)
     prompt_clean = " ".join(parts)
     assert not _leaks(prompt_clean, text1, text2), f"Leak detected in combinatorial prompt: {prompt_clean}"
     assert "(1)" in prompt_clean and "(2)" in prompt_clean
+    if has_product:
+        assert "(3)" in prompt_clean
     return prompt_clean
 
 
-LLM_SYSTEM_PROMPT = """Bạn là bộ sinh mô tả bố cục poster quảng cáo cho pipeline huấn luyện AI.
-Nhiệm vụ: viết MỘT đoạn mô tả bối cảnh + bố cục bằng tiếng Việt, gồm:
-- 1 câu mô tả bối cảnh/studio chung.
-- Một mục đánh dấu "(1) ..." mô tả VAI TRÒ, VỊ TRÍ và CHẤT LIỆU của khối chữ thứ nhất (tiêu đề).
-- Một mục đánh dấu "(2) ..." mô tả VAI TRÒ, VỊ TRÍ và CHẤT LIỆU của khối chữ thứ hai (phụ đề).
-{product_line}
-- 1 câu mô tả ánh sáng/phong cách nhiếp ảnh.
+LLM_SYSTEM_PROMPT = """Bạn là chuyên gia Art Director biên soạn prompt mô tả bố cục poster thương mại cho mô hình DiT (FLUX.2).
+Mục tiêu: Viết MỘT đoạn văn ngắn gọn (3-4 câu) bằng tiếng Việt mô tả bối cảnh, chất liệu, ánh sáng và vị trí của các thành phần poster.
 
-QUY TẮC BẮT BUỘC (vi phạm là hỏng dữ liệu huấn luyện):
-- TUYỆT ĐỐI KHÔNG được viết ra nội dung chữ thật (không lặp lại bất kỳ từ nào trong nội dung text được cho bên dưới, kể cả một phần).
-- Chỉ mô tả vai trò/vị trí/chất liệu của khối chữ, không mô tả ý nghĩa hay nội dung của nó.
-- Bắt buộc phải có đúng các thẻ "(1)" và "(2)"{product_tag_note}.
-- Trả về DUY NHẤT đoạn văn bản, không giải thích, không markdown, không liệt kê lại nội dung chữ."""
+QUY TẮC BẮT BUỘC ĐỂ GIỮ CHUẨN MỎ NEO KHÔNG GIAN (VI PHẠM LÀ HỎNG DỮ LIỆU):
+1. BẮT BUỘC có thẻ "(1)" đứng trước mô tả của khối chữ thứ nhất (tiêu đề chính).
+2. BẮT BUỘC có thẻ "(2)" đứng trước mô tả của khối chữ thứ hai (phụ đề/slogan).
+{product_rule}
+3. TUYỆT ĐỐI KHÔNG LẶP LẠI BẤT KỲ TỪ NÀO trong nội dung chữ được cung cấp (Representation Clash).
+4. KHÔNG dùng các từ ngữ sáo rỗng (như 'bữa tiệc thị giác', 'tinh hoa hội tụ', 'đẹp lung linh', 'tuyệt mỹ').
+5. TẬP TRUNG 100% VÀO VẬT LÝ VÀ QUANG HỌC: Chất liệu chế tác (acrylic, kim loại dập nổi 3D, neon uốn lượn, mạ vàng, khắc gỗ...), hướng chiếu sáng (key light, rim light, spotlight, softbox), đổ bóng và độ tương phản.
+6. CÂU VĂN TỰ NHIÊN, KHÔNG RẬP KHUÔN: Biến hóa cấu trúc câu xung quanh thẻ (1) và (2), không viết rập khuôn máy móc.
+7. TUYỆT ĐỐI KHÔNG ghi độ phân giải hay tỉ lệ khung hình (như '1024x1024', '9:16', '4k', '8k').
+8. Trả về DUY NHẤT đoạn văn bản hoàn chỉnh, không giải thích, không tiêu đề."""
 
 
-def llm_clean_prompt(text1: str, text2: str, has_product: bool, max_retries: int = 3) -> Optional[str]:
-    """Ask an LLM to author a more diverse student prompt; enforce the anti-leak rule as a hard gate.
-    Returns None (caller should fall back to combinatorial_clean_prompt) if all retries fail validation.
+def llm_clean_prompt(spec: Dict, has_product: bool, max_retries: int = 3) -> Optional[str]:
+    """Ask an LLM to author a diverse student prompt with natural variation around anchors (1), (2), (3).
+    Enforces anti-leak and anchor presence as a hard gate.
     """
-    product_line = "- Một mục đánh dấu \"(3) ...\" mô tả vai trò/vị trí của SẢN PHẨM thật trong ảnh." if has_product else ""
-    product_tag_note = " và \"(3)\"" if has_product else ""
-    system = LLM_SYSTEM_PROMPT.format(product_line=product_line, product_tag_note=product_tag_note)
+    text1, text2 = spec["text1"], spec["text2"]
+    product_rule = "3. BẮT BUỘC có thẻ \"(3)\" đứng trước mô tả vai trò/vị trí của SẢN PHẨM thật trong ảnh." if has_product else ""
+    system = LLM_SYSTEM_PROMPT.format(product_rule=product_rule)
+
+    style_seed = random.choice(DYNAMIC_STYLE_SEEDS)
+    syntax_hint = random.choice(SYNTACTIC_FLOW_HINTS)
+
     user_msg = (
-        f"Nội dung chữ thứ nhất (KHÔNG được lặp lại): {text1}\n"
-        f"Nội dung chữ thứ hai (KHÔNG được lặp lại): {text2}\n"
-        f"Có sản phẩm thật trong ảnh: {'Có' if has_product else 'Không'}"
+        f"Ngành hàng/Domain: {spec.get('domain', 'general')}\n"
+        f"Mục đích poster (Use-Case): {spec.get('use_case', 'commercial')}\n"
+        f"Gợi ý phong cách nghệ thuật: {style_seed}\n"
+        f"Gợi ý cấu trúc câu: {syntax_hint}\n"
+        f"Nội dung chữ thứ nhất (TUYỆT ĐỐI KHÔNG ĐƯỢC LẶP LẠI TỪ NÀO): {text1}\n"
+        f"Nội dung chữ thứ hai (TUYỆT ĐỐI KHÔNG ĐƯỢC LẶP LẠI TỪ NÀO): {text2}\n"
+        f"Có sản phẩm thật trong ảnh: {'Có (cần thẻ (3))' if has_product else 'Không'}"
     )
+
     for attempt in range(max_retries):
         try:
             resp = client.chat.completions.create(
@@ -293,8 +382,8 @@ def llm_clean_prompt(text1: str, text2: str, has_product: bool, max_retries: int
                     {"role": "system", "content": system},
                     {"role": "user", "content": user_msg},
                 ],
-                temperature=0.9,
-                max_tokens=250,
+                temperature=0.85,
+                max_tokens=280,
             )
             candidate = resp.choices[0].message.content.strip()
         except Exception as e:
@@ -315,13 +404,13 @@ def llm_clean_prompt(text1: str, text2: str, has_product: bool, max_retries: int
     return None  # caller falls back to deterministic combinatorial builder
 
 
-def build_clean_prompt(text1: str, text2: str, has_product: bool, use_llm: bool) -> str:
+def build_clean_prompt(spec: Dict, has_product: bool, use_llm: bool) -> str:
     if use_llm:
-        result = llm_clean_prompt(text1, text2, has_product)
+        result = llm_clean_prompt(spec, has_product)
         if result is not None:
             return result
         print("   [LLM prompt] all retries failed validation -> falling back to combinatorial builder")
-    return combinatorial_clean_prompt(text1, text2, has_product)
+    return combinatorial_clean_prompt(spec, has_product)
 
 
 # ==================================================================================================
@@ -620,7 +709,7 @@ def main():
         for idx in range(1, min(6, total_samples + 1)):
             spec = sample_dataset_spec(idx, total_samples)
             has_product = spec["modality"] == "i2i" and spec.get("product_path") is not None
-            prompt_clean = build_clean_prompt(spec["text1"], spec["text2"], has_product, args.llm_prompts)
+            prompt_clean = build_clean_prompt(spec, has_product, args.llm_prompts)
             print(f"\n--- [SAMPLE #{spec['id']}] cohort={spec['cohort']} stratum={spec['length_stratum']} ---")
             print(f" Modality: {spec['modality']} | Use Case: {spec['use_case']} | Domain: {spec['domain']} | AR: {spec['aspect_ratio']} ({spec['width']}x{spec['height']})")
             print(f" Slot t=10.0 (text1): '{spec['text1']}' [Font: {spec['font1']} @ {spec['floor1']}pt]")
@@ -655,7 +744,7 @@ def main():
 
         g1_path, g2_path, g1_info, g2_info = render_and_save_glyphs(spec, glyphs_dir)
         has_product = spec["modality"] == "i2i" and spec.get("product_path") is not None
-        prompt_clean = build_clean_prompt(spec["text1"], spec["text2"], has_product, args.llm_prompts)
+        prompt_clean = build_clean_prompt(spec, has_product, args.llm_prompts)
 
         target_path = generate_target_image(spec, g1_info.lines, g2_info.lines, targets_dir, delay=args.delay)
 
