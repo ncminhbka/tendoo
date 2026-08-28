@@ -10,7 +10,7 @@ Tài liệu này là đặc tả kỹ thuật chi tiết cho hợp phần **Data
 
 ### 1.1. Ma trận 7 Nghiệp vụ Use-Case Thực tế của Tendoo AI $\times$ Modality Split
 
-| STT | Nghiệp Vụ Sử Dụng Thực Tế | Quy Mô Mẫu | Tỷ Lệ | I2I (SP-Anchor: 1 SP + 1 Text) | Pure T2I (2 Texts: Slot 1 + Slot 2) |
+| STT | Nghiệp Vụ Sử Dụng Thực Tế | Quy Mô Mẫu | Tỷ Lệ | I2I (2 Texts @ t=10, 20 + 1 SP @ t=30) | Pure T2I (2 Texts @ t=10, 20) |
 | :---: | :--- | :---: | :---: | :---: | :---: |
 | **1** | **Poster Khuyến Mại / Flash Sale** | **170** | $21.25\%$ | $90$ mẫu (Đồ gia dụng, công nghệ, thời trang) | $80$ mẫu (Dịch vụ F&B, vé sự kiện, voucher) |
 | **2** | **Poster / Banner Quảng Cáo Sản Phẩm** | **170** | $21.25\%$ | $170$ mẫu (Chai nước hoa, đồng hồ, điện thoại) | $0$ mẫu (100% là sản phẩm thật) |
@@ -20,6 +20,13 @@ Tài liệu này là đặc tả kỹ thuật chi tiết cho hợp phần **Data
 | **6** | **Quy Trình / Hướng Dẫn (2 Bước)** | **80** | $10.00\%$ | $30$ mẫu (Hướng dẫn sử dụng thiết bị/sản phẩm) | $50$ mẫu (Quy trình dùng app, đăng ký dịch vụ) |
 | **7** | **Sáng Tạo Tự Do / Quote / Bìa Sách** | **80** | $10.00\%$ | $30$ mẫu (Bìa sách, album, tác phẩm nghệ thuật) | $50$ mẫu (Trích dẫn danh ngôn, thơ ca chữ nổi) |
 | **Σ** | **TỔNG CỘNG MILESTONE A** | **800** | **$100\%$** | **440 mẫu ($55\%$)** | **360 mẫu ($45\%$)** |
+
+> [!IMPORTANT]
+> **Đặc tả Kiến trúc Slot của Milestone A**:
+> - **Text 1 (Tiêu đề)**: Đặt tại mốc thời gian chuẩn $t = 10.0$ (Cả I2I và T2I đều có).
+> - **Text 2 (Phụ đề/Slogan)**: Đặt tại mốc thời gian chuẩn $t = 20.0$ (Cả I2I và T2I đều có).
+> - **Sản phẩm (Packshot thật)**: Đặt tại mốc thời gian $t = 30.0$ (Chỉ nhánh I2I có).
+> $\implies$ Mục tiêu cốt lõi của Milestone A là kích hoạt năng lực vẽ **đồng thời 2 khối chữ ($t=10, 20$) không bị rò rỉ hay tràn kênh Attention**. Nhánh I2I có thêm Slot sản phẩm tại $t=30.0$ để rèn luyện phân luồng trong môi trường có ảnh thực tế.
 
 ---
 
@@ -265,19 +272,58 @@ Sau khi hoàn tất, thư mục dữ liệu Milestone A sẽ có cấu trúc chu
 data/milestone_a/
 ├── dataset_manifest.jsonl      # 800 dòng metadata JSON
 ├── targets/                    # 800 ảnh Ground Truth do Teacher sinh (PNG)
-│   ├── target_0001.png
+│   ├── target_sample_0001.png
 │   └── ...
 ├── glyphs/                     # 1,600 ảnh Glyph đen-trắng do glyph_engine render
-│   ├── glyph_0001_slot10.png
-│   ├── glyph_0001_slot20.png
+│   ├── glyph_sample_0001_slot10.png
+│   ├── glyph_sample_0001_slot20.png
 │   └── ...
-└── products/                   # Thư mục gốc chứa 50 ảnh sản phẩm thật tuyển chọn
-    ├── cosmetics/
-    ├── fnb/
-    ├── tech/
-    ├── fashion/
-    ├── home/
-    ├── fmcg/
-    ├── telecom_viettel/
-    └── fitness/
+└── (products/ được quản lý riêng và kéo trực tiếp từ Hugging Face Hub)
+```
+
+### Cấu Trúc Bản Ghi Metadata (`dataset_manifest.jsonl`):
+```json
+{
+  "id": "sample_0001",
+  "cohort": "standard",
+  "split": "train",
+  "modality": "i2i",
+  "use_case": "hero_product",
+  "domain": "cosmetics",
+  "aspect_ratio": "9:16",
+  "width": 768,
+  "height": 1344,
+  "prompt_clean": "Không gian nội thất sang trọng... (1) Tiêu đề phía trên... (2) Dòng slogan phía dưới... (3) Sản phẩm ở trung tâm...",
+  "target_image": "data/milestone_a/targets/target_sample_0001.png",
+  "slots": [
+    {
+      "time_offset": 10.0,
+      "type": "glyph",
+      "path": "data/milestone_a/glyphs/glyph_sample_0001_slot10.png",
+      "font": "playfair",
+      "font_size_pt": 36,
+      "text": "NƯỚC HOA CAO CẤP",
+      "width_px": 432,
+      "height_px": 112,
+      "token_count": 189
+    },
+    {
+      "time_offset": 20.0,
+      "type": "glyph",
+      "path": "data/milestone_a/glyphs/glyph_sample_0001_slot20.png",
+      "font": "bevietnam",
+      "font_size_pt": 32,
+      "text": "Hương thơm quý phái\nLưu hương 24 giờ",
+      "width_px": 416,
+      "height_px": 112,
+      "token_count": 182
+    },
+    {
+      "time_offset": 30.0,
+      "type": "product",
+      "path": "data/products/cosmetics/01_nuoc_hoa_luxury.png",
+      "product_name": "01_nuoc_hoa_luxury"
+    }
+  ]
+}
 ```
