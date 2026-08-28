@@ -182,16 +182,218 @@ FONT_STYLE_DESCRIPTORS = {
 # ==================================================================================================
 # 5. STUDENT CLEAN-PROMPT BUILDER (RULE: never leak literal text; keep (1)/(2)/(3) spatial anchors)
 # ==================================================================================================
-DYNAMIC_STYLE_SEEDS = [
-    "Phong cách studio thương mại cao cấp với bệ trưng bày hình khối mạ chrome tối giản, ánh sáng tương phát điện ảnh.",
-    "Phong cách công nghệ hiện đại Cyberpunk với ánh sáng neon dịu, phông nền gradient trừu tượng sắc sảo.",
-    "Phong cách Bắc Âu Scandinavian thanh lịch, ánh sáng ban mai tự nhiên dịu nhẹ, tone màu gỗ và pastel trang nhã.",
-    "Phong cách tạp chí thời trang quốc tế Editorial/Vogue, bố cục bất đối xứng tinh tế, tương phản kịch tính.",
-    "Phong cách ẩm thực và đời sống ấm cúng, bề mặt gỗ mộc mạc, ánh sáng mềm tôn vinh độ tươi ngon.",
-    "Phong cách Retro Vintage hoài niệm thập niên 90, hạt grain điện ảnh nhẹ, màu sắc cổ điển sang trọng.",
-    "Phong cách thiết kế phẳng Bauhaus hiện đại, các mảng màu hình học cân đối, không gian thoáng đãng.",
-    "Phong cách Zen tối giản Nhật Bản, phông nền sa thạch trung tính, ánh sáng xiên đổ bóng tự nhiên dài.",
-]
+# ==================================================================================================
+# 5. DOMAIN-AWARE VISUAL CONTEXTS & CLEAN-PROMPT BUILDER (NO "CỌC CẠCH" MISMATCHES)
+# ==================================================================================================
+DOMAIN_VISUAL_CONTEXTS: Dict[str, Dict[str, List[str]]] = {
+    "fitness": {
+        "seeds": [
+            "Phong cách phòng tập thể thao cao cấp, ánh sáng spotlight tương phản mạnh mẽ, phông nền bê tông mài và kim loại tối giản.",
+            "Phong cách thể thao năng động bùng nổ, ánh sáng góc nghiêng mạnh mẽ, tạo bóng đổ dứt khoát tôn vinh tinh thần vận động.",
+            "Không gian tập luyện chuyên nghiệp hiện đại, tone màu xám đậm thể thao, ánh sáng studio sắc sảo.",
+        ],
+        "envs": [
+            "Bối cảnh studio thể thao hiện đại với phông nền bê tông mài tối giản",
+            "Không gian phòng tập cao cấp với ánh sáng spotlight tương phản mạnh",
+            "Phông nền xám đen mờ sang trọng tôn vinh tối đa tinh thần thể thao năng động",
+        ],
+        "materials_1": [
+            "chữ kim loại dập nổi 3D mạ vàng ánh kim mạnh mẽ",
+            "nét chữ typography đậm đà phong cách thể thao hiện đại dập chìm",
+            "chữ kim loại chrome bạc phản chiếu ánh sáng studio sắc nét",
+        ],
+        "materials_2": [
+            "nét chữ màu trắng thanh lịch đổ bóng studio sắc nét",
+            "chữ decal mờ tinh giản với độ tương phản sắc nét",
+            "dòng chữ viền led phát sáng dịu mắt tạo chiều sâu không gian",
+        ],
+    },
+    "cosmetics": {
+        "seeds": [
+            "Phong cách studio mỹ phẩm cao cấp với bệ đá cẩm thạch trắng, ánh sáng softbox khuếch tán dịu nhẹ, tone màu pastel thanh khiết.",
+            "Phong cách chăm sóc sắc đẹp spa sang trọng, ánh sáng tự nhiên tinh khôi tôn vinh sự tươi mới.",
+            "Phong cách tạp chí làm đẹp quốc tế, tương phản mềm mại, bóng đổ mờ ảo mang lại cảm giác dịu dàng quý phái.",
+        ],
+        "envs": [
+            "Không gian chụp ảnh mỹ phẩm chuyên nghiệp phong cách Bắc Âu trang nhã",
+            "Bối cảnh studio spa sang trọng với bệ đá cẩm thạch trắng tinh khôi",
+            "Phông nền tone màu pastel dịu nhẹ với ánh sáng tự nhiên êm dịu",
+        ],
+        "materials_1": [
+            "chữ in nổi chất liệu acrylic cao cấp trong suốt bóng bẩy",
+            "chữ kim loại dập nổi 3D mạ vàng hồng ánh kim sang trọng",
+            "chữ vàng đồng cổ điển ánh kim dập nổi tương phản cao",
+        ],
+        "materials_2": [
+            "nét chữ màu trắng thanh lịch đổ bóng studio mềm mại",
+            "dòng chữ màu vàng nhạt tinh tế hài hòa với bố cục",
+            "chữ decal mờ tinh giản với độ tương phản sắc nét",
+        ],
+    },
+    "tech": {
+        "seeds": [
+            "Phong cách công nghệ hiện đại với bệ trưng bày hình khối mạ chrome tối giản, ánh sáng tương phản điện ảnh sắc sảo.",
+            "Phong cách Cyberpunk tương lai với ánh sáng neon dịu, phông nền gradient trừu tượng công nghệ cao.",
+            "Phong cách tối giản công nghệ cao với các đường nét viền phản quang sắc nét, chiều sâu trường ảnh mượt mà.",
+        ],
+        "envs": [
+            "Bối cảnh công nghệ hiện đại với hiệu ứng ánh sáng gradient tinh tế",
+            "Không gian studio công nghệ cao với bệ trưng bày hình khối mạ chrome",
+            "Phông nền đen mờ sang trọng tôn vinh tối đa các chi tiết viền phản quang",
+        ],
+        "materials_1": [
+            "chữ kim loại chrome bạc phản chiếu ánh sáng studio sắc nét",
+            "chữ phát sáng hiệu ứng đèn neon uốn lượn hiện đại rực rỡ",
+            "chữ kim loại dập nổi 3D mạ bạc công nghệ sắc sảo",
+        ],
+        "materials_2": [
+            "nét chữ phát quang viền led dịu mắt tạo chiều sâu không gian",
+            "dòng chữ màu bạc ánh kim thanh mảnh trang nhã",
+            "chữ decal mờ tinh giản với độ tương phản sắc nét",
+        ],
+    },
+    "telecom_viettel": {
+        "seeds": [
+            "Phong cách thương mại viễn thông hiện đại của Viettel, bệ trưng bày công nghệ số sắc nét, ánh sáng tương phản cao.",
+            "Không gian dịch vụ số tương lai với ánh sáng viền công nghệ, phông nền gradient hiện đại thanh lịch.",
+            "Bố cục poster truyền thông công nghệ viễn thông cao cấp, ánh sáng spotlight tập trung tôn vinh thiết bị kết nối.",
+        ],
+        "envs": [
+            "Bối cảnh công nghệ số hiện đại với hiệu ứng ánh sáng gradient tinh tế",
+            "Không gian studio viễn thông cao cấp với bệ trưng bày hình khối tối giản",
+            "Phông nền tương phản cao với ánh sáng studio điện ảnh nghệ thuật",
+        ],
+        "materials_1": [
+            "chữ kim loại dập nổi 3D mạ bạc ánh kim sắc sảo",
+            "chữ phát sáng hiệu ứng đèn neon hiện đại trang nhã",
+            "chữ kim loại dập nổi 3D mạ vàng sang trọng",
+        ],
+        "materials_2": [
+            "nét chữ màu trắng thanh lịch đổ bóng studio mềm mại",
+            "dòng chữ màu bạc ánh kim thanh mảnh trang nhã",
+            "nét chữ phát quang viền led dịu mắt tạo chiều sâu không gian",
+        ],
+    },
+    "fnb": {
+        "seeds": [
+            "Phong cách ẩm thực ấm cúng với bề mặt gỗ mộc mạc, ánh sáng mềm tôn vinh hương vị và màu sắc tự nhiên.",
+            "Không gian quán cà phê phong cách Retro hoài niệm, ánh sáng đèn vàng dịu nhẹ, tạo cảm giác gần gũi và thư thái.",
+            "Bối cảnh studio ẩm thực chuyên nghiệp, ánh sáng spotlight chiếu xiên làm nổi bật độ tươi ngon và chi tiết đồ uống.",
+        ],
+        "envs": [
+            "Không gian ẩm thực và đồ uống ấm cúng với mặt bàn gỗ tự nhiên mộc mạc",
+            "Bối cảnh quán cà phê sang trọng phong cách Retro với ánh sáng ấm dịu",
+            "Bố cục poster ẩm thực thương mại cao cấp với các mảng màu cân đối",
+        ],
+        "materials_1": [
+            "chữ vàng đồng cổ điển ánh kim dập nổi tương phản cao",
+            "chữ gỗ khắc mộc tinh xảo với vân gỗ tự nhiên ấm áp",
+            "chữ kim loại dập nổi 3D mạ vàng sang trọng",
+        ],
+        "materials_2": [
+            "nét chữ màu trắng thanh lịch đổ bóng studio mềm mại",
+            "dòng chữ màu vàng nhạt tinh tế hài hòa với bố cục",
+            "chữ decal mờ tinh giản với độ tương phản sắc nét",
+        ],
+    },
+    "fashion": {
+        "seeds": [
+            "Phong cách tạp chí thời trang quốc tế Editorial/Vogue, bố cục thanh lịch, tương phản ánh sáng điện ảnh sắc nét.",
+            "Không gian studio thời trang cao cấp với phông nền xám trung tính, ánh sáng softbox tôn vinh chất liệu vải.",
+            "Phong cách thời trang đường phố Streetwear năng động, ánh sáng rim-light tương phản mạnh tôn vinh cá tính.",
+        ],
+        "envs": [
+            "Không gian studio thời trang cao cấp với phông nền xám trung tính trang nhã",
+            "Bố cục poster thời trang editorial với các mảng màu cân xứng hoàn hảo",
+            "Phông nền tương phản cao với ánh sáng studio điện ảnh nghệ thuật",
+        ],
+        "materials_1": [
+            "chữ kim loại dập nổi 3D mạ vàng ánh kim sang trọng",
+            "nét chữ typography đậm đà phong cách thời trang hiện đại",
+            "chữ sơn mài đen bóng viền kim loại sang trọng",
+        ],
+        "materials_2": [
+            "nét chữ màu trắng thanh lịch đổ bóng studio mềm mại",
+            "dòng chữ màu bạc ánh kim thanh mảnh trang nhã",
+            "chữ decal mờ tinh giản với độ tương phản sắc nét",
+        ],
+    },
+    "cultural_vietnam": {
+        "seeds": [
+            "Phong cách không gian văn hóa Việt Nam thanh tao, phông nền sa thạch cổ kính, ánh nắng tự nhiên le lói dịu dàng.",
+            "Bối cảnh phố cổ hoài niệm với tường vàng rêu phong, ánh sáng ban mai nhẹ nhàng tôn vinh vẻ đẹp truyền thống.",
+            "Không gian nghệ thuật thủ công truyền thống ấm cúng, nền giấy dó mộc mạc, đậm đà bản sắc dân tộc.",
+        ],
+        "envs": [
+            "Không gian văn hóa truyền thống với phông nền tường vàng sa thạch cổ kính",
+            "Bối cảnh phố cổ hoài niệm thanh bình với ánh sáng tự nhiên dịu nhẹ",
+            "Không gian nghệ thuật truyền thống với nền giấy dó và gỗ mộc ấm cúng",
+        ],
+        "materials_1": [
+            "chữ vàng đồng cổ điển ánh kim dập nổi tương phản cao",
+            "chữ gỗ khắc mộc tinh xảo với vân gỗ tự nhiên ấm áp",
+            "chữ kim loại dập nổi 3D mạ vàng đồng truyền thống",
+        ],
+        "materials_2": [
+            "nét chữ màu trắng thanh lịch đổ bóng tự nhiên mềm mại",
+            "chữ khắc chìm phong cách tối giản tương phản rõ ràng",
+            "dòng chữ màu vàng nhạt tinh tế hài hòa với bố cục",
+        ],
+    },
+    "home": {
+        "seeds": [
+            "Phong cách không gian sống gia đình hiện đại Bắc Âu, ánh sáng tự nhiên tràn ngập từ cửa sổ, tone màu gỗ và trắng ấm áp.",
+            "Bối cảnh nội thất gia đình trang nhã, phông nền tối giản hiện đại tôn vinh sự tiện nghi và an lành.",
+            "Studio chụp ảnh đồ gia dụng chuyên nghiệp, ánh sáng softbox khuếch tán đều, tạo cảm giác sạch sẽ và đáng tin cậy.",
+        ],
+        "envs": [
+            "Không gian nội thất gia đình sang trọng với ánh sáng tự nhiên dịu nhẹ",
+            "Không gian chụp ảnh phong cách Bắc Âu trang nhã với tone màu sáng ấm",
+            "Bối cảnh studio gia dụng hiện đại với bệ trưng bày tối giản",
+        ],
+        "materials_1": [
+            "chữ kim loại dập nổi 3D mạ vàng ánh kim sang trọng",
+            "chữ in nổi chất liệu acrylic cao cấp trong suốt bóng bẩy",
+            "nét chữ typography đậm đà phong cách hiện đại dập chìm",
+        ],
+        "materials_2": [
+            "nét chữ màu trắng thanh lịch đổ bóng studio mềm mại",
+            "chữ decal mờ tinh giản với độ tương phản sắc nét",
+            "dòng chữ màu vàng nhạt tinh tế hài hòa với bố cục",
+        ],
+    },
+    "fmcg": {
+        "seeds": [
+            "Phong cách poster tiêu dùng nhanh thương mại cao cấp, bệ trưng bày tối giản, ánh sáng studio tương phản sắc nét.",
+            "Không gian chụp ảnh bao bì sản phẩm chuyên nghiệp, ánh sáng softbox tôn vinh màu sắc tươi tắn và nhãn mác rõ ràng.",
+            "Bố cục poster thương mại hiện đại với các khối màu tươi sáng, ánh sáng rạng rỡ thân thiện.",
+        ],
+        "envs": [
+            "Bối cảnh studio thương mại hiện đại với bệ trưng bày hình khối tối giản",
+            "Không gian chụp ảnh sản phẩm chuyên nghiệp với ánh sáng tự nhiên dịu mắt",
+            "Bố cục poster đồ họa thương mại cao cấp với các mảng màu cân đối",
+        ],
+        "materials_1": [
+            "chữ kim loại dập nổi 3D mạ vàng ánh kim sang trọng",
+            "chữ vàng đồng cổ điển ánh kim dập nổi tương phản cao",
+            "chữ in nổi chất liệu acrylic cao cấp bóng bẩy",
+        ],
+        "materials_2": [
+            "nét chữ màu trắng thanh lịch đổ bóng studio mềm mại",
+            "chữ decal mờ tinh giản với độ tương phản sắc nét",
+            "dòng chữ màu vàng nhạt tinh tế hài hòa với bố cục",
+        ],
+    },
+}
+
+
+def get_domain_context(domain: str) -> Dict[str, List[str]]:
+    clean_domain = domain.replace("general_", "").lower()
+    if clean_domain in DOMAIN_VISUAL_CONTEXTS:
+        return DOMAIN_VISUAL_CONTEXTS[clean_domain]
+    # Fallback to fmcg context
+    return DOMAIN_VISUAL_CONTEXTS["fmcg"]
+
 
 SYNTACTIC_FLOW_HINTS = [
     "Khởi đầu câu bằng vị trí không gian rồi đến chất liệu và vai trò khối chữ (ví dụ: 'Ở phần trên cùng, tiêu đề chính được chế tác bằng...').",
@@ -199,17 +401,6 @@ SYNTACTIC_FLOW_HINTS = [
     "Tập trung miêu tả hiệu ứng quang học và đổ bóng studio của khối chữ trước khi mô tả vị trí.",
     "Sử dụng câu ghép mô tả sự chuyển tiếp tự nhiên giữa tiêu đề chính và phụ đề bổ trợ.",
     "Mô tả trực diện phong cách typography hiện đại với sự hòa quyện giữa chất liệu chữ và phông nền studio.",
-]
-
-ENV_SETTINGS = [
-    "Bối cảnh studio thương mại hiện đại với bệ trưng bày hình khối tối giản",
-    "Không gian chụp ảnh sản phẩm chuyên nghiệp phong cách Bắc Âu trang nhã",
-    "Phông nền tương phản cao với ánh sáng studio điện ảnh nghệ thuật",
-    "Không gian nội thất sang trọng với ánh sáng tự nhiên dịu nhẹ",
-    "Bối cảnh công nghệ hiện đại với hiệu ứng ánh sáng gradient tinh tế",
-    "Bố cục poster đồ họa thương mại cao cấp với các mảng màu cân đối",
-    "Không gian tối giản hiện đại với phông nền bê tông mài và gỗ sáng màu",
-    "Phông nền đen mờ sang trọng tôn vinh tối đa các chi tiết phản quang",
 ]
 
 ROLE_DESCRIPTORS_1 = [
@@ -230,26 +421,6 @@ POSITION_DESCRIPTORS_1 = [
 POSITION_DESCRIPTORS_2 = [
     "ở phía dưới chính giữa", "ở phần chân đế bên dưới", "nằm ngay bên dưới tiêu đề",
     "ở nửa dưới của poster", "ở vị trí góc dưới thanh lịch", "bố trí cân xứng ở phần chân poster",
-]
-
-MATERIALS_TITLE = [
-    "chữ kim loại dập nổi 3D mạ vàng ánh kim sang trọng",
-    "chữ phát sáng hiệu ứng đèn neon uốn lượn hiện đại rực rỡ",
-    "chữ in nổi chất liệu acrylic cao cấp trong suốt bóng bẩy",
-    "chữ kim loại chrome bạc phản chiếu ánh sáng studio sắc nét",
-    "chữ vàng đồng cổ điển ánh kim dập nổi tương phản cao",
-    "nét chữ typography đậm đà phong cách hiện đại dập chìm",
-    "chữ sơn mài đen bóng viền kim loại sang trọng",
-    "chữ gỗ khắc mộc tinh xảo với vân gỗ tự nhiên ấm áp",
-]
-
-MATERIALS_SUBTITLE = [
-    "nét chữ màu trắng thanh lịch đổ bóng studio mềm mại",
-    "chữ decal mờ tinh giản với độ tương phản sắc nét",
-    "dòng chữ màu bạc ánh kim thanh mảnh trang nhã",
-    "chữ khắc chìm phong cách tối giản tương phản rõ ràng",
-    "nét chữ phát quang viền led dịu mắt tạo chiều sâu không gian",
-    "chữ màu vàng nhạt tinh tế hài hòa với bố cục",
 ]
 
 PHOTOGRAPHY_LIGHTING = [
@@ -319,9 +490,12 @@ def _leaks(candidate: str, *texts: str) -> bool:
 
 def combinatorial_clean_prompt(spec: Dict, has_product: bool) -> str:
     text1, text2 = spec["text1"], spec["text2"]
-    env = random.choice(ENV_SETTINGS)
-    r1, p1, m1 = random.choice(ROLE_DESCRIPTORS_1), random.choice(POSITION_DESCRIPTORS_1), random.choice(MATERIALS_TITLE)
-    r2, p2, m2 = random.choice(ROLE_DESCRIPTORS_2), random.choice(POSITION_DESCRIPTORS_2), random.choice(MATERIALS_SUBTITLE)
+    domain = spec.get("domain", "general")
+    ctx = get_domain_context(domain)
+
+    env = random.choice(ctx["envs"])
+    r1, p1, m1 = random.choice(ROLE_DESCRIPTORS_1), random.choice(POSITION_DESCRIPTORS_1), random.choice(ctx["materials_1"])
+    r2, p2, m2 = random.choice(ROLE_DESCRIPTORS_2), random.choice(POSITION_DESCRIPTORS_2), random.choice(ctx["materials_2"])
     light = random.choice(PHOTOGRAPHY_LIGHTING)
     pattern_fn = random.choice(COMBINATORIAL_PATTERNS)
     typography_part = pattern_fn(r1, p1, m1, r2, p2, m2)
@@ -363,7 +537,9 @@ def llm_clean_prompt(spec: Dict, has_product: bool, max_retries: int = 3) -> Opt
     product_rule = "3. BẮT BUỘC có thẻ \"(3)\" đứng trước mô tả vai trò/vị trí của SẢN PHẨM thật trong ảnh." if has_product else ""
     system = LLM_SYSTEM_PROMPT.format(product_rule=product_rule)
 
-    style_seed = random.choice(DYNAMIC_STYLE_SEEDS)
+    domain = spec.get("domain", "general")
+    ctx = get_domain_context(domain)
+    style_seed = random.choice(ctx["seeds"])
     syntax_hint = random.choice(SYNTACTIC_FLOW_HINTS)
 
     num_words_1 = len(text1.split())
@@ -712,8 +888,8 @@ def main():
     print("=" * 90)
 
     if not args.execute:
-        print(" [*] Pre-generating dataset specifications and verifying typography pipeline...")
-        for idx in range(1, min(6, total_samples + 1)):
+        num_to_print = min(15, total_samples) if total_samples > 10 else total_samples
+        for idx in range(1, num_to_print + 1):
             spec = sample_dataset_spec(idx, total_samples)
             has_product = spec["modality"] == "i2i" and spec.get("product_path") is not None
             prompt_clean = build_clean_prompt(spec, has_product, args.llm_prompts)
