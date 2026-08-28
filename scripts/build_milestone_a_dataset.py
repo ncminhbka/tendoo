@@ -135,16 +135,36 @@ except ImportError:
     from corpus_milestone_a import PRODUCT_TEXT_CORPUS, GENERAL_T2I_CORPUS
 
 
-# Known-hard concurrency stress pairs, reproducing configurations that broke in earlier probing.
-# Each carries an explicit, semantically sane domain (used only to pick a plausible product for I2I).
+# Known-hard concurrency stress pairs covering 4 empirical pain points from sub-plan 1.6:
+# 1. Diacritic Cluster Stress (3-4 dense tone marks in a row)
+# 2. Extreme Asymmetric Token Mass (product 4096 tokens vs tiny text badge)
+# 3. Zero Surface Anchor (abstract/floating 3D text without cue words)
+# 4. Boundary Coordinates on extreme aspect ratios (9:16 & 16:9)
 KNOWN_HARD_PAIRS = [
+    # 1. Diacritic Clusters
     {"text1": "CHỐNG ỒN CHỦ ĐỘNG", "text2": "Khử tạp âm kỹ thuật số\nĐắm chìm trong âm nhạc đỉnh cao", "domain": "tech"},
     {"text1": "Ủ CHƯỢP TRUYỀN THỐNG", "text2": "Cá cơm tươi nguyên chất\nĐậm đà phong vị biển xanh", "domain": "fmcg"},
     {"text1": "ĐỔI MỚI SÁNG TẠO TOÀN DIỆN", "text2": "Bứt phá mọi giới hạn\nĐịnh hình kỷ nguyên số", "domain": "telecom_viettel"},
-    {"text1": "KHUẤY ĐỘNG MỌI BỮA TIỆC", "text2": "Âm bass bùng nổ nội lực\nÁnh sáng rực rỡ sắc màu", "domain": "tech"},
-    {"text1": "AN TOÀN TUYỆT ĐỐI CHO LÀN DA", "text2": "Không chất bảo quản\nChứng nhận kiểm nghiệm quốc tế", "domain": "cosmetics"},
+    {"text1": "BỘT GIẶT ĐẬM ĐẶC BẢO VỆ MÀU VẢI", "text2": "Đánh bay vết bẩn cứng đầu\nLưu hương thơm mát suốt ngày dài", "domain": "home"},
+    {"text1": "KHỞI ĐẦU ĐỔI MỚI PHÁT TRIỂN", "text2": "Kiến tạo tương lai số\nNâng tầm vị thế doanh nghiệp", "domain": "telecom_viettel"},
+    {"text1": "NƯỚC MẮM CỐT ĐẶC SẢN NGUYÊN CHẤT", "text2": "Ủ chượp tự nhiên từ cá cơm than\nHương vị truyền thống trăm năm", "domain": "fmcg"},
+    # 2. Extreme Asymmetric Token Mass
     {"text1": "TIỆM CÀ PHÊ ANH QUÂN GÓC PHỐ NHỎ BÌNH YÊN", "text2": "GIẢM 50%", "domain": "fnb"},
     {"text1": "BỘ DƯỠNG TRẮNG PHỤC HỒI TÁI TẠO LÀN DA CHUYÊN SÂU", "text2": "HOT SALE", "domain": "cosmetics"},
+    {"text1": "GIẢI PHÁP KẾT NỐI KHÔNG DÂY TỐC ĐỘ CAO CHO MỌI NGÔI NHÀ", "text2": "0 ĐỒNG", "domain": "telecom_viettel"},
+    {"text1": "DÒNG ĐỒNG HỒ KIM LOẠI CAO CẤP CHỐNG NƯỚC VƯỢT TRỘI", "text2": "5 SAO", "domain": "fashion"},
+    {"text1": "CHƯƠNG TRÌNH KHUYẾN MẠI MÙA HÈ BÙNG NỔ NĂNG LƯỢNG", "text2": "SALE", "domain": "fitness"},
+    # 3. Zero Surface Anchor (floating 3D text without physical cue words)
+    {"text1": "SỨC MẠNH VÔ HÌNH", "text2": "Đánh thức tiềm năng vô hạn\nVượt qua mọi giới hạn bản thân", "domain": "fitness"},
+    {"text1": "KHÔNG GIAN VÔ CỰC", "text2": "Âm thanh lan tỏa đa chiều\nCảm xúc thăng hoa bất tận", "domain": "tech"},
+    {"text1": "TỰ DO BỨT PHÁ", "text2": "Làm chủ hành trình cuộc đời\nTự tin khẳng định phong cách", "domain": "fashion"},
+    {"text1": "ÁNH SÁNG TƯƠNG LAI", "text2": "Công nghệ dẫn đầu xu thế\nTrải nghiệm đỉnh cao mỗi ngày", "domain": "tech"},
+    # 4. Boundary Coordinates on extreme aspect ratios (9:16 & 16:9)
+    {"text1": "ĐỈNH CAO THIẾT KẾ ĐỒ HỌA SỐNG ĐỘNG", "text2": "ĐẲNG CẤP THƯƠNG HIỆU QUỐC TẾ\nKHẲNG ĐỊNH VỊ THẾ DẪN ĐẦU THỊ TRƯỜNG", "domain": "telecom_viettel"},
+    {"text1": "TRẢI NGHIỆM ĐIỆN ẢNH ĐỈNH CAO TRONG TẦM TAY", "text2": "HÀNG NGÀN BỘ PHIM BOM TẤN\nCẬP NHẬT LIÊN TỤC MỖI NGÀY", "domain": "telecom_viettel"},
+    {"text1": "BỨT PHÁ MỌI GIỚI HẠN TỐC ĐỘ VẬN ĐỘNG", "text2": "RÈN LUYỆN THỂ LỰC BỀN BỈ\nCHINH PHỤC ĐỈNH CAO DANH VỌNG", "domain": "fitness"},
+    {"text1": "HƯƠNG VỊ THANH TAO TỪ THIÊN NHIÊN HOANG SƠ", "text2": "CHẮT LỌC TINH TÚY ĐẤT TRỜI\nAN LÀNH CHO SỨC KHỎE GIA ĐÌNH", "domain": "fnb"},
+    {"text1": "KHOẢNH KHẮC THĂNG HOA CÙNG ĐAM MÊ BẤT TẬN", "text2": "ĐỒNG HÀNH TRÊN MỌI CUNG ĐƯỜNG\nTỰ HÀO BẢN SẮC VIỆT NAM", "domain": "fashion"},
 ]
 
 # Detailed typography styling instructions passed to Teacher (gpt-image-2)
@@ -378,13 +398,13 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
     # 4. Determine Use-Case based on Sub-plan 1.1 Matrix
     use_case = determine_use_case(sample_id, total_samples, is_i2i)
 
-    # 5. Length Stratum: 75% standard commercial, 25% inverted (Golden 75/25 Ratio per subplan)
-    # Standard: Slot 1 short/medium (2-5 words), Slot 2 medium/long (4-12 words)
-    # Inverted: Slot 1 long (8-16 words, 2-3 lines), Slot 2 short punchy badge (1-3 words)
-    is_inverted = (random.random() < 0.25)
+    # 5. Length Stratum: EXACT 75% standard commercial (600 samples), 25% inverted (200 samples)
+    # Using deterministic cycle: sample_id % 4 == 0 ensures exactly 1 in 4 samples is inverted.
+    # When total_samples == 800: exactly 200 inverted (110 I2I + 90 T2I) and 600 standard (330 I2I + 270 T2I).
+    is_inverted = (sample_id % 4 == 0)
     length_stratum = "inverted" if is_inverted else "standard"
 
-    # 6. Cohort: ~12.5% known-hard stress reproductions, rest standard
+    # 6. Cohort: ~12.5% known-hard stress reproductions (exactly 100 samples when total_samples == 800)
     is_known_hard = (sample_id % 8 == 0)
     cohort = "known_hard" if is_known_hard else "standard"
 
@@ -413,10 +433,22 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
             text1, text2 = random.choice(options)
     else:
         # Pure T2I: 2 text slots, no product.
+        # Sub-plan 1.4 Incidental Cultural Baking: EXACTLY 60 T2I samples for authentic Vietnamese culinary & cultural life
+        # (30 from opening_banner [even sample_ids] + 30 from creative_quote [3 of 5 sample_ids])
+        is_cultural = False
+        if use_case == "opening_banner" and (sample_id % 2 == 0):
+            is_cultural = True
+        elif use_case == "creative_quote" and (sample_id % 5 in (0, 1, 2)):
+            is_cultural = True
+
         if use_case == "flash_sale":
             domain = random.choice(list(PRODUCT_TEXT_CORPUS.keys()))
             stem = random.choice(list(PRODUCT_TEXT_CORPUS[domain].keys()))
             options = PRODUCT_TEXT_CORPUS[domain][stem][length_stratum]
+            text1, text2 = random.choice(options)
+        elif is_cultural:
+            domain = "cultural_vietnam"
+            options = GENERAL_T2I_CORPUS["cultural_vietnam"][length_stratum]
             text1, text2 = random.choice(options)
         else:
             domain = "general_" + use_case
