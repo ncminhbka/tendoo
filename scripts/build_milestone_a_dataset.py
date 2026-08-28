@@ -845,9 +845,31 @@ def _build_teacher_prompt(spec: Dict, g1_lines: List[str], g2_lines: List[str]) 
     f1_style = FONT_STYLE_DESCRIPTORS.get(spec["font1"], "in clean modern bold typography")
     f2_style = FONT_STYLE_DESCRIPTORS.get(spec["font2"], "in clean typography")
 
-    # Let Teacher GPT naturally design the visual layout (no rigid 'At top' / 'Below it' constraints)
-    t1_desc = _format_lines_desc(g1_lines, "Primary headline text", f1_style)
-    t2_desc = _format_lines_desc(g2_lines, "Secondary subtitle text", f2_style)
+    # Dynamic role naming to avoid hardcoded headline/subtitle bias
+    uc = spec.get("use_case", "")
+    ls = spec.get("length_stratum", "")
+
+    if ls == "inverted":
+        role1 = "Introductory statement / lead text"
+        role2 = "Punchline / brand title"
+    elif uc == "two_step_guide":
+        role1 = "Step 1 instruction"
+        role2 = "Step 2 instruction"
+    elif uc == "creative_quote":
+        role1 = "Inspirational quote text"
+        role2 = "Attribution / author signature"
+    elif uc == "customer_feedback":
+        role1 = "Customer experience rating / summary"
+        role2 = "Testimonial review commentary"
+    elif uc == "flash_sale":
+        role1 = "Promotional campaign title"
+        role2 = "Discount mechanics / terms"
+    else:
+        role1 = "Primary headline text"
+        role2 = "Secondary subtitle text"
+
+    t1_desc = _format_lines_desc(g1_lines, role1, f1_style)
+    t2_desc = _format_lines_desc(g2_lines, role2, f2_style)
 
     prod_desc = ""
     if spec["modality"] == "i2i" and spec.get("product_path"):
