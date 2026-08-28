@@ -112,20 +112,18 @@ ASPECT_RATIOS = {
     "4:5": {"width": 896, "height": 1152, "weight": 0.15},
     "16:9": {"width": 1344, "height": 768, "weight": 0.15},
 }
-_AR_NAMES = list(ASPECT_RATIOS.keys())
-_AR_CUM = []
-_c = 0.0
-for _name in _AR_NAMES:
-    _c += ASPECT_RATIOS[_name]["weight"]
-    _AR_CUM.append(_c)
+# Exact 20-sample balanced cycle matching 35% 1:1, 35% 9:16, 15% 4:5, 15% 16:9 per Sub-plan Table 1.2
+# Evenly interleaved so aspect ratios are uniformly distributed across domains & use-cases.
+AR_CYCLE_20: List[str] = [
+    "1:1", "9:16", "4:5", "1:1", "9:16", "16:9", "1:1", "9:16", "1:1", "9:16",
+    "4:5", "1:1", "9:16", "16:9", "1:1", "9:16", "4:5", "1:1", "9:16", "16:9",
+]
 
 
-def sample_aspect_ratio() -> str:
-    r = random.random()
-    for name, cum in zip(_AR_NAMES, _AR_CUM):
-        if r < cum:
-            return name
-    return _AR_NAMES[-1]
+def determine_aspect_ratio(sample_id: int, total_samples: int, is_i2i: bool) -> str:
+    i2i_cutoff = round(total_samples * 0.55)
+    rel_idx = (sample_id - 1) if is_i2i else (sample_id - i2i_cutoff - 1)
+    return AR_CYCLE_20[rel_idx % len(AR_CYCLE_20)]
 
 
 # ==================================================================================================
@@ -370,7 +368,7 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
     modality = "i2i" if is_i2i else "t2i"
 
     # 2. Aspect ratio
-    ar_name = sample_aspect_ratio()
+    ar_name = determine_aspect_ratio(sample_id, total_samples, is_i2i)
     ar_cfg = ASPECT_RATIOS[ar_name]
 
     # 3. Fonts
