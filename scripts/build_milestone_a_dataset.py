@@ -434,21 +434,18 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
     else:
         # Pure T2I: 2 text slots, no product.
         # Sub-plan 1.4 Incidental Cultural Baking: EXACTLY 60 T2I samples for authentic Vietnamese culinary & cultural life
-        # (30 from opening_banner [even sample_ids] + 30 from creative_quote [3 of 5 sample_ids])
-        is_cultural = False
-        if use_case == "opening_banner" and (sample_id % 2 == 0):
-            is_cultural = True
-        elif use_case == "creative_quote" and (sample_id % 5 in (0, 1, 2)):
-            is_cultural = True
+        # Using (rel_t2i_idx % 6 == 2): mathematically proves 0 collisions with is_known_hard (since 443 + 6k is always odd)
+        rel_t2i_idx = sample_id - i2i_cutoff - 1
+        is_cultural = (rel_t2i_idx % 6 == 2)
 
-        if use_case == "flash_sale":
+        if is_cultural:
+            domain = "cultural_vietnam"
+            options = GENERAL_T2I_CORPUS["cultural_vietnam"][length_stratum]
+            text1, text2 = random.choice(options)
+        elif use_case == "flash_sale":
             domain = random.choice(list(PRODUCT_TEXT_CORPUS.keys()))
             stem = random.choice(list(PRODUCT_TEXT_CORPUS[domain].keys()))
             options = PRODUCT_TEXT_CORPUS[domain][stem][length_stratum]
-            text1, text2 = random.choice(options)
-        elif is_cultural:
-            domain = "cultural_vietnam"
-            options = GENERAL_T2I_CORPUS["cultural_vietnam"][length_stratum]
             text1, text2 = random.choice(options)
         else:
             domain = "general_" + use_case
