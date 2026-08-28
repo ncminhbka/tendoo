@@ -488,10 +488,25 @@ def _leaks(candidate: str, *texts: str) -> bool:
     return False
 
 
+USE_CASE_DESCRIPTIONS: Dict[str, str] = {
+    "hero_product": "Poster quảng cáo thương mại cao cấp tôn vinh sản phẩm",
+    "flash_sale": "Poster thông báo chương trình khuyến mại ưu đãi đặc biệt",
+    "customer_feedback": "Thẻ ảnh đánh giá phản hồi (card feedback) trải nghiệm khách hàng",
+    "opening_banner": "Banner sự kiện khai trương ra mắt cơ sở hoặc dịch vụ mới",
+    "recruitment": "Thẻ tin tuyển dụng nhân sự chuyên nghiệp và uy tín",
+    "two_step_guide": "Infographic poster hướng dẫn quy trình 2 bước trực quan",
+    "creative_quote": "Poster tranh ảnh nghệ thuật trích dẫn danh ngôn truyền cảm hứng",
+}
+
+
 def combinatorial_clean_prompt(spec: Dict, has_product: bool) -> str:
     text1, text2 = spec["text1"], spec["text2"]
     domain = spec.get("domain", "general")
     ctx = get_domain_context(domain)
+    raw_uc = spec.get("use_case", "commercial")
+    uc_desc = USE_CASE_DESCRIPTIONS.get(raw_uc, "Poster đồ họa thương mại cao cấp")
+    prod_name = _clean_product_name(spec["product_path"]) if has_product and spec.get("product_path") else ""
+    subject_desc = f"sản phẩm {prod_name}" if prod_name else f"chủ đề {domain}"
 
     env = random.choice(ctx["envs"])
     r1, p1, m1 = random.choice(ROLE_DESCRIPTORS_1), random.choice(POSITION_DESCRIPTORS_1), random.choice(ctx["materials_1"])
@@ -500,7 +515,7 @@ def combinatorial_clean_prompt(spec: Dict, has_product: bool) -> str:
     pattern_fn = random.choice(COMBINATORIAL_PATTERNS)
     typography_part = pattern_fn(r1, p1, m1, r2, p2, m2)
 
-    parts = [f"{env}.", typography_part]
+    parts = [f"{uc_desc} cho {subject_desc}, {env.lower()}.", typography_part]
     if has_product:
         parts.append(random.choice(PRODUCT_PATTERNS))
     parts.append(light)
@@ -512,21 +527,23 @@ def combinatorial_clean_prompt(spec: Dict, has_product: bool) -> str:
     return prompt_clean
 
 
-LLM_SYSTEM_PROMPT = """Bạn là chuyên gia Art Director biên soạn prompt mô tả bố cục poster thương mại cho mô hình DiT (FLUX.2).
-Mục tiêu: Viết MỘT đoạn văn ngắn gọn (3-4 câu) bằng tiếng Việt mô tả bối cảnh, chất liệu, ánh sáng và vị trí của các thành phần poster.
+LLM_SYSTEM_PROMPT = """Bạn là chuyên gia Art Director biên soạn Clean Prompt cho mô hình DiT (FLUX.2) trong nền tảng Tendoo AI.
+Trong thực tế, Clean Prompt này là kết quả sau khi LLM Enhancer xử lý prompt thô của người dùng (đã bóc tách nội dung chữ ra làm VAE Glyphs, và thay bằng các mỏ neo (1), (2), (3)).
 
-QUY TẮC BẮT BUỘC ĐỂ GIỮ CHUẨN MỎ NEO KHÔNG GIAN (VI PHẠM LÀ HỎNG DỮ LIỆU):
-1. BẮT BUỘC có thẻ "(1)" đứng trước câu mô tả HÌNH THỨC của khối chữ thứ nhất (tiêu đề chính): Vị trí ở đâu trên canvas, làm bằng chất liệu gì (acrylic, kim loại dập nổi 3D, neon phát sáng, mạ vàng, khắc gỗ...), hiệu ứng đổ bóng ra sao.
-2. BẮT BUỘC có thẻ "(2)" đứng trước câu mô tả HÌNH THỨC của khối chữ thứ hai (phụ đề/slogan): Vị trí bên dưới, chất liệu (decal mờ, chữ trắng thanh mảnh, viền led...), cách bố trí.
+NHIỆM VỤ CỐT LÕI:
+Viết MỘT đoạn văn ngắn gọn (khoảng 3-4 câu) bằng tiếng Việt mô tả đầy đủ:
+1. YÊU CẦU NGHIỆP VỤ & BỐI CẢNH THỰC TẾ (TUYỆT ĐỐI KHÔNG ĐƯỢC BỎ MẤT YÊU CẦU NGƯỜI DÙNG):
+   - Mở đầu bằng yêu cầu nghiệp vụ rõ ràng: Ví dụ "Poster quảng cáo thương mại cho sản phẩm...", "Banner sự kiện khai trương...", "Thẻ tin tuyển dụng chuyên nghiệp cho...", "Thẻ card feedback khách hàng cho..."
+   - Mô tả bối cảnh không gian sống/nhiếp ảnh studio thực tế liên quan mật thiết đến sản phẩm/chủ đề (ví dụ: bàn ăn gia đình ấm cúng với nguyên liệu tươi ngon; phòng gym cao cấp với tạ đòn; phố cổ hoàng hôn với tường vàng và đèn lồng đỏ; studio công nghệ cao với bệ chrome...).
+2. CÁC THẺ MỎ NEO KHÔNG GIAN BẮT BUỘC ĐỂ ĐỊNH VỊ CHỮ VÀ SẢN PHẨM:
+   - Thẻ "(1)": Đứng trước câu mô tả HÌNH THỨC của khối chữ thứ nhất (vị trí ở đâu, chất liệu chữ 3D mạ vàng / acrylic / kim loại / thư pháp, hướng chiếu sáng).
+   - Thẻ "(2)": Đứng trước câu mô tả HÌNH THỨC của khối chữ thứ hai (vị trí bên dưới, chất liệu chữ trắng thanh mảnh / decal mờ / viền led).
 {product_rule}
-3. CẢNH BÁO QUAN TRỌNG VỀ NỘI DUNG CHỮ:
-   - TUYỆT ĐỐI KHÔNG ĐƯỢC TỰ BỊA RA CÂU CHỮ / SLOGAN GIẢ (Không được viết kiểu: '(1) Nước hoa quyến rũ', '(2) Mua ngay hôm nay').
-   - CHỈ MÔ TẢ HÌNH THỨC VẬT LÝ CỦA NÉT CHỮ (Ví dụ ĐÚNG: '(1) Tiêu đề chính chữ nổi mạ vàng 3D sang trọng đặt ở phía trên...', '(2) Dòng phụ đề màu trắng thanh lịch đổ bóng mờ ở phía dưới...').
-4. KHÔNG dùng các từ ngữ sáo rỗng (như 'bữa tiệc thị giác', 'tinh hoa hội tụ', 'đẹp lung linh', 'tuyệt mỹ').
-5. TẬP TRUNG 100% VÀO VẬT LÝ VÀ QUANG HỌC: Chất liệu chế tác, hướng chiếu sáng (key light, rim light, spotlight, softbox), đổ bóng và độ tương phản.
-6. CÂU VĂN TỰ NHIÊN, UYỂN CHUYỂN, KHÔNG RẬP KHUÔN: Biến hóa cấu trúc câu xung quanh thẻ (1) và (2), không viết rập khuôn máy móc.
-7. TUYỆT ĐỐI KHÔNG ghi độ phân giải hay tỉ lệ khung hình (như '1024x1024', '9:16', '4k', '8k').
-8. Trả về DUY NHẤT một đoạn văn xuôi hoàn chỉnh, không gạch đầu dòng, không tiêu đề."""
+3. CẢNH BÁO TUYỆT ĐỐI VỀ NỘI DUNG CHỮ:
+   - TUYỆT ĐỐI KHÔNG LẶP LẠI NỘI DUNG CHỮ THẬT (Representation Clash).
+   - TUYỆT ĐỐI KHÔNG tự bịa ra slogan hay câu chữ giả. Chỉ mô tả HÌNH THỨC VẬT LÝ của nét chữ.
+   - TUYỆT ĐỐI KHÔNG ghi độ phân giải hay tỉ lệ khung hình (như '1024x1024', '9:16', '4k', '8k', '--ar').
+4. Trả về DUY NHẤT một đoạn văn xuôi hoàn chỉnh, không gạch đầu dòng, không tiêu đề."""
 
 
 def llm_clean_prompt(spec: Dict, has_product: bool, max_retries: int = 3) -> Optional[str]:
@@ -534,7 +551,7 @@ def llm_clean_prompt(spec: Dict, has_product: bool, max_retries: int = 3) -> Opt
     Enforces anti-leak and anchor presence as a hard gate.
     """
     text1, text2 = spec["text1"], spec["text2"]
-    product_rule = "3. BẮT BUỘC có thẻ \"(3)\" đứng trước mô tả vai trò/vị trí của SẢN PHẨM thật trong ảnh." if has_product else ""
+    product_rule = "3. BẮT BUỘC có thẻ \"(3)\" đứng trước mô tả vị trí của SẢN PHẨM THẬT trong bố cục." if has_product else ""
     system = LLM_SYSTEM_PROMPT.format(product_rule=product_rule)
 
     domain = spec.get("domain", "general")
@@ -542,19 +559,24 @@ def llm_clean_prompt(spec: Dict, has_product: bool, max_retries: int = 3) -> Opt
     style_seed = random.choice(ctx["seeds"])
     syntax_hint = random.choice(SYNTACTIC_FLOW_HINTS)
 
+    raw_uc = spec.get("use_case", "commercial")
+    uc_desc = USE_CASE_DESCRIPTIONS.get(raw_uc, "Poster đồ họa thương mại cao cấp")
+    prod_name = _clean_product_name(spec["product_path"]) if has_product and spec.get("product_path") else ""
+    subject_desc = f"sản phẩm {prod_name}" if prod_name else f"chủ đề {domain}"
+
     num_words_1 = len(text1.split())
     num_lines_1 = len(text1.split("\n"))
     num_words_2 = len(text2.split())
     num_lines_2 = len(text2.split("\n"))
 
     user_msg = (
-        f"Ngành hàng/Domain: {spec.get('domain', 'general')}\n"
-        f"Mục đích poster (Use-Case): {spec.get('use_case', 'commercial')}\n"
-        f"Gợi ý phong cách nghệ thuật: {style_seed}\n"
+        f"Yêu cầu nghiệp vụ cốt lõi: {uc_desc} cho {subject_desc}\n"
+        f"Ngành hàng/Lĩnh vực: {domain}\n"
+        f"Gợi ý phong cách & không gian: {style_seed}\n"
         f"Gợi ý cấu trúc câu: {syntax_hint}\n"
         f"Đặc điểm khối chữ (1): Tiêu đề chính ({num_words_1} từ, {num_lines_1} dòng)\n"
         f"Đặc điểm khối chữ (2): Phụ đề bổ trợ ({num_words_2} từ, {num_lines_2} dòng)\n"
-        f"Có sản phẩm thật trong ảnh: {'Có (cần thẻ (3))' if has_product else 'Không'}"
+        f"Có sản phẩm thật trong ảnh: {'Có (bắt buộc có thẻ (3) mô tả vị trí sản phẩm thật)' if has_product else 'Không'}"
     )
 
     for attempt in range(max_retries):
