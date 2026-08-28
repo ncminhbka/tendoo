@@ -832,27 +832,28 @@ def _clean_product_name(product_path: Path) -> str:
     return re.sub(r"^\d+[\s_-]*", "", product_path.stem).replace("_", " ")
 
 
-def _format_lines_desc(lines: List[str], position: str, font_style: str) -> str:
+def _format_lines_desc(lines: List[str], role: str, font_style: str) -> str:
     n = len(lines)
     if n == 1:
-        return f"{position}, on 1 single line {font_style}: \"{lines[0]}\""
+        return f"{role}, on 1 single line {font_style}: \"{lines[0]}\""
     else:
         line_specs = " and ".join(f"line {i+1} reads \"{line}\"" for i, line in enumerate(lines))
-        return f"{position}, stacked vertically on {n} distinct lines (where {line_specs}) {font_style}"
+        return f"{role}, stacked on {n} distinct lines (where {line_specs}) {font_style}"
 
 
 def _build_teacher_prompt(spec: Dict, g1_lines: List[str], g2_lines: List[str]) -> str:
     f1_style = FONT_STYLE_DESCRIPTORS.get(spec["font1"], "in clean modern bold typography")
     f2_style = FONT_STYLE_DESCRIPTORS.get(spec["font2"], "in clean typography")
 
-    t1_desc = _format_lines_desc(g1_lines, "At top", f1_style)
-    t2_desc = _format_lines_desc(g2_lines, "Below it", f2_style)
+    # Let Teacher GPT naturally design the visual layout (no rigid 'At top' / 'Below it' constraints)
+    t1_desc = _format_lines_desc(g1_lines, "Primary headline text", f1_style)
+    t2_desc = _format_lines_desc(g2_lines, "Secondary subtitle text", f2_style)
 
     prod_desc = ""
     if spec["modality"] == "i2i" and spec.get("product_path"):
         prod_desc = (
-            f"The exact product shown in the reference image (a {_clean_product_name(spec['product_path'])}) "
-            f"must appear placed prominently, unmodified in identity/shape/label, in the lower or center portion. "
+            f"The product shown in the reference image (a {_clean_product_name(spec['product_path'])}) "
+            f"must appear placed prominently, unmodified in identity/shape/label. "
         )
 
     negative_rule = (
@@ -872,20 +873,8 @@ def _build_teacher_prompt(spec: Dict, g1_lines: List[str], g2_lines: List[str]) 
     )
 
 
-def map_to_openai_size(target_w: int, target_h: int) -> str:
-    """Maps target aspect ratio to supported OpenAI API sizes:
-    1024x1024 (1:1), 1024x1536 (portrait), 1536x1024 (landscape).
-    """
-    if target_w == target_h:
-        return "1024x1024"
-    elif target_w < target_h:
-        return "1024x1536"
-    else:
-        return "1536x1024"
-
-
 def generate_target_image(spec: Dict, g1_lines: List[str], g2_lines: List[str], targets_dir: Path, delay: float) -> Path:
-    from PIL import Image, ImageOps
+    from PIL import Image
     import io
     import urllib.request
 
@@ -895,7 +884,8 @@ def generate_target_image(spec: Dict, g1_lines: List[str], g2_lines: List[str], 
         return target_path
 
     teacher_prompt = _build_teacher_prompt(spec, g1_lines, g2_lines)
-    api_size = map_to_openai_size(spec["width"], spec["height"])
+    # gpt-image-2 natively supports exact FLUX.2 bucket resolutions (1024x1024, 768x1344, 896x1152, 1344x768)
+    api_size = f"{spec['width']}x{spec['height']}"
 
     max_retries = 3
     for attempt in range(max_retries):
@@ -929,10 +919,10 @@ def generate_target_image(spec: Dict, g1_lines: List[str], g2_lines: List[str], 
             else:
                 raise RuntimeError(f"No image data returned from API for {sid}")
 
-            # Ensure exact target bucket dimensions (1024x1024, 768x1344, 896x1152, 1344x768)
+            # Verify native dimensions directly without any lossy cropping
             target_size = (spec["width"], spec["height"])
             if img.size != target_size:
-                img = ImageOps.fit(img, target_size, method=Image.Resampling.LANCZOS)
+                img = img.resize(target_size, Image.Resampling.LANCZOS)
 
             img.save(target_path)
             time.sleep(delay)
