@@ -732,6 +732,67 @@ def adapt_text_for_aspect_ratio(text: str, ar_name: str) -> str:
     return text
 
 
+def to_title_case_vietnamese(s: str) -> str:
+    """Converts multi-line string to Title Case while preserving Vietnamese diacritics."""
+    lines = s.split("\n")
+    return "\n".join(" ".join(w.capitalize() for w in line.split()) for line in lines)
+
+
+def to_sentence_case_vietnamese(s: str) -> str:
+    """Capitalizes the first letter of each line, keeping the rest lowercase."""
+    lines = s.split("\n")
+    res = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        line_low = line.lower()
+        res.append(line_low[0].upper() + line_low[1:])
+    return "\n".join(res)
+
+
+def adapt_casing_for_typography(text: str, font_name: str, sample_id: int, is_slot1: bool = True) -> str:
+    """
+    Applies realistic typography casing distribution across ALL CAPS, Title Case, and Sentence Case.
+    Prevents artificial 100% uppercase bias on Slot 1, and strictly enforces Title Case for
+    Script / Calligraphy fonts where ALL CAPS is considered unacceptable graphic design.
+    """
+    if not is_slot1:
+        return text
+
+    font = font_name.lower()
+
+    # 1. Script / Calligraphy fonts (Dancing Script, Pacifico): MUST be set in Title Case
+    # All-caps in cursive scripts causes broken ligatures and illegible lettering.
+    if font in ("dancing", "pacifico"):
+        return to_title_case_vietnamese(text)
+
+    # 2. Long narrative statements (>=8 words, e.g. inverted stratum lead text):
+    # Natural editorial style is Sentence Case or Title Case, not shouting in ALL CAPS.
+    if len(text.split()) >= 8:
+        return to_sentence_case_vietnamese(text) if (sample_id % 2 == 0) else to_title_case_vietnamese(text)
+
+    # 3. Standard titles based on font personality (deterministic cycling across sample_id):
+    mod = (sample_id * 7 + 3) % 10
+    if font in ("anton", "oswald"):
+        # Heavy condensed: 70% ALL CAPS, 30% Title Case
+        return text.upper() if mod < 7 else to_title_case_vietnamese(text)
+    elif font == "playfair":
+        # High-contrast Serif: 60% Title Case, 40% ALL CAPS
+        return to_title_case_vietnamese(text) if mod < 6 else text.upper()
+    elif font == "sedgwick":
+        # Urban marker / Graffiti: 50% Title Case, 50% ALL CAPS
+        return to_title_case_vietnamese(text) if mod < 5 else text.upper()
+    else:  # bevietnam and others
+        # Clean Geometric Sans: 40% ALL CAPS, 40% Title Case, 20% Sentence Case
+        if mod < 4:
+            return text.upper()
+        elif mod < 8:
+            return to_title_case_vietnamese(text)
+        else:
+            return to_sentence_case_vietnamese(text)
+
+
 def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
     # 1. Modality: 55% I2I / 45% T2I, proportional to total_samples (fixes the hardcoded-800 bug)
     i2i_cutoff = round(total_samples * 0.55)
@@ -797,6 +858,9 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
     text1 = adapt_text_for_aspect_ratio(text1, ar_name)
     text2 = adapt_text_for_aspect_ratio(text2, ar_name)
 
+    # TYPOGRAPHY CASING ADAPTATION: Diversify casing across ALL CAPS, Title Case, Sentence Case
+    text1 = adapt_casing_for_typography(text1, font1, sample_id, is_slot1=True)
+
     return {
         "id": f"sample_{sample_id:04d}",
         "cohort": cohort,
@@ -852,13 +916,25 @@ def _clean_product_name(product_path: Path) -> str:
     return re.sub(r"^\d+[\s_-]*", "", product_path.stem).replace("_", " ")
 
 
+def _detect_casing_instruction(lines: List[str]) -> str:
+    """Detects casing of lines to pass explicit instruction to Teacher."""
+    full_text = " ".join(lines).strip()
+    if full_text == full_text.upper():
+        return "rendered strictly in ALL-CAPS (UPPERCASE) lettering"
+    elif all(line == " ".join(w.capitalize() for w in line.split()) for line in lines):
+        return "rendered strictly in Title Case (Capitalized Words, with lowercase body)"
+    else:
+        return "rendered strictly in sentence case (only first letter capitalized, remaining letters lowercase)"
+
+
 def _format_lines_desc(lines: List[str], role: str, font_style: str) -> str:
     n = len(lines)
+    casing_instr = _detect_casing_instruction(lines)
     if n == 1:
-        return f"{role}, on 1 single line {font_style}: \"{lines[0]}\""
+        return f"{role}, on 1 single line {casing_instr} {font_style}: \"{lines[0]}\""
     else:
         line_specs = " and ".join(f"line {i+1} reads \"{line}\"" for i, line in enumerate(lines))
-        return f"{role}, stacked on {n} distinct lines (where {line_specs}) {font_style}"
+        return f"{role}, stacked on {n} distinct lines (where {line_specs}) {casing_instr} {font_style}"
 
 
 def _build_teacher_prompt(spec: Dict, g1_lines: List[str], g2_lines: List[str]) -> str:
@@ -901,6 +977,8 @@ def _build_teacher_prompt(spec: Dict, g1_lines: List[str], g2_lines: List[str]) 
     negative_rule = (
         "CRITICAL TYPOGRAPHY RESTRICTION: Render ONLY the exact text specified above, with fully correct "
         "Vietnamese diacritics (tone marks) -- do not drop, alter, or simplify any dấu. "
+        "CRITICAL: Match the exact letter casing (UPPERCASE vs Title Case vs lowercase) exactly as written in the quotes above -- "
+        "NEVER convert uppercase text to lowercase, and NEVER convert Title Case or lowercase text to all-caps. "
         "DO NOT render metadata labels like 'line 1' or delimiter symbols like slashes '/', hyphens, or bullet points. "
         "DO NOT add any other words, badges, discount numbers, phone numbers, website URLs, or decorative "
         "gibberish text. There must be ZERO extraneous text anywhere on the canvas."
