@@ -59,18 +59,65 @@ Tỉ lệ khung hình được phân bổ cố định và trải đều trên c
 
 ---
 
-## 🎨 2. NGUYÊN TẮC TRỰC GIAO HÓA FONT VÀ SÀN PHÂN GIẢI KÉP
+### 1.5. Khóa Kích Thước Trực Tiếp Pixel-for-Pixel với Teacher API
+* **Khám phá kỹ thuật**: `gpt-image-2` hỗ trợ kích thước tùy ý chia hết cho 16 trong dải tỉ lệ từ 1:3 đến 3:1.
+* **Cơ chế Direct Sizing**:
+  - Truyền trực tiếp `size=f"{width}x{height}"` vào OpenAI API:
+    * $1:1 \rightarrow \mathbf{1024 \times 1024}$
+    * $9:16 \rightarrow \mathbf{768 \times 1344}$
+    * $4:5 \rightarrow \mathbf{896 \times 1152}$
+    * $16:9 \rightarrow \mathbf{1344 \times 768}$
+  - **Loại bỏ 100% bước resize/crop Lanczos hậu kỳ**, đảm bảo ảnh Ground Truth khớp $1:1$ từng pixel với lưới Latent Patch của FLUX.2 ($48\times 84, 56\times 72, 84\times 48$).
 
-### 2.1. Phân bổ Font Ngẫu nhiên Độc lập ($I(\text{Font}; \text{Domain}) = 0$)
+---
+
+### 1.6. Chiến Lược Khai Thác Vùng Khó Chủ Đích (Known-Hard Sub-Cohort: 12% = ~100 Mẫu)
+Thay vì dùng 100% phân phối ngẫu nhiên tự nhiên (Uniform Random Sampling), ta phân bổ riêng **$12\%$ tập dữ liệu ($\approx 100$ mẫu)** gắn tag `cohort: "known_hard"` nhắm trúng 4 tử huyệt đã phát hiện qua các probe thực nghiệm:
+1. **Diacritic Cluster Stress (Cụm 3-4 dấu phụ liên tiếp)**:
+   - Các từ ngữ phức tạp dễ biến dạng: *"CHỐNG ỒN CHỦ ĐỘNG"*, *"Ủ CHƯỢP TRUYỀN THỐNG"*, *"ĐỔI MỚI SÁNG TẠO TOÀN DIỆN"*.
+2. **Cạnh tranh Token Mass Bất đối xứng Cực đoan**:
+   - Ảnh sản phẩm $4.096$ tokens ($t=20$) cạnh tranh trực tiếp với khối Text nhỏ ($\sim 120$ tokens tại $t=10$). LoRA học cách bảo toàn Attention Heads không để sản phẩm lấn át chữ.
+3. **Zero Surface Anchor (Prompt Tự Nhiên Không Bảng Hiệu)**:
+   - Prompt trừu tượng, không mớm lời "trên bảng hiệu/vách đá". Mô hình tự học cách định vị chữ nổi 3D hài hòa mà không cần "nạng cứu trợ".
+4. **Boundary Coordinates trên Tỉ lệ Cực Hạn ($9:16$ và $16:9$)**:
+   - Chữ nằm sát biên trên ($y \le 64\text{px}$) hoặc biên đáy ($y \ge 1280\text{px}$) nơi góc quay 4D RoPE gần cực hạn.
+
+---
+
+### 1.7. Kiểm Soát Rủi Ro Lệch Phong Cách (Style Drift Mitigation via Focal Loss)
+* **Rủi ro**: `FLUX.2-klein-base-4B` có chất ảnh gốc cực kỳ chân thực, trong khi GPT-Image có xu hướng mượt mà, bóng bẩy 3D render thương mại. Full-image loss có nguy cơ kéo phong cách background của FLUX theo GPT.
+* **Giải pháp Focal / Masked Loss Weighting**:
+  $$\mathcal{L} = \left[ \mathbf{W}_{\text{text}} \odot M_{\text{text}} + \mathbf{W}_{\text{prod}} \odot M_{\text{prod}} + \mathbf{W}_{\text{bg}} \odot M_{\text{bg}} \right] \odot \| v_\theta - v^* \|^2$$
+  - $\mathbf{W}_{\text{text}} = \mathbf{3.0}$ (ép học hình học nét chữ từ Glyph).
+  - $\mathbf{W}_{\text{prod}} = \mathbf{2.0}$ (bảo toàn nhãn mác sản phẩm).
+  - $\mathbf{W}_{\text{bg}} = \mathbf{0.3 - 0.5}$ (giảm áp lực học nền của GPT, giữ trọn vẹn chất ảnh nguyên bản của FLUX.2).
+
+---
+
+## 🎨 2. NGUYÊN TẮC BẢN QUYỀN THƯƠNG MẠI & KHO 7 FONT AN TOÀN TUYỆT ĐỐI (100% OFL)
+
+### 2.1. Quyết Định Chiến Lược Về Bản Quyền Font (Commercial Legal Safety)
+* Nhằm đảm bảo an toàn pháp lý tuyệt đối cho sản phẩm thương mại **Tendoo AI**, loại bỏ toàn bộ các font có rủi ro bản quyền:
+  - ⛔ Loại bỏ **`gotham`**: Font thương mại độc quyền của Hoefler & Co. / Monotype (bản SVN-Gotham là mod cộng đồng, không có giấy phép thương mại).
+  - ⛔ Loại bỏ **các font `SVN-...`** (`SVN-Harabara`, `SVN-Clementine`, `SVN-Cookies`, `SVN-Grocery`, `SVN-Holidays`, `SVN-Gretoon`, `SVN-BlowBrush`): Font mod Việt hóa cộng đồng thường chỉ cấp phép phi thương mại (Personal Use Only).
+* **Khóa cứng Kho 7 Font Chuẩn Google Fonts OFL (Open Font License - 100% Tự do Thương mại)**:
+
+| STT | Font Key | Tên Đầy Đủ | Archetype (Trường phái Hình học) | License | Sàn Tối Thiểu |
+| :---: | :--- | :--- | :--- | :---: | :---: |
+| **1** | **`bevietnam`** | Be Vietnam Pro (Black / Bold) | Modern Geometric Sans (Công nghệ, Viễn thông, Tối giản) | **OFL** | **$32\text{pt}$** |
+| **2** | **`anton`** | Anton (Regular / Heavy Bold) | Heavy Condensed Sans (Sale sốc, Giảm giá, Tiêu đề mạnh) | **OFL** | **$36\text{pt}$** |
+| **3** | **`playfair`** | Playfair Display (Bold) | Elegant High-Contrast Serif (Mỹ phẩm, Nước hoa, Sang trọng) | **OFL** | **$36\text{pt}$** |
+| **4** | **`oswald`** | Oswald (Bold / SemiBold) | Gothic Condensed Display (Thời trang nam, Thể thao, Poster) | **OFL** | **$36\text{pt}$** |
+| **5** | **`pacifico`** | Pacifico (Regular) | Casual Fun Brush Script (Ẩm thực, Trà sữa, F&B trẻ trung) | **OFL** | **$36\text{pt}$** |
+| **6** | **`dancing`** | Dancing Script (Bold) | Dynamic Cursive Script (Boutique, Thiệp mừng, Spa, Thơ ca) | **OFL** | **$36\text{pt}$** |
+| **7** | **`sedgwick`** | Sedgwick Ave (Regular) | Street Graffiti / Urban Marker (Gaming, Giày sneaker, Streetwear) | **OFL** | **$36\text{pt}$** |
+
+### 2.2. Phân Bổ Ngẫu Nhiên Độc Lập Trực Giao Trong Kho 7 Font
 * Tuyệt đối không gán chết một font vào một ngành hàng.
-* Mỗi mẫu huấn luyện chọn ngẫu nhiên độc lập trong kho **16 Font Unicode**:
-  - **Slot 1**: Bốc ngẫu nhiên 1 trong 16 font với xác suất đều đặn $P = 1/16$ ($\approx 50$ mẫu/font).
-  - **Slot 2**: $75\%$ trường hợp chọn font khác Slot 1 (để học cách phối hợp 2 font khác phong cách); $25\%$ trường hợp chọn cùng font (để học phân cấp kích thước đồng bộ).
-* **Tổng lượt xuất hiện mỗi font trong 800 mẫu**: $\approx 100$ lần, đảm bảo phá vỡ hoàn toàn mọi định kiến giả giữa phong cách hình học của chữ và ngữ cảnh của ảnh.
-
-### 2.2. Khóa Cứng Sàn Phân Giải Kép (Locked Dual-Floor Architecture)
-* **`BeVietnamPro-Black`**: Sàn tối thiểu **$32\text{pt}$** (độ phân giải tối thiểu cho nét chữ không bị gãy).
-* **Toàn bộ 15 font còn lại** (`anton`, `gotham`, `lolapeluza`, `gretoon`, `playfair`, `oswald`, `harabaras`, `dancing`, `pacifico`, `sedgwick`, `blowbrush`, `clementine`, `cookies`, `grocery`, `holidays`): Sàn tối thiểu **$36\text{pt}$**.
+* Phân bổ đều đặn $P = 1/7$ cho mỗi font ($\approx 114$ lượt xuất hiện mỗi font trong 800 mẫu).
+* **Khóa Cứng Sàn Phân Giải Kép (Locked Dual-Floor)**:
+  - `bevietnam`: Sàn tối thiểu **$32\text{pt}$**.
+  - 6 font còn lại (`anton`, `playfair`, `oswald`, `pacifico`, `dancing`, `sedgwick`): Sàn tối thiểu **$36\text{pt}$**.
 
 ---
 

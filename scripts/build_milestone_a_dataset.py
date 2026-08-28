@@ -48,20 +48,24 @@ from openai import OpenAI
 client = OpenAI(api_key=api_key)
 
 # ==================================================================================================
-# 1. 16 UNICODE FONTS & DUAL-FLOOR RESOLUTION
+# 1. 7 100% OFL GOOGLE FONTS (COMMERCIAL LEGAL SAFETY) & DUAL-FLOOR RESOLUTION
 # ==================================================================================================
 ALL_FONTS = [
-    "bevietnam", "anton", "gotham", "lolapeluza", "gretoon", "playfair",
-    "oswald", "harabaras", "dancing", "pacifico", "sedgwick", "blowbrush",
-    "clementine", "cookies", "grocery", "holidays"
+    "bevietnam",  # Clean Modern Geometric Sans (OFL) - Floor 32pt
+    "anton",      # Heavy Condensed Bold Display (OFL) - Floor 36pt
+    "playfair",   # Elegant High-Contrast Serif (OFL) - Floor 36pt
+    "oswald",     # Gothic Condensed Display Sans (OFL) - Floor 36pt
+    "pacifico",   # Casual Fun Brush Script (OFL) - Floor 36pt
+    "dancing",    # Dynamic Cursive Script (OFL) - Floor 36pt
+    "sedgwick",   # Street Urban Marker / Graffiti (OFL) - Floor 36pt
 ]
 
 def get_font_floor(font_name: str) -> int:
-    """Locked Dual-Floor: 32pt for bevietnam, 36pt for all other 15 fonts."""
+    """Locked Dual-Floor: 32pt for bevietnam, 36pt for all other 6 OFL fonts."""
     return 32 if font_name.lower() == "bevietnam" else 36
 
 def sample_orthogonal_fonts() -> Tuple[str, str]:
-    """Independent font sampling: Slot 1 is uniform 1/16, Slot 2 is 75% distinct font."""
+    """Independent font sampling across 7 100% OFL fonts."""
     font1 = random.choice(ALL_FONTS)
     if random.random() < 0.75:
         remaining = [f for f in ALL_FONTS if f != font1]
@@ -69,6 +73,17 @@ def sample_orthogonal_fonts() -> Tuple[str, str]:
     else:
         font2 = font1
     return font1, font2
+
+# Stress test pairs for the 12% "Known-Hard" Sub-Cohort
+KNOWN_HARD_PAIRS = [
+    ("CHỐNG ỒN CHỦ ĐỘNG", "Khử tạp âm kỹ thuật số\nĐắm chìm trong âm nhạc đỉnh cao"),
+    ("Ủ CHƯỢP TRUYỀN THỐNG", "Cá cơm tươi nguyên chất\nĐậm đà phong vị biển xanh"),
+    ("ĐỔI MỚI SÁNG TẠO TOÀN DIỆN", "Bứt phá mọi giới hạn\nĐịnh hình kỷ nguyên số"),
+    ("KHUẤY ĐỘNG MỌI BỮA TIỆC", "Âm bass bùng nổ nội lực\nÁnh sáng rực rỡ sắc màu"),
+    ("AN TOÀN TUYỆT ĐỐI CHO LÀN DA", "Không chất bảo quản\nChứng nhận kiểm nghiệm quốc tế"),
+    ("TIỆM CÀ PHÊ ANH QUÂN GÓC PHỐ NHỎ BÌNH YÊN", "GIẢM 50%"),
+    ("BỘ DƯỠNG TRẮNG PHỤC HỒI TÁI TẠO LÀN DA CHUYÊN SÂU", "HOT SALE"),
+]
 
 # ==================================================================================================
 # 2. ASPECT RATIO CONFIGURATIONS
@@ -293,9 +308,23 @@ def sample_dataset_spec(sample_id: int, total_samples: int = 800) -> Dict:
     floor1 = get_font_floor(font1)
     floor2 = get_font_floor(font2)
 
-    # 4. Domain, Product & Text
+    # 4. Domain, Product, Text & Cohort
+    is_known_hard = (sample_id % 8 == 0)  # 12.5% dedicated stress tests
+    cohort = "known_hard" if is_known_hard else "standard"
     product_path = None
-    if is_i2i:
+
+    if is_known_hard:
+        pair = random.choice(KNOWN_HARD_PAIRS)
+        text1, text2 = pair
+        domain = "stress_test"
+        use_case = "known_hard"
+        if is_i2i:
+            # Pick product for token mass stress testing
+            d = random.choice(list(DOMAIN_TEXT_CORPUS.keys()))
+            p_files = sorted([f for f in (PROJECT_ROOT / "data" / "products" / d).glob("*.*") if f.suffix.lower() in [".png", ".jpg", ".jpeg"]])
+            if p_files:
+                product_path = random.choice(p_files)
+    elif is_i2i:
         # Pick domain and strictly coupled product + text pair by index (Semantic Product-Copy Consistency)
         domains = list(DOMAIN_TEXT_CORPUS.keys())
         domain = random.choice(domains)
@@ -325,6 +354,7 @@ def sample_dataset_spec(sample_id: int, total_samples: int = 800) -> Dict:
 
     return {
         "id": f"sample_{sample_id:04d}",
+        "cohort": cohort,
         "modality": modality,
         "use_case": use_case,
         "domain": domain,
@@ -422,14 +452,8 @@ def generate_target_image(
         f"Professional graphic typography design, high contrast, sharp studio lighting, commercial photography."
     )
 
-    # Pick closest OpenAI size
-    ar = spec["aspect_ratio"]
-    if ar == "1:1":
-        api_size = "1024x1024"
-    elif ar in ["9:16", "4:5"]:
-        api_size = "1024x1536"
-    else:
-        api_size = "1536x1024"
+    # Direct 1:1 Pixel Sizing for gpt-image-2 (zero resize needed!)
+    direct_size = f"{spec['width']}x{spec['height']}"
 
     max_retries = 3
     for attempt in range(max_retries):
@@ -438,15 +462,11 @@ def generate_target_image(
                 model="gpt-image-2",
                 prompt=teacher_prompt,
                 quality="low",
-                size=api_size,
+                size=direct_size,
             )
             raw_bytes = base64.b64decode(res.data[0].b64_json)
             img = Image.open(io.BytesIO(raw_bytes))
-
-            # Resize with Lanczos to exact canonical bucket dimensions (multiples of 16)
-            target_w, target_h = spec["width"], spec["height"]
-            img_resized = img.resize((target_w, target_h), Image.Resampling.LANCZOS)
-            img_resized.save(target_path)
+            img.save(target_path)
 
             time.sleep(delay)
             return target_path
@@ -537,6 +557,7 @@ def main():
         # 3. Assemble Manifest Record
         record = {
             "id": spec["id"],
+            "cohort": spec["cohort"],
             "modality": spec["modality"],
             "use_case": spec["use_case"],
             "domain": spec["domain"],
