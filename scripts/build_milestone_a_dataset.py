@@ -674,6 +674,44 @@ def determine_use_case(sample_id: int, total_samples: int, is_i2i: bool) -> str:
     return targets[-1][0]
 
 
+def adapt_text_for_aspect_ratio(text: str, ar_name: str) -> str:
+    """Adapts line breaks to match the geometric aspect ratio of the canvas.
+    On narrow 9:16 (768px width), prevents overflow and uncontrolled line breaks by
+    proactively structuring >=3 word titles into balanced multi-line text.
+    On wide 16:9 (1344px width, 768px height), prevents tall multi-line stacks that consume vertical space.
+    """
+    if not text:
+        return text
+
+    if ar_name == "9:16":
+        # Narrow vertical canvas: 1 single long line will overflow or force GPT to break unpredictably.
+        # Proactively wrap >=3 words if not already broken.
+        if "\n" not in text:
+            words = text.split()
+            if len(words) == 3:
+                return f"{words[0]} {words[1]}\n{words[2]}"
+            elif len(words) == 4:
+                return f"{words[0]} {words[1]}\n{words[2]} {words[3]}"
+            elif len(words) == 5:
+                return f"{words[0]} {words[1]}\n{words[2]} {words[3]} {words[4]}"
+            elif len(words) >= 6:
+                # Break into roughly 3-4 word lines
+                lines = []
+                for i in range(0, len(words), 3):
+                    lines.append(" ".join(words[i:i+3]))
+                return "\n".join(lines)
+    elif ar_name == "16:9":
+        # Wide horizontal canvas: abundant width (1344px), scarce height (768px).
+        # Avoid >=3 stacked lines. If text has 3+ lines, rebalance into 1-2 lines.
+        lines = [l.strip() for l in text.split("\n") if l.strip()]
+        if len(lines) >= 3:
+            all_words = " ".join(lines).split()
+            half = len(all_words) // 2
+            return " ".join(all_words[:half]) + "\n" + " ".join(all_words[half:])
+
+    return text
+
+
 def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
     # 1. Modality: 55% I2I / 45% T2I, proportional to total_samples (fixes the hardcoded-800 bug)
     i2i_cutoff = round(total_samples * 0.55)
@@ -735,6 +773,10 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
             options = GENERAL_T2I_CORPUS[use_case][length_stratum]
             text1, text2 = random.choice(options)
 
+    # GEOMETRIC LINE ADAPTATION: Proactively align text line breaks with aspect ratio
+    text1 = adapt_text_for_aspect_ratio(text1, ar_name)
+    text2 = adapt_text_for_aspect_ratio(text2, ar_name)
+
     return {
         "id": f"sample_{sample_id:04d}",
         "cohort": cohort,
@@ -790,12 +832,21 @@ def _clean_product_name(product_path: Path) -> str:
     return re.sub(r"^\d+[\s_-]*", "", product_path.stem).replace("_", " ")
 
 
+def _format_lines_desc(lines: List[str], position: str, font_style: str) -> str:
+    n = len(lines)
+    if n == 1:
+        return f"{position}, on 1 single line {font_style}: '{lines[0]}'"
+    else:
+        line_specs = ", ".join(f"Line {i+1}: '{line}'" for i, line in enumerate(lines))
+        return f"{position}, stacked vertically on {n} lines ({line_specs}) {font_style}"
+
+
 def _build_teacher_prompt(spec: Dict, g1_lines: List[str], g2_lines: List[str]) -> str:
     f1_style = FONT_STYLE_DESCRIPTORS.get(spec["font1"], "in clean modern bold typography")
     f2_style = FONT_STYLE_DESCRIPTORS.get(spec["font2"], "in clean typography")
 
-    t1_desc = f"At top, on {len(g1_lines)} line(s) {f1_style}: '{' / '.join(g1_lines)}'"
-    t2_desc = f"Below it, on {len(g2_lines)} line(s) {f2_style}: '{' / '.join(g2_lines)}'"
+    t1_desc = _format_lines_desc(g1_lines, "At top", f1_style)
+    t2_desc = _format_lines_desc(g2_lines, "Below it", f2_style)
 
     prod_desc = ""
     if spec["modality"] == "i2i" and spec.get("product_path"):
