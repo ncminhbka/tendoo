@@ -633,24 +633,23 @@ def _pick_product_for_domain(domain: str) -> Optional[Path]:
 # 6. BUSINESS USE-CASE QUOTA MATRIX (SUB-PLAN 1.1: 800-SAMPLE GROUND TRUTH ALLOCATION)
 # ==================================================================================================
 # Target sample counts for I2I (55% = 440 total per Sub-plan Table 1.1)
+# Note: Real packshots must strictly feature product-tailored commercial copy (no recruitment or abstract quotes on consumer products).
 I2I_USE_CASE_TARGETS: List[Tuple[str, int]] = [
-    ("hero_product", 170),        # 21.25% of total
-    ("flash_sale", 90),           # 11.25% of total
-    ("customer_feedback", 60),    # 7.50% of total
-    ("opening_banner", 40),       # 5.00% of total
-    ("two_step_guide", 30),       # 3.75% of total
-    ("creative_quote", 30),       # 3.75% of total
-    ("recruitment", 20),          # 2.50% of total
+    ("hero_product", 190),        # 43.18% of I2I (Product identity, features, branding)
+    ("flash_sale", 120),          # 27.27% of I2I (Hot discounts, promotions)
+    ("customer_feedback", 70),    # 15.91% of I2I (Product ratings, user satisfaction)
+    ("opening_banner", 35),       # 7.95% of I2I (Flagship launch, new arrival)
+    ("two_step_guide", 25),       # 5.68% of I2I (Usage guide, unbox/experience)
 ]
 
 # Target sample counts for Pure T2I (45% = 360 total per Sub-plan Table 1.1)
 T2I_USE_CASE_TARGETS: List[Tuple[str, int]] = [
-    ("flash_sale", 80),           # 10.00% of total
-    ("recruitment", 70),          # 8.75% of total
-    ("opening_banner", 60),       # 7.50% of total
-    ("customer_feedback", 50),    # 6.25% of total
-    ("two_step_guide", 50),       # 6.25% of total
-    ("creative_quote", 50),       # 6.25% of total
+    ("recruitment", 90),          # 25.00% of T2I (Modern employer branding, tech hiring)
+    ("creative_quote", 80),       # 22.22% of T2I (Inspirational quotes, wisdom, typography art)
+    ("flash_sale", 60),           # 16.67% of T2I (Services, vouchers, travel, dining)
+    ("cultural_vietnam", 60),     # 16.67% of T2I (Vietnamese cuisine, heritage, street life)
+    ("opening_banner", 35),       # 9.72% of T2I (Store grand opening, exhibition, event)
+    ("two_step_guide", 35),       # 9.72% of T2I (App onboarding, digital procedure)
 ]
 
 
@@ -711,36 +710,26 @@ def sample_dataset_spec(sample_id: int, total_samples: int) -> Dict:
             product_path = _pick_product_for_domain(domain)
     elif is_i2i:
         # I2I ALWAYS has 2 text slots + 1 product slot (per corrected architecture).
+        # In I2I, typography MUST strictly match the product packshot!
         domain = random.choice(list(PRODUCT_TEXT_CORPUS.keys()))
         stem = random.choice(list(PRODUCT_TEXT_CORPUS[domain].keys()))
         prod_folder = PROJECT_ROOT / "data" / "products" / domain
         candidates = list(prod_folder.glob(f"{stem}.*"))
         product_path = candidates[0] if candidates else _pick_product_for_domain(domain)
 
-        if use_case in ["hero_product", "flash_sale"]:
-            options = PRODUCT_TEXT_CORPUS[domain][stem][length_stratum]
-            text1, text2 = random.choice(options)
-        else:
-            # Other 5 use cases in I2I (customer_feedback, opening_banner, recruitment, two_step_guide, creative_quote)
-            # take text from GENERAL_T2I_CORPUS while displaying the real product photo!
-            options = GENERAL_T2I_CORPUS[use_case][length_stratum]
-            text1, text2 = random.choice(options)
+        # STRICT PRODUCT-COUPLED COPY: Never leak disconnected quotes/recruitment onto products
+        options = PRODUCT_TEXT_CORPUS[domain][stem][length_stratum]
+        text1, text2 = random.choice(options)
     else:
         # Pure T2I: 2 text slots, no product.
-        # Sub-plan 1.4 Incidental Cultural Baking: EXACTLY 60 T2I samples for authentic Vietnamese culinary & cultural life
-        # Using (rel_t2i_idx % 6 == 2): mathematically proves 0 collisions with is_known_hard (since 443 + 6k is always odd)
-        rel_t2i_idx = sample_id - i2i_cutoff - 1
-        is_cultural = (rel_t2i_idx % 6 == 2)
-
-        if is_cultural:
+        if use_case == "cultural_vietnam":
             domain = "cultural_vietnam"
             options = GENERAL_T2I_CORPUS["cultural_vietnam"][length_stratum]
             text1, text2 = random.choice(options)
         elif use_case == "flash_sale":
-            domain = random.choice(list(PRODUCT_TEXT_CORPUS.keys()))
-            stem = random.choice(list(PRODUCT_TEXT_CORPUS[domain].keys()))
-            options = PRODUCT_TEXT_CORPUS[domain][stem][length_stratum]
+            options = GENERAL_T2I_CORPUS["flash_sale"][length_stratum]
             text1, text2 = random.choice(options)
+            domain = random.choice(["fmcg", "fashion", "tech", "home"])
         else:
             domain = "general_" + use_case
             options = GENERAL_T2I_CORPUS[use_case][length_stratum]
