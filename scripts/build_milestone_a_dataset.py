@@ -476,15 +476,35 @@ COMBINATORIAL_PATTERNS = [
 
 def _leaks(candidate: str, *texts: str) -> bool:
     cand_low = candidate.lower()
+
     for t in texts:
+        full_phrase = " ".join(t.split()).strip().lower()
+        if full_phrase and full_phrase in cand_low:
+            return True
+
         for line in t.split("\n"):
-            line = line.strip()
-            if line and line.lower() in cand_low:
-                return True
+            line = line.strip().lower()
+            if not line:
+                continue
+            words = line.split()
+            if len(words) >= 3:
+                # 3 or more words together: very specific, almost certainly a real text leak
+                if line in cand_low:
+                    return True
+            else:
+                # 1 or 2 words: could be common descriptive adjectives (chân thực, tự nhiên, hiện đại...)
+                # Only flag as leak if quoted or preceded by an explicit text marker
+                if f'"{line}"' in cand_low or f"'{line}'" in cand_low:
+                    return True
+                for marker in ["chữ ", "từ ", "câu ", "nội dung ", "dòng chữ ", "mang tên "]:
+                    if f"{marker}{line}" in cand_low:
+                        return True
+
     # Also forbid dimension/resolution leaks
     for forbidden in ["1024x1024", "768x1344", "896x1152", "1344x768", "9:16", "16:9", "4:5", "1:1", "4k", "8k"]:
         if forbidden in cand_low:
             return True
+
     return False
 
 
