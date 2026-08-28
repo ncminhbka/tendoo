@@ -24,7 +24,7 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from dotenv import load_dotenv
 
 # Setup Paths
@@ -259,15 +259,10 @@ def synthesize_clean_prompt(text1: str, text2: str) -> str:
         f"{light}"
     )
 
-    # ANTI-LEAK VALIDATION: Ensure literal words are 100% absent
-    def get_clean_words(t: str) -> List[str]:
-        words = re.findall(r"\b\w+\b", t.lower())
-        return [w for w in words if len(w) > 2]
-
-    for w in get_clean_words(text1) + get_clean_words(text2):
-        if w in prompt_clean.lower():
-            # Replace any accidental common word collision
-            prompt_clean = prompt_clean.replace(w, "thông_điệp")
+    # Ensure the full phrase of text1 or text2 never appears in clean prompt
+    assert text1.lower() not in prompt_clean.lower(), f"Leak detected: {text1} in {prompt_clean}"
+    for line in text2.split("\n"):
+        assert line.lower() not in prompt_clean.lower(), f"Leak detected: {line} in {prompt_clean}"
 
     assert "(1)" in prompt_clean and "(2)" in prompt_clean, "Missing ordinal tags!"
     return prompt_clean
@@ -298,13 +293,21 @@ def sample_dataset_spec(sample_id: int, total_samples: int = 800) -> Dict:
     floor1 = get_font_floor(font1)
     floor2 = get_font_floor(font2)
 
-    # 4. Domain & Text
+    # 4. Domain, Product & Text
+    product_path = None
     if is_i2i:
-        # Pick from domain products
+        # Pick domain and strictly coupled product + text pair by index (Semantic Product-Copy Consistency)
         domains = list(DOMAIN_TEXT_CORPUS.keys())
         domain = random.choice(domains)
-        pair = random.choice(DOMAIN_TEXT_CORPUS[domain])
-        text1, text2 = pair
+        prod_folder = PROJECT_ROOT / "data" / "products" / domain
+        prod_files = sorted([f for f in prod_folder.glob("*.*") if f.suffix.lower() in [".png", ".jpg", ".jpeg"]])
+
+        domain_pairs = DOMAIN_TEXT_CORPUS[domain]
+        num_items = min(len(prod_files), len(domain_pairs))
+        item_idx = random.randrange(num_items)
+
+        product_path = prod_files[item_idx]
+        text1, text2 = domain_pairs[item_idx]
         use_case = "hero_product" if sample_id <= 170 else "flash_sale"
     else:
         # T2I can be commercial or general
@@ -334,39 +337,53 @@ def sample_dataset_spec(sample_id: int, total_samples: int = 800) -> Dict:
         "font2": font2,
         "floor1": floor1,
         "floor2": floor2,
+        "product_path": product_path,
         "prompt_clean": prompt_clean,
     }
 
 
-def render_and_save_glyphs(spec: Dict, glyphs_dir: Path) -> Tuple[Path, Path, Dict, Dict]:
-    """Renders locked tight-crop glyphs for Slot 1 and Slot 2 according to font floors."""
+def render_and_save_glyphs(spec: Dict, glyphs_dir: Path) -> Tuple[Path, Optional[Path], Any, Optional[Any]]:
+    """Renders locked tight-crop glyphs according to modality."""
     sid = spec["id"]
     g1_path = glyphs_dir / f"glyph_{sid}_slot10.png"
-    g2_path = glyphs_dir / f"glyph_{sid}_slot20.png"
 
+    # Force single line for Slot 1 unless explicit \n is provided
+    force_single = "\n" not in spec["text1"]
     g1_info = glyph_engine.render(
         text=spec["text1"],
         font_name_or_path=spec["font1"],
         font_size_pt=spec["floor1"],
+        force_single_line=force_single,
         auto_size=True,
     )
     g1_info.image.save(g1_path)
 
-    g2_info = glyph_engine.render(
-        text=spec["text2"],
-        font_name_or_path=spec["font2"],
-        font_size_pt=spec["floor2"],
-        auto_size=True,
-    )
-    g2_info.image.save(g2_path)
+    g2_path = None
+    g2_info = None
+    if spec["modality"] == "t2i":
+        g2_path = glyphs_dir / f"glyph_{sid}_slot20.png"
+        g2_info = glyph_engine.render(
+            text=spec["text2"],
+            font_name_or_path=spec["font2"],
+            font_size_pt=spec["floor2"],
+            auto_size=True,
+        )
+        g2_info.image.save(g2_path)
 
-    return g1_path, g2_path, g1_info.__dict__, g2_info.__dict__
+    return g1_path, g2_path, g1_info, g2_info
 
 
-def generate_target_image(spec: Dict, targets_dir: Path, delay: float = 9.5) -> Path:
+def generate_target_image(
+    spec: Dict,
+    g1_lines: List[str],
+    g2_lines: Optional[List[str]],
+    targets_dir: Path,
+    delay: float = 9.5,
+) -> Path:
     """Calls OpenAI gpt-image-2 to generate ground-truth image and resizes to exact bucket dimensions."""
     from PIL import Image
     import io
+    import re
 
     sid = spec["id"]
     target_path = targets_dir / f"target_{sid}.png"
@@ -374,16 +391,34 @@ def generate_target_image(spec: Dict, targets_dir: Path, delay: float = 9.5) -> 
     if target_path.exists() and target_path.stat().st_size > 10000:
         return target_path
 
-    # Build Teacher Prompt with explicit line structure
-    t1_lines = spec["text1"].split("\n")
-    t2_lines = spec["text2"].split("\n")
+    # Build Teacher Prompt strictly mirroring the exact lines in the glyphs
+    t1_desc = f"At top, {len(g1_lines)} line(s): '{' / '.join(g1_lines)}'"
 
-    t1_desc = f"At top, {len(t1_lines)} line(s): '{' / '.join(t1_lines)}'"
-    t2_desc = f"Below it, {len(t2_lines)} line(s): '{' / '.join(t2_lines)}'"
+    # For text2, use glyph lines if T2I, or spec lines if I2I
+    if g2_lines:
+        t2_actual_lines = g2_lines
+    else:
+        t2_actual_lines = spec["text2"].split("\n")
+    t2_desc = f"Below it, {len(t2_actual_lines)} line(s): '{' / '.join(t2_actual_lines)}'"
+
+    prod_desc = ""
+    if spec["modality"] == "i2i" and spec.get("product_path"):
+        raw_stem = spec["product_path"].stem
+        # Strip numeric index prefix like '37_', '01_' to prevent number hallucinations
+        clean_name = re.sub(r"^\d+[\s_-]*", "", raw_stem).replace("_", " ")
+        prod_desc = f"Features the commercial product ({clean_name}) placed prominently in center or lower portion. "
+
+    negative_rule = (
+        "CRITICAL TYPOGRAPHY RESTRICTION: Render ONLY the exact text specified above. "
+        "DO NOT add any other words, badges, discount numbers, phone numbers, website URLs, or decorative gibberish text. "
+        "There must be ZERO extraneous text anywhere on the canvas."
+    )
 
     teacher_prompt = (
         f"Commercial advertising graphic poster for {spec['use_case']} ({spec['domain']}). "
+        f"{prod_desc}"
         f"{t1_desc}. {t2_desc}. "
+        f"{negative_rule} "
         f"Professional graphic typography design, high contrast, sharp studio lighting, commercial photography."
     )
 
@@ -488,10 +523,16 @@ def main():
         print(f"[{idx:04d}/{target_count:04d}] Processing {sample_id} ({spec['modality']} | {spec['use_case']} | {spec['aspect_ratio']})...")
 
         # 1. Render Glyphs
-        g1_path, g2_path, g1_meta, g2_meta = render_and_save_glyphs(spec, glyphs_dir)
+        g1_path, g2_path, g1_info, g2_info = render_and_save_glyphs(spec, glyphs_dir)
 
         # 2. Generate Target Image via API
-        target_path = generate_target_image(spec, targets_dir, delay=args.delay)
+        target_path = generate_target_image(
+            spec,
+            g1_info.lines,
+            g2_info.lines if g2_info else None,
+            targets_dir,
+            delay=args.delay,
+        )
 
         # 3. Assemble Manifest Record
         record = {
@@ -507,24 +548,35 @@ def main():
             "slots": [
                 {
                     "time_offset": 10.0,
-                    "glyph_path": str(g1_path.relative_to(PROJECT_ROOT)).replace("\\", "/"),
+                    "type": "glyph",
+                    "path": str(g1_path.relative_to(PROJECT_ROOT)).replace("\\", "/"),
                     "font": spec["font1"],
                     "font_size_pt": spec["floor1"],
                     "text": spec["text1"],
-                    "width_px": g1_meta["width_px"],
-                    "height_px": g1_meta["height_px"],
-                    "token_count": g1_meta["token_count"],
+                    "width_px": g1_info.width_px,
+                    "height_px": g1_info.height_px,
+                    "token_count": g1_info.token_count,
                 },
-                {
-                    "time_offset": 20.0,
-                    "glyph_path": str(g2_path.relative_to(PROJECT_ROOT)).replace("\\", "/"),
-                    "font": spec["font2"],
-                    "font_size_pt": spec["floor2"],
-                    "text": spec["text2"],
-                    "width_px": g2_meta["width_px"],
-                    "height_px": g2_meta["height_px"],
-                    "token_count": g2_meta["token_count"],
-                }
+                (
+                    {
+                        "time_offset": 20.0,
+                        "type": "product",
+                        "path": str(spec["product_path"].relative_to(PROJECT_ROOT)).replace("\\", "/"),
+                        "product_name": spec["product_path"].stem,
+                    }
+                    if spec["modality"] == "i2i" and spec.get("product_path")
+                    else {
+                        "time_offset": 20.0,
+                        "type": "glyph",
+                        "path": str(g2_path.relative_to(PROJECT_ROOT)).replace("\\", "/") if g2_path else "",
+                        "font": spec["font2"],
+                        "font_size_pt": spec["floor2"],
+                        "text": spec["text2"],
+                        "width_px": g2_info.width_px if g2_info else 0,
+                        "height_px": g2_info.height_px if g2_info else 0,
+                        "token_count": g2_info.token_count if g2_info else 0,
+                    }
+                )
             ]
         }
 
