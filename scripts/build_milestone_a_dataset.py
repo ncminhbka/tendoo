@@ -809,9 +809,22 @@ def _build_teacher_prompt(spec: Dict, g1_lines: List[str], g2_lines: List[str]) 
     )
 
 
+def map_to_openai_size(target_w: int, target_h: int) -> str:
+    """Maps target aspect ratio to supported OpenAI API sizes:
+    1024x1024 (1:1), 1024x1536 (portrait), 1536x1024 (landscape).
+    """
+    if target_w == target_h:
+        return "1024x1024"
+    elif target_w < target_h:
+        return "1024x1536"
+    else:
+        return "1536x1024"
+
+
 def generate_target_image(spec: Dict, g1_lines: List[str], g2_lines: List[str], targets_dir: Path, delay: float) -> Path:
-    from PIL import Image
+    from PIL import Image, ImageOps
     import io
+    import urllib.request
 
     sid = spec["id"]
     target_path = targets_dir / f"target_{sid}.png"
@@ -819,33 +832,46 @@ def generate_target_image(spec: Dict, g1_lines: List[str], g2_lines: List[str], 
         return target_path
 
     teacher_prompt = _build_teacher_prompt(spec, g1_lines, g2_lines)
-    direct_size = f"{spec['width']}x{spec['height']}"
+    api_size = map_to_openai_size(spec["width"], spec["height"])
 
     max_retries = 3
     for attempt in range(max_retries):
         try:
             if spec["modality"] == "i2i" and spec.get("product_path"):
-                # Use the REAL product photo as an edit reference so the ground-truth target
-                # actually contains the same product pixels that will condition FLUX at t=30.0.
-                # Without this, the "ground truth" would show a teacher-hallucinated product that
-                # never matches the reference image used at train/inference time.
+                # Pass file handle directly to OpenAI image edit endpoint
                 with open(spec["product_path"], "rb") as prod_file:
                     res = client.images.edit(
                         model="gpt-image-2",
-                        image=[prod_file],
+                        image=prod_file,
                         prompt=teacher_prompt,
                         quality="low",
-                        size=direct_size,
+                        size=api_size,
                     )
             else:
                 res = client.images.generate(
                     model="gpt-image-2",
                     prompt=teacher_prompt,
                     quality="low",
-                    size=direct_size,
+                    size=api_size,
                 )
-            raw_bytes = base64.b64decode(res.data[0].b64_json)
-            Image.open(io.BytesIO(raw_bytes)).save(target_path)
+
+            # Retrieve image bytes whether returned via url or b64_json
+            if getattr(res.data[0], "b64_json", None):
+                raw_bytes = base64.b64decode(res.data[0].b64_json)
+                img = Image.open(io.BytesIO(raw_bytes))
+            elif getattr(res.data[0], "url", None):
+                req = urllib.request.Request(res.data[0].url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req) as resp:
+                    img = Image.open(io.BytesIO(resp.read()))
+            else:
+                raise RuntimeError(f"No image data returned from API for {sid}")
+
+            # Ensure exact target bucket dimensions (1024x1024, 768x1344, 896x1152, 1344x768)
+            target_size = (spec["width"], spec["height"])
+            if img.size != target_size:
+                img = ImageOps.fit(img, target_size, method=Image.Resampling.LANCZOS)
+
+            img.save(target_path)
             time.sleep(delay)
             return target_path
         except Exception as e:
@@ -853,7 +879,10 @@ def generate_target_image(spec: Dict, g1_lines: List[str], g2_lines: List[str], 
                 print(f"   [429 RATE LIMIT] Backoff 12s (attempt {attempt+1}/{max_retries})...")
                 time.sleep(12.0)
             else:
-                raise
+                print(f"   [API ERROR on {sid}] attempt {attempt+1}: {e}")
+                time.sleep(3.0)
+                if attempt == max_retries - 1:
+                    raise
 
     raise RuntimeError(f"Failed to generate target for {sid}")
 
