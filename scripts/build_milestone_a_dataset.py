@@ -599,12 +599,18 @@ def vlm_clean_prompt(target_image_path: Path, spec: Dict, has_product: bool, max
         return None
 
     text1, text2 = spec["text1"], spec["text2"]
-    product_rule = (
-        "\n4. THẺ MỎ NEO KHÔNG GIAN (3) - CHO SẢN PHẨM THẬT:\n"
-        "   - Bắt đầu bằng thẻ \"(3)\".\n"
-        "   - Mô tả chính xác VỊ TRÍ THỰC TẾ và CÁCH BÀI TRÍ của sản phẩm trong khung hình (ví dụ: sản phẩm bình giữ nhiệt màu xanh nắp gỗ được đặt trang trọng trên phiến đá ở góc dưới bên phải; sản phẩm đồng hồ nam được trưng bày làm tiêu điểm trung tâm đón ánh sáng spotlight...)."
-        if has_product else ""
-    )
+    if has_product:
+        product_rule = (
+            "\n4. THẺ MỎ NEO KHÔNG GIAN (3) - CHO SẢN PHẨM THẬT (BẮT BUỘC ĐỐI VỚI IMAGE-TO-IMAGE):\n"
+            "   - Bắt đầu bằng thẻ \"(3)\".\n"
+            "   - Bức ảnh này có một sản phẩm thật cố định tham chiếu (I2I). BẮT BUỘC phải mô tả chính xác VỊ TRÍ THỰC TẾ và CÁCH BÀI TRÍ của sản phẩm này trong khung hình (ví dụ: đặt trên bệ đá, ở góc dưới, đón ánh sáng spotlight...)."
+        )
+    else:
+        product_rule = (
+            "\n4. QUY TẮC TUYỆT ĐỐI CHO POSTER TEXT-TO-IMAGE (T2I - KHÔNG CÓ SẢN PHẨM THAM CHIẾU):\n"
+            "   - Đây là poster đồ họa thuần túy (T2I). Bức ảnh CHỈ CÓ DUY NHẤT 2 KHỐI CHỮ: (1) và (2).\n"
+            "   - ⛔ TUYỆT ĐỐI CẤM SỬ DỤNG THẺ '(3)'! Dù Teacher có vẽ thêm bất kỳ đồ vật minh họa nào (như laptop, tai nghe, điện thoại, xe cộ, cốc nước...) để làm sinh động bối cảnh, bạn chỉ xem chúng là chi tiết nền ở câu mở đầu. NGHIÊM CẤM gắn thẻ '(3)' vào bất kỳ đồ vật nào!"
+        )
     system = VLM_SYSTEM_PROMPT.format(product_rule=product_rule)
 
     domain = spec.get("domain", "general")
@@ -614,14 +620,17 @@ def vlm_clean_prompt(target_image_path: Path, spec: Dict, has_product: bool, max
 
     text1_single = text1.replace("\n", " / ")
     text2_single = text2.replace("\n", " / ")
-    product_hint = f"- Sản phẩm thật (3) là: '{prod_name}' (để bạn nhận diện vị trí của nó)" if has_product else ""
+    if has_product:
+        product_hint = f"- Chế độ: Image-to-Image (I2I). BẮT BUỘC có đủ 3 khối: Tiêu đề (1), Phụ đề (2), và Sản phẩm thật (3): '{prod_name}'."
+    else:
+        product_hint = "- Chế độ: Text-to-Image (T2I). CHỈ CÓ 2 KHỐI: Tiêu đề (1) và Phụ đề (2). ⛔ TUYỆT ĐỐI CẤM DÙNG THẺ (3)."
 
     user_text = (
         f"Hãy quan sát bức ảnh poster này và viết Clean Prompt:\n"
         f"- Nghiệp vụ: {uc_desc} ({domain})\n"
+        f"- {product_hint}\n"
         f"- Khối chữ tiêu đề (1) tương ứng với nội dung: '{text1_single}' (dùng để định vị vị trí và màu sắc của nó trên ảnh)\n"
-        f"- Khối chữ phụ đề (2) tương ứng với nội dung: '{text2_single}' (dùng để định vị vị trí và màu sắc của nó trên ảnh)\n"
-        f"{product_hint}\n\n"
+        f"- Khối chữ phụ đề (2) tương ứng với nội dung: '{text2_single}' (dùng để định vị vị trí và màu sắc của nó trên ảnh)\n\n"
         f"Hãy viết đoạn Clean Prompt theo đúng hướng dẫn của System Prompt."
     )
 
@@ -654,7 +663,10 @@ def vlm_clean_prompt(target_image_path: Path, spec: Dict, has_product: bool, max
             print(f"   [VLM prompt WARN] missing ordinal tags on attempt {attempt+1}, retrying...")
             continue
         if has_product and "(3)" not in candidate:
-            print(f"   [VLM prompt WARN] missing (3) product tag on attempt {attempt+1}, retrying...")
+            print(f"   [VLM prompt WARN] missing (3) product tag in I2I on attempt {attempt+1}, retrying...")
+            continue
+        if not has_product and "(3)" in candidate:
+            print(f"   [VLM prompt WARN] illegal (3) tag detected in T2I on attempt {attempt+1}, retrying...")
             continue
         return candidate
 
