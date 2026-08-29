@@ -741,6 +741,8 @@ def adapt_text_for_aspect_ratio(text: str, ar_name: str) -> str:
     """Adapts line breaks to match the geometric aspect ratio of the canvas.
     On narrow 9:16 (768px width), prevents overflow and uncontrolled line breaks by
     proactively structuring >=3 word titles into balanced multi-line text.
+    On square 1:1 (1024px) and 4:5 (896px), proactively breaks any individual line with >=6 words
+    to prevent GPT Image from emergency line-wrapping.
     On wide 16:9 (1344px width, 768px height), prevents tall multi-line stacks that consume vertical space.
     """
     if not text:
@@ -763,6 +765,35 @@ def adapt_text_for_aspect_ratio(text: str, ar_name: str) -> str:
                 for i in range(0, len(words), 3):
                     lines.append(" ".join(words[i:i+3]))
                 return "\n".join(lines)
+        else:
+            # Check individual lines: if any line >= 5 words on 9:16, split it
+            raw_lines = text.split("\n")
+            new_lines = []
+            for line in raw_lines:
+                words = line.split()
+                if len(words) >= 5:
+                    half = len(words) // 2
+                    new_lines.append(" ".join(words[:half]))
+                    new_lines.append(" ".join(words[half:]))
+                else:
+                    new_lines.append(line)
+            return "\n".join(new_lines)
+
+    elif ar_name in ("1:1", "4:5"):
+        # Square or standard vertical canvas: any individual line with >=6 words causes
+        # display/graffiti fonts to overflow the margin, forcing GPT Image to wrap unexpectedly.
+        raw_lines = text.split("\n")
+        new_lines = []
+        for line in raw_lines:
+            words = line.split()
+            if len(words) >= 6:
+                half = len(words) // 2
+                new_lines.append(" ".join(words[:half]))
+                new_lines.append(" ".join(words[half:]))
+            else:
+                new_lines.append(line)
+        return "\n".join(new_lines)
+
     elif ar_name == "16:9":
         # Wide horizontal canvas: abundant width (1344px), scarce height (768px).
         # Avoid >=3 stacked lines. If text has 3+ lines, rebalance into 1-2 lines.
