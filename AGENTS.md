@@ -78,6 +78,9 @@
    - **Nhánh Text Prompt (Qwen3)**: Chịu trách nhiệm $100\%$ về **CHẤT LIỆU, VẬT LÝ & QUANG HỌC** (kỹ thuật chế tác: dập nổi, khắc chìm trên gỗ, đúc kim loại; hiệu ứng ánh sáng: đèn neon phát quang, đổ bóng 3D, phản chiếu studio).
    - Glyph tạo nên "khung xương hình học", Prompt tạo nên "phần hồn, ánh sáng và chất liệu".
 4. **Mã nguồn thực thi**: Mọi script viết ra để chạy trên Server phải tự chứa (self-contained), có xử lý exception, hỗ trợ GPU CUDA, và tối ưu cho cấu hình 2x GPU A30 (Ampere architecture, BF16/FP16, DDP).
+5. **Mục Tiêu Tối Thượng Của LoRA Giai Đoạn 3 (LoRA Attention Disentanglement & Anti-Crosstalk Rule)**:
+   - **Bản chất bài toán**: Mô hình Base 4B khi ở trạng thái cô lập (Isolated Slot) đã có sẵn năng lực đọc hiểu hoàn hảo từng slot rời rạc ($t=10, 20, 30, 40$). Khi xuất hiện đồng thời $N$ Reference slots ($N \ge 2$), động lực học Softmax gây ra hiện tượng **Tranh chấp và tràn kênh Attention (Cross-Slot Attention Crosstalk / Bleeding)** làm đè nét chữ hoặc biến dạng.
+   - **Sứ mệnh cốt lõi của LoRA**: Đóng vai trò là **Bộ Điều Phối Phân Luồng Attention (Attention Traffic Controller)**. Huấn luyện LoRA nhắm vào ma trận $W_Q, W_K$ để dạy mô hình **tự động phân bổ Attention hợp lý khi có $N$ References cùng lúc**, cho phép render đồng thời các khối Glyph ở $t=10.0, 20.0, 30.0, 40.0$ một cách độc lập, sắc nét và không bị nhiễu chéo (crosstalk).
 
 
 ---

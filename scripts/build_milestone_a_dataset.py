@@ -5,14 +5,14 @@ TENDOO AI - MASTER DATASET SYNTHESIS ENGINE (MILESTONE A: 800 UNIQUE SAMPLES)
 ====================================================================================================
 Script: scripts/build_milestone_a_dataset.py
 
-SLOT ARCHITECTURE (corrected per clarification):
+SLOT ARCHITECTURE & CORE LORA OBJECTIVE:
     - Text1 (title)    @ t=10.0  -> ALWAYS present (I2I and T2I)
     - Text2 (subtitle) @ t=20.0  -> ALWAYS present (I2I and T2I)
-    - Product ref      @ t=30.0  -> I2I ONLY (single-ref product placement is already reliable
-                                      at any t-slot per prior probing; it rides "for free" and is
-                                      NOT the thing Milestone A is trying to unlock)
-    => Milestone A's actual learning target in both modalities is the SAME: reliable concurrent
-       2-slot TEXT rendering (t=10 + t=20). I2I just has one extra, already-solved, slot on top.
+    - Product ref      @ t=30.0  -> I2I (Milestone A baseline) / extensible to t=30.0, t=40.0
+    => CORE LORA OBJECTIVE (PHASE 3):
+       Solve Cross-Slot Attention Crosstalk & Softmax Competition.
+       Teach the DiT model optimal Attention Routing when N reference slots appear concurrently,
+       enabling reliable simultaneous glyph & product rendering across t=10.0, t=20.0, t=30.0, t=40.0.
 
 Key fixes vs. the previous draft:
     1. total_samples was ignored -> --smoke/--pilot silently only ever produced i2i/hero_product
@@ -30,8 +30,6 @@ Key fixes vs. the previous draft:
        between training target and training reference).
     5. Known-hard stress pairs now carry an explicit, semantically sane domain instead of a fully
        random one.
-    6. Added an explicit held-out split (`split: train|val`) so Milestone A produces something you
-       can actually evaluate generalization against, not just training loss.
     7. Optional LLM-authored student prompts (--llm-prompts) for phrasing diversity beyond the
        fixed combinatorial word lists, with the anti-leak assertion still enforced as a hard gate
        (LLM proposes, code disposes: on validation failure it retries, then falls back to the
