@@ -40,6 +40,7 @@ Key fixes vs. the previous draft:
 import argparse
 import base64
 import json
+import math
 import os
 import random
 import re
@@ -737,63 +738,35 @@ def determine_use_case(sample_id: int, total_samples: int, is_i2i: bool) -> str:
     return targets[-1][0]
 
 
+def _wrap_balanced_words(line: str, max_words_per_line: int) -> List[str]:
+    """Splits a single line into balanced sub-lines where each line has <= max_words_per_line."""
+    words = line.split()
+    if len(words) <= max_words_per_line:
+        return [line]
+    num_lines = math.ceil(len(words) / max_words_per_line)
+    words_per_line = math.ceil(len(words) / num_lines)
+    sub_lines = []
+    for i in range(0, len(words), words_per_line):
+        sub_lines.append(" ".join(words[i:i + words_per_line]))
+    return sub_lines
+
+
 def adapt_text_for_aspect_ratio(text: str, ar_name: str) -> str:
-    """Adapts line breaks to match the geometric aspect ratio of the canvas.
-    On narrow 9:16 (768px width), prevents overflow and uncontrolled line breaks by
-    proactively structuring >=3 word titles into balanced multi-line text.
-    On square 1:1 (1024px) and 4:5 (896px), proactively breaks any individual line with >=6 words
-    to prevent GPT Image from emergency line-wrapping.
-    On wide 16:9 (1344px width, 768px height), prevents tall multi-line stacks that consume vertical space.
+    """Adapts line breaks to match the geometric aspect ratio and typography scale.
+    In Milestone A (2 text blocks only), font sizes are relatively large (hero headline / lead).
+    Long unbroken lines (>5 words) cannot fit horizontally in display fonts without forcing
+    GPT Image to execute emergency wrapping.
+    - Narrow 9:16 (768px): balanced chunks of <= 4 words per line.
+    - Square 1:1 (1024px) & 4:5 (896px): balanced chunks of <= 5 words per line.
+    - Wide 16:9 (1344px): balanced chunks of <= 8 words per line (max 2 stacked lines).
     """
     if not text:
         return text
 
     if ar_name == "9:16":
-        # Narrow vertical canvas: 1 single long line will overflow or force GPT to break unpredictably.
-        # Proactively wrap >=3 words if not already broken.
-        if "\n" not in text:
-            words = text.split()
-            if len(words) == 3:
-                return f"{words[0]} {words[1]}\n{words[2]}"
-            elif len(words) == 4:
-                return f"{words[0]} {words[1]}\n{words[2]} {words[3]}"
-            elif len(words) == 5:
-                return f"{words[0]} {words[1]}\n{words[2]} {words[3]} {words[4]}"
-            elif len(words) >= 6:
-                # Break into roughly 3-4 word lines
-                lines = []
-                for i in range(0, len(words), 3):
-                    lines.append(" ".join(words[i:i+3]))
-                return "\n".join(lines)
-        else:
-            # Check individual lines: if any line >= 5 words on 9:16, split it
-            raw_lines = text.split("\n")
-            new_lines = []
-            for line in raw_lines:
-                words = line.split()
-                if len(words) >= 5:
-                    half = len(words) // 2
-                    new_lines.append(" ".join(words[:half]))
-                    new_lines.append(" ".join(words[half:]))
-                else:
-                    new_lines.append(line)
-            return "\n".join(new_lines)
-
+        max_w = 4
     elif ar_name in ("1:1", "4:5"):
-        # Square or standard vertical canvas: any individual line with >=6 words causes
-        # display/graffiti fonts to overflow the margin, forcing GPT Image to wrap unexpectedly.
-        raw_lines = text.split("\n")
-        new_lines = []
-        for line in raw_lines:
-            words = line.split()
-            if len(words) >= 6:
-                half = len(words) // 2
-                new_lines.append(" ".join(words[:half]))
-                new_lines.append(" ".join(words[half:]))
-            else:
-                new_lines.append(line)
-        return "\n".join(new_lines)
-
+        max_w = 5
     elif ar_name == "16:9":
         # Wide horizontal canvas: abundant width (1344px), scarce height (768px).
         # Avoid >=3 stacked lines. If text has 3+ lines, rebalance into 1-2 lines.
@@ -802,8 +775,16 @@ def adapt_text_for_aspect_ratio(text: str, ar_name: str) -> str:
             all_words = " ".join(lines).split()
             half = len(all_words) // 2
             return " ".join(all_words[:half]) + "\n" + " ".join(all_words[half:])
+        max_w = 8
+    else:
+        max_w = 5
 
-    return text
+    raw_lines = [l.strip() for l in text.split("\n") if l.strip()]
+    adapted_lines = []
+    for l in raw_lines:
+        adapted_lines.extend(_wrap_balanced_words(l, max_words_per_line=max_w))
+
+    return "\n".join(adapted_lines)
 
 
 def to_title_case_vietnamese(s: str) -> str:
