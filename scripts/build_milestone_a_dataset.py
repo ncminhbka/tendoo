@@ -477,28 +477,38 @@ COMBINATORIAL_PATTERNS = [
 def _leaks(candidate: str, *texts: str) -> bool:
     cand_low = candidate.lower()
 
+    # Separate text description clauses (1) & (2) from intro and product clause (3)
+    parts = re.split(r"\([123]\)", candidate)
+    text_clauses = (parts[1] + " " + parts[2]).lower() if len(parts) >= 3 else cand_low
+
     for t in texts:
         full_phrase = " ".join(t.split()).strip().lower()
-        if full_phrase and full_phrase in cand_low:
+
+        # Quoted text anywhere is ALWAYS a leak
+        if f'"{full_phrase}"' in cand_low or f"'{full_phrase}'" in cand_low:
             return True
+
+        # Preceded by explicit text markers anywhere is ALWAYS a leak
+        for marker in ["chữ ", "từ ", "câu ", "nội dung ", "dòng chữ ", "mang tên ", "ghi là ", "viết "]:
+            if f"{marker}{full_phrase}" in cand_low:
+                return True
 
         for line in t.split("\n"):
             line = line.strip().lower()
             if not line:
                 continue
+
+            if f'"{line}"' in cand_low or f"'{line}'" in cand_low:
+                return True
+            for marker in ["chữ ", "từ ", "câu ", "nội dung ", "dòng chữ ", "mang tên ", "ghi là ", "viết "]:
+                if f"{marker}{line}" in cand_low:
+                    return True
+
+            # If inside the text clauses (1) or (2):
             words = line.split()
             if len(words) >= 3:
-                # 3 or more words together: very specific, almost certainly a real text leak
-                if line in cand_low:
+                if line in text_clauses:
                     return True
-            else:
-                # 1 or 2 words: could be common descriptive adjectives (chân thực, tự nhiên, hiện đại...)
-                # Only flag as leak if quoted or preceded by an explicit text marker
-                if f'"{line}"' in cand_low or f"'{line}'" in cand_low:
-                    return True
-                for marker in ["chữ ", "từ ", "câu ", "nội dung ", "dòng chữ ", "mang tên "]:
-                    if f"{marker}{line}" in cand_low:
-                        return True
 
     # Also forbid dimension/resolution leaks
     for forbidden in ["1024x1024", "768x1344", "896x1152", "1344x768", "9:16", "16:9", "4:5", "1:1", "4k", "8k"]:
@@ -547,56 +557,72 @@ def combinatorial_clean_prompt(spec: Dict, has_product: bool) -> str:
     return prompt_clean
 
 
-LLM_SYSTEM_PROMPT = """Bạn là chuyên gia Art Director biên soạn Clean Prompt cho mô hình DiT (FLUX.2) trong nền tảng Tendoo AI.
-Trong thực tế, Clean Prompt này là kết quả sau khi LLM Enhancer xử lý prompt thô của người dùng (đã bóc tách nội dung chữ ra làm VAE Glyphs, và thay bằng các mỏ neo (1), (2), (3)).
+VLM_SYSTEM_PROMPT = """Bạn là Art Director và Chuyên gia Phân tích Thị giác hàng đầu của nền tảng Tendoo AI.
+Nhiệm vụ của bạn là quan sát bức ảnh poster quảng cáo thực tế được cung cấp và viết một đoạn "Clean Prompt" (3-4 câu văn xuôi bằng tiếng Việt) mô tả CHÍNH XÁC 100% sự thật thị giác đang xuất hiện trong bức ảnh để làm điều kiện huấn luyện cho mô hình DiT (FLUX.2).
 
-NHIỆM VỤ CỐT LÕI:
-Viết MỘT đoạn văn ngắn gọn (khoảng 3-4 câu) bằng tiếng Việt mô tả đầy đủ:
-1. YÊU CẦU NGHIỆP VỤ & BỐI CẢNH THỰC TẾ (TUYỆT ĐỐI KHÔNG ĐƯỢC BỎ MẤT YÊU CẦU NGƯỜI DÙNG):
-   - Mở đầu bằng yêu cầu nghiệp vụ rõ ràng: Ví dụ "Poster quảng cáo thương mại cho sản phẩm...", "Banner sự kiện khai trương...", "Thẻ tin tuyển dụng chuyên nghiệp cho...", "Thẻ card feedback khách hàng cho..."
-   - Mô tả bối cảnh không gian sống/nhiếp ảnh studio thực tế liên quan mật thiết đến sản phẩm/chủ đề (ví dụ: bàn ăn gia đình ấm cúng với nguyên liệu tươi ngon; phòng gym cao cấp với tạ đòn; phố cổ hoàng hôn với tường vàng và đèn lồng đỏ; studio công nghệ cao với bệ chrome...).
-2. CÁC THẺ MỎ NEO KHÔNG GIAN BẮT BUỘC ĐỂ ĐỊNH VỊ CHỮ VÀ SẢN PHẨM:
-   - Thẻ "(1)": Đứng trước câu mô tả HÌNH THỨC của khối chữ thứ nhất (vị trí ở đâu, chất liệu chữ 3D mạ vàng / acrylic / kim loại / thư pháp, hướng chiếu sáng).
-   - Thẻ "(2)": Đứng trước câu mô tả HÌNH THỨC của khối chữ thứ hai (vị trí bên dưới, chất liệu chữ trắng thanh mảnh / decal mờ / viền led).
+BỐ CỤC ĐOẠN VĂN PHẢI TUÂN THỦ NGHIÊM NGẶT CÁC QUY TẮC SAU:
+
+1. BỐI CẢNH & KHÔNG GIAN THỰC TẾ TRONG ẢNH (1 câu mở đầu):
+   - Mở đầu bằng loại hình poster và bối cảnh không gian thực tế mà bạn nhìn thấy trong ảnh (ví dụ: bệ đá cẩm thạch trong studio sang trọng; phòng khách tối giản với ánh nắng qua bóng lá; không gian phòng gym hiện đại; bàn gỗ mộc mạc...).
+   - Mô tả tông màu chủ đạo và phong cách ánh sáng thực tế (ánh sáng tự nhiên dịu nhẹ, spotlight tương phản cao, rim-light...).
+
+2. THẺ MỎ NEO KHÔNG GIAN (1) - CHO KHỐI CHỮ TIÊU ĐỀ CHÍNH:
+   - Bắt đầu bằng thẻ "(1)".
+   - Mô tả chính xác VỊ TRÍ THỰC TẾ của khối chữ này trên canvas (ví dụ: ở góc trên bên trái; ở vị trí trung tâm phía trên; chạy ngang phần trên canvas...).
+   - Mô tả MÀU SẮC, CHẤT LIỆU và PHONG CÁCH NÉT CHỮ THỰC TẾ TRÊN ẢNH (ví dụ: chữ thư pháp uốn lượn màu xanh lá cây đậm; chữ 3D kim loại mạ vàng ánh kim lấp lánh; chữ in nổi acrylic bóng bẩy...).
+
+3. THẺ MỎ NEO KHÔNG GIAN (2) - CHO KHỐI CHỮ PHỤ ĐỀ / BỔ TRỢ:
+   - Bắt đầu bằng thẻ "(2)".
+   - Mô tả chính xác VỊ TRÍ THỰC TẾ của khối chữ này (ví dụ: nằm ngay bên dưới khối tiêu đề; ở nửa dưới khung hình; bố trí cân xứng ở phần chân poster...).
+   - Mô tả MÀU SẮC, ĐỘ DÀY và PHONG CÁCH THỰC TẾ (ví dụ: nét chữ không chân màu xanh rêu đậm thanh mảnh; dòng chữ trắng tương phản sắc nét; chữ decal mờ tinh tế...).
 {product_rule}
-3. CẢNH BÁO TUYỆT ĐỐI VỀ NỘI DUNG CHỮ:
-   - TUYỆT ĐỐI KHÔNG LẶP LẠI NỘI DUNG CHỮ THẬT (Representation Clash).
-   - TUYỆT ĐỐI KHÔNG tự bịa ra slogan hay câu chữ giả. Chỉ mô tả HÌNH THỨC VẬT LÝ của nét chữ.
-   - TUYỆT ĐỐI KHÔNG ghi độ phân giải hay tỉ lệ khung hình (như '1024x1024', '9:16', '4k', '8k', '--ar').
-4. Trả về DUY NHẤT một đoạn văn xuôi hoàn chỉnh, không gạch đầu dòng, không tiêu đề."""
+4. CÁC QUY TẮC CẤM ĐOÁN TUYỆT ĐỐI (HARD GATES):
+   - ⚠️ TUYỆT ĐỐI KHÔNG lặp lại bất kỳ từ ngữ nào thuộc về nội dung chữ (Không viết ra từ ngữ cụ thể của thông điệp). Chỉ mô tả HÌNH THỨC, MÀU SẮC, CHẤT LIỆU và TỌA ĐỘ BỐ CỤC.
+   - ⚠️ TUYỆT ĐỐI KHÔNG ghi độ phân giải hay tỉ lệ khung hình (như '1024x1024', '9:16', '4k', '8k').
+   - Trả về DUY NHẤT một đoạn văn xuôi tiếng Việt hoàn chỉnh, mạch lạc, tự nhiên, không gạch đầu dòng, không tiêu đề."""
 
 
-def llm_clean_prompt(spec: Dict, has_product: bool, max_retries: int = 3) -> Optional[str]:
-    """Ask an LLM to author a diverse student prompt with natural variation around anchors (1), (2), (3).
-    Enforces anti-leak and anchor presence as a hard gate.
+def vlm_clean_prompt(target_image_path: Path, spec: Dict, has_product: bool, max_retries: int = 3) -> Optional[str]:
+    """Inspects the actual generated target image using a Vision-Language Model (gpt-4o-mini Vision)
+    and authors a 100% ground-truth clean prompt describing the exact colors, positions, and styles
+    rendered on the canvas.
     """
+    import base64
+
+    if not target_image_path.exists() or target_image_path.stat().st_size < 10000:
+        return None
+
+    try:
+        b64_img = base64.b64encode(target_image_path.read_bytes()).decode("utf-8")
+    except Exception as e:
+        print(f"   [VLM prompt WARN] Failed to read image for base64 encoding: {e}")
+        return None
+
     text1, text2 = spec["text1"], spec["text2"]
-    product_rule = "3. BẮT BUỘC có thẻ \"(3)\" đứng trước mô tả vị trí của SẢN PHẨM THẬT trong bố cục." if has_product else ""
-    system = LLM_SYSTEM_PROMPT.format(product_rule=product_rule)
+    product_rule = (
+        "\n4. THẺ MỎ NEO KHÔNG GIAN (3) - CHO SẢN PHẨM THẬT:\n"
+        "   - Bắt đầu bằng thẻ \"(3)\".\n"
+        "   - Mô tả chính xác VỊ TRÍ THỰC TẾ và CÁCH BÀI TRÍ của sản phẩm trong khung hình (ví dụ: sản phẩm bình giữ nhiệt màu xanh nắp gỗ được đặt trang trọng trên phiến đá ở góc dưới bên phải; sản phẩm đồng hồ nam được trưng bày làm tiêu điểm trung tâm đón ánh sáng spotlight...)."
+        if has_product else ""
+    )
+    system = VLM_SYSTEM_PROMPT.format(product_rule=product_rule)
 
     domain = spec.get("domain", "general")
-    ctx = get_domain_context(domain)
-    style_seed = random.choice(ctx["seeds"])
-    syntax_hint = random.choice(SYNTACTIC_FLOW_HINTS)
-
     raw_uc = spec.get("use_case", "commercial")
     uc_desc = USE_CASE_DESCRIPTIONS.get(raw_uc, "Poster đồ họa thương mại cao cấp")
     prod_name = _clean_product_name(spec["product_path"]) if has_product and spec.get("product_path") else ""
-    subject_desc = f"sản phẩm {prod_name}" if prod_name else f"chủ đề {domain}"
 
-    num_words_1 = len(text1.split())
-    num_lines_1 = len(text1.split("\n"))
-    num_words_2 = len(text2.split())
-    num_lines_2 = len(text2.split("\n"))
+    text1_single = text1.replace("\n", " / ")
+    text2_single = text2.replace("\n", " / ")
+    product_hint = f"- Sản phẩm thật (3) là: '{prod_name}' (để bạn nhận diện vị trí của nó)" if has_product else ""
 
-    user_msg = (
-        f"Yêu cầu nghiệp vụ cốt lõi: {uc_desc} cho {subject_desc}\n"
-        f"Ngành hàng/Lĩnh vực: {domain}\n"
-        f"Gợi ý phong cách & không gian: {style_seed}\n"
-        f"Gợi ý cấu trúc câu: {syntax_hint}\n"
-        f"Đặc điểm khối chữ (1): Tiêu đề chính ({num_words_1} từ, {num_lines_1} dòng)\n"
-        f"Đặc điểm khối chữ (2): Phụ đề bổ trợ ({num_words_2} từ, {num_lines_2} dòng)\n"
-        f"Có sản phẩm thật trong ảnh: {'Có (bắt buộc có thẻ (3) mô tả vị trí sản phẩm thật)' if has_product else 'Không'}"
+    user_text = (
+        f"Hãy quan sát bức ảnh poster này và viết Clean Prompt:\n"
+        f"- Nghiệp vụ: {uc_desc} ({domain})\n"
+        f"- Khối chữ tiêu đề (1) tương ứng với nội dung: '{text1_single}' (dùng để định vị vị trí và màu sắc của nó trên ảnh)\n"
+        f"- Khối chữ phụ đề (2) tương ứng với nội dung: '{text2_single}' (dùng để định vị vị trí và màu sắc của nó trên ảnh)\n"
+        f"{product_hint}\n\n"
+        f"Hãy viết đoạn Clean Prompt theo đúng hướng dẫn của System Prompt."
     )
 
     for attempt in range(max_retries):
@@ -605,36 +631,43 @@ def llm_clean_prompt(spec: Dict, has_product: bool, max_retries: int = 3) -> Opt
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": system},
-                    {"role": "user", "content": user_msg},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": user_text},
+                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_img}", "detail": "low"}},
+                        ],
+                    },
                 ],
-                temperature=0.85,
+                temperature=0.3,
                 max_tokens=280,
             )
             candidate = resp.choices[0].message.content.strip()
         except Exception as e:
-            print(f"   [LLM prompt WARN] call failed (attempt {attempt+1}): {e}")
+            print(f"   [VLM prompt WARN] call failed (attempt {attempt+1}): {e}")
             continue
 
         if _leaks(candidate, text1, text2):
-            print(f"   [LLM prompt WARN] leak detected on attempt {attempt+1}, retrying...")
+            print(f"   [VLM prompt WARN] leak detected on attempt {attempt+1}, retrying...")
             continue
         if "(1)" not in candidate or "(2)" not in candidate:
-            print(f"   [LLM prompt WARN] missing ordinal tags on attempt {attempt+1}, retrying...")
+            print(f"   [VLM prompt WARN] missing ordinal tags on attempt {attempt+1}, retrying...")
             continue
         if has_product and "(3)" not in candidate:
-            print(f"   [LLM prompt WARN] missing (3) product tag on attempt {attempt+1}, retrying...")
+            print(f"   [VLM prompt WARN] missing (3) product tag on attempt {attempt+1}, retrying...")
             continue
         return candidate
 
-    return None  # caller falls back to deterministic combinatorial builder
+    return None
 
 
-def build_clean_prompt(spec: Dict, has_product: bool, use_llm: bool) -> str:
-    if use_llm:
-        result = llm_clean_prompt(spec, has_product)
+def build_clean_prompt(target_image_path: Optional[Path], spec: Dict, has_product: bool, use_vlm: bool) -> str:
+    """Builds clean prompt using VLM inspection of real target image if available, falling back to combinatorial."""
+    if use_vlm and target_image_path and target_image_path.exists():
+        result = vlm_clean_prompt(target_image_path, spec, has_product)
         if result is not None:
             return result
-        print("   [LLM prompt] all retries failed validation -> falling back to combinatorial builder")
+        print("   [VLM prompt] all retries failed validation -> falling back to combinatorial builder")
     return combinatorial_clean_prompt(spec, has_product)
 
 
@@ -970,26 +1003,32 @@ def _build_teacher_prompt(spec: Dict, g1_lines: List[str], g2_lines: List[str]) 
     prod_desc = ""
     if spec["modality"] == "i2i" and spec.get("product_path"):
         prod_desc = (
-            f"The product shown in the reference image (a {_clean_product_name(spec['product_path'])}) "
-            f"must appear placed prominently, unmodified in identity/shape/label. "
+            f"The real product shown in the reference image (a {_clean_product_name(spec['product_path'])}) "
+            f"must appear placed naturally and prominently in the commercial setting, with its identity, labels, and form factor strictly preserved. "
         )
 
+    creative_intro = (
+        f"A masterfully designed commercial advertising graphic poster for {spec['use_case']} ({spec['domain']}). "
+        f"You have full creative freedom to design an aesthetically stunning studio setting, atmospheric lighting, "
+        f"harmonious color palette, and premium commercial layout that best celebrates the subject."
+    )
+
     negative_rule = (
-        "CRITICAL TYPOGRAPHY RESTRICTION: Render ONLY the exact text specified above, with fully correct "
-        "Vietnamese diacritics (tone marks) -- do not drop, alter, or simplify any dấu. "
-        "CRITICAL: Match the exact letter casing (UPPERCASE vs Title Case vs lowercase) exactly as written in the quotes above -- "
-        "NEVER convert uppercase text to lowercase, and NEVER convert Title Case or lowercase text to all-caps. "
-        "DO NOT render metadata labels like 'line 1' or delimiter symbols like slashes '/', hyphens, or bullet points. "
-        "DO NOT add any other words, badges, discount numbers, phone numbers, website URLs, or decorative "
-        "gibberish text. There must be ZERO extraneous text anywhere on the canvas."
+        "CRITICAL TYPOGRAPHY RESTRICTIONS:\n"
+        "1. Render ONLY the exact text specified in quotes with 100% correct Vietnamese diacritics (dấu tiếng Việt) -- do not drop or alter any tone marks.\n"
+        "2. Match the exact letter casing (UPPERCASE vs Title Case vs lowercase) exactly as written in quotes.\n"
+        "3. DO NOT render structural formatting metadata (such as the words 'line 1', 'line 2', quotes, or brackets). Legitimate punctuation marks that belong to the text (such as slashes '/', hyphens '-', percentages '%', or plus signs '+') MUST be rendered correctly.\n"
+        "4. DO NOT add any extra random words, English slogans, prices, phone numbers, website URLs, or decorative gibberish text. Zero extraneous text anywhere on the canvas."
     )
 
     return (
-        f"Commercial advertising graphic poster for {spec['use_case']} ({spec['domain']}). "
-        f"{prod_desc}"
-        f"{t1_desc}. {t2_desc}. "
-        f"{negative_rule} "
-        f"Professional graphic typography design, high contrast, sharp studio lighting, commercial photography."
+        f"{creative_intro}\n"
+        f"{prod_desc}\n"
+        f"TYPOGRAPHY SPECIFICATION:\n"
+        f"- {t1_desc}.\n"
+        f"- {t2_desc}.\n\n"
+        f"{negative_rule}\n"
+        f"High-end commercial photography, professional lighting, award-winning visual advertising graphic design."
     )
 
 
@@ -1061,6 +1100,51 @@ def generate_target_image(spec: Dict, g1_lines: List[str], g2_lines: List[str], 
 
 
 # ==================================================================================================
+# 9. MANIFEST RECAPTIONING HELPER
+# ==================================================================================================
+def recaption_existing_manifest(manifest_path: Path):
+    """Iterates over existing records in dataset_manifest.jsonl and uses VLM to recaption all targets."""
+    if not manifest_path.exists():
+        print(f"Manifest not found: {manifest_path}")
+        return
+
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        records = [json.loads(line) for line in f if line.strip()]
+
+    print(f" [*] Recaptioning {len(records)} existing targets using VLM Vision...")
+    updated_records = []
+    for idx, rec in enumerate(records, 1):
+        target_file = PROJECT_ROOT / rec["target_image"]
+        has_prod = rec["modality"] == "i2i" and any(s["type"] == "product" for s in rec["slots"])
+        prod_slot = next((s for s in rec["slots"] if s["type"] == "product"), None)
+        prod_path = PROJECT_ROOT / prod_slot["path"] if prod_slot else None
+
+        spec = {
+            "id": rec["id"],
+            "domain": rec["domain"],
+            "use_case": rec["use_case"],
+            "text1": rec["slots"][0]["text"],
+            "text2": rec["slots"][1]["text"],
+            "product_path": prod_path,
+        }
+
+        print(f"   [{idx:04d}/{len(records):04d}] Recaptioning {rec['id']}...", end="", flush=True)
+        new_prompt = vlm_clean_prompt(target_file, spec, has_prod)
+        if new_prompt:
+            rec["prompt_clean"] = new_prompt
+            print(" [OK]")
+        else:
+            print(" [FAILED/SKIPPED]")
+        updated_records.append(rec)
+        time.sleep(0.5)
+
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        for rec in updated_records:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    print(f" [*] All {len(updated_records)} records updated in {manifest_path}!")
+
+
+# ==================================================================================================
 # 9. MAIN
 # ==================================================================================================
 def main():
@@ -1070,22 +1154,29 @@ def main():
     parser.add_argument("--count", type=int, default=None, help="Custom sample count")
     parser.add_argument("--execute", action="store_true", help="Actually execute API calls (default: dry-run)")
     parser.add_argument("--delay", type=float, default=9.5, help="Delay in seconds between API requests")
-    parser.add_argument("--llm-prompts", action="store_true", help="Use LLM-authored student prompts (falls back to combinatorial on failure)")
+    parser.add_argument("--vlm-prompts", action="store_true", default=True, help="Use VLM Vision recaptioning on real target image (default: True)")
+    parser.add_argument("--no-vlm", dest="vlm_prompts", action="store_false", help="Disable VLM and use combinatorial prompt only")
+    parser.add_argument("--recaption-manifest", action="store_true", help="Recaption all existing targets in manifest using VLM")
     args = parser.parse_args()
+
+    output_dir = PROJECT_ROOT / "data" / "milestone_a"
+    manifest_path = output_dir / "dataset_manifest.jsonl"
+
+    if args.recaption_manifest:
+        recaption_existing_manifest(manifest_path)
+        return
 
     total_samples = 10 if args.smoke else (60 if args.pilot else (args.count or 800))
 
-    output_dir = PROJECT_ROOT / "data" / "milestone_a"
     glyphs_dir = output_dir / "glyphs"
     targets_dir = output_dir / "targets"
     glyphs_dir.mkdir(parents=True, exist_ok=True)
     targets_dir.mkdir(parents=True, exist_ok=True)
-    manifest_path = output_dir / "dataset_manifest.jsonl"
 
     print("=" * 90)
     print(f" [*] TENDOO AI - MILESTONE A DATASET GENERATOR (TARGET COUNT: {total_samples})")
     print(f" [*] MODE: {'EXECUTE (API + GLYPHS)' if args.execute else 'DRY RUN (SPECIFICATION VERIFICATION)'}")
-    print(f" [*] STUDENT PROMPTS: {'LLM-authored (w/ combinatorial fallback)' if args.llm_prompts else 'Combinatorial only'}")
+    print(f" [*] CLEAN PROMPTS: {'VLM-authored (Real Image Recaptioning)' if args.vlm_prompts else 'Combinatorial only'}")
     print(f" [*] OUTPUT DIRECTORY: {output_dir}")
     print("=" * 90)
 
@@ -1094,14 +1185,14 @@ def main():
         for idx in range(1, num_to_print + 1):
             spec = sample_dataset_spec(idx, total_samples)
             has_product = spec["modality"] == "i2i" and spec.get("product_path") is not None
-            prompt_clean = build_clean_prompt(spec, has_product, args.llm_prompts)
+            prompt_clean = build_clean_prompt(None, spec, has_product, use_vlm=False)
             print(f"\n--- [SAMPLE #{spec['id']}] cohort={spec['cohort']} stratum={spec['length_stratum']} ---")
             print(f" Modality: {spec['modality']} | Use Case: {spec['use_case']} | Domain: {spec['domain']} | AR: {spec['aspect_ratio']} ({spec['width']}x{spec['height']})")
             print(f" Slot t=10.0 (text1): '{spec['text1']}' [Font: {spec['font1']} @ {spec['floor1']}pt]")
             print(f" Slot t=20.0 (text2): '{spec['text2'].replace(chr(10), ' / ')}' [Font: {spec['font2']} @ {spec['floor2']}pt]")
             if has_product:
                 print(f" Slot t=30.0 (product): {spec['product_path'].name}")
-            print(f" Student Clean Prompt: {prompt_clean}")
+            print(f" Student Clean Prompt (Combinatorial Preview): {prompt_clean}")
         print("\n" + "=" * 90)
         print(" [OK] Dry-run passed. To generate real data, run with '--execute'.")
         print("=" * 90)
@@ -1129,9 +1220,9 @@ def main():
 
         g1_path, g2_path, g1_info, g2_info = render_and_save_glyphs(spec, glyphs_dir)
         has_product = spec["modality"] == "i2i" and spec.get("product_path") is not None
-        prompt_clean = build_clean_prompt(spec, has_product, args.llm_prompts)
 
         target_path = generate_target_image(spec, g1_info.lines, g2_info.lines, targets_dir, delay=args.delay)
+        prompt_clean = build_clean_prompt(target_path, spec, has_product, use_vlm=args.vlm_prompts)
 
         slots = [
             {
