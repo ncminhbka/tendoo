@@ -30,6 +30,8 @@ Core Architecture & Mathematical Basis:
 ====================================================================================================
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import math
@@ -38,7 +40,7 @@ import random
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -48,7 +50,7 @@ import torch.nn.functional as F
 # from einops import rearrange  (replaced with native torch.reshape)
 from PIL import Image
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 
 # Project Root Setup
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -287,6 +289,57 @@ def pre_cache_dataset(
 # ==================================================================================================
 # 4. FLOW MATCHING TRAINING ENGINE
 # ==================================================================================================
+def evaluate_validation(
+    model: nn.Module,
+    val_dataset: List[Dict],
+    null_txt: torch.Tensor,
+    null_txt_ids: torch.Tensor,
+    device: torch.device,
+) -> float:
+    """Evaluates validation Flow Matching MSE loss on held-out samples."""
+    model.eval()
+    val_losses = []
+    with torch.no_grad():
+        for batch in val_dataset:
+            z_0 = batch["z_0"].to(device, dtype=torch.bfloat16)
+            ref_tokens = batch["ref_tokens"].to(device, dtype=torch.bfloat16)
+            ref_ids = batch["ref_ids"].to(device)
+            txt = batch["txt_tokens"].to(device, dtype=torch.bfloat16)
+            txt_ids = batch["txt_ids"].to(device)
+
+            # Standard evaluation at t = 0.5 (midpoint of ODE flow)
+            t_val = 0.5
+            z_1 = torch.randn_like(z_0)
+            z_t = (1.0 - t_val) * z_0 + t_val * z_1
+            target_velocity = z_1 - z_0
+
+            canvas_tokens, canvas_ids = prc_img(z_t[0])
+            canvas_tokens = canvas_tokens.unsqueeze(0).to(device)
+            canvas_ids = canvas_ids.unsqueeze(0).to(device)
+
+            target_tokens, _ = prc_img(target_velocity[0])
+            target_tokens = target_tokens.unsqueeze(0).to(device, dtype=torch.bfloat16)
+
+            num_canvas = canvas_tokens.shape[1]
+            img_input = torch.cat([canvas_tokens, ref_tokens], dim=1)
+            img_input_ids = torch.cat([canvas_ids, ref_ids], dim=1)
+            t_vec = torch.full((1,), t_val, dtype=torch.bfloat16, device=device)
+
+            pred = model(
+                x=img_input,
+                x_ids=img_input_ids,
+                timesteps=t_vec,
+                ctx=txt,
+                ctx_ids=txt_ids,
+                guidance=None,
+            )
+            pred_canvas = pred[:, :num_canvas, :]
+            val_loss = F.mse_loss(pred_canvas, target_tokens).item()
+            val_losses.append(val_loss)
+
+    return float(np.mean(val_losses)) if val_losses else 0.0
+
+
 def train_lora(
     manifest_path: str,
     cache_dir: str,
@@ -301,35 +354,57 @@ def train_lora(
     warmup_steps: int = 150,
     grad_accum_steps: int = 4,
     save_every: int = 200,
+    eval_every: int = 50,
+    val_ratio: float = 0.10,
+    weighted_sampling: bool = True,
     text_dropout: float = 0.10,
     seed: int = 42,
     device_str: str = "cuda",
 ):
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-    random.seed(seed)
+    # 0. DDP / Multi-GPU Environment Initialization
+    is_distributed = "RANK" in os.environ and "WORLD_SIZE" in os.environ and int(os.environ["WORLD_SIZE"]) > 1
+    if is_distributed:
+        dist.init_process_group(backend="nccl")
+        rank_id = int(os.environ["RANK"])
+        local_rank = int(os.environ["LOCAL_RANK"])
+        world_size = int(os.environ["WORLD_SIZE"])
+        device = torch.device(f"cuda:{local_rank}")
+        torch.cuda.set_device(device)
+        is_main_process = (rank_id == 0)
+    else:
+        rank_id = 0
+        local_rank = 0
+        world_size = 1
+        device = torch.device(device_str if torch.cuda.is_available() else "cpu")
+        is_main_process = True
 
-    device = torch.device(device_str)
+    torch.manual_seed(seed + rank_id)
+    np.random.seed(seed + rank_id)
+    random.seed(seed + rank_id)
+
     output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-
-    print("=" * 90)
-    print(" 🚀 TENDOO AI - LORA DIT 4B TRAINING LAUNCH")
-    print(f" [*] Manifest       : {manifest_path}")
-    print(f" [*] Cache Dir      : {cache_dir}")
-    print(f" [*] Output Dir     : {output_path}")
-    print(f" [*] Target Steps   : {max_steps} steps (Effective Batch Size = 1 x {grad_accum_steps} = {grad_accum_steps})")
-    print(f" [*] LoRA Config    : Rank={rank}, Alpha={alpha}, LR={lr}, TextDropout={text_dropout}")
-    print(f" [*] Execution Device: {device}")
-    print("=" * 90)
+    if is_main_process:
+        output_path.mkdir(parents=True, exist_ok=True)
+        print("=" * 90)
+        print(" 🚀 TENDOO AI - LORA DIT 4B TRAINING LAUNCH")
+        print(f" [*] Manifest         : {manifest_path}")
+        print(f" [*] Cache Dir        : {cache_dir}")
+        print(f" [*] Output Dir       : {output_path}")
+        print(f" [*] Target Steps     : {max_steps} steps (Effective Batch = {world_size} GPU x {grad_accum_steps} = {world_size * grad_accum_steps})")
+        print(f" [*] LoRA Config      : Rank={rank}, Alpha={alpha}, LR={lr}, TextDropout={text_dropout}")
+        print(f" [*] DDP Mode         : {'Active (2x GPUs)' if is_distributed else 'Single Device'}")
+        print(f" [*] Execution Device : {device}")
+        print("=" * 90)
 
     # 1. Load Base FLUX.2 DiT Model
-    print("\n[1/5] Loading FLUX.2-klein-base-4B DiT...")
+    if is_main_process:
+        print("\n[1/5] Loading FLUX.2-klein-base-4B DiT...")
     model = load_flow_model(model_name, device=device)
     model.eval()
 
     # 2. Inject LoRA Layers
-    print("\n[2/5] Injecting LoRA Adapters...")
+    if is_main_process:
+        print("\n[2/5] Injecting LoRA Adapters...")
     model, injected_modules = inject_lora_to_flux2_klein(
         model=model,
         r=rank,
@@ -337,6 +412,16 @@ def train_lora(
         lora_dropout=dropout,
         dtype=torch.bfloat16,
     )
+
+    # Ensure base model remains in eval mode (freezing LayerNorm/RMSNorm running stats)
+    # while explicitly setting all LoRA modules to train mode so dropout and gradients are active
+    model.eval()
+    for mod in injected_modules.values():
+        mod.train()
+
+    # Wrap model in DDP if running distributed
+    if is_distributed:
+        model = DDP(model, device_ids=[local_rank], output_device=local_rank)
 
     # 3. Load Empty Prompt for Text Dropout
     empty_shard_file = Path(cache_dir) / "_empty_prompt.pt"
@@ -358,11 +443,36 @@ def train_lora(
 
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
-    # 5. Dataset Loader
-    dataset = MilestoneADataset(manifest_path, cache_dir=cache_dir)
-    indices = list(range(len(dataset)))
+    # 5. Dataset Loader & Train/Val Split (Held-Out Validation Set)
+    full_dataset = MilestoneADataset(manifest_path, cache_dir=cache_dir)
+    n_total = len(full_dataset)
+    n_val = max(1, int(n_total * val_ratio)) if val_ratio > 0 else 0
+    n_train = n_total - n_val
 
-    print("\n[3/5] Starting Flow Matching Optimization Loop...")
+    all_indices = list(range(n_total))
+    rng = random.Random(seed)
+    rng.shuffle(all_indices)
+    val_indices = all_indices[:n_val]
+    train_indices = all_indices[n_val:]
+
+    val_dataset = [full_dataset[i] for i in val_indices]
+
+    # Calculate Sample Weights for Hard Crosstalk Cases (Oversampling)
+    train_weights = []
+    for idx in train_indices:
+        item = full_dataset[idx]
+        w = 1.0
+        ref_tokens_count = item["ref_tokens"].shape[1]
+        # Stress-inducing cases: low token mass (<350 tokens) or known_hard
+        if ref_tokens_count < 350:
+            w *= 2.0
+        train_weights.append(w)
+
+    if is_main_process:
+        print(f" [*] Dataset Split    : {n_train} Train samples, {n_val} Held-out Validation samples")
+        print(f" [*] Weighted Sampling: {'Enabled (Hard Cases 2.0x weight)' if weighted_sampling else 'Disabled'}")
+        print("\n[3/5] Starting Flow Matching Optimization Loop...")
+
     step = 0
     epoch = 0
     accum_loss = 0.0
@@ -371,12 +481,14 @@ def train_lora(
 
     while step < max_steps:
         epoch += 1
-        random.shuffle(indices)
+        if weighted_sampling:
+            current_epoch_indices = random.choices(train_indices, weights=train_weights, k=len(train_indices))
+        else:
+            current_epoch_indices = train_indices.copy()
+            random.shuffle(current_epoch_indices)
 
-        for idx in indices:
-            batch = dataset[idx]
-
-            # Unpack cached features
+        for idx in current_epoch_indices:
+            batch = full_dataset[idx]
             z_0 = batch["z_0"].to(device, dtype=torch.bfloat16)  # [1, 128, H/16, W/16]
             ref_tokens = batch["ref_tokens"].to(device, dtype=torch.bfloat16)  # [1, L_ref, 128]
             ref_ids = batch["ref_ids"].to(device)  # [1, L_ref, 4]
@@ -441,30 +553,44 @@ def train_lora(
                 optimizer.zero_grad()
                 step += 1
 
-                if step % 10 == 0:
+                if step % 10 == 0 and is_main_process:
                     avg_loss = accum_loss / (10 * grad_accum_steps)
                     current_lr = scheduler.get_last_lr()[0]
                     elapsed = time.time() - start_time
                     s_per_step = elapsed / max(1, step)
                     print(
                         f" [Step {step:04d}/{max_steps:04d} | Epoch {epoch}] "
-                        f"Loss: {avg_loss:.4f} | LR: {current_lr:.2e} | "
+                        f"Train Loss: {avg_loss:.4f} | LR: {current_lr:.2e} | "
                         f"Speed: {s_per_step:.2f}s/step"
                     )
                     accum_loss = 0.0
 
+                # Held-Out Validation Evaluation
+                if step % eval_every == 0 and is_main_process and val_dataset:
+                    raw_model = model.module if is_distributed else model
+                    val_loss = evaluate_validation(raw_model, val_dataset, null_txt, null_txt_ids, device)
+                    print(f"   📊 [Validation @ Step {step:04d}] Held-Out Val Loss: {val_loss:.4f}")
+                    # Re-set LoRA modules back to train mode
+                    for mod in injected_modules.values():
+                        mod.train()
+
                 # Checkpoint saving
-                if step % save_every == 0 or step == max_steps:
+                if (step % save_every == 0 or step == max_steps) and is_main_process:
                     ckpt_file = output_path / f"tendoo_lora_step_{step:04d}.safetensors"
-                    save_lora_weights(model, ckpt_file)
+                    raw_model = model.module if is_distributed else model
+                    save_lora_weights(raw_model, ckpt_file)
 
             if step >= max_steps:
                 break
 
-    print("\n" + "=" * 90)
-    print(" 🎉 TENDOO AI - LORA TRAINING COMPLETED SUCCESSFULLY!")
-    print(f" [*] Final Checkpoint Saved: {output_path / f'tendoo_lora_step_{max_steps:04d}.safetensors'}")
-    print("=" * 90)
+    if is_main_process:
+        print("\n" + "=" * 90)
+        print(" 🎉 TENDOO AI - LORA TRAINING COMPLETED SUCCESSFULLY!")
+        print(f" [*] Final Checkpoint Saved: {output_path / f'tendoo_lora_step_{max_steps:04d}.safetensors'}")
+        print("=" * 90)
+
+    if is_distributed:
+        dist.destroy_process_group()
 
 
 # ==================================================================================================
@@ -485,6 +611,9 @@ def main():
     parser.add_argument("--alpha", type=float, default=32.0, help="LoRA alpha")
     parser.add_argument("--dropout", type=float, default=0.05, help="LoRA dropout")
     parser.add_argument("--text-dropout", type=float, default=0.10, help="Text conditioning dropout probability")
+    parser.add_argument("--eval-every", type=int, default=50, help="Evaluate validation loss every N steps")
+    parser.add_argument("--val-ratio", type=float, default=0.10, help="Validation set ratio (default: 0.10)")
+    parser.add_argument("--weighted-sampling", action="store_true", default=True, help="Enable oversampling of hard crosstalk cases")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--device", type=str, default="cuda", help="Target device (cuda or cpu)")
     args = parser.parse_args()
@@ -510,6 +639,9 @@ def main():
         max_steps=args.steps,
         grad_accum_steps=args.grad_accum,
         save_every=args.save_every,
+        eval_every=args.eval_every,
+        val_ratio=args.val_ratio,
+        weighted_sampling=args.weighted_sampling,
         text_dropout=args.text_dropout,
         seed=args.seed,
         device_str=args.device if torch.cuda.is_available() else "cpu",
