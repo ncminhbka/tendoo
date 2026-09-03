@@ -70,8 +70,11 @@ MATHEMATICAL & ARCHITECTURAL FOUNDATIONS (MANDATORY TECHNICAL LAWS):
        `--box_w` from whoever built that slot; this function does not pretend to solve that
        automatically either.
      - Font size: binary-searched to be the LARGEST that fits both the width and height budget.
-       There is no configurable floor at all -- `FONT_TIERS[*]['min_floor_pt']` is UNUSED by this
-       function now (kept in the registry only for other callers / backward compatibility).
+       There is no configurable floor at all, in EITHER Mode A (`compute_optimal_glyph_box`) or
+       Mode B (`GlyphEngine.render`'s explicit-envelope path) -- the per-font `min_floor_pt` this
+       registry used to carry has been removed entirely (see the FONT_TIERS header note below),
+       not just unused. Both modes search the full feasible range from a fixed low absolute
+       sanity bound (`ABSOLUTE_MIN_FONT_PT`, currently 8pt) up to a generous ceiling.
      - The resulting box is NOT tight-cropped further after font selection.
 
    RESIDUAL, KNOWN-OPEN RISK: even with a generous box and a large font, expect a non-trivial
@@ -79,12 +82,15 @@ MATHEMATICAL & ARCHITECTURAL FOUNDATIONS (MANDATORY TECHNICAL LAWS):
    not 5/5, on the real canvas). Production use should plan for regeneration/retry, not assume a
    deterministic single-shot 100% guarantee. Safety padding (16px) and the 512px default width
    for un-overridden multi-line content remain provisional, not independently re-verified per font.
+   AGENTS.md Rule 31 additionally found that PROMPT WORDING and MATERIAL choice (e.g. avoiding
+   "chữ phụ"/subordinate-role phrasing, avoiding neon-bloom materials that wash out fine strokes)
+   can independently make or break fine-detail fidelity, on top of box/font sizing -- font size
+   alone is not the whole story.
 
    STATUS: this glyph-rendering layer is considered LOCKED for the isolated single-glyph @ t=10
    case. Next phase of the project moves to multi-slot conditioning (RoPE spatial binding --
-   already tried and closed, AGENTS.md Rule 30; Regional Parallel Diffusion -- in progress)
-   RE-EXAMINED using this corrected primitive, since earlier negative results for both may have
-   been confounded by the very glyph-sizing defect this revision fixes.
+   already tried and closed, AGENTS.md Rule 30; Regional Parallel Diffusion -- in progress, see
+   AGENTS.md Rule 31) built on this corrected primitive.
 ====================================================================================================
 """
 
@@ -123,30 +129,25 @@ CURRENT_FILE = Path(__file__).resolve()
 PROJECT_ROOT = CURRENT_FILE.parent.parent.parent
 FONTS_DIR = PROJECT_ROOT / "fonts"
 
+# Absolute sanity floor for font-size binary searches (Mode A and Mode B alike). NOT a "locked"
+# per-font floor -- just the point below which a font is illegible regardless of anything else,
+# matching Rule 2's VAE-roundtrip-safe threshold (~20pt was proven clean at the VAE stage; 8pt
+# gives the search a little extra room below that before giving up, rather than silently
+# expanding a caller-specified envelope the moment 20pt itself doesn't fit).
+ABSOLUTE_MIN_FONT_PT = 8
+
 # ==================================================================================================
-# 1. PER-FONT FLOOR REGISTRY & ARCHETYPES (16 QA-VERIFIED VIETNAMESE UNICODE FONTS)
+# 1. FONT ARCHETYPE REGISTRY (16 QA-VERIFIED VIETNAMESE UNICODE FONTS)
 # ==================================================================================================
-# Unified Floor Architecture (REVISED Sept 2026, was Dual: bevietnam 32pt / others 36pt):
-# - ALL 16 fonts: Floor 40pt.
-#
-# REVISION (Sept 2026): the original 32pt/36pt floors were locked from a single-line, short-text
-# probe (probe_dit_font_resolution_floor.py / probe_all_fonts_floor_32_36.py) targeting the
-# Nyquist "spiky edges" failure mode. Once Rule 29's self-aspect-ratio fix made multi-line
-# diacritic-dense text reliable at the STRUCTURAL level, a residual, more uniform defect
-# remained: diacritic marks (circumflex, tilde, the horizontal stroke on "đ") came out mildly
-# wrong at 32pt while basic Latin letters were fine -- a DIFFERENT failure mode than the one the
-# original floors were probed against. A dedicated multi-seed sweep
-# (scripts/probe_glyph_font_size_fine_detail.py, bevietnam, text richest in Vietnamese diacritics,
-# aspect ratio held in-band throughout by adjusting line count) found: 24-30pt still show
-# diacritic defects, 36pt+ clean, 40pt sharpest. This also reconciles with reverse-engineering the
-# `demo_tendoo_poster.py` "Tây Tiến" 100%-accurate reference (AGENTS.md Rule 11): its binary
-# search actually chose 48pt for playfair at 4 lines.
-#
-# ONLY bevietnam was directly re-tested at 40pt. The other 15 fonts are raised to the SAME 40pt
-# floor as a deliberate, conservative unification decision (40 > both their old 36pt and
-# bevietnam's old 32pt, so it cannot be less safe than what shipped before) -- NOT because each
-# was independently re-verified against this exact diacritic-fidelity methodology. Treat
-# non-bevietnam floors as a reasonable default, not a locked law, until each gets its own sweep.
+# RETIRED (Sept 2026, Rule 29 final revision): there is no per-font (or unified) minimum font-size
+# floor anymore. The registry used to carry a `min_floor_pt` value (32/36pt per font-tier, later a
+# "unified" 40pt for all 16) that was enforced as a hard lower bound on font size -- first to guard
+# against Nyquist "spiky edges" on tiny single-line text, later re-justified for diacritic fine-
+# detail fidelity. Both justifications were superseded once Rule 29 settled on "generous box + the
+# largest font that fits it, decided per-slot by box_width_px/px_per_line" -- at that point a fixed
+# pt floor stopped meaning anything: the right font size is whatever a well-chosen box permits, not
+# a number this registry can know in advance. `compute_optimal_glyph_box` (Mode A) and `GlyphEngine.
+# render`'s Mode B both now binary-search the full feasible range with no enforced floor.
 
 FONT_TIERS: Dict[str, Dict[str, Any]] = {
     # Workhorse Clean Sans-Serif (Floor: 40pt, revised Sept 2026)
@@ -154,7 +155,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "BeVietnamPro-Black.ttf",
         "archetype": "Clean Sans-Serif",
         "tier": "Tier A (Heavy / Dense)",
-        "min_floor_pt": 40,  # scripts/probe_glyph_font_size_fine_detail.py: 36+ clean, 40 sharpest
         "default_line_spacing": 0.22,
         "description": "Commercial workhorse for clean, hyper-legible body, subtitles, and modern ads.",
     },
@@ -164,7 +164,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "Anton-Regular.ttf",
         "archetype": "Bold Heavy Display",
         "tier": "Tier A (Heavy / Dense)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.20,
         "description": "Massive, impactful condensed poster font for high-energy tech and flash sale ads.",
     },
@@ -172,7 +171,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Gotham Ultra.otf",
         "archetype": "Geometric Ultra-Bold",
         "tier": "Tier A (Heavy / Dense)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.20,
         "description": "High-end corporate branding, telecom campaigns, and authoritative titles.",
     },
@@ -180,7 +178,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Lolapeluza Black.ttf",
         "archetype": "Ultra-Black Display",
         "tier": "Tier A (Heavy / Dense)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.22,
         "description": "Playful, chunky heavy display with high token mass and extreme contrast.",
     },
@@ -188,7 +185,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Gretoon.ttf",
         "archetype": "Pop-Art Cartoon",
         "tier": "Tier A (Heavy / Dense)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.22,
         "description": "Pop-art, 3D extruded comic font for FMCG, snacks, and youthful campaigns.",
     },
@@ -196,7 +192,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "PlayfairDisplay.ttf",
         "archetype": "Editorial Serif",
         "tier": "Tier B (Serif / Medium)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.26,
         "description": "Luxury serif with sharp contrast, ideal for fashion, jewelry, and literature.",
     },
@@ -204,7 +199,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "Oswald.ttf",
         "archetype": "Condensed Gothic Sans",
         "tier": "Tier B (Serif / Medium)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.20,
         "description": "Tall, elegant condensed font for specifications, sports gear, and modern posters.",
     },
@@ -212,7 +206,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Harabaras.ttf",
         "archetype": "Geometric Medium Sans",
         "tier": "Tier B (Serif / Medium)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.22,
         "description": "Friendly, modern geometric branding for startups, apps, and consumer tech.",
     },
@@ -220,7 +213,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "DancingScript.ttf",
         "archetype": "Cursive Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.32,
         "description": "Fluid, emotional cursive script for spa, cosmetics, bridal, and organic lifestyle.",
     },
@@ -228,7 +220,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "Pacifico-Regular.ttf",
         "archetype": "Brush Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.28,
         "description": "Casual retro brush script, world-class for CTA badges, food trucks, and summer ads.",
     },
@@ -236,7 +227,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SedgwickAveDisplay-Regular.ttf",
         "archetype": "Graffiti / Street Brush",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.25,
         "description": "Urban street graffiti with organic splatter vibes for streetwear and youth culture.",
     },
@@ -244,7 +234,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SedgwickAveDisplay-Regular.ttf",
         "archetype": "Graffiti / Street Brush",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.25,
         "description": "Alias for sedgwick.",
     },
@@ -252,7 +241,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Blow Brush.ttf",
         "archetype": "Marker / Street Art",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.26,
         "description": "Handmade dry-marker brush typography with energetic motion.",
     },
@@ -260,7 +248,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Blow Brush.ttf",
         "archetype": "Marker / Street Art",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.26,
         "description": "Alias for blowbrush.",
     },
@@ -268,7 +255,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Clementine.ttf",
         "archetype": "Calligraphy Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.32,
         "description": "Sophisticated wedding and boutique calligraphy with sweeping ascenders/descenders.",
     },
@@ -276,7 +262,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Cookies.ttf",
         "archetype": "Chunky Rounded Display",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.24,
         "description": "Soft, rounded bubbly letters for confectionery, bakery, toys, and kids products.",
     },
@@ -284,7 +269,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Grocery Rounded.ttf",
         "archetype": "Handwritten Store Display",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.24,
         "description": "Vintage chalkboard / grocery sign lettering for organic markets and rustic cafes.",
     },
@@ -292,7 +276,6 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Holidays.ttf",
         "archetype": "Festive Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.28,
         "description": "Joyful seasonal typography for Tet, festivals, promotions, and celebrations.",
     },
@@ -327,7 +310,6 @@ class GlyphInfo:
     token_count: int
     archetype: str
     tier: str
-    min_floor_pt: int
     is_nyquist_safe: bool
     line_spacing_px: int
     padding_x_px: int
@@ -563,10 +545,10 @@ def compute_optimal_glyph_box(
     from the person building that slot, never a fully automatic derivation -- so this function
     does not pretend to auto-derive it either.
 
-    Status: font size now has no configurable floor at all (the old `min_floor_pt` per font in
-    FONT_TIERS is UNUSED by this function as of this revision -- kept in the registry only for
-    other callers/backward compatibility). Safety padding (16px) and the 512px default width for
-    un-overridden multi-line content remain provisional, not independently re-verified per font.
+    Status: font size has no configurable floor at all -- the per-font `min_floor_pt` this
+    registry used to carry has been removed entirely. Safety padding (16px) and the 512px default
+    width for un-overridden multi-line content remain provisional, not independently re-verified
+    per font.
 
     Returns: (width_px, height_px, chosen_font_size_pt, lines)
     """
@@ -698,7 +680,6 @@ class GlyphEngine:
           wrapping is applied directly against them.
         """
         font_key, font_path, meta = resolve_font_path(font_name_or_path or self.default_font)
-        min_floor = meta["min_floor_pt"]
         spacing_ratio = meta["default_line_spacing"]
 
         if auto_size or (target_width is None and target_height is None):
@@ -735,22 +716,27 @@ class GlyphEngine:
                 max_line_width_px=max_allowed_w,
             )
 
-            # Safety guard (Anti-Truncation Law): if text at min_floor is wider than max_allowed_w,
-            # auto-expand envelope_w to ensure text is NEVER chopped off at the image borders!
-            min_test_font = self.get_font(font_path, min_floor)
+            # Safety guard (Anti-Truncation Law): if text at the absolute minimum legible size
+            # still doesn't fit, auto-expand envelope_w rather than silently chopping it off.
+            # NOTE: this used to test against the retired per-font `min_floor_pt` (40pt) -- a much
+            # HIGHER bar than genuine illegibility, so it triggered (and force-expanded the
+            # caller's envelope) far more readily than actually necessary. Now tests against
+            # ABSOLUTE_MIN_FONT_PT instead: only expand when even the smallest usable font can't
+            # fit, letting the binary search below freely land anywhere in between.
+            min_test_font = self.get_font(font_path, ABSOLUTE_MIN_FONT_PT)
             max_line_w_at_min = max(min_test_font.getbbox(l)[2] - min_test_font.getbbox(l)[0] for l in lines)
             if max_line_w_at_min > max_allowed_w:
                 envelope_w = int(math.ceil((max_line_w_at_min + 2 * safety_padding_px) / 16.0) * 16)
                 max_allowed_w = envelope_w - 2 * safety_padding_px
                 logger.warning(
-                    f"[GlyphEngine] Text width ({max_line_w_at_min}px) exceeds envelope ({target_width}px) at "
-                    f"min_floor {min_floor}pt. Auto-expanded envelope_w to {envelope_w}px to guarantee zero truncation!"
+                    f"[GlyphEngine] Text width ({max_line_w_at_min}px) exceeds envelope ({target_width}px) even at "
+                    f"the absolute minimum {ABSOLUTE_MIN_FONT_PT}pt. Auto-expanded envelope_w to {envelope_w}px."
                 )
 
-            # Binary search for maximum font size fitting inside envelope
-            low, high = min_floor, 220
-            best_size = min_floor
-            best_font = self.get_font(font_path, min_floor)
+            # Binary search for maximum font size fitting inside envelope -- no per-font floor.
+            low, high = ABSOLUTE_MIN_FONT_PT, 220
+            best_size = ABSOLUTE_MIN_FONT_PT
+            best_font = self.get_font(font_path, ABSOLUTE_MIN_FONT_PT)
 
             while low <= high:
                 mid = (low + high) // 2
@@ -839,7 +825,6 @@ class GlyphEngine:
             token_count=token_count,
             archetype=meta["archetype"],
             tier=meta["tier"],
-            min_floor_pt=min_floor,
             is_nyquist_safe=is_nyquist_safe,
             line_spacing_px=line_spacing,
             padding_x_px=safety_padding_px,
@@ -899,7 +884,7 @@ def run_font_inspection() -> None:
     print("=" * 100)
     print(" [*] TENDOO AI - 16 QA-VERIFIED VIETNAMESE UNICODE FONTS & RESOLUTION FLOORS")
     print("=" * 100)
-    header = f"{'Alias':<14} | {'Archetype':<22} | {'Tier':<20} | {'Min Floor':<10} | {'Status':<10}"
+    header = f"{'Alias':<14} | {'Archetype':<22} | {'Tier':<20} | {'Status':<10}"
     print(header)
     print("-" * 100)
 
@@ -909,10 +894,11 @@ def run_font_inspection() -> None:
         path = FONT_REGISTRY[alias]
         exists = os.path.exists(path)
         status = "[OK]" if exists else "[MISSING]"
-        print(f"{alias:<14} | {meta['archetype']:<22} | {meta['tier']:<20} | {meta['min_floor_pt']}pt{'':<6} | {status}")
+        print(f"{alias:<14} | {meta['archetype']:<22} | {meta['tier']:<20} | {status}")
 
     print("=" * 100)
-    print(" [i] Mathematical Rule: 1 Latent Token = 16x16px. Min Floor guarantees diacritics >= 0.70 tokens.")
+    print(" [i] Mathematical Rule: 1 Latent Token = 16x16px. No fixed font-size floor (Rule 29,")
+    print("     final revision) -- font size is whatever the chosen box permits, per slot.")
     print("=" * 100)
 
 
@@ -1024,7 +1010,7 @@ def main():
     print("=" * 80)
     print(f"  - Text Content   : \"{info.text}\"")
     print(f"  - Font Name      : {info.font_name.upper()} ({info.archetype})")
-    print(f"  - Font Size      : {info.font_size_pt}pt (Min Floor: {info.min_floor_pt}pt)")
+    print(f"  - Font Size      : {info.font_size_pt}pt (no fixed floor -- largest fitting the box)")
     print(f"  - Pixel Size     : {info.width_px} x {info.height_px} px")
     print(f"  - Latent Grid    : {info.latent_w} x {info.latent_h} latent patches (16x16)")
     print(f"  - Token Count    : {info.token_count} tokens")
