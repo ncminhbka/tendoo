@@ -40,23 +40,38 @@ MATHEMATICAL & ARCHITECTURAL FOUNDATIONS (MANDATORY TECHNICAL LAWS):
    - RoPE Time Offset (t=10, 20, 30, 40): Identifies and disentangles slot channels independently.
    - Glyph VAE (via this Engine): Preserves 100% Vietnamese Spelling and Font Geometry.
 
-5. Rule 29 (NEW, Sept 2026): Canvas-Aware Dynamic Line Planning Law:
-   - Empirical finding: FLUX.2 Base DiT treats the glyph bitmap as a REFERENCE IMAGE to be
-     preserved near-verbatim, INCLUDING ITS LINE COUNT / INTERNAL ASPECT RATIO — not merely
-     its character content. A glyph rendered as one wide, short line (natural for a 16:9
-     canvas) still "wants" to keep that 1-line shape when the actual output canvas is a
-     narrow 9:16 poster, forcing the DiT to squeeze it into a much narrower usable width and
-     causing broken/garbled characters.
-   - Consequence: the NUMBER OF LINES must be decided from the REAL available width on the
-     TARGET OUTPUT CANVAS, not from word-count bands alone. `auto_wrap_text` /
-     `compute_optimal_glyph_box` now accept `target_canvas_w` (or an explicit
-     `max_line_width_px`) and treat pixel-width fitting as authoritative over the legacy
-     word-count heuristic whenever canvas information is available. The word-count bands are
-     kept ONLY as a fallback for isolated/canvas-agnostic probes.
-   - Status: mechanism implemented, `max_line_width_ratio` (fraction of canvas width a line
-     may occupy, default 0.85) and the minimum line-height floor (112px 1-line / 128px
-     multi-line, potentially in tension with the >=160px floor documented in AGENTS.md rule 4)
-     are NOT yet empirically locked — see `scripts/probe_glyph_engine_lock.py`.
+5. Rule 29 (Sept 2026, REVISED after `probe_glyph_engine_lock.py` GPU evidence): Glyph-to-Canvas
+   Latent Width Ceiling Law:
+   - Original hypothesis ("model preserves line count, so a wide isolated glyph breaks when
+     forced onto a narrow canvas") was PARTIALLY WRONG: a controlled A/B on the IDENTICAL
+     glyph bitmap (608x512px, 4-line poem) composited onto two canvases proved the isolated
+     glyph itself was never the issue -- the SAME bitmap rendered perfectly on a 1024x576
+     canvas (glyph_lat_w=38 vs canvas_lat_w=64, ratio 0.59) and failed completely on a
+     576x1024 canvas (glyph_lat_w=38 vs canvas_lat_w=36, ratio 1.06). Line count, font size,
+     and text content were held constant; only the ratio changed.
+   - Cross-checked against 3 more independent (text, canvas) pairs spanning ratio 0.42 to
+     1.92: EVERY case with glyph_lat_w / canvas_lat_w <= 0.59 rendered cleanly; EVERY case
+     with ratio >= 0.86 failed (garbled/broken text), regardless of line count, font size, or
+     line-height. The corresponding HEIGHT ratio showed no such pattern (0.5 failed, 0.89
+     passed) -- this is specifically a WIDTH phenomenon, not a general "glyph too big" one.
+   - Working theory: glyph reference (h, w) coordinates are LOCAL to the glyph's own box, not
+     tied to absolute canvas position (see Rule 26 in AGENTS.md). A glyph whose own latent
+     width approaches or exceeds the canvas's latent width is likely OOD relative to BFL's
+     reference-conditioning pretraining data, where a reference sub-image is presumably always
+     markedly narrower than the canvas it is composited into.
+   - Consequence: `max_line_width_ratio` -- previously defaulted to 0.85, which sat almost
+     exactly ON the empirically-confirmed failure boundary (0.86) -- is now defaulted to 0.6,
+     just below the highest confirmed-safe ratio (0.59) observed so far. This is the primary
+     lever `auto_wrap_text` / `compute_optimal_glyph_box` use (via `target_canvas_w`) to force
+     additional line breaks and keep each line's width comfortably below the danger zone.
+   - Status: 0.6 is a provisional, evidence-based default from n=1-per-condition GPU samples
+     (seed=42) spanning only two texts. The exact threshold, whether it holds across fonts/
+     seeds, and whether diacritic density is an independent confound are being narrowed down
+     by a dedicated ratio sweep -- see `scripts/probe_glyph_width_ratio.py`. Font-size floor
+     (current 32pt lock looked WORSE than 28pt in one sample), safety padding (16px confirmed
+     better than 8px), and the min-line-height floor (112-160px range all failed identically
+     for a diacritic-dense text, so height was likely never the operative variable in that
+     experiment) remain open too -- see `scripts/probe_glyph_engine_lock.py`.
 ====================================================================================================
 """
 
@@ -385,7 +400,7 @@ def auto_wrap_text(
     font_size_pt: int,
     max_line_width_px: Optional[int] = None,
     target_canvas_w: Optional[int] = None,
-    max_line_width_ratio: float = 0.85,
+    max_line_width_ratio: float = 0.6,
     target_lines: Optional[int] = None,
     force_single_line: bool = False,
 ) -> List[str]:
@@ -470,7 +485,7 @@ def compute_optimal_glyph_box(
     safety_padding_px: int = 16,
     target_canvas_w: Optional[int] = None,
     target_canvas_h: Optional[int] = None,
-    max_line_width_ratio: float = 0.85,
+    max_line_width_ratio: float = 0.6,
     min_line_height_single_px: int = 112,
     min_line_height_multi_px: int = 128,
 ) -> Tuple[int, int, int, List[str]]:
@@ -596,7 +611,7 @@ class GlyphEngine:
         safety_padding_px: int = 16,
         target_canvas_w: Optional[int] = None,
         target_canvas_h: Optional[int] = None,
-        max_line_width_ratio: float = 0.85,
+        max_line_width_ratio: float = 0.6,
     ) -> GlyphInfo:
         """
         Main entrypoint to generate a production-ready locked glyph image.
@@ -763,7 +778,7 @@ def render_glyph(
     safety_padding_px: int = 16,
     target_canvas_w: Optional[int] = None,
     target_canvas_h: Optional[int] = None,
-    max_line_width_ratio: float = 0.85,
+    max_line_width_ratio: float = 0.6,
 ) -> GlyphInfo:
     """
     Convenience function to render a locked glyph using the singleton engine.
@@ -831,7 +846,7 @@ def main():
         help="Target OUTPUT canvas height (px) for Rule 29 canvas-aware line planning in Mode A",
     )
     parser.add_argument(
-        "--max_line_width_ratio", type=float, default=0.85,
+        "--max_line_width_ratio", type=float, default=0.6,
         help="Fraction of target canvas width a single line may occupy (default: 0.85)",
     )
     parser.add_argument(
