@@ -98,6 +98,101 @@ SCALE_STEPS = {
     "L": (896, 384),  # 1344 tokens, ratio 1.56 (approaching Tây Tiến's 1792-token scale)
 }
 
+# NOTE (user correction): the historically-reliable recipe was actually "render chữ to + crop
+# sát" (big font, THEN tight-crop) -- not "big font, keep the full fixed envelope" (what "S"
+# above actually is). This third recipe reuses S's own font-maximizing candidate-layout search
+# (61pt, ["BỨT PHÁ","MỌI GIỚI HẠN"]) but then tight-crops to content afterward instead of keeping
+# the 512x224 envelope -- same font size as S, but fewer tokens (384 vs 448, at 8% padding).
+TIGHT_BIGFONT_SEARCH_ENVELOPE = (512, 224)  # search envelope only -- final box is tight-cropped
+TIGHT_BIGFONT_PADDING_RATIO = 0.08
+
+
+def render_bigfont_tight_crop_glyph(
+    text: str, font_name: str, search_envelope_w: int = 512, search_envelope_h: int = 224,
+    padding_ratio: float = 0.08,
+) -> GlyphInfo:
+    """
+    "Render chữ to + crop sát": reuses the OLD algorithm's own font-maximizing candidate-layout
+    search (find the layout + largest font size that fits within a generous search envelope --
+    this is what "render chữ to" means: pick whichever line split lets the font be as big as
+    possible) but then TIGHT-CROPS the box down to the actual rendered content afterward, instead
+    of keeping the full fixed search envelope. Same font size as the OLD recipe, fewer tokens.
+    """
+    _, font_path, meta = resolve_font_path(font_name)
+    search_w, search_h = (search_envelope_w // 16) * 16, (search_envelope_h // 16) * 16
+    pad_w0, pad_h0 = int(search_w * 0.08), int(search_h * 0.08)
+    max_w, max_h = search_w - 2 * pad_w0, search_h - 2 * pad_h0
+
+    words = text.split()
+    candidate_layouts = []
+    if len(words) >= 4:
+        mid = len(words) // 2
+        candidate_layouts.append([" ".join(words[:mid]), " ".join(words[mid:])])
+    if len(words) >= 6:
+        p1, p2 = len(words) // 3, 2 * len(words) // 3
+        candidate_layouts.append([" ".join(words[:p1]), " ".join(words[p1:p2]), " ".join(words[p2:])])
+    candidate_layouts.append([text])
+
+    best_size, best_lines, best_font = 0, None, None
+    for lines in candidate_layouts:
+        spacing_ratio = 0.32 if len(lines) >= 2 else 0.20
+        low, high, opt_size, opt_font = 14, 300, 0, None
+        while low <= high:
+            mid_size = (low + high) // 2
+            try:
+                test_font = ImageFont.truetype(font_path, size=mid_size)
+            except Exception:
+                test_font = ImageFont.load_default()
+            total_h, max_line_w = 0, 0
+            for line in lines:
+                bbox = test_font.getbbox(line)
+                max_line_w = max(max_line_w, bbox[2] - bbox[0])
+                total_h += bbox[3] - bbox[1]
+            total_h += int(mid_size * spacing_ratio) * (len(lines) - 1)
+            if max_line_w <= max_w and total_h <= max_h:
+                opt_size, opt_font = mid_size, test_font
+                low = mid_size + 1
+            else:
+                high = mid_size - 1
+        if opt_size > best_size:
+            best_size, best_lines, best_font = opt_size, lines, opt_font
+
+    if best_font is None:
+        best_font = ImageFont.truetype(font_path, size=20)
+        best_lines, best_size = candidate_layouts[-1], 20
+
+    spacing_ratio = 0.32 if len(best_lines) >= 2 else 0.20
+    line_spacing = int(best_size * spacing_ratio)
+    line_widths = [best_font.getbbox(l)[2] - best_font.getbbox(l)[0] for l in best_lines]
+    line_heights = [best_font.getbbox(l)[3] - best_font.getbbox(l)[1] for l in best_lines]
+    content_w = max(line_widths)
+    content_h = sum(line_heights) + line_spacing * (len(best_lines) - 1)
+
+    # TIGHT CROP (this is the only difference from render_fixed_envelope_glyph): box sized to
+    # the actual content + a real (not wasted) padding margin, not the full search envelope.
+    pad_x = max(10, int(content_w * padding_ratio))
+    pad_y = max(8, int(content_h * padding_ratio))
+    final_w = max(32, ((content_w + 2 * pad_x + 15) // 16) * 16)
+    final_h = max(32, ((content_h + 2 * pad_y + 15) // 16) * 16)
+
+    img = Image.new("RGB", (final_w, final_h), color=(0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    curr_y = (final_h - content_h) // 2
+    for i, line in enumerate(best_lines):
+        lw = line_widths[i]
+        bbox = best_font.getbbox(line)
+        draw.text(((final_w - lw) // 2 - bbox[0], curr_y - bbox[1]), line, fill=(255, 255, 255), font=best_font)
+        curr_y += line_heights[i] + line_spacing
+
+    return GlyphInfo(
+        image=img, text=text, lines=best_lines, font_name=font_name, font_path=font_path,
+        font_size_pt=best_size, width_px=final_w, height_px=final_h,
+        latent_w=final_w // 16, latent_h=final_h // 16, token_count=(final_w // 16) * (final_h // 16),
+        archetype=meta["archetype"], tier=meta["tier"], min_floor_pt=meta["min_floor_pt"],
+        is_nyquist_safe=best_size >= meta["min_floor_pt"],
+        line_spacing_px=line_spacing, padding_x_px=pad_x, padding_y_px=pad_y,
+    )
+
 DEFAULT_PROMPT = (
     "Poster tuyển dụng phong cách công ty công nghệ hiện đại, nền gradient xanh dương đậm sang "
     "trọng, dòng chữ phát sáng neon tinh tế, bố cục sạch sẽ chuyên nghiệp, không có chữ ký, "
@@ -273,8 +368,11 @@ def run_probe(
 
     glyph_infos: Dict[str, GlyphInfo] = {}
     for key in scale_keys:
-        ew, eh = SCALE_STEPS[key]
-        info = render_fixed_envelope_glyph(TEXT, FONT, ew, eh)
+        if key == "T":
+            info = render_bigfont_tight_crop_glyph(TEXT, FONT, *TIGHT_BIGFONT_SEARCH_ENVELOPE, TIGHT_BIGFONT_PADDING_RATIO)
+        else:
+            ew, eh = SCALE_STEPS[key]
+            info = render_fixed_envelope_glyph(TEXT, FONT, ew, eh)
         glyph_infos[key] = info
         aspect = info.width_px / info.height_px
         canvas_ratio = info.latent_w / lat_w
@@ -361,7 +459,10 @@ def run_probe(
 
 def main():
     parser = argparse.ArgumentParser(description="Tendoo AI Glyph Absolute Scale Probe")
-    parser.add_argument("--scales", type=str, nargs="+", default=list(SCALE_STEPS.keys()), choices=list(SCALE_STEPS.keys()))
+    parser.add_argument("--scales", type=str, nargs="+", default=list(SCALE_STEPS.keys()) + ["T"],
+                         choices=list(SCALE_STEPS.keys()) + ["T"],
+                         help="S/M/L: fixed-envelope, not tight-cropped. T: 'render chữ to + crop sát' -- "
+                              "same font-maximizing search as S, but tight-cropped afterward (384 tokens).")
     parser.add_argument("--seeds", type=int, nargs="+", default=DEFAULT_SEEDS)
     parser.add_argument("--prompt", type=str, default=DEFAULT_PROMPT)
     parser.add_argument("--output_dir", type=str, default="output_glyph_absolute_scale")
