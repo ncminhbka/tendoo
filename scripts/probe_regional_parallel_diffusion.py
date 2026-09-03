@@ -98,6 +98,24 @@ DEFAULT_PROMPT = (
     "Poster tuyển dụng phong cách công ty công nghệ hiện đại, nền gradient xanh dương đậm sang "
     "trọng, dòng chữ tiêu đề lớn dập nổi kim loại sắc nét ở phía trên, dòng chữ phụ phát sáng neon "
     "tinh tế ở phía dưới, bố cục sạch sẽ chuyên nghiệp, không có chữ ký, không có watermark"
+)  # used ONLY by the "baseline" condition (single joint pass, matches the pre-existing convention)
+
+# NOTE (bugfix after first regional_parallel run): each branch's own prompt must describe ONLY
+# its own role/material, never the other slot. The first attempt reused DEFAULT_PROMPT (which
+# mentions BOTH "title... at top" AND "subtitle... at bottom") for every branch -- so the
+# subtitle branch, despite being fully isolated at the attention level from the title glyph, was
+# still asked to satisfy a prompt describing a title it had no glyph to render, plausibly
+# confusing that branch's OWN prediction even in isolation. Background/material phrasing is kept
+# consistent across both so the merged halves still cohere stylistically.
+TITLE_PROMPT = (
+    "Poster tuyển dụng phong cách công ty công nghệ hiện đại, nền gradient xanh dương đậm sang "
+    "trọng, dòng chữ tiêu đề lớn dập nổi kim loại sắc nét ở phía trên, bố cục sạch sẽ chuyên "
+    "nghiệp, không có chữ ký, không có watermark"
+)
+SUBTITLE_PROMPT = (
+    "Poster tuyển dụng phong cách công ty công nghệ hiện đại, nền gradient xanh dương đậm sang "
+    "trọng, dòng chữ phụ phát sáng neon tinh tế ở phía dưới, bố cục sạch sẽ chuyên nghiệp, không "
+    "có chữ ký, không có watermark"
 )
 
 
@@ -152,16 +170,21 @@ def denoise_baseline_joint(
 
 
 def denoise_regional_parallel(
-    model: Flux2, img: torch.Tensor, img_ids: torch.Tensor, txt: torch.Tensor, txt_ids: torch.Tensor,
+    model: Flux2, img: torch.Tensor, img_ids: torch.Tensor,
     timesteps: List[float], guidance: float,
-    branch_refs: List[Tuple[torch.Tensor, torch.Tensor]], branch_weights: List[torch.Tensor],
+    branch_refs: List[Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]], branch_weights: List[torch.Tensor],
 ) -> torch.Tensor:
     """
     N independent single-glyph branches sharing one canvas. Each branch runs its OWN full joint-
-    attention forward pass (canvas + prompt + exactly ONE canonical glyph ref) -- crosstalk is
-    impossible by construction since no two glyphs are ever in the same pass. Per-step, each
-    branch's CFG-guided velocity prediction is combined via a smooth per-canvas-token spatial mask
-    into ONE consensus update; that single merged canvas is what every branch sees next step.
+    attention forward pass (canvas + ITS OWN prompt describing only its own role + exactly ONE
+    canonical glyph ref) -- crosstalk is impossible by construction since no two glyphs are ever
+    in the same pass, and no branch is confused by a prompt describing a slot it has no glyph
+    for (see the TITLE_PROMPT/SUBTITLE_PROMPT note above). Per-step, each branch's CFG-guided
+    velocity prediction is combined via a smooth per-canvas-token spatial mask into ONE consensus
+    update; that single merged canvas is what every branch sees next step.
+
+    `branch_refs`: list of (ref_tokens, ref_ids, txt, txt_ids) -- txt/txt_ids are THAT branch's
+    OWN [uncond, cond] prompt encoding, not shared across branches.
     """
     n_canvas = img.shape[1]
     orig_dtype = img.dtype  # bfloat16 -- guarded against below, see the cast on `weight`
@@ -171,7 +194,7 @@ def denoise_regional_parallel(
         img_ids_cfg = torch.cat([img_ids, img_ids], dim=0)
 
         merged_pred = torch.zeros_like(img)  # [1, n_canvas, C]
-        for (ref_tokens, ref_ids), weight in zip(branch_refs, branch_weights):
+        for (ref_tokens, ref_ids, txt, txt_ids), weight in zip(branch_refs, branch_weights):
             ref_tokens_cfg = torch.cat([ref_tokens, ref_tokens], dim=0)
             ref_ids_cfg = torch.cat([ref_ids, ref_ids], dim=0)
             img_input = torch.cat([img_cfg, ref_tokens_cfg], dim=1)
@@ -248,12 +271,16 @@ def run_probe(
     model = load_flow_model(model_name, device=device_dit)
     text_encoder = load_qwen3_embedder(variant="4B", device=device_te)
 
-    print("[2/3] Encoding shared prompt via Qwen3-4B-FP8...")
+    print("[2/3] Encoding prompts via Qwen3-4B-FP8 (shared for baseline, per-branch for regional_parallel)...")
     with torch.no_grad():
-        txt = text_encoder(["", prompt])
-        txt, txt_ids = batched_prc_txt(txt)
-        txt = txt.to(device_dit)
-        txt_ids = txt_ids.to(device_dit)
+        txt_baseline, txt_ids_baseline = batched_prc_txt(text_encoder(["", prompt]))
+        txt_baseline, txt_ids_baseline = txt_baseline.to(device_dit), txt_ids_baseline.to(device_dit)
+
+        txt_title, txt_ids_title = batched_prc_txt(text_encoder(["", TITLE_PROMPT]))
+        txt_title, txt_ids_title = txt_title.to(device_dit), txt_ids_title.to(device_dit)
+
+        txt_subtitle, txt_ids_subtitle = batched_prc_txt(text_encoder(["", SUBTITLE_PROMPT]))
+        txt_subtitle, txt_ids_subtitle = txt_subtitle.to(device_dit), txt_ids_subtitle.to(device_dit)
 
     if num_gpus >= 2:
         try:
@@ -311,17 +338,17 @@ def run_probe(
                 ref_tokens = torch.cat([title_ref_t10[0], subtitle_ref_t20[0]], dim=1).to(device_dit)
                 ref_ids = torch.cat([title_ref_t10[1], subtitle_ref_t20[1]], dim=1).to(device_dit)
                 out_latent = denoise_baseline_joint(
-                    model=model, img=img_tokens, img_ids=img_ids, txt=txt, txt_ids=txt_ids,
+                    model=model, img=img_tokens, img_ids=img_ids, txt=txt_baseline, txt_ids=txt_ids_baseline,
                     timesteps=timesteps, guidance=guidance, ref_tokens=ref_tokens, ref_ids=ref_ids,
                 )
-            else:  # "regional_parallel"
+            else:  # "regional_parallel" -- each branch carries its OWN (ref_tokens, ref_ids, txt, txt_ids)
                 branch_refs = [
-                    (title_ref_t10[0].to(device_dit), title_ref_t10[1].to(device_dit)),
-                    (subtitle_ref_t10[0].to(device_dit), subtitle_ref_t10[1].to(device_dit)),
+                    (title_ref_t10[0].to(device_dit), title_ref_t10[1].to(device_dit), txt_title, txt_ids_title),
+                    (subtitle_ref_t10[0].to(device_dit), subtitle_ref_t10[1].to(device_dit), txt_subtitle, txt_ids_subtitle),
                 ]
                 branch_weights = [w_top, w_bottom]
                 out_latent = denoise_regional_parallel(
-                    model=model, img=img_tokens, img_ids=img_ids, txt=txt, txt_ids=txt_ids,
+                    model=model, img=img_tokens, img_ids=img_ids,
                     timesteps=timesteps, guidance=guidance, branch_refs=branch_refs, branch_weights=branch_weights,
                 )
 
