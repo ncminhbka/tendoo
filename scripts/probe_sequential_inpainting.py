@@ -148,8 +148,29 @@ def denoise_single_slot(
     n_canvas = img.shape[1]
     orig_dtype = img.dtype
 
+def denoise_single_slot_with_trajectory(
+    model: Flux2,
+    img: torch.Tensor,
+    img_ids: torch.Tensor,
+    txt: torch.Tensor,
+    txt_ids: torch.Tensor,
+    timesteps: List[float],
+    guidance: float,
+    ref_tokens: torch.Tensor,
+    ref_ids: torch.Tensor,
+) -> Tuple[torch.Tensor, List[torch.Tensor]]:
+    """
+    Standard Euler ODE flow matching for a single reference slot.
+    Records and returns the EXACT trajectory [img_0, img_1, ..., img_N] at each step.
+    """
+    n_canvas = img.shape[1]
+    orig_dtype = img.dtype
+
     ref_tokens_cfg = torch.cat([ref_tokens, ref_tokens], dim=0)
     ref_ids_cfg = torch.cat([ref_ids, ref_ids], dim=0)
+
+    # Record trajectory: index 0 is initial noise
+    trajectory: List[torch.Tensor] = [img.clone().cpu()]
 
     for t_curr, t_prev in zip(timesteps[:-1], timesteps[1:]):
         t_vec = torch.full((2,), t_curr, dtype=img.dtype, device=img.device)
@@ -172,15 +193,16 @@ def denoise_single_slot(
         v_pred = pred_uncond + guidance * (pred_cond - pred_uncond)
 
         img = (img + (t_prev - t_curr) * v_pred).to(orig_dtype)
+        trajectory.append(img.clone().cpu())
 
-    return img
+    return img, trajectory
 
 
-def denoise_flow_matching_inpaint(
+def denoise_flow_matching_inpaint_exact(
     model: Flux2,
-    z_init_tokens: torch.Tensor,   # [1, n_canvas, C] noise state z_1
-    z_known_tokens: torch.Tensor,  # [1, n_canvas, C] clean ground truth state z_0 from Pass 1
-    mask_tokens: torch.Tensor,     # [1, n_canvas, 1] smooth spatial mask (0 = keep, 1 = inpaint)
+    z_init_tokens: torch.Tensor,
+    pass1_trajectory: List[torch.Tensor],  # exact recorded intermediate latents from Pass 1
+    mask_tokens: torch.Tensor,            # [1, n_canvas, 1] smooth spatial mask (0 = keep, 1 = inpaint)
     img_ids: torch.Tensor,
     txt: torch.Tensor,
     txt_ids: torch.Tensor,
@@ -190,14 +212,10 @@ def denoise_flow_matching_inpaint(
     ref_ids: torch.Tensor,
 ) -> torch.Tensor:
     """
-    Flow Matching Inpainting via Known-Latent Trajectory Replacement:
-      At each step t_curr -> t_prev:
-        1. Model predicts velocity v_theta on current canvas x_curr.
-        2. x_model_next = x_curr + (t_prev - t_curr) * v_theta
-        3. Known clean Title trajectory at t_prev:
-           x_known_next = (1.0 - t_prev) * z_known_tokens + t_prev * z_init_tokens
-        4. Blend:
-           x_curr = (1.0 - mask_tokens) * x_known_next + mask_tokens * x_model_next
+    Flow Matching Inpainting via EXACT Recorded Trajectory Injection:
+      Instead of using an artificial straight-line (1-t)*z0 + t*z1 approximation,
+      we inject the EXACT latent state that the model generated in Pass 1 at step (k+1)!
+      Zero distribution drift, zero CFG curvature distortion.
     """
     n_canvas = z_init_tokens.shape[1]
     orig_dtype = z_init_tokens.dtype
@@ -208,7 +226,7 @@ def denoise_flow_matching_inpaint(
     ref_tokens_cfg = torch.cat([ref_tokens, ref_tokens], dim=0)
     ref_ids_cfg = torch.cat([ref_ids, ref_ids], dim=0)
 
-    for t_curr, t_prev in zip(timesteps[:-1], timesteps[1:]):
+    for step_idx, (t_curr, t_prev) in enumerate(zip(timesteps[:-1], timesteps[1:])):
         t_vec = torch.full((2,), t_curr, dtype=img.dtype, device=img.device)
         img_cfg = torch.cat([img, img], dim=0)
         img_ids_cfg = torch.cat([img_ids, img_ids], dim=0)
@@ -228,17 +246,18 @@ def denoise_flow_matching_inpaint(
         pred_uncond, pred_cond = pred.chunk(2)
         v_pred = pred_uncond + guidance * (pred_cond - pred_uncond)
 
-        # Model's step
+        # Model's step on the canvas
         img_model_next = img + (t_prev - t_curr) * v_pred
 
-        # Known trajectory of Pass 1 Title at t_prev
-        img_known_next = (1.0 - t_prev) * z_known_tokens + t_prev * z_init_tokens
+        # EXACT known state of Pass 1 Title at step (step_idx + 1)
+        img_known_next = pass1_trajectory[step_idx + 1].to(device=img.device, dtype=orig_dtype)
 
         # Seamless blended replacement
         img = ((1.0 - mask_tokens) * img_known_next + mask_tokens * img_model_next).to(orig_dtype)
 
-    # At t=0, enforce clean known latent in the unmasked region
-    img = ((1.0 - mask_tokens) * z_known_tokens + mask_tokens * img).to(orig_dtype)
+    # At t=0, enforce the exact clean Pass 1 Title latent in the unmasked region
+    final_pass1 = pass1_trajectory[-1].to(device=img.device, dtype=orig_dtype)
+    img = ((1.0 - mask_tokens) * final_pass1 + mask_tokens * img).to(orig_dtype)
     return img
 
 
@@ -368,7 +387,7 @@ def run_sequential_probe(
         print(f"  [Pass 1] Generating canvas with Title ({num_steps} steps Euler ODE)...")
         t_p1 = time.time()
         with torch.no_grad():
-            z0_title_tokens = denoise_single_slot(
+            z0_title_tokens, pass1_trajectory = denoise_single_slot_with_trajectory(
                 model=model,
                 img=img_tokens_init.clone(),
                 img_ids=img_ids,
@@ -390,15 +409,15 @@ def run_sequential_probe(
             print(f"  [Pass 1] Done in {dur_p1:.1f}s -> Saved: {pass1_file.name}")
 
         # ------------------------------------------------------------------------------------------
-        # PASS 2: INPAINT SUBTITLE INTO BOTTOM REGION (t=10.0)
+        # PASS 2: INPAINT SUBTITLE INTO BOTTOM REGION VIA EXACT TRAJECTORY (t=10.0)
         # ------------------------------------------------------------------------------------------
-        print(f"  [Pass 2] Inpainting Subtitle with known-latent trajectory replacement...")
+        print(f"  [Pass 2] Inpainting Subtitle via EXACT Pass 1 Trajectory Injection...")
         t_p2 = time.time()
         with torch.no_grad():
-            z_completed_tokens = denoise_flow_matching_inpaint(
+            z_completed_tokens = denoise_flow_matching_inpaint_exact(
                 model=model,
                 z_init_tokens=img_tokens_init,
-                z_known_tokens=z0_title_tokens,
+                pass1_trajectory=pass1_trajectory,
                 mask_tokens=mask_tokens,
                 img_ids=img_ids,
                 txt=txt_subtitle,
