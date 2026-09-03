@@ -104,13 +104,13 @@ def encode_glyph_to_ref_tokens(
 
 
 def compute_inpainting_mask(
-    lat_h: int, lat_w: int, keep_y_end: float = 0.38, inpaint_y_start: float = 0.52, device=None,
+    lat_h: int, lat_w: int, keep_y_end: float = 0.28, inpaint_y_start: float = 0.36, device=None,
 ) -> torch.Tensor:
     """
     Computes a smooth 3-zone inpainting mask M(h, w) in [0, 1]:
-      - y <= keep_y_end: M = 0.0 (100% frozen Pass 1 Title region).
-      - keep_y_end < y < inpaint_y_start: Smooth Cosine transition (seamless blending, no sharp seam).
-      - y >= inpaint_y_start: M = 1.0 (100% freshly inpainted Subtitle region).
+      - y <= keep_y_end: M = 0.0 (100% frozen Pass 1 Title region, protecting Title + shadows).
+      - keep_y_end < y < inpaint_y_start: Smooth Cosine transition in the empty turquoise space.
+      - y >= inpaint_y_start: M = 1.0 (100% freshly inpainted Subtitle region, 64% of total canvas).
     Returns tensor shaped [lat_h, lat_w].
     """
     h_idx = torch.arange(lat_h, device=device, dtype=torch.float32)
@@ -132,21 +132,6 @@ def compute_inpainting_mask(
 # ==================================================================================================
 # 3. DENOISING LOOPS: PASS 1 (FULL ODE) & PASS 2 (INPAINTING ODE)
 # ==================================================================================================
-
-def denoise_single_slot(
-    model: Flux2,
-    img: torch.Tensor,
-    img_ids: torch.Tensor,
-    txt: torch.Tensor,
-    txt_ids: torch.Tensor,
-    timesteps: List[float],
-    guidance: float,
-    ref_tokens: torch.Tensor,
-    ref_ids: torch.Tensor,
-) -> torch.Tensor:
-    """Standard Euler ODE flow matching for a single reference slot."""
-    n_canvas = img.shape[1]
-    orig_dtype = img.dtype
 
 def denoise_single_slot_with_trajectory(
     model: Flux2,
@@ -210,23 +195,39 @@ def denoise_flow_matching_inpaint_exact(
     guidance: float,
     ref_tokens: torch.Tensor,
     ref_ids: torch.Tensor,
+    t_start: float = 1.0,
 ) -> torch.Tensor:
     """
     Flow Matching Inpainting via EXACT Recorded Trajectory Injection:
       Instead of using an artificial straight-line (1-t)*z0 + t*z1 approximation,
       we inject the EXACT latent state that the model generated in Pass 1 at step (k+1)!
       Zero distribution drift, zero CFG curvature distortion.
+      Optionally warm-starts from step corresponding to t_start (if t_start < 1.0).
     """
     n_canvas = z_init_tokens.shape[1]
     orig_dtype = z_init_tokens.dtype
 
-    # Start with initial noise
-    img = z_init_tokens.clone()
+    # Find starting step for warm-start if t_start < 1.0
+    start_idx = 0
+    if t_start < 0.999:
+        for idx, t_val in enumerate(timesteps[:-1]):
+            if t_val <= t_start:
+                start_idx = idx
+                break
+
+    # If warm-starting from Pass 1 trajectory, seed the canvas from pass1_trajectory[start_idx]
+    if start_idx == 0:
+        img = z_init_tokens.clone()
+    else:
+        img = pass1_trajectory[start_idx].to(device=img_ids.device, dtype=orig_dtype)
 
     ref_tokens_cfg = torch.cat([ref_tokens, ref_tokens], dim=0)
     ref_ids_cfg = torch.cat([ref_ids, ref_ids], dim=0)
 
-    for step_idx, (t_curr, t_prev) in enumerate(zip(timesteps[:-1], timesteps[1:])):
+    for step_idx in range(start_idx, len(timesteps) - 1):
+        t_curr = timesteps[step_idx]
+        t_prev = timesteps[step_idx + 1]
+
         t_vec = torch.full((2,), t_curr, dtype=img.dtype, device=img.device)
         img_cfg = torch.cat([img, img], dim=0)
         img_ids_cfg = torch.cat([img_ids, img_ids], dim=0)
@@ -275,8 +276,9 @@ def run_sequential_probe(
     guidance: float = 4.0,
     envelope_w: int = 512,
     envelope_h: int = 224,
-    keep_y_end: float = 0.38,
-    inpaint_y_start: float = 0.52,
+    keep_y_end: float = 0.28,
+    inpaint_y_start: float = 0.36,
+    t_start: float = 1.0,
 ) -> None:
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -289,6 +291,7 @@ def run_sequential_probe(
     print(f"  Canvas     : {CANVAS[0]}x{CANVAS[1]} (9:16 target)")
     print(f"  Envelope   : {envelope_w}x{envelope_h}px (Mode B fixed envelope, 448 tokens)")
     print(f"  Mask Zones : Keep Title [0.0 -> {keep_y_end:.2f}] | Cosine Transition [{keep_y_end:.2f} -> {inpaint_y_start:.2f}] | Inpaint Subtitle [{inpaint_y_start:.2f} -> 1.0]")
+    print(f"  Warm-Start : t_start = {t_start:.2f} ({'Full 50 steps from noise' if t_start >= 0.999 else f'Warm-start from Pass 1 layout at t={t_start:.2f}'})")
     print(f"  Seeds      : {seeds}")
     print(f"  Steps / CFG: {num_steps} steps | CFG guidance = {guidance:.1f}")
 
@@ -426,6 +429,7 @@ def run_sequential_probe(
                 guidance=guidance,
                 ref_tokens=subtitle_ref_tokens,
                 ref_ids=subtitle_ref_ids,
+                t_start=t_start,
             )
 
             # Decode Pass 2 completed image
@@ -490,8 +494,9 @@ def main():
     parser.add_argument("--guidance", type=float, default=4.0, help="CFG guidance scale (default: 4.0)")
     parser.add_argument("--envelope_w", type=int, default=512, help="Glyph envelope width in px (default: 512)")
     parser.add_argument("--envelope_h", type=int, default=224, help="Glyph envelope height in px (default: 224)")
-    parser.add_argument("--keep_y_end", type=float, default=0.38, help="Top fraction to freeze (default: 0.38)")
-    parser.add_argument("--inpaint_y_start", type=float, default=0.52, help="Bottom fraction to inpaint (default: 0.52)")
+    parser.add_argument("--keep_y_end", type=float, default=0.28, help="Top fraction to freeze (default: 0.28)")
+    parser.add_argument("--inpaint_y_start", type=float, default=0.36, help="Bottom fraction to inpaint (default: 0.36)")
+    parser.add_argument("--t_start", type=float, default=1.0, help="Timestep to start Pass 2 (default 1.0 = full ODE, 0.75-0.85 = warm-start from Pass 1 layout)")
 
     args = parser.parse_args()
     run_sequential_probe(
@@ -506,6 +511,7 @@ def main():
         envelope_h=args.envelope_h,
         keep_y_end=args.keep_y_end,
         inpaint_y_start=args.inpaint_y_start,
+        t_start=args.t_start,
     )
 
 
