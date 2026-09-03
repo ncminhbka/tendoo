@@ -101,27 +101,29 @@ DEFAULT_SEEDS = [42, 123, 777]
 SPLIT_Y = 0.5        # canvas fraction: title branch dominates above this, subtitle below
 MASK_SHARPNESS = 14.0  # sigmoid transition sharpness (matches the earlier test_attention_steering.py convention)
 
+# Clean, robust 3D metallic prompts without semantic confusion (no "chữ phụ", no neon bloom)
 DEFAULT_PROMPT = (
-    "Poster tuyển dụng phong cách công ty công nghệ hiện đại, nền gradient xanh dương đậm sang "
-    "trọng, dòng chữ tiêu đề lớn dập nổi kim loại sắc nét ở phía trên, dòng chữ phụ phát sáng neon "
-    "tinh tế ở phía dưới, bố cục sạch sẽ chuyên nghiệp, không có chữ ký, không có watermark"
-)  # used ONLY by the "baseline" condition (single joint pass, matches the pre-existing convention)
+    "Poster quảng cáo phong cách công nghệ hiện đại, nền gradient xanh dương đậm sang trọng, "
+    "dòng chữ tiêu đề 3D dập nổi mạ vàng kim loại sắc nét ở phía trên, dòng chữ 3D dập nổi mạ vàng "
+    "kim loại sắc nét ở phía dưới, bố cục sạch sẽ chuyên nghiệp, không có chữ ký, không có watermark"
+)
 
-# NOTE (bugfix after first regional_parallel run): each branch's own prompt must describe ONLY
-# its own role/material, never the other slot. The first attempt reused DEFAULT_PROMPT (which
-# mentions BOTH "title... at top" AND "subtitle... at bottom") for every branch -- so the
-# subtitle branch, despite being fully isolated at the attention level from the title glyph, was
-# still asked to satisfy a prompt describing a title it had no glyph to render, plausibly
-# confusing that branch's OWN prediction even in isolation. Background/material phrasing is kept
-# consistent across both so the merged halves still cohere stylistically.
 TITLE_PROMPT = (
-    "Poster tuyển dụng phong cách công ty công nghệ hiện đại, nền gradient xanh dương đậm sang "
-    "trọng, dòng chữ tiêu đề lớn dập nổi kim loại sắc nét ở phía trên, bố cục sạch sẽ chuyên "
+    "Poster quảng cáo phong cách công nghệ hiện đại, nền gradient xanh dương đậm sang trọng, "
+    "dòng chữ tiêu đề 3D dập nổi mạ vàng kim loại sắc nét ở phía trên, bố cục sạch sẽ chuyên "
     "nghiệp, không có chữ ký, không có watermark"
 )
+
 SUBTITLE_PROMPT = (
-    "Poster tuyển dụng phong cách công ty công nghệ hiện đại, nền gradient xanh dương đậm sang "
-    "trọng, dòng chữ phụ phát sáng neon tinh tế ở phía dưới, bố cục sạch sẽ chuyên nghiệp, không "
+    "Poster quảng cáo phong cách công nghệ hiện đại, nền gradient xanh dương đậm sang trọng, "
+    "dòng chữ 3D dập nổi mạ vàng kim loại sắc nét ở phía dưới, bố cục sạch sẽ chuyên nghiệp, không "
+    "có chữ ký, không có watermark"
+)
+
+# Prompt for isolated control runs (no spatial confusion like "ở phía dưới", no subordinate role like "chữ phụ")
+ISO_PROMPT = (
+    "Poster quảng cáo phong cách công nghệ hiện đại, nền gradient xanh dương đậm sang trọng, "
+    "dòng chữ 3D dập nổi mạ vàng kim loại sắc nét nổi bật, bố cục sạch sẽ chuyên nghiệp, không "
     "có chữ ký, không có watermark"
 )
 
@@ -244,6 +246,7 @@ def run_probe(
     conditions: List[str], seeds: List[int], font: str = "bevietnam", prompt: str = DEFAULT_PROMPT,
     output_dir: str = "output_regional_parallel_diffusion", model_name: str = "flux.2-klein-base-4b",
     checkpoint_dir: str | None = None, num_steps: int = 50, guidance: float = 4.0,
+    envelope_w: int = 512, envelope_h: int = 224,
 ) -> None:
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -256,6 +259,7 @@ def run_probe(
     print(f"  Title    : \"{TITLE_TEXT}\" (top)")
     print(f"  Subtitle : \"{SUBTITLE_TEXT}\" (bottom)")
     print(f"  Canvas   : {CANVAS[0]}x{CANVAS[1]} (9:16)")
+    print(f"  Envelope : {envelope_w}x{envelope_h}px (Mode B fixed envelope)")
     print(f"  Conditions: {conditions}")
     print(f"  Seeds    : {seeds}")
     print(f"  Total runs: {len(all_runs)}")
@@ -278,7 +282,7 @@ def run_probe(
     model = load_flow_model(model_name, device=device_dit)
     text_encoder = load_qwen3_embedder(variant="4B", device=device_te)
 
-    print("[2/3] Encoding prompts via Qwen3-4B-FP8 (shared for baseline, per-branch for regional_parallel)...")
+    print("[2/3] Encoding prompts via Qwen3-4B-FP8 (shared, per-branch, and isolated)...")
     with torch.no_grad():
         txt_baseline, txt_ids_baseline = batched_prc_txt(text_encoder(["", prompt]))
         txt_baseline, txt_ids_baseline = txt_baseline.to(device_dit), txt_ids_baseline.to(device_dit)
@@ -288,6 +292,9 @@ def run_probe(
 
         txt_subtitle, txt_ids_subtitle = batched_prc_txt(text_encoder(["", SUBTITLE_PROMPT]))
         txt_subtitle, txt_ids_subtitle = txt_subtitle.to(device_dit), txt_ids_subtitle.to(device_dit)
+
+        txt_iso, txt_ids_iso = batched_prc_txt(text_encoder(["", ISO_PROMPT]))
+        txt_iso, txt_ids_iso = txt_iso.to(device_dit), txt_ids_iso.to(device_dit)
 
     if num_gpus >= 2:
         try:
@@ -303,10 +310,16 @@ def run_probe(
     canvas_h = (canvas_h // 16) * 16
     lat_w, lat_h = canvas_w // 16, canvas_h // 16
 
-    # Render title + subtitle glyphs ONCE via the LOCKED production glyph_engine API.
+    # Render title + subtitle glyphs ONCE via Mode B (fixed envelope matching batch_tendoo_poster.py).
     glyph_infos: Dict[str, GlyphInfo] = {}
     for role, text in [("title", TITLE_TEXT), ("subtitle", SUBTITLE_TEXT)]:
-        info = render_glyph(text=text, font_name_or_path=font, auto_size=True, target_canvas_w=canvas_w, target_canvas_h=canvas_h)
+        info = render_glyph(
+            text=text,
+            font_name_or_path=font,
+            auto_size=False,
+            target_width=envelope_w,
+            target_height=envelope_h,
+        )
         glyph_infos[role] = info
         print(f"  [{role:9s}] {info.width_px}x{info.height_px}px {info.font_size_pt}pt {len(info.lines)}L "
               f"{info.token_count}tok :: {info.lines}")
@@ -361,18 +374,11 @@ def run_probe(
                     timesteps=timesteps, guidance=guidance, branch_refs=branch_refs, branch_weights=branch_weights,
                 )
             elif run.condition in ("isolated_title", "isolated_subtitle"):
-                # CONTROL: exactly ONE glyph, standard denoise_cfg, NO merging, NO other branch --
-                # reproduces the classic "single glyph @ t=10 is bulletproof" test, but for THIS
-                # specific text/prompt/font, which (unlike "MUA 1 TẶNG 1" etc. earlier in this
-                # investigation) has never actually been verified in true isolation. Separates
-                # "the merge mechanism corrupts an otherwise-fine glyph" from "this glyph/prompt
-                # combo was never confirmed reliable to begin with".
+                # CONTROL: exactly ONE glyph @ t=10, standard denoise_cfg, NO merging, clean prompt without position confusion
                 if run.condition == "isolated_title":
                     ref_tokens, ref_ids = title_ref_t10[0].to(device_dit), title_ref_t10[1].to(device_dit)
-                    txt_iso, txt_ids_iso = txt_title, txt_ids_title
                 else:
                     ref_tokens, ref_ids = subtitle_ref_t10[0].to(device_dit), subtitle_ref_t10[1].to(device_dit)
-                    txt_iso, txt_ids_iso = txt_subtitle, txt_ids_subtitle
                 out_latent = denoise_baseline_joint(
                     model=model, img=img_tokens, img_ids=img_ids, txt=txt_iso, txt_ids=txt_ids_iso,
                     timesteps=timesteps, guidance=guidance, ref_tokens=ref_tokens, ref_ids=ref_ids,
@@ -444,12 +450,15 @@ def main():
     parser.add_argument("--checkpoint_dir", type=str, default=None, help="Path to persistent-data")
     parser.add_argument("--steps", type=int, default=50, help="Euler ODE steps (default: 50)")
     parser.add_argument("--guidance", type=float, default=4.0, help="CFG guidance scale (default: 4.0)")
+    parser.add_argument("--envelope_w", type=int, default=512, help="Glyph envelope width in px (default: 512)")
+    parser.add_argument("--envelope_h", type=int, default=224, help="Glyph envelope height in px (default: 224)")
 
     args = parser.parse_args()
     run_probe(
         conditions=args.conditions, seeds=args.seeds, font=args.font, prompt=args.prompt, output_dir=args.output_dir,
         model_name=args.model_name, checkpoint_dir=args.checkpoint_dir,
         num_steps=args.steps, guidance=args.guidance,
+        envelope_w=args.envelope_w, envelope_h=args.envelope_h,
     )
 
 
