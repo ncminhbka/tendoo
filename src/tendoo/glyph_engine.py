@@ -59,19 +59,30 @@ MATHEMATICAL & ARCHITECTURAL FOUNDATIONS (MANDATORY TECHNICAL LAWS):
      width approaches or exceeds the canvas's latent width is likely OOD relative to BFL's
      reference-conditioning pretraining data, where a reference sub-image is presumably always
      markedly narrower than the canvas it is composited into.
-   - Consequence: `max_line_width_ratio` -- previously defaulted to 0.85, which sat almost
-     exactly ON the empirically-confirmed failure boundary (0.86) -- is now defaulted to 0.6,
-     just below the highest confirmed-safe ratio (0.59) observed so far. This is the primary
-     lever `auto_wrap_text` / `compute_optimal_glyph_box` use (via `target_canvas_w`) to force
-     additional line breaks and keep each line's width comfortably below the danger zone.
-   - Status: 0.6 is a provisional, evidence-based default from n=1-per-condition GPU samples
-     (seed=42) spanning only two texts. The exact threshold, whether it holds across fonts/
-     seeds, and whether diacritic density is an independent confound are being narrowed down
-     by a dedicated ratio sweep -- see `scripts/probe_glyph_width_ratio.py`. Font-size floor
-     (current 32pt lock looked WORSE than 28pt in one sample), safety padding (16px confirmed
-     better than 8px), and the min-line-height floor (112-160px range all failed identically
-     for a diacritic-dense text, so height was likely never the operative variable in that
-     experiment) remain open too -- see `scripts/probe_glyph_engine_lock.py`.
+   - Consequence: `max_line_width_ratio` was first defaulted to 0.85 (sat almost exactly ON the
+     empirically-confirmed failure boundary of 0.86), then tightened to 0.6 (just below the
+     highest confirmed-safe ratio 0.59). A follow-up fine sweep at ratio 0.50/0.60/0.65 then
+     ALL FAILED -- including 0.50, which should be safer than the already-confirmed-safe 0.55
+     -- a non-monotonic result that single-seed (seed=42, n=1-per-condition) GPU sampling
+     cannot distinguish from a hard boundary: with only one ODE trajectory per data point, a
+     result this close to a transition zone may simply be sampling noise, not a reproducible
+     threshold. A companion aspect-ratio isolation test (same text forced into 1/2/3/4 lines,
+     canvas-ratio held <=0.35 throughout so it cannot confound) showed a NON-MONOTONIC quality
+     curve too (1-line: total failure; 2-line and 3-line: ~90% correct with localized blur;
+     4-line: only ~60% correct, i.e. WORSE than 2-3 lines despite being more "square") -- so the
+     glyph's own aspect ratio likely has a moderate sweet spot rather than "more square is always
+     better", and extreme in EITHER direction (very wide-flat OR very tall-narrow) degrades it.
+   - Status: given the demonstrated noise level, chasing an exact numeric threshold via more
+     single-seed synthetic isolation has hit diminishing returns. `max_line_width_ratio` is set
+     to 0.4 -- a conservative margin below every point that has ever shown a problem (the only
+     cluster of unambiguous, repeatedly-clean results sits at ratio 0.42-0.47). This is NOT
+     claimed to be a precisely-measured optimum, just a safe operating point. Before pushing for
+     more precision, cross-check against known-good production configs (canvas size, box size,
+     which script) that rendered cleanly before this investigation started -- if their natural
+     ratio already sits <=0.5, that corroborates 0.4 as workable without further probing. Font-
+     size floor (32pt lock looked WORSE than 28pt in one sample), safety padding (16px beat 8px),
+     and the min-line-height floor remain open and equally noise-limited -- see
+     `scripts/probe_glyph_engine_lock.py` / `probe_glyph_width_ratio.py` / `probe_glyph_aspect_ratio.py`.
 ====================================================================================================
 """
 
@@ -400,7 +411,7 @@ def auto_wrap_text(
     font_size_pt: int,
     max_line_width_px: Optional[int] = None,
     target_canvas_w: Optional[int] = None,
-    max_line_width_ratio: float = 0.6,
+    max_line_width_ratio: float = 0.4,
     target_lines: Optional[int] = None,
     force_single_line: bool = False,
 ) -> List[str]:
@@ -485,7 +496,7 @@ def compute_optimal_glyph_box(
     safety_padding_px: int = 16,
     target_canvas_w: Optional[int] = None,
     target_canvas_h: Optional[int] = None,
-    max_line_width_ratio: float = 0.6,
+    max_line_width_ratio: float = 0.4,
     min_line_height_single_px: int = 112,
     min_line_height_multi_px: int = 128,
 ) -> Tuple[int, int, int, List[str]]:
@@ -611,7 +622,7 @@ class GlyphEngine:
         safety_padding_px: int = 16,
         target_canvas_w: Optional[int] = None,
         target_canvas_h: Optional[int] = None,
-        max_line_width_ratio: float = 0.6,
+        max_line_width_ratio: float = 0.4,
         target_lines: Optional[int] = None,
     ) -> GlyphInfo:
         """
@@ -780,7 +791,7 @@ def render_glyph(
     safety_padding_px: int = 16,
     target_canvas_w: Optional[int] = None,
     target_canvas_h: Optional[int] = None,
-    max_line_width_ratio: float = 0.6,
+    max_line_width_ratio: float = 0.4,
     target_lines: Optional[int] = None,
 ) -> GlyphInfo:
     """
@@ -850,7 +861,7 @@ def main():
         help="Target OUTPUT canvas height (px) for Rule 29 canvas-aware line planning in Mode A",
     )
     parser.add_argument(
-        "--max_line_width_ratio", type=float, default=0.6,
+        "--max_line_width_ratio", type=float, default=0.4,
         help="Fraction of target canvas width a single line may occupy (default: 0.85)",
     )
     parser.add_argument(
