@@ -735,6 +735,18 @@ class GlyphEngine:
                 max_line_width_px=max_allowed_w,
             )
 
+            # Safety guard (Anti-Truncation Law): if text at min_floor is wider than max_allowed_w,
+            # auto-expand envelope_w to ensure text is NEVER chopped off at the image borders!
+            min_test_font = self.get_font(font_path, min_floor)
+            max_line_w_at_min = max(min_test_font.getbbox(l)[2] - min_test_font.getbbox(l)[0] for l in lines)
+            if max_line_w_at_min > max_allowed_w:
+                envelope_w = int(math.ceil((max_line_w_at_min + 2 * safety_padding_px) / 16.0) * 16)
+                max_allowed_w = envelope_w - 2 * safety_padding_px
+                logger.warning(
+                    f"[GlyphEngine] Text width ({max_line_w_at_min}px) exceeds envelope ({target_width}px) at "
+                    f"min_floor {min_floor}pt. Auto-expanded envelope_w to {envelope_w}px to guarantee zero truncation!"
+                )
+
             # Binary search for maximum font size fitting inside envelope
             low, high = min_floor, 220
             best_size = min_floor

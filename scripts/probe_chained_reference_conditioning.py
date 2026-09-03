@@ -145,8 +145,10 @@ def run_chained_conditioning_probe(
     checkpoint_dir: str | None = None,
     num_steps: int = 50,
     guidance: float = 4.0,
-    envelope_w: int = 512,
-    envelope_h: int = 224,
+    title_w: int = 512,
+    title_h: int = 224,
+    subtitle_w: int = 832,
+    subtitle_h: int = 224,
     t_title: float = 10.0,
     t_prod: float = 20.0,
     t_subtitle: float = 10.0,
@@ -168,11 +170,10 @@ def run_chained_conditioning_probe(
     print("=" * 100)
     print(f"  Preset     : {preset.upper()}")
     print(f"  Product Img: {prod_img_path} (Step 1 @ t={t_prod})")
-    print(f"  Title      : \"{title.replace(chr(10), ' ')}\" (Step 1 @ t={t_title})")
-    print(f"  Subtitle   : \"{subtitle.replace(chr(10), ' ')}\" (Step 2 @ t={t_subtitle})")
+    print(f"  Title      : \"{title.replace(chr(10), ' ')}\" (Step 1 @ t={t_title}, {title_w}x{title_h}px)")
+    print(f"  Subtitle   : \"{subtitle.replace(chr(10), ' ')}\" (Step 2 @ t={t_subtitle}, {subtitle_w}x{subtitle_h}px)")
     print(f"  Poster Ref : Step 1 output poster chained into Step 2 @ t={t_poster}")
     print(f"  Canvas     : {CANVAS[0]}x{CANVAS[1]} (9:16 target)")
-    print(f"  Envelope   : {envelope_w}x{envelope_h}px (Mode B fixed envelope)")
     print(f"  Seeds      : {seeds}")
     print(f"  Steps / CFG: {num_steps} steps | CFG guidance = {guidance:.1f}")
 
@@ -219,20 +220,30 @@ def run_chained_conditioning_probe(
     lat_w, lat_h = canvas_w // 16, canvas_h // 16
 
     print("\n[3/4] Preparing Glyph Bitmaps & Product Image...")
-    # Render Title glyph (bold prominent header)
+    # Render Title glyph (bold prominent header, default 512x224)
     title_info = render_glyph(
         text=title, font_name_or_path=font, auto_size=False,
-        target_width=envelope_w, target_height=envelope_h,
+        target_width=title_w, target_height=title_h,
     )
-    # Render Subtitle glyph (refined long subtitle)
+    # Render Subtitle glyph (generous width 832px to guarantee zero edge truncation)
     subtitle_info = render_glyph(
         text=subtitle, font_name_or_path=font, auto_size=False,
-        target_width=envelope_w, target_height=envelope_h,
+        target_width=subtitle_w, target_height=subtitle_h,
     )
     print(f"  [Title Glyph]   : {title_info.width_px}x{title_info.height_px}px {title_info.font_size_pt}pt {title_info.token_count}tok :: {title_info.lines}")
     print(f"  [Subtitle Glyph]: {subtitle_info.width_px}x{subtitle_info.height_px}px {subtitle_info.font_size_pt}pt {subtitle_info.token_count}tok :: {subtitle_info.lines}")
     title_info.image.save(out_path / "title_glyph.png")
     subtitle_info.image.save(out_path / "subtitle_glyph.png")
+
+    # Anti-Truncation Verification: Ensure NO glyph pixels touch the left/right borders
+    for name, info in [("Title", title_info), ("Subtitle", subtitle_info)]:
+        arr = np.array(info.image)
+        l_col = int(np.count_nonzero(arr[:, 0]))
+        r_col = int(np.count_nonzero(arr[:, -1]))
+        if l_col > 0 or r_col > 0:
+            print(f"  [!] CRITICAL WARNING: {name} glyph text touches border! (col0={l_col}, col_end={r_col})")
+        else:
+            print(f"  [✓] {name} glyph: Verified 100% clean borders (col0=0, col_end=0, safe padding intact).")
 
     # Encode glyphs
     title_ref_tokens, title_ref_ids = encode_image_to_ref_tokens(ae, title_info.image, t_title, device_ae)
@@ -395,8 +406,10 @@ def main():
     parser.add_argument("--checkpoint_dir", type=str, default=None, help="Path to persistent-data")
     parser.add_argument("--steps", type=int, default=50, help="Euler ODE steps (default: 50)")
     parser.add_argument("--guidance", type=float, default=4.0, help="CFG guidance scale (default: 4.0)")
-    parser.add_argument("--envelope_w", type=int, default=512, help="Glyph envelope width in px (default: 512)")
-    parser.add_argument("--envelope_h", type=int, default=224, help="Glyph envelope height in px (default: 224)")
+    parser.add_argument("--title_w", type=int, default=512, help="Title envelope width in px (default: 512)")
+    parser.add_argument("--title_h", type=int, default=224, help="Title envelope height in px (default: 224)")
+    parser.add_argument("--subtitle_w", type=int, default=832, help="Subtitle envelope width in px (default: 832)")
+    parser.add_argument("--subtitle_h", type=int, default=224, help="Subtitle envelope height in px (default: 224)")
     parser.add_argument("--t_title", type=float, default=10.0, help="Time offset for Title glyph in Step 1 (default: 10.0)")
     parser.add_argument("--t_prod", type=float, default=20.0, help="Time offset for Product image in Step 1 (default: 20.0)")
     parser.add_argument("--t_subtitle", type=float, default=10.0, help="Time offset for Subtitle glyph in Step 2 (default: 10.0)")
@@ -417,8 +430,10 @@ def main():
         checkpoint_dir=args.checkpoint_dir,
         num_steps=args.steps,
         guidance=args.guidance,
-        envelope_w=args.envelope_w,
-        envelope_h=args.envelope_h,
+        title_w=args.title_w,
+        title_h=args.title_h,
+        subtitle_w=args.subtitle_w,
+        subtitle_h=args.subtitle_h,
         t_title=args.t_title,
         t_prod=args.t_prod,
         t_subtitle=args.t_subtitle,
