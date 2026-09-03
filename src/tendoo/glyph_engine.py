@@ -24,65 +24,67 @@ MATHEMATICAL & ARCHITECTURAL FOUNDATIONS (MANDATORY TECHNICAL LAWS):
    - We establish an empirical resolution floor per font archetype (calibrated via probe_dit_font_resolution_floor.py)
      to guarantee ODE trajectories denoise with 100% smooth, crisp contours without wasting token budget.
 
-
-3. Rule 25: Optimal Tight-Crop Sizing Law (Zero Size Bias & Maximum Speed):
-   - Glyph boxes scale dynamically and purely based on ACTUAL TEXT LENGTH and NUMBER OF LINES.
-   - We DO NOT artificially inflate glyph envelopes (e.g. 640 tokens for simple headers).
-   - Token budgets by line count:
-       * 1 short line (1-3 words, badges, CTA):   80 - 140 tokens  (~65% token savings)
-       * 1 medium line (4-6 words, slogans):      130 - 200 tokens
-       * 2 lines (6-10 words, titles):            220 - 320 tokens
-       * Multi-line / long paragraph (15-25 words): 380 - 640 tokens
-   - Saves >60% sequence length, speeds up attention O(L^2) by 2-3x, and eliminates Size Bias.
+3. Rule 25: Tight-Crop Sizing (superseded in priority by Rule 29 below, kept as a tie-breaker):
+   - Glyph boxes still scale off ACTUAL TEXT LENGTH, not artificially inflated envelopes -- but
+     since Rule 29 (below), minimizing tokens is no longer the PRIMARY objective. When multiple
+     line counts land inside Rule 29's safe aspect-ratio band, the smallest (cheapest) one still
+     wins -- this is where token economy still applies, as a tie-breaker, not as the top-level goal.
 
 4. Rule 26: Decoupled Signal Independence (The Tripartite Synergy):
    - Prompt (via Qwen3): Steers Canvas Placement (top-left, center, bottom) and Visual Stylization.
    - RoPE Time Offset (t=10, 20, 30, 40): Identifies and disentangles slot channels independently.
    - Glyph VAE (via this Engine): Preserves 100% Vietnamese Spelling and Font Geometry.
 
-5. Rule 29 (Sept 2026, REVISED after `probe_glyph_engine_lock.py` GPU evidence): Glyph-to-Canvas
-   Latent Width Ceiling Law:
-   - Original hypothesis ("model preserves line count, so a wide isolated glyph breaks when
-     forced onto a narrow canvas") was PARTIALLY WRONG: a controlled A/B on the IDENTICAL
-     glyph bitmap (608x512px, 4-line poem) composited onto two canvases proved the isolated
-     glyph itself was never the issue -- the SAME bitmap rendered perfectly on a 1024x576
-     canvas (glyph_lat_w=38 vs canvas_lat_w=64, ratio 0.59) and failed completely on a
-     576x1024 canvas (glyph_lat_w=38 vs canvas_lat_w=36, ratio 1.06). Line count, font size,
-     and text content were held constant; only the ratio changed.
-   - Cross-checked against 3 more independent (text, canvas) pairs spanning ratio 0.42 to
-     1.92: EVERY case with glyph_lat_w / canvas_lat_w <= 0.59 rendered cleanly; EVERY case
-     with ratio >= 0.86 failed (garbled/broken text), regardless of line count, font size, or
-     line-height. The corresponding HEIGHT ratio showed no such pattern (0.5 failed, 0.89
-     passed) -- this is specifically a WIDTH phenomenon, not a general "glyph too big" one.
-   - Working theory: glyph reference (h, w) coordinates are LOCAL to the glyph's own box, not
-     tied to absolute canvas position (see Rule 26 in AGENTS.md). A glyph whose own latent
-     width approaches or exceeds the canvas's latent width is likely OOD relative to BFL's
-     reference-conditioning pretraining data, where a reference sub-image is presumably always
-     markedly narrower than the canvas it is composited into.
-   - Consequence: `max_line_width_ratio` was first defaulted to 0.85 (sat almost exactly ON the
-     empirically-confirmed failure boundary of 0.86), then tightened to 0.6 (just below the
-     highest confirmed-safe ratio 0.59). A follow-up fine sweep at ratio 0.50/0.60/0.65 then
-     ALL FAILED -- including 0.50, which should be safer than the already-confirmed-safe 0.55
-     -- a non-monotonic result that single-seed (seed=42, n=1-per-condition) GPU sampling
-     cannot distinguish from a hard boundary: with only one ODE trajectory per data point, a
-     result this close to a transition zone may simply be sampling noise, not a reproducible
-     threshold. A companion aspect-ratio isolation test (same text forced into 1/2/3/4 lines,
-     canvas-ratio held <=0.35 throughout so it cannot confound) showed a NON-MONOTONIC quality
-     curve too (1-line: total failure; 2-line and 3-line: ~90% correct with localized blur;
-     4-line: only ~60% correct, i.e. WORSE than 2-3 lines despite being more "square") -- so the
-     glyph's own aspect ratio likely has a moderate sweet spot rather than "more square is always
-     better", and extreme in EITHER direction (very wide-flat OR very tall-narrow) degrades it.
-   - Status: given the demonstrated noise level, chasing an exact numeric threshold via more
-     single-seed synthetic isolation has hit diminishing returns. `max_line_width_ratio` is set
-     to 0.4 -- a conservative margin below every point that has ever shown a problem (the only
-     cluster of unambiguous, repeatedly-clean results sits at ratio 0.42-0.47). This is NOT
-     claimed to be a precisely-measured optimum, just a safe operating point. Before pushing for
-     more precision, cross-check against known-good production configs (canvas size, box size,
-     which script) that rendered cleanly before this investigation started -- if their natural
-     ratio already sits <=0.5, that corroborates 0.4 as workable without further probing. Font-
-     size floor (32pt lock looked WORSE than 28pt in one sample), safety padding (16px beat 8px),
-     and the min-line-height floor remain open and equally noise-limited -- see
-     `scripts/probe_glyph_engine_lock.py` / `probe_glyph_width_ratio.py` / `probe_glyph_aspect_ratio.py`.
+5. Rule 29 -- LOCKED (Sept 2026, after 7 rounds of GPU probing -- see `scripts/probe_glyph_*.py`):
+   Glyph-Box Self-Aspect-Ratio Band + Unified 40pt Font Floor.
+
+   THE JOURNEY (kept for context -- two earlier, more intuitive theories were each falsified by
+   direct GPU evidence before converging on the rule actually shipped):
+     a) "Model preserves line count, so a wide glyph breaks on a narrow canvas" -- falsified: the
+        IDENTICAL glyph bitmap (608x512px poem) rendered perfectly on a 1024x576 canvas and failed
+        completely on 576x1024. Line count/font/text held constant; only canvas orientation changed.
+     b) "glyph_lat_w / canvas_lat_w ratio must stay <= ~0.6" (canvas-width-ratio theory) --
+        falsified by a DOCUMENTED, VERIFIED 100%-accurate production result (AGENTS.md Rule 11,
+        the "Tây Tiến" poem via demo_tendoo_poster.py, canvas-ratio=0.875) that this theory said
+        should fail, and by a controlled isolation sweep at ratio<=0.4 that STILL failed for a
+        very elongated single-line glyph -- proving canvas-ratio alone was never the operative
+        variable, just a correlated side effect in most of the earlier test cases.
+     c) THE REAL VARIABLE (confirmed twice, independently): the glyph BOX'S OWN aspect ratio
+        (width_px / height_px), regardless of canvas. A target_lines=1..4 isolation sweep (canvas-
+        ratio held <=0.35 throughout) and a 2x2 (canvas shape x box strategy) factorial both
+        showed the SAME monotonic curve against this ONE variable: self-aspect ~0.33-1.3 renders
+        reliably; drifting further from 1.0 in EITHER direction (too wide-flat OR too tall-narrow)
+        degrades, down to 0% success at the extreme (aspect 5.4). This also resolves the Tây Tiến
+        "contradiction": its self-aspect was 896/512=1.75 -- inside the real band, even though its
+        canvas-ratio (0.875) looked "unsafe" under theory (b).
+
+   THE SHIPPED RULE:
+     - `compute_optimal_glyph_box`, when no explicit override (`force_single_line` / `target_lines`
+       / literal '\n') pins the layout, searches for the SMALLEST line count N whose resulting box
+       lands `width_px / height_px` inside [0.5, 1.3]. `target_canvas_w` is now only a loose
+       sanity ceiling (glyph must not outgrow the whole canvas) -- NOT the primary lever.
+     - Font floor: raised from the old 32pt (bevietnam) / 36pt (other 15 fonts) to a UNIFIED
+       40pt across all 16 fonts. Reason: once (c) fixed the STRUCTURAL failure mode (broken
+       layout, crosstalk-like garbling), a smaller, more uniform residual remained -- diacritic
+       marks (circumflex, tilde, the horizontal stroke on "đ") mildly wrong at 32pt while basic
+       Latin letters were fine, on EVERY config regardless of aspect ratio. A dedicated multi-seed
+       sweep (`probe_glyph_font_size_fine_detail.py`, bevietnam, aspect held in-band throughout)
+       found 24-30pt still defective, 36pt+ clean, 40pt sharpest -- independently corroborated by
+       reverse-engineering the Tây Tiến recipe's own binary search, which picked 48pt for playfair
+       at 4 lines. Only bevietnam was directly re-tested; the other 15 fonts were raised to the
+       same 40pt as a conservative unification (safer than their old 36pt in the same direction
+       the evidence points), not independently re-verified -- see the FONT_TIERS comment below.
+
+   RESIDUAL, KNOWN-OPEN RISK: even fully inside the safe aspect band at the new floor, expect a
+   non-trivial per-seed stochastic failure rate from the 50-step ODE itself -- e.g. a "short"
+   1-line config rendered clean on only 1 of 3 seeds in one round (`probe_glyph_lock_validation.py`)
+   despite an otherwise "safe" configuration. Production use should plan for regeneration/retry,
+   not assume a deterministic single-shot 100% guarantee. Safety padding (16px beat 8px in one
+   sample) and the min-line-height floor remain unlocked/provisional for the same reason.
+
+   STATUS: this glyph-rendering layer is considered LOCKED for the isolated single-glyph @ t=10
+   case. Next phase of the project moves to multi-slot conditioning (RoPE spatial binding,
+   Regional Parallel Diffusion) built ON TOP of this now-reliable single-glyph primitive.
 ====================================================================================================
 """
 
@@ -124,25 +126,27 @@ FONTS_DIR = PROJECT_ROOT / "fonts"
 # ==================================================================================================
 # 1. PER-FONT FLOOR REGISTRY & ARCHETYPES (16 QA-VERIFIED VIETNAMESE UNICODE FONTS)
 # ==================================================================================================
-# Dual Floor Architecture:
-# - BeVietnamPro-Black: Floor 40pt (REVISED Sept 2026, see below -- was 32pt)
-# - All other 15 fonts: Floor 36pt (locked earlier via probe_all_fonts_floor_32_36.py; NOT
-#   re-tested against the font-size-fine-detail methodology below, so treat as provisional too)
+# Unified Floor Architecture (REVISED Sept 2026, was Dual: bevietnam 32pt / others 36pt):
+# - ALL 16 fonts: Floor 40pt.
 #
-# REVISION (Sept 2026): the original 32pt bevietnam floor was locked from a single-line,
-# short-text probe (probe_dit_font_resolution_floor.py / probe_all_fonts_floor_32_36.py). Once
-# Rule 29's self-aspect-ratio fix made multi-line diacritic-dense text reliable at the STRUCTURAL
-# level, a residual, more uniform defect remained: diacritic marks (circumflex, tilde, the
-# horizontal stroke on "đ") came out mildly wrong at 32pt while basic Latin letters were fine --
-# consistent with the font-size floor being set too low for fine-detail fidelity specifically,
-# independent of the aspect-ratio/layout question. A dedicated multi-seed sweep
-# (scripts/probe_glyph_font_size_fine_detail.py, text richest in Vietnamese diacritics, aspect
-# ratio held in-band throughout by adjusting line count) found: 24-30pt still show diacritic
-# defects, 36pt+ clean, 40pt sharpest. This also reconciles with reverse-engineering the
+# REVISION (Sept 2026): the original 32pt/36pt floors were locked from a single-line, short-text
+# probe (probe_dit_font_resolution_floor.py / probe_all_fonts_floor_32_36.py) targeting the
+# Nyquist "spiky edges" failure mode. Once Rule 29's self-aspect-ratio fix made multi-line
+# diacritic-dense text reliable at the STRUCTURAL level, a residual, more uniform defect
+# remained: diacritic marks (circumflex, tilde, the horizontal stroke on "đ") came out mildly
+# wrong at 32pt while basic Latin letters were fine -- a DIFFERENT failure mode than the one the
+# original floors were probed against. A dedicated multi-seed sweep
+# (scripts/probe_glyph_font_size_fine_detail.py, bevietnam, text richest in Vietnamese diacritics,
+# aspect ratio held in-band throughout by adjusting line count) found: 24-30pt still show
+# diacritic defects, 36pt+ clean, 40pt sharpest. This also reconciles with reverse-engineering the
 # `demo_tendoo_poster.py` "Tây Tiến" 100%-accurate reference (AGENTS.md Rule 11): its binary
-# search actually chose 48pt for playfair at 4 lines -- confirming the general pattern (previous
-# floors across the project were locked too conservatively low for diacritic fidelity, not just
-# for the Nyquist "spiky edges" floor they were originally probed against).
+# search actually chose 48pt for playfair at 4 lines.
+#
+# ONLY bevietnam was directly re-tested at 40pt. The other 15 fonts are raised to the SAME 40pt
+# floor as a deliberate, conservative unification decision (40 > both their old 36pt and
+# bevietnam's old 32pt, so it cannot be less safe than what shipped before) -- NOT because each
+# was independently re-verified against this exact diacritic-fidelity methodology. Treat
+# non-bevietnam floors as a reasonable default, not a locked law, until each gets its own sweep.
 
 FONT_TIERS: Dict[str, Dict[str, Any]] = {
     # Workhorse Clean Sans-Serif (Floor: 40pt, revised Sept 2026)
@@ -155,12 +159,12 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "description": "Commercial workhorse for clean, hyper-legible body, subtitles, and modern ads.",
     },
 
-    # All Other 15 Fonts (Floor: 36pt Locked)
+    # All Other 15 Fonts (Floor: 40pt, unified Sept 2026 -- see header note, not independently re-tested)
     "anton": {
         "file": "Anton-Regular.ttf",
         "archetype": "Bold Heavy Display",
         "tier": "Tier A (Heavy / Dense)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.20,
         "description": "Massive, impactful condensed poster font for high-energy tech and flash sale ads.",
     },
@@ -168,7 +172,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Gotham Ultra.otf",
         "archetype": "Geometric Ultra-Bold",
         "tier": "Tier A (Heavy / Dense)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.20,
         "description": "High-end corporate branding, telecom campaigns, and authoritative titles.",
     },
@@ -176,7 +180,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Lolapeluza Black.ttf",
         "archetype": "Ultra-Black Display",
         "tier": "Tier A (Heavy / Dense)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.22,
         "description": "Playful, chunky heavy display with high token mass and extreme contrast.",
     },
@@ -184,7 +188,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Gretoon.ttf",
         "archetype": "Pop-Art Cartoon",
         "tier": "Tier A (Heavy / Dense)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.22,
         "description": "Pop-art, 3D extruded comic font for FMCG, snacks, and youthful campaigns.",
     },
@@ -192,7 +196,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "PlayfairDisplay.ttf",
         "archetype": "Editorial Serif",
         "tier": "Tier B (Serif / Medium)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.26,
         "description": "Luxury serif with sharp contrast, ideal for fashion, jewelry, and literature.",
     },
@@ -200,7 +204,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "Oswald.ttf",
         "archetype": "Condensed Gothic Sans",
         "tier": "Tier B (Serif / Medium)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.20,
         "description": "Tall, elegant condensed font for specifications, sports gear, and modern posters.",
     },
@@ -208,7 +212,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Harabaras.ttf",
         "archetype": "Geometric Medium Sans",
         "tier": "Tier B (Serif / Medium)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.22,
         "description": "Friendly, modern geometric branding for startups, apps, and consumer tech.",
     },
@@ -216,7 +220,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "DancingScript.ttf",
         "archetype": "Cursive Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.32,
         "description": "Fluid, emotional cursive script for spa, cosmetics, bridal, and organic lifestyle.",
     },
@@ -224,7 +228,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "Pacifico-Regular.ttf",
         "archetype": "Brush Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.28,
         "description": "Casual retro brush script, world-class for CTA badges, food trucks, and summer ads.",
     },
@@ -232,7 +236,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SedgwickAveDisplay-Regular.ttf",
         "archetype": "Graffiti / Street Brush",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.25,
         "description": "Urban street graffiti with organic splatter vibes for streetwear and youth culture.",
     },
@@ -240,7 +244,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SedgwickAveDisplay-Regular.ttf",
         "archetype": "Graffiti / Street Brush",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.25,
         "description": "Alias for sedgwick.",
     },
@@ -248,7 +252,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Blow Brush.ttf",
         "archetype": "Marker / Street Art",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.26,
         "description": "Handmade dry-marker brush typography with energetic motion.",
     },
@@ -256,7 +260,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Blow Brush.ttf",
         "archetype": "Marker / Street Art",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.26,
         "description": "Alias for blowbrush.",
     },
@@ -264,7 +268,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Clementine.ttf",
         "archetype": "Calligraphy Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.32,
         "description": "Sophisticated wedding and boutique calligraphy with sweeping ascenders/descenders.",
     },
@@ -272,7 +276,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Cookies.ttf",
         "archetype": "Chunky Rounded Display",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.24,
         "description": "Soft, rounded bubbly letters for confectionery, bakery, toys, and kids products.",
     },
@@ -280,7 +284,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Grocery Rounded.ttf",
         "archetype": "Handwritten Store Display",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.24,
         "description": "Vintage chalkboard / grocery sign lettering for organic markets and rustic cafes.",
     },
@@ -288,7 +292,7 @@ FONT_TIERS: Dict[str, Dict[str, Any]] = {
         "file": "SVN-Holidays.ttf",
         "archetype": "Festive Script",
         "tier": "Tier C (Script / Brush)",
-        "min_floor_pt": 36,
+        "min_floor_pt": 40,  # unified Sept 2026, see header note -- NOT independently re-tested per-font
         "default_line_spacing": 0.28,
         "description": "Joyful seasonal typography for Tet, festivals, promotions, and celebrations.",
     },
