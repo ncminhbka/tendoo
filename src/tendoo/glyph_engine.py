@@ -604,19 +604,39 @@ def compute_optimal_glyph_box(
         final_w, final_h = _measure_box(lines)
     else:
         words = clean_text.split()
-        best_n, best_lines, best_fw, best_fh, best_score = 1, [clean_text], *_measure_box([clean_text]), None
-        best_score = abs(math.log(best_fw / best_fh))
-        for n in range(1, min(max_lines_search, max(1, len(words))) + 1):
+        # NOTE (bugfix): when a large font_size_pt is forced (e.g. testing the ~80-90pt range
+        # implicated by scripts/probe_glyph_absolute_scale.py), a long text's N=1..6 candidates
+        # can ALL exceed target_canvas_w -- the search must be allowed to keep adding lines past
+        # the default max_lines_search until the ceiling is satisfied, up to one word per line.
+        # Previously `best_score` was seeded from N=1 UNCONDITIONALLY (even if N=1 itself violated
+        # the ceiling) and every ceiling-violating candidate was skipped via `continue` without
+        # ever updating `best_*` -- if every candidate up to max_lines_search violated the
+        # ceiling, the function silently returned that poisoned N=1 seed (observed: a 14-word
+        # sentence at 83pt returned as a single 2816px-wide line, aspect 19.56).
+        n_cap = max(1, len(words)) if target_canvas_w else min(max_lines_search, max(1, len(words)))
+        best_n, best_lines, best_fw, best_fh, best_score = None, None, None, None, None
+        fallback_n, fallback_lines, fallback_fw, fallback_fh = 1, [clean_text], None, None
+        for n in range(1, n_cap + 1):
             lines_n = [clean_text] if n == 1 else _balanced_split(words, n)
             fw, fh = _measure_box(lines_n)
+            fallback_n, fallback_lines, fallback_fw, fallback_fh = n, lines_n, fw, fh
             if target_canvas_w and fw > target_canvas_w:
                 continue  # sanity ceiling only: never let the glyph outgrow the whole canvas
             aspect = fw / fh
             score = abs(math.log(aspect))
-            if score < best_score:
+            if best_score is None or score < best_score:
                 best_n, best_lines, best_fw, best_fh, best_score = n, lines_n, fw, fh, score
             if target_aspect_min <= aspect <= target_aspect_max:
                 break  # smallest N landing inside the safe band wins (Rule 25 token economy)
+        if best_lines is None:
+            # Nothing ever satisfied the canvas-width ceiling even at n_cap lines (one word per
+            # line) -- fall back to the narrowest (largest-N) candidate tried as a last resort.
+            logger.warning(
+                f"No line-count candidate for \"{clean_text[:40]}...\" satisfied the canvas-width "
+                f"ceiling ({target_canvas_w}px) up to {fallback_n} lines; falling back to the "
+                f"narrowest candidate tried ({fallback_fw}x{fallback_fh}px)."
+            )
+            best_lines, best_fw, best_fh = fallback_lines, fallback_fw, fallback_fh
         lines, final_w, final_h = best_lines, best_fw, best_fh
 
     # Diagnostic-only: if the wrapped block would still overflow the target canvas vertically,
