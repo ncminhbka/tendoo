@@ -3,21 +3,25 @@
 scripts/probe_chained_reference_conditioning.py
 
 ==================================================================================================
-TENDOO AI - CHAINED REFERENCE CONDITIONING PROBE (DIRECTION 4)
+TENDOO AI - CHAINED MULTI-MODAL REFERENCE CONDITIONING PROBE (DIRECTION 4)
 ==================================================================================================
 
 WHY THIS EXPERIMENT?
-  1. Base FLUX.2 Klein 4B Base struggles when TWO SPARSE GLYPHS (black/white text bitmaps) are passed
-     simultaneously at t=10 and t=20, because both are small/sparse and fight in the joint attention space.
-  2. HOWEVER, Rule 8 & exp45 proved that when given a FULL NATURAL REFERENCE IMAGE (2304 tokens, rich
-     continuous manifold features at t=20 or t=60) + ONE TEXT GLYPH (at t=10), the model preserves
-     the reference image with near-100% fidelity while drawing the 3D text cleanly!
-  3. USER'S HYPOTHESIS:
-     - Pass 1: Render Title text glyph at t=10.0 -> Generates high-quality base poster with Title.
-     - Pass 2: Feed Pass 1's full generated poster as Reference 1 at t=20.0, and feed Subtitle glyph
-       as Reference 2 at t=10.0. Canvas denoises from noise, conditioned on both!
-     - Let FLUX's native image-reference preservation capability lock the upper visual scene and Title,
-       while the t=10 glyph guides the synthesis of the 3D Subtitle at the bottom.
+  1. The user verified that Chained Reference Conditioning WORKS WELL:
+     - Pass 1 renders Title + Product into a coherent base poster.
+     - Pass 2 feeds Pass 1's poster at t=20.0, and feeds Subtitle glyph at t=10.0.
+  2. USER'S NEW SPECIFICATION:
+     - Subtitle should NOT be large 3D embossed like the Title; it should have an elegant, refined,
+       minimalist typography style (e.g. silver-white clean text, not giant extruded 3D blocks).
+     - Step 1 (Pass 1):
+       * Title glyph @ t=10.0
+       * Reference Product Image (Headphone or Shoes) @ t=20.0
+       -> Generates Step 1 Base Poster containing Title + Product.
+     - Step 2 (Pass 2):
+       * Long Subtitle glyph @ t=10.0
+       * Step 1 Output Poster @ t=20.0
+       * Adjusted prompt for refined, non-embossed commercial ad subtitle.
+       -> Generates Final Chained Completed Poster with Product + Title + Long Subtitle!
 
 EXECUTION REQUIREMENTS:
   - 2x NVIDIA A30 (DiT on cuda:0, VAE/Qwen3 on cuda:1) or Single GPU.
@@ -55,26 +59,44 @@ from flux2.util import load_ae, load_flow_model
 from tendoo.glyph_engine import GlyphInfo, render_glyph
 
 # ==================================================================================================
-# 1. LAYOUT & PROMPTS
+# 1. PRESETS (HEADPHONES & SHOES)
 # ==================================================================================================
 
-TITLE_TEXT = "TUYỂN DỤNG\nNHÂN TÀI"
-SUBTITLE_TEXT = "BỨT PHÁ MỌI\nGIỚI HẠN"
+PRESETS = {
+    "headphones": {
+        "prod_image": "images/ref_prod_02.png",
+        "title_text": "ÂM THANH\nĐỈNH CAO",
+        "subtitle_text": "Chống ồn chủ động đỉnh cao\nvà thời lượng pin vượt trội suốt 40 giờ",
+        "step1_prompt": (
+            "Poster quảng cáo thương mại cho chiếc tai nghe chụp tai cao cấp màu đen sang trọng đặt ở "
+            "trung tâm, nền studio công nghệ ánh sáng tương phản cao, dòng chữ tiêu đề lớn 3D dập nổi mạ "
+            "vàng kim loại sắc nét ở phía trên, bố cục sạch sẽ chuyên nghiệp, không có watermark"
+        ),
+        "step2_prompt": (
+            "Poster quảng cáo thương mại kế thừa toàn bộ phong cách bố cục và chiếc tai nghe của poster "
+            "tham chiếu, bổ sung dòng chữ phụ màu trắng bạc thanh lịch tinh tế sắc nét ở phía dưới, "
+            "phong cách typography tối giản hiện đại, bố cục sang trọng, không có watermark"
+        ),
+    },
+    "shoes": {
+        "prod_image": "images/shoes.jpeg",
+        "title_text": "BỨT PHÁ\nTỐC ĐỘ",
+        "subtitle_text": "Thiết kế đệm khí êm ái linh hoạt\ncho mọi cung đường bứt phá",
+        "step1_prompt": (
+            "Poster quảng cáo thương mại cho đôi giày thể thao cao cấp đặt ở vị trí trung tâm, "
+            "nền studio ánh sáng điện ảnh tương phản cao sang trọng, dòng chữ tiêu đề lớn 3D dập nổi "
+            "mạ vàng kim loại sắc nét ở phía trên, bố cục sạch sẽ chuyên nghiệp, không có watermark"
+        ),
+        "step2_prompt": (
+            "Poster quảng cáo thương mại kế thừa toàn bộ phong cách bố cục và đôi giày thể thao của poster "
+            "tham chiếu, bổ sung dòng chữ phụ màu trắng bạc thanh lịch tinh tế sắc nét ở phía dưới, "
+            "phong cách typography thể thao tối giản hiện đại, bố cục sang trọng, không có watermark"
+        ),
+    },
+}
+
 CANVAS = (576, 1024)  # 9:16 target
 DEFAULT_SEEDS = [42, 123, 777]
-
-TITLE_PROMPT = (
-    "Poster quảng cáo phong cách công nghệ hiện đại, nền gradient xanh dương đậm sang trọng, "
-    "dòng chữ tiêu đề 3D dập nổi mạ vàng kim loại sắc nét ở phía trên, bố cục sạch sẽ chuyên "
-    "nghiệp, không có chữ ký, không có watermark"
-)
-
-# Pass 2 prompt: instructs the model to preserve the reference poster style while adding the bottom 3D text
-PASS2_PROMPT = (
-    "Poster quảng cáo phong cách công nghệ hiện đại kế thừa toàn bộ phong cách và tiêu đề của poster "
-    "tham chiếu, dòng chữ 3D dập nổi mạ vàng kim loại sắc nét ở phía dưới, bố cục sạch sẽ chuyên "
-    "nghiệp, không có chữ ký, không có watermark"
-)
 
 
 # ==================================================================================================
@@ -82,10 +104,14 @@ PASS2_PROMPT = (
 # ==================================================================================================
 
 def encode_image_to_ref_tokens(
-    ae: AutoEncoder, img: Image.Image, t_offset: float, device: str | torch.device,
+    ae: AutoEncoder, img: Image.Image, t_offset: float, device: str | torch.device, target_size: Tuple[int, int] | None = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Encodes any image (glyph or full natural poster) into canonical 4D RoPE tokens at local origin."""
-    arr = np.array(img.convert("RGB")).astype(np.float32) / 127.5 - 1.0
+    """Encodes any image (glyph, product, or full poster) into canonical 4D RoPE tokens at local origin."""
+    img_rgb = img.convert("RGB")
+    if target_size is not None:
+        img_rgb = img_rgb.resize(target_size, Image.Resampling.LANCZOS)
+
+    arr = np.array(img_rgb).astype(np.float32) / 127.5 - 1.0
     tensor = torch.from_numpy(arr).permute(2, 0, 1).unsqueeze(0).to(device=device, dtype=torch.bfloat16)
     with torch.no_grad():
         latent = ae.encode(tensor)
@@ -106,7 +132,13 @@ def encode_image_to_ref_tokens(
 # ==================================================================================================
 
 def run_chained_conditioning_probe(
-    seeds: List[int],
+    preset: str = "headphones",
+    prod_image: str | None = None,
+    title_text: str | None = None,
+    subtitle_text: str | None = None,
+    step1_prompt: str | None = None,
+    step2_prompt: str | None = None,
+    seeds: List[int] = DEFAULT_SEEDS,
     font: str = "bevietnam",
     output_dir: str = "output_chained_reference_conditioning",
     model_name: str = "flux.2-klein-base-4b",
@@ -115,19 +147,30 @@ def run_chained_conditioning_probe(
     guidance: float = 4.0,
     envelope_w: int = 512,
     envelope_h: int = 224,
-    t_img: float = 20.0,
-    t_text: float = 10.0,
-    pass2_prompt: str = PASS2_PROMPT,
+    t_title: float = 10.0,
+    t_prod: float = 20.0,
+    t_subtitle: float = 10.0,
+    t_poster: float = 20.0,
 ) -> None:
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
+    # Resolve preset configurations
+    cfg = PRESETS.get(preset, PRESETS["headphones"])
+    prod_img_path = prod_image or cfg["prod_image"]
+    title = title_text or cfg["title_text"]
+    subtitle = subtitle_text or cfg["subtitle_text"]
+    p_step1 = step1_prompt or cfg["step1_prompt"]
+    p_step2 = step2_prompt or cfg["step2_prompt"]
+
     print("=" * 100)
-    print(" [*] TENDOO AI - CHAINED REFERENCE CONDITIONING PROBE (DIRECTION 4)")
+    print(" [*] TENDOO AI - CHAINED MULTI-MODAL REFERENCE CONDITIONING PROBE (DIRECTION 4)")
     print("=" * 100)
-    print(f"  Title      : \"{TITLE_TEXT.replace(chr(10), ' ')}\" (Pass 1 @ t=10.0)")
-    print(f"  Subtitle   : \"{SUBTITLE_TEXT.replace(chr(10), ' ')}\" (Pass 2 @ t={t_text})")
-    print(f"  Poster Ref : Pass 1 output image chained into Pass 2 @ t={t_img}")
+    print(f"  Preset     : {preset.upper()}")
+    print(f"  Product Img: {prod_img_path} (Step 1 @ t={t_prod})")
+    print(f"  Title      : \"{title.replace(chr(10), ' ')}\" (Step 1 @ t={t_title})")
+    print(f"  Subtitle   : \"{subtitle.replace(chr(10), ' ')}\" (Step 2 @ t={t_subtitle})")
+    print(f"  Poster Ref : Step 1 output poster chained into Step 2 @ t={t_poster}")
     print(f"  Canvas     : {CANVAS[0]}x{CANVAS[1]} (9:16 target)")
     print(f"  Envelope   : {envelope_w}x{envelope_h}px (Mode B fixed envelope)")
     print(f"  Seeds      : {seeds}")
@@ -152,12 +195,14 @@ def run_chained_conditioning_probe(
     text_encoder = load_qwen3_embedder(variant="4B", device=device_te)
 
     print("\n[2/4] Encoding prompts via Qwen3-4B-FP8...")
+    print(f"  [Step 1 Prompt]: {p_step1[:90]}...")
+    print(f"  [Step 2 Prompt]: {p_step2[:90]}...")
     with torch.no_grad():
-        txt_pass1, txt_ids_pass1 = batched_prc_txt(text_encoder(["", TITLE_PROMPT]))
-        txt_pass1, txt_ids_pass1 = txt_pass1.to(device_dit), txt_ids_pass1.to(device_dit)
+        txt_step1, txt_ids_step1 = batched_prc_txt(text_encoder(["", p_step1]))
+        txt_step1, txt_ids_step1 = txt_step1.to(device_dit), txt_ids_step1.to(device_dit)
 
-        txt_pass2, txt_ids_pass2 = batched_prc_txt(text_encoder(["", pass2_prompt]))
-        txt_pass2, txt_ids_pass2 = txt_pass2.to(device_dit), txt_ids_pass2.to(device_dit)
+        txt_step2, txt_ids_step2 = batched_prc_txt(text_encoder(["", p_step2]))
+        txt_step2, txt_ids_step2 = txt_step2.to(device_dit), txt_ids_step2.to(device_dit)
 
     if num_gpus >= 2:
         try:
@@ -173,30 +218,40 @@ def run_chained_conditioning_probe(
     canvas_h = (canvas_h // 16) * 16
     lat_w, lat_h = canvas_w // 16, canvas_h // 16
 
-    print("\n[3/4] Rendering Title & Subtitle Glyphs...")
+    print("\n[3/4] Preparing Glyph Bitmaps & Product Image...")
+    # Render Title glyph (bold prominent header)
     title_info = render_glyph(
-        text=TITLE_TEXT, font_name_or_path=font, auto_size=False,
+        text=title, font_name_or_path=font, auto_size=False,
         target_width=envelope_w, target_height=envelope_h,
     )
+    # Render Subtitle glyph (refined long subtitle)
     subtitle_info = render_glyph(
-        text=SUBTITLE_TEXT, font_name_or_path=font, auto_size=False,
+        text=subtitle, font_name_or_path=font, auto_size=False,
         target_width=envelope_w, target_height=envelope_h,
     )
-    print(f"  [Title]    : {title_info.width_px}x{title_info.height_px}px {title_info.font_size_pt}pt {title_info.token_count}tok :: {title_info.lines}")
-    print(f"  [Subtitle] : {subtitle_info.width_px}x{subtitle_info.height_px}px {subtitle_info.font_size_pt}pt {subtitle_info.token_count}tok :: {subtitle_info.lines}")
+    print(f"  [Title Glyph]   : {title_info.width_px}x{title_info.height_px}px {title_info.font_size_pt}pt {title_info.token_count}tok :: {title_info.lines}")
+    print(f"  [Subtitle Glyph]: {subtitle_info.width_px}x{subtitle_info.height_px}px {subtitle_info.font_size_pt}pt {subtitle_info.token_count}tok :: {subtitle_info.lines}")
     title_info.image.save(out_path / "title_glyph.png")
     subtitle_info.image.save(out_path / "subtitle_glyph.png")
 
-    # Encode Title at t=10.0 for Pass 1, and Subtitle at t_text (default 10.0) for Pass 2
-    title_ref_tokens, title_ref_ids = encode_image_to_ref_tokens(ae, title_info.image, 10.0, device_ae)
-    subtitle_ref_tokens, subtitle_ref_ids = encode_image_to_ref_tokens(ae, subtitle_info.image, t_text, device_ae)
+    # Encode glyphs
+    title_ref_tokens, title_ref_ids = encode_image_to_ref_tokens(ae, title_info.image, t_title, device_ae)
+    subtitle_ref_tokens, subtitle_ref_ids = encode_image_to_ref_tokens(ae, subtitle_info.image, t_subtitle, device_ae)
+    title_ref_tokens, title_ref_ids = title_ref_tokens.to(device_dit), title_ref_ids.to(device_dit)
+    subtitle_ref_tokens, subtitle_ref_ids = subtitle_ref_tokens.to(device_dit), subtitle_ref_ids.to(device_dit)
 
-    title_ref_tokens = title_ref_tokens.to(device_dit)
-    title_ref_ids = title_ref_ids.to(device_dit)
-    subtitle_ref_tokens = subtitle_ref_tokens.to(device_dit)
-    subtitle_ref_ids = subtitle_ref_ids.to(device_dit)
+    # Encode Product image (768x768 for optimal 2304 token density)
+    prod_pil = Image.open(prod_img_path).convert("RGB")
+    prod_ref_tokens, prod_ref_ids = encode_image_to_ref_tokens(ae, prod_pil, t_prod, device_ae, target_size=(768, 768))
+    prod_ref_tokens, prod_ref_ids = prod_ref_tokens.to(device_dit), prod_ref_ids.to(device_dit)
+    print(f"  [Product Image] : {prod_pil.size} -> 768x768 -> {prod_ref_tokens.shape[1]} tokens (t={t_prod})")
 
-    print(f"\n[4/4] Executing Chained Conditioning across {len(seeds)} seed(s)...\n")
+    # Step 1 Combined Reference: Title Glyph (@ t_title) + Product Image (@ t_prod)
+    step1_ref_tokens = torch.cat([title_ref_tokens, prod_ref_tokens], dim=1)
+    step1_ref_ids = torch.cat([title_ref_ids, prod_ref_ids], dim=1)
+    print(f"  [Step 1 Input]  : {step1_ref_tokens.shape[1]} total ref tokens (Title {title_ref_tokens.shape[1]}tok + Product {prod_ref_tokens.shape[1]}tok)")
+
+    print(f"\n[4/4] Executing Chained Multi-Modal Conditioning across {len(seeds)} seed(s)...\n")
     results_summary: List[Dict[str, Any]] = []
 
     for idx, seed in enumerate(seeds, 1):
@@ -206,9 +261,9 @@ def run_chained_conditioning_probe(
         t_start = time.time()
 
         # ------------------------------------------------------------------------------------------
-        # STEP 1: GENERATE BASE POSTER WITH TITLE AT t=10.0
+        # STEP 1: GENERATE BASE POSTER (Title @ t=10 + Product @ t=20)
         # ------------------------------------------------------------------------------------------
-        print(f"  [Step 1] Generating Base Poster with Title (t=10.0)...")
+        print(f"  [Step 1] Generating Base Poster with Title + Product ({num_steps} steps Euler ODE)...")
         t_s1 = time.time()
         torch.manual_seed(seed)
         z_init_1 = torch.randn(1, 128, lat_h, lat_w, device=device_dit, dtype=torch.bfloat16)
@@ -223,39 +278,38 @@ def run_chained_conditioning_probe(
                 model=model,
                 img=img_tokens_1,
                 img_ids=img_ids_1,
-                txt=txt_pass1,
-                txt_ids=txt_ids_pass1,
+                txt=txt_step1,
+                txt_ids=txt_ids_step1,
                 timesteps=timesteps,
                 guidance=guidance,
-                img_cond_seq=title_ref_tokens,
-                img_cond_seq_ids=title_ref_ids,
+                img_cond_seq=step1_ref_tokens,
+                img_cond_seq_ids=step1_ref_ids,
             )
 
             # Decode Step 1 Base Poster
             pass1_lat_2d = rearrange(pass1_latent_tokens[0], "(h w) c -> 1 c h w", h=lat_h, w=lat_w)
             pass1_img = ae.decode(pass1_lat_2d.to(device_ae))
             pass1_pil = Image.fromarray(((pass1_img[0].float().clamp(-1, 1) + 1.0) * 127.5).permute(1, 2, 0).byte().cpu().numpy())
-            pass1_file = out_path / f"seed{seed}_step1_title_poster.png"
+            pass1_file = out_path / f"seed{seed}_step1_title_product_poster.png"
             pass1_pil.save(pass1_file)
             dur_s1 = time.time() - t_s1
             print(f"  [Step 1] Completed in {dur_s1:.1f}s -> Saved: {pass1_file.name}")
 
         # ------------------------------------------------------------------------------------------
-        # STEP 2: CHAINED CONDITIONING (Pass 1 Poster @ t=20.0 + Subtitle Glyph @ t=10.0)
+        # STEP 2: CHAINED CONDITIONING (Step 1 Poster @ t_poster + Long Subtitle @ t_subtitle)
         # ------------------------------------------------------------------------------------------
-        print(f"  [Step 2] Encoding Step 1 Poster as Reference Image at t={t_img}...")
-        pass1_ref_tokens, pass1_ref_ids = encode_image_to_ref_tokens(ae, pass1_pil, t_img, device_ae)
-        pass1_ref_tokens = pass1_ref_tokens.to(device_dit)
-        pass1_ref_ids = pass1_ref_ids.to(device_dit)
+        print(f"  [Step 2] Encoding Step 1 Poster as Reference Image at t={t_poster}...")
+        pass1_ref_tokens, pass1_ref_ids = encode_image_to_ref_tokens(ae, pass1_pil, t_poster, device_ae)
+        pass1_ref_tokens, pass1_ref_ids = pass1_ref_tokens.to(device_dit), pass1_ref_ids.to(device_dit)
         print(f"  [Step 2] Poster tokens: {pass1_ref_tokens.shape[1]}tok | Subtitle tokens: {subtitle_ref_tokens.shape[1]}tok")
 
-        # Combine references: Subtitle Glyph (@ t_text) + Pass 1 Poster (@ t_img)
-        all_ref_tokens = torch.cat([subtitle_ref_tokens, pass1_ref_tokens], dim=1)
-        all_ref_ids = torch.cat([subtitle_ref_ids, pass1_ref_ids], dim=1)
+        # Step 2 Combined Reference: Subtitle Glyph (@ t_subtitle) + Step 1 Poster (@ t_poster)
+        step2_ref_tokens = torch.cat([subtitle_ref_tokens, pass1_ref_tokens], dim=1)
+        step2_ref_ids = torch.cat([subtitle_ref_ids, pass1_ref_ids], dim=1)
 
         print(f"  [Step 2] Denoising canvas with Chained References ({num_steps} steps Euler ODE)...")
         t_s2 = time.time()
-        torch.manual_seed(seed + 1000)  # fresh seed for Pass 2 canvas
+        torch.manual_seed(seed + 5000)  # independent seed for Step 2 canvas synthesis
         z_init_2 = torch.randn(1, 128, lat_h, lat_w, device=device_dit, dtype=torch.bfloat16)
         img_tokens_2, img_ids_2 = prc_img(z_init_2[0])
         img_tokens_2 = img_tokens_2.unsqueeze(0).to(device_dit)
@@ -266,19 +320,19 @@ def run_chained_conditioning_probe(
                 model=model,
                 img=img_tokens_2,
                 img_ids=img_ids_2,
-                txt=txt_pass2,
-                txt_ids=txt_ids_pass2,
+                txt=txt_step2,
+                txt_ids=txt_ids_step2,
                 timesteps=timesteps,
                 guidance=guidance,
-                img_cond_seq=all_ref_tokens,
-                img_cond_seq_ids=all_ref_ids,
+                img_cond_seq=step2_ref_tokens,
+                img_cond_seq_ids=step2_ref_ids,
             )
 
             # Decode Step 2 Chained Completed Poster
             pass2_lat_2d = rearrange(pass2_latent_tokens[0], "(h w) c -> 1 c h w", h=lat_h, w=lat_w)
             pass2_img = ae.decode(pass2_lat_2d.to(device_ae))
             pass2_pil = Image.fromarray(((pass2_img[0].float().clamp(-1, 1) + 1.0) * 127.5).permute(1, 2, 0).byte().cpu().numpy())
-            pass2_file = out_path / f"seed{seed}_step2_chained_poster.png"
+            pass2_file = out_path / f"seed{seed}_step2_completed_chained_poster.png"
             pass2_pil.save(pass2_file)
             dur_s2 = time.time() - t_s2
             print(f"  [Step 2] Completed in {dur_s2:.1f}s -> Saved: {pass2_file.name}")
@@ -294,8 +348,8 @@ def run_chained_conditioning_probe(
         comp_img.paste(pass1_pil, (10, 50))
         comp_img.paste(pass2_pil, (canvas_w + 20, 50))
 
-        draw.text((20, 15), f"STEP 1: Title Poster (Ref for Step 2)", fill=(255, 215, 0))
-        draw.text((canvas_w + 30, 15), f"STEP 2: Chained (Poster @ t={t_img} + Subtitle @ t={t_text})", fill=(0, 255, 127))
+        draw.text((20, 15), f"STEP 1: Title + Product (Ref for Step 2)", fill=(255, 215, 0))
+        draw.text((canvas_w + 30, 15), f"STEP 2: Completed (Poster @ t={t_poster} + Subtitle @ t={t_subtitle})", fill=(0, 255, 127))
 
         comp_file = out_path / f"seed{seed}_chained_comparison.png"
         comp_img.save(comp_file)
@@ -316,17 +370,24 @@ def run_chained_conditioning_probe(
     # ASCII SUMMARY TABLE (Rule 28 Compliant: NO HTML)
     # ==============================================================================================
     print("=" * 100)
-    print(f"{'SEED':<8} | {'STEP 1 (TITLE POSTER)':<32} | {'STEP 2 (CHAINED POSTER)':<35} | {'TIME (S1 / S2 / TOT)':<20}")
+    print(f"{'SEED':<8} | {'STEP 1 (TITLE + PRODUCT)':<35} | {'STEP 2 (COMPLETED POSTER)':<35} | {'TIME (S1 / S2 / TOT)':<20}")
     print("-" * 100)
     for res in results_summary:
         time_str = f"{res['dur_s1']}s / {res['dur_s2']}s / {res['dur_total']}s"
-        print(f"{res['seed']:<8} | {Path(res['step1_file']).name:<32} | {Path(res['step2_file']).name:<35} | {time_str:<20}")
+        print(f"{res['seed']:<8} | {Path(res['step1_file']).name:<35} | {Path(res['step2_file']).name:<35} | {time_str:<20}")
     print("=" * 100)
     print(f"\n[✓] Chained Reference Conditioning probe finished successfully. Outputs in: {out_path.resolve()}\n")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Tendoo AI Chained Reference Conditioning Probe (Direction 4)")
+    parser = argparse.ArgumentParser(description="Tendoo AI Chained Multi-Modal Reference Conditioning Probe (Direction 4)")
+    parser.add_argument("--preset", type=str, default="headphones", choices=["headphones", "shoes"],
+                        help="Preset configuration (default: headphones)")
+    parser.add_argument("--prod_image", type=str, default=None, help="Custom path to product image")
+    parser.add_argument("--title_text", type=str, default=None, help="Custom Title text")
+    parser.add_argument("--subtitle_text", type=str, default=None, help="Custom Subtitle text")
+    parser.add_argument("--step1_prompt", type=str, default=None, help="Custom prompt for Step 1")
+    parser.add_argument("--step2_prompt", type=str, default=None, help="Custom prompt for Step 2")
     parser.add_argument("--font", type=str, default="bevietnam", help="Font alias (default: bevietnam)")
     parser.add_argument("--seeds", type=int, nargs="+", default=DEFAULT_SEEDS, help="Seeds to run")
     parser.add_argument("--output_dir", type=str, default="output_chained_reference_conditioning", help="Output directory")
@@ -336,12 +397,19 @@ def main():
     parser.add_argument("--guidance", type=float, default=4.0, help="CFG guidance scale (default: 4.0)")
     parser.add_argument("--envelope_w", type=int, default=512, help="Glyph envelope width in px (default: 512)")
     parser.add_argument("--envelope_h", type=int, default=224, help="Glyph envelope height in px (default: 224)")
-    parser.add_argument("--t_img", type=float, default=20.0, help="Time offset for Step 1 Poster reference (default: 20.0, can try 30.0 or 60.0)")
-    parser.add_argument("--t_text", type=float, default=10.0, help="Time offset for Subtitle glyph reference (default: 10.0)")
-    parser.add_argument("--pass2_prompt", type=str, default=PASS2_PROMPT, help="Custom prompt for Step 2")
+    parser.add_argument("--t_title", type=float, default=10.0, help="Time offset for Title glyph in Step 1 (default: 10.0)")
+    parser.add_argument("--t_prod", type=float, default=20.0, help="Time offset for Product image in Step 1 (default: 20.0)")
+    parser.add_argument("--t_subtitle", type=float, default=10.0, help="Time offset for Subtitle glyph in Step 2 (default: 10.0)")
+    parser.add_argument("--t_poster", type=float, default=20.0, help="Time offset for Step 1 Poster in Step 2 (default: 20.0)")
 
     args = parser.parse_args()
     run_chained_conditioning_probe(
+        preset=args.preset,
+        prod_image=args.prod_image,
+        title_text=args.title_text,
+        subtitle_text=args.subtitle_text,
+        step1_prompt=args.step1_prompt,
+        step2_prompt=args.step2_prompt,
         seeds=args.seeds,
         font=args.font,
         output_dir=args.output_dir,
@@ -351,9 +419,10 @@ def main():
         guidance=args.guidance,
         envelope_w=args.envelope_w,
         envelope_h=args.envelope_h,
-        t_img=args.t_img,
-        t_text=args.t_text,
-        pass2_prompt=args.pass2_prompt,
+        t_title=args.t_title,
+        t_prod=args.t_prod,
+        t_subtitle=args.t_subtitle,
+        t_poster=args.t_poster,
     )
 
 
