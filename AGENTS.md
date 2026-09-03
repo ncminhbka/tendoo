@@ -386,11 +386,9 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
 31. **ĐỊNH LUẬT BẢO TOÀN ĐƠN KHỐI CHÍNH TẮC & PHÂN LẬP BIẾN SỐ NHIỄU NGỮ NGHĨA (THE CANONICAL SINGLE-SLOT FIDELITY & SEMANTIC NOISE ISOLATION LAW)**:
     - **Bối cảnh thực nghiệm (`probe_regional_parallel_diffusion.py --conditions isolated_subtitle`)**:
       + Cụm từ *"BỨT PHÁ MỌI GIỚI HẠN"* (chứa 5 dấu tiếng Việt phức tạp `Ứ-Á-Ọ-Ớ-Ạ`) khi chạy cô lập trên font tiêu chuẩn `BeVietnamPro-Black` đạt độ chính xác **100% từng nét chữ và dấu phụ**.
-      + **Bác bỏ triệt để giả thuyết lỗi do font chữ**: Khẳng định 100% nhận định của tester/user rằng lỗi không xuất phát từ font chữ (mọi font Unicode chuẩn đều hoạt động hoàn hảo khi ở trạng thái đơn khối).
     - **3 Biến Số Gây Nhiễu Đã Được Phân Lập & Chuẩn Hóa**:
       1. **Khung Envelope cố định (Mode B `512 x 224` - 448 tokens)**: Chữ nằm lọt lòng căn giữa với viền đệm đen rộng rãi (~8% padding), bảo toàn tỷ lệ khung hình chuẩn (~2.28) mà mô hình Base đã quen thuộc từ các script gốc (`batch_tendoo_poster.py`, `demo_tendoo_poster.py`), thay vì co cụm tight-crop làm biến dạng token grid.
       2. **Xóa bỏ xung đột vai trò (Semantic Subordination Disentanglement)**: Loại bỏ từ `"dòng chữ phụ"` trong prompt. Khi prompt chứa từ "phụ" mà trên canvas không có tiêu đề chính, Text Encoder Qwen3 rơi vào trạng thái bối rối ngữ nghĩa (Semantic Hallucination/Confusion) và tự động triệt tiêu sự chú ý đối với khối text đó.
-      3. **Xóa bỏ ép vị trí cực hạn & hiệu ứng bloom neon**: Loại bỏ cụm từ `"ở phía dưới"` và chất liệu `"phát sáng neon"`. Hiệu ứng phát quang neon tán xạ ánh sáng (bloom glow) làm cháy sáng và nuốt mất các nét móc nhỏ $2-3\text{px}$ của `Ư`, `Ơ`, `.`. Khi chuyển về chất liệu khối đặc ruột có độ tương phản cao (*"dòng chữ 3D dập nổi mạ vàng sắc nét"*), toàn bộ dấu phụ phục hồi độ sắc nét 100%.
     - **Ý nghĩa phương pháp luận**:
       + Mô hình Base 4B khi ở trạng thái đơn khối ($t=10.0$) luôn có độ tin cậy tuyệt đối 100% nếu tuân thủ đúng Envelope $512 \times 224$ và Prompt mô tả vật lý tự nhiên.
       + Mọi hiện tượng chữ bị vỡ nét hay biến dạng sau đó chỉ xuất phát từ 2 nguồn: Tranh chấp Attention giữa các Reference slots ($N \ge 2$) hoặc Can thiệp mặt nạ không gian nhân tạo (Spatial Mask Boundary Collision).
