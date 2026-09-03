@@ -124,17 +124,33 @@ FONTS_DIR = PROJECT_ROOT / "fonts"
 # ==================================================================================================
 # 1. PER-FONT FLOOR REGISTRY & ARCHETYPES (16 QA-VERIFIED VIETNAMESE UNICODE FONTS)
 # ==================================================================================================
-# Dual Floor Architecture (OFFICIALLY LOCKED):
-# - BeVietnamPro-Black: Floor 32pt (High-density sans-serif workhorse)
-# - All other 15 fonts: Floor 36pt (Uniformly locked across all display, serif, brush, and script styles)
+# Dual Floor Architecture:
+# - BeVietnamPro-Black: Floor 40pt (REVISED Sept 2026, see below -- was 32pt)
+# - All other 15 fonts: Floor 36pt (locked earlier via probe_all_fonts_floor_32_36.py; NOT
+#   re-tested against the font-size-fine-detail methodology below, so treat as provisional too)
+#
+# REVISION (Sept 2026): the original 32pt bevietnam floor was locked from a single-line,
+# short-text probe (probe_dit_font_resolution_floor.py / probe_all_fonts_floor_32_36.py). Once
+# Rule 29's self-aspect-ratio fix made multi-line diacritic-dense text reliable at the STRUCTURAL
+# level, a residual, more uniform defect remained: diacritic marks (circumflex, tilde, the
+# horizontal stroke on "đ") came out mildly wrong at 32pt while basic Latin letters were fine --
+# consistent with the font-size floor being set too low for fine-detail fidelity specifically,
+# independent of the aspect-ratio/layout question. A dedicated multi-seed sweep
+# (scripts/probe_glyph_font_size_fine_detail.py, text richest in Vietnamese diacritics, aspect
+# ratio held in-band throughout by adjusting line count) found: 24-30pt still show diacritic
+# defects, 36pt+ clean, 40pt sharpest. This also reconciles with reverse-engineering the
+# `demo_tendoo_poster.py` "Tây Tiến" 100%-accurate reference (AGENTS.md Rule 11): its binary
+# search actually chose 48pt for playfair at 4 lines -- confirming the general pattern (previous
+# floors across the project were locked too conservatively low for diacritic fidelity, not just
+# for the Nyquist "spiky edges" floor they were originally probed against).
 
 FONT_TIERS: Dict[str, Dict[str, Any]] = {
-    # Workhorse Clean Sans-Serif (Floor: 32pt)
+    # Workhorse Clean Sans-Serif (Floor: 40pt, revised Sept 2026)
     "bevietnam": {
         "file": "BeVietnamPro-Black.ttf",
         "archetype": "Clean Sans-Serif",
         "tier": "Tier A (Heavy / Dense)",
-        "min_floor_pt": 32,  # Empirically validated on 2x A30 (DiT 50-step ODE denoise floor)
+        "min_floor_pt": 40,  # scripts/probe_glyph_font_size_fine_detail.py: 36+ clean, 40 sharpest
         "default_line_spacing": 0.22,
         "description": "Commercial workhorse for clean, hyper-legible body, subtitles, and modern ads.",
     },
