@@ -499,17 +499,40 @@ def compute_optimal_glyph_box(
     max_line_width_ratio: float = 0.4,
     min_line_height_single_px: int = 112,
     min_line_height_multi_px: int = 128,
+    target_aspect_min: float = 0.5,
+    target_aspect_max: float = 1.3,
+    max_lines_search: int = 6,
 ) -> Tuple[int, int, int, List[str]]:
     """
     Universal Slot-Agnostic Sizing Function (Rules 22, 25, 26, 29).
     Calculates the exact minimal bounding box (width, height) snapped to multiples of 16,
     ensuring font_size satisfies the per-font Nyquist anti-aliasing floor.
 
-    If `target_canvas_w`/`target_canvas_h` are provided, line count is derived from the REAL
-    output canvas width (Rule 29: Canvas-Aware Dynamic Line Planning) instead of word-count
-    bands alone — pass these whenever the glyph's destination canvas/aspect ratio is known.
-    `min_line_height_*_px` are exposed (not hardcoded) because they are NOT yet empirically
-    locked against AGENTS.md rule 4's >=160px claim — see `scripts/probe_glyph_engine_lock.py`.
+    Rule 29 (FINAL, Sept 2026, revised a 3rd time after `probe_glyph_token_mass_vs_canvas.py`):
+    Glyph-Box Self-Aspect-Ratio Band Law. Two independent GPU experiments (an isolated
+    target_lines=1..4 sweep, and a 2x2 canvas x box-strategy factorial) both showed the SAME
+    monotonic pattern using the SAME variable: `width_px / height_px` OF THE GLYPH BOX ITSELF
+    (not its ratio to the canvas). Every case with that self-aspect-ratio in roughly [0.5, 1.3]
+    rendered reliably; every case that drifted further from 1.0 in EITHER direction (too wide-flat
+    OR too tall-narrow) degraded, down to total failure at the extremes (~5.4:1 -> 0/2 seeds; the
+    Round 1-3 canvas-width-ratio theory this superseded could not explain a documented, verified
+    100%-accurate production result at canvas-ratio=0.875 that nonetheless had a self-aspect of
+    only 1.75 -- comfortably inside this band).
+
+    Consequence: when no explicit `force_single_line` / `target_lines` / literal '\\n' pins the
+    layout, line count is now chosen by searching for the SMALLEST number of lines whose resulting
+    box lands its own aspect ratio inside [target_aspect_min, target_aspect_max] -- not by
+    comparing width against a target canvas at all. `target_canvas_w` is now used ONLY as a loose
+    sanity ceiling (the glyph must not end up wider than the destination canvas), not as the
+    primary lever -- superseding `max_line_width_ratio`'s role from the prior revision (kept for
+    backward compatibility and for the explicit-override code path via `auto_wrap_text`).
+
+    Status: based on n=2-per-condition GPU seeds (42, 123) across two rounds -- a real, twice-
+    replicated signal, but not yet validated at production scale or across more seeds/fonts. Even
+    within the safe band, expect a non-trivial residual failure rate from ODE stochasticity (e.g.
+    the "short" 1-line config in `probe_glyph_lock_validation.py`, self-aspect ~2.4, only rendered
+    cleanly on seed 42 of 3) -- production use should plan for regeneration/retry, not assume a
+    single-shot 100% guarantee. `min_line_height_*_px` remain unlocked for the same reason.
 
     Returns: (width_px, height_px, chosen_font_size_pt, lines)
     """
@@ -527,47 +550,54 @@ def compute_optimal_glyph_box(
         )
         font_size_pt = min_floor
 
-    lines = auto_wrap_text(
-        text=text,
-        font_path=font_path,
-        font_size_pt=font_size_pt,
-        target_lines=target_lines,
-        force_single_line=force_single_line,
-        target_canvas_w=target_canvas_w,
-        max_line_width_ratio=max_line_width_ratio,
-    )
-
     try:
         font = ImageFont.truetype(font_path, size=font_size_pt)
     except Exception:
         font = ImageFont.load_default()
 
-    line_widths = []
-    line_heights = []
-    for line in lines:
-        bbox = font.getbbox(line)
-        line_widths.append(bbox[2] - bbox[0])
-        line_heights.append(bbox[3] - bbox[1])
+    def _measure_box(lines_: List[str]) -> Tuple[int, int]:
+        """Computes the final snapped (width_px, height_px) for a given candidate line list."""
+        line_widths_ = [font.getbbox(line)[2] - font.getbbox(line)[0] for line in lines_]
+        line_heights_ = [font.getbbox(line)[3] - font.getbbox(line)[1] for line in lines_]
+        line_spacing_ = int(font_size_pt * spacing_ratio)
+        raw_w_ = max(line_widths_)
+        raw_h_ = sum(line_heights_) + line_spacing_ * (len(lines_) - 1)
+        total_w_ = raw_w_ + 2 * safety_padding_px
+        total_h_ = raw_h_ + 2 * safety_padding_px
+        min_h_rule_ = len(lines_) * (min_line_height_single_px if len(lines_) == 1 else min_line_height_multi_px)
+        total_h_ = max(total_h_, min_h_rule_)
+        fw_ = max(32, int(math.ceil(total_w_ / 16.0) * 16))
+        fh_ = max(32, int(math.ceil(total_h_ / 16.0) * 16))
+        return fw_, fh_
 
-    line_spacing = int(font_size_pt * spacing_ratio)
-    raw_content_w = max(line_widths)
-    raw_content_h = sum(line_heights) + line_spacing * (len(lines) - 1)
+    clean_text = text.replace("\\n", "\n").strip()
+    has_explicit_override = ("\n" in clean_text) or force_single_line or (target_lines is not None)
 
-    # Apply symmetric safety padding
-    total_w = raw_content_w + 2 * safety_padding_px
-    total_h = raw_content_h + 2 * safety_padding_px
-
-    # Guarantee minimum height per line (NOT yet empirically locked, see docstring above)
-    min_h_rule = len(lines) * (min_line_height_single_px if len(lines) == 1 else min_line_height_multi_px)
-    total_h = max(total_h, min_h_rule)
-
-    # Snap to integer multiples of 16 (FLUX.2 VAE Patch Size)
-    final_w = int(math.ceil(total_w / 16.0) * 16)
-    final_h = int(math.ceil(total_h / 16.0) * 16)
-
-    # Enforce minimum lower bound for VAE patch (No arbitrary 1024px ceiling)
-    final_w = max(32, final_w)
-    final_h = max(32, final_h)
+    if has_explicit_override:
+        # Explicit user intent (literal newlines, forced single line, or an exact line count)
+        # wins outright -- respected as-is via the legacy path, self-aspect-ratio not enforced.
+        lines = auto_wrap_text(
+            text=text, font_path=font_path, font_size_pt=font_size_pt,
+            target_lines=target_lines, force_single_line=force_single_line,
+            target_canvas_w=target_canvas_w, max_line_width_ratio=max_line_width_ratio,
+        )
+        final_w, final_h = _measure_box(lines)
+    else:
+        words = clean_text.split()
+        best_n, best_lines, best_fw, best_fh, best_score = 1, [clean_text], *_measure_box([clean_text]), None
+        best_score = abs(math.log(best_fw / best_fh))
+        for n in range(1, min(max_lines_search, max(1, len(words))) + 1):
+            lines_n = [clean_text] if n == 1 else _balanced_split(words, n)
+            fw, fh = _measure_box(lines_n)
+            if target_canvas_w and fw > target_canvas_w:
+                continue  # sanity ceiling only: never let the glyph outgrow the whole canvas
+            aspect = fw / fh
+            score = abs(math.log(aspect))
+            if score < best_score:
+                best_n, best_lines, best_fw, best_fh, best_score = n, lines_n, fw, fh, score
+            if target_aspect_min <= aspect <= target_aspect_max:
+                break  # smallest N landing inside the safe band wins (Rule 25 token economy)
+        lines, final_w, final_h = best_lines, best_fw, best_fh
 
     # Diagnostic-only: if the wrapped block would still overflow the target canvas vertically,
     # warn loudly rather than silently clip (silent clipping would re-introduce the exact
@@ -862,14 +892,15 @@ def main():
     )
     parser.add_argument(
         "--max_line_width_ratio", type=float, default=0.4,
-        help="Fraction of target canvas width a single line may occupy (default: 0.85)",
+        help="Legacy canvas-width-ratio cap, only used on the explicit-override path "
+             "(force_single_line / target_lines / literal '\\n') (default: 0.4)",
     )
     parser.add_argument(
         "--aspect_test", action="store_true",
         help="CPU-only sanity check (no GPU needed): renders --text across the 4 canonical "
-             "aspect ratios (1:1, 9:16, 4:5, 16:9) and prints the resulting line count/font "
-             "size/box for each, to sanity-check Rule 29 canvas-aware wrapping before running "
-             "the GPU-backed probe on the server.",
+             "aspect ratios (1:1, 9:16, 4:5, 16:9) and prints the resulting box/line count/self "
+             "aspect ratio for each, to sanity-check Rule 29's self-aspect-ratio band before "
+             "running the GPU-backed probe on the server.",
     )
 
     args = parser.parse_args()
@@ -885,10 +916,10 @@ def main():
             ("4:5", 896, 1120),
             ("16:9", 1024, 576),
         ]
-        print("\n[ASPECT_TEST] Rule 29 Canvas-Aware Line Planning Sanity Check (CPU-only, no GPU)")
-        print(f"  Text: \"{args.text}\"  |  Font: {args.font}  |  max_line_width_ratio={args.max_line_width_ratio}")
+        print("\n[ASPECT_TEST] Rule 29 Glyph-Box Self-Aspect-Ratio Sanity Check (CPU-only, no GPU)")
+        print(f"  Text: \"{args.text}\"  |  Font: {args.font}  |  target band: [0.5, 1.3]")
         print("=" * 100)
-        header = f"{'Aspect':<8} | {'Canvas':<12} | {'Lines':<6} | {'FontPt':<7} | {'Box (px)':<14} | {'Tokens':<7} | Wrapped Lines"
+        header = f"{'Aspect':<8} | {'Canvas':<12} | {'Lines':<6} | {'FontPt':<7} | {'Box (px)':<14} | {'SelfAR':<7} | {'Tokens':<7} | Wrapped Lines"
         print(header)
         print("-" * 100)
         for name, cw, ch in canonical_canvases:
@@ -897,17 +928,20 @@ def main():
                 font_name_or_path=args.font,
                 target_canvas_w=cw,
                 target_canvas_h=ch,
-                max_line_width_ratio=args.max_line_width_ratio,
             )
             tokens = (box_w // 16) * (box_h // 16)
+            self_ar = box_w / box_h
             print(
                 f"{name:<8} | {cw}x{ch:<8} | {len(lines):<6} | {chosen_pt}pt{'':<4} | "
-                f"{box_w}x{box_h:<9} | {tokens:<7} | {lines}"
+                f"{box_w}x{box_h:<9} | {self_ar:<7.2f} | {tokens:<7} | {lines}"
             )
         print("=" * 100)
-        print("[i] Expect: narrower canvases (9:16) force MORE lines than wide canvases (16:9) for")
-        print("    the same text. If line count is identical across all 4 rows for a long input,")
-        print("    canvas-aware wrapping is not engaging (check text length / max_line_width_ratio).\n")
+        print("[i] Since Sept 2026 Rule 29 (final revision), line count is chosen from the glyph's")
+        print("    OWN aspect ratio (SelfAR column, target [0.5, 1.3]), not from the canvas -- so it")
+        print("    is EXPECTED and CORRECT for all 4 rows to pick the same line count/box for the")
+        print("    same text. target_canvas_w/h now only act as a loose sanity ceiling (glyph must")
+        print("    not outgrow the whole canvas). A SelfAR outside [0.5, 1.3] here means max_lines_search")
+        print("    was exhausted without landing in-band -- consider a shorter text per slot.\n")
         return
 
     if args.test_suite:
