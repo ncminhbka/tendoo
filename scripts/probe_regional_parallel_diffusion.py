@@ -87,8 +87,15 @@ from tendoo.glyph_engine import GlyphInfo, render_glyph
 #    (identical texts/canvas to probe_rope_spatial_binding.py for direct comparability)
 # ==================================================================================================
 
-TITLE_TEXT = "TUYỂN DỤNG NHÂN TÀI"
-SUBTITLE_TEXT = "BỨT PHÁ MỌI GIỚI HẠN"
+# NOTE (re-test after glyph_engine.py Rule 29's 4th/final revision): the ORIGINAL isolated_subtitle
+# GPU result ("fails even fully alone") was rendered under the OLD engine (40pt fixed floor,
+# tight-cropped, no explicit line breaks -> single squeezed line). AGENTS.md Rule 29 now requires
+# EXPLICIT '\n' for multi-line layout (no more word-count guessing) and no longer has a font
+# floor -- without an explicit break these 4-5 word phrases default to a single, mediocre-font
+# line (35-36pt at the default 512px width). Adding the same 2-line treatment validated for
+# "short_generous" (86-98pt, 5/5) brings both texts to a healthy 62pt/2-line box instead.
+TITLE_TEXT = "TUYỂN DỤNG\nNHÂN TÀI"
+SUBTITLE_TEXT = "BỨT PHÁ MỌI\nGIỚI HẠN"
 CANVAS = (576, 1024)  # real 9:16 primary target
 DEFAULT_SEEDS = [42, 123, 777]
 SPLIT_Y = 0.5        # canvas fraction: title branch dominates above this, subtitle below
