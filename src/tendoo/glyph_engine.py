@@ -612,6 +612,7 @@ class GlyphEngine:
         target_canvas_w: Optional[int] = None,
         target_canvas_h: Optional[int] = None,
         max_line_width_ratio: float = 0.6,
+        target_lines: Optional[int] = None,
     ) -> GlyphInfo:
         """
         Main entrypoint to generate a production-ready locked glyph image.
@@ -642,6 +643,7 @@ class GlyphEngine:
                 target_canvas_w=target_canvas_w,
                 target_canvas_h=target_canvas_h,
                 max_line_width_ratio=max_line_width_ratio,
+                target_lines=target_lines,
             )
             font = self.get_font(font_path, chosen_size)
         else:
@@ -779,6 +781,7 @@ def render_glyph(
     target_canvas_w: Optional[int] = None,
     target_canvas_h: Optional[int] = None,
     max_line_width_ratio: float = 0.6,
+    target_lines: Optional[int] = None,
 ) -> GlyphInfo:
     """
     Convenience function to render a locked glyph using the singleton engine.
@@ -797,6 +800,7 @@ def render_glyph(
         target_canvas_w=target_canvas_w,
         target_canvas_h=target_canvas_h,
         max_line_width_ratio=max_line_width_ratio,
+        target_lines=target_lines,
     )
 
 
