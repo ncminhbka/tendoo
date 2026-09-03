@@ -341,7 +341,9 @@ def run_probe(
                     model=model, img=img_tokens, img_ids=img_ids, txt=txt_baseline, txt_ids=txt_ids_baseline,
                     timesteps=timesteps, guidance=guidance, ref_tokens=ref_tokens, ref_ids=ref_ids,
                 )
-            else:  # "regional_parallel" -- each branch carries its OWN (ref_tokens, ref_ids, txt, txt_ids)
+            elif run.condition == "regional_parallel":
+                # Each branch carries its OWN (ref_tokens, ref_ids, txt, txt_ids) -- shared canvas,
+                # merged every step (see denoise_regional_parallel docstring).
                 branch_refs = [
                     (title_ref_t10[0].to(device_dit), title_ref_t10[1].to(device_dit), txt_title, txt_ids_title),
                     (subtitle_ref_t10[0].to(device_dit), subtitle_ref_t10[1].to(device_dit), txt_subtitle, txt_ids_subtitle),
@@ -351,6 +353,25 @@ def run_probe(
                     model=model, img=img_tokens, img_ids=img_ids,
                     timesteps=timesteps, guidance=guidance, branch_refs=branch_refs, branch_weights=branch_weights,
                 )
+            elif run.condition in ("isolated_title", "isolated_subtitle"):
+                # CONTROL: exactly ONE glyph, standard denoise_cfg, NO merging, NO other branch --
+                # reproduces the classic "single glyph @ t=10 is bulletproof" test, but for THIS
+                # specific text/prompt/font, which (unlike "MUA 1 TẶNG 1" etc. earlier in this
+                # investigation) has never actually been verified in true isolation. Separates
+                # "the merge mechanism corrupts an otherwise-fine glyph" from "this glyph/prompt
+                # combo was never confirmed reliable to begin with".
+                if run.condition == "isolated_title":
+                    ref_tokens, ref_ids = title_ref_t10[0].to(device_dit), title_ref_t10[1].to(device_dit)
+                    txt_iso, txt_ids_iso = txt_title, txt_ids_title
+                else:
+                    ref_tokens, ref_ids = subtitle_ref_t10[0].to(device_dit), subtitle_ref_t10[1].to(device_dit)
+                    txt_iso, txt_ids_iso = txt_subtitle, txt_ids_subtitle
+                out_latent = denoise_baseline_joint(
+                    model=model, img=img_tokens, img_ids=img_ids, txt=txt_iso, txt_ids=txt_ids_iso,
+                    timesteps=timesteps, guidance=guidance, ref_tokens=ref_tokens, ref_ids=ref_ids,
+                )
+            else:
+                raise ValueError(f"Unknown condition: {run.condition}")
 
         torch.cuda.empty_cache()
         out_latent = rearrange(out_latent, "b (h w) c -> b c h w", h=lat_h, w=lat_w)
@@ -405,7 +426,10 @@ def main():
     parser = argparse.ArgumentParser(description="Tendoo AI Regional Parallel Diffusion Probe (Direction 2)")
     parser.add_argument("--font", type=str, default="bevietnam", help="Font alias (default: bevietnam)")
     parser.add_argument("--conditions", type=str, nargs="+", default=["baseline", "regional_parallel"],
-                         choices=["baseline", "regional_parallel"], help="Which conditions to run")
+                         choices=["baseline", "regional_parallel", "isolated_title", "isolated_subtitle"],
+                         help="Which conditions to run. isolated_title/isolated_subtitle are control runs: "
+                              "exactly one glyph, standard denoise, no merging -- isolates whether a glyph/"
+                              "prompt combo is reliable on its own before blaming the merge mechanism.")
     parser.add_argument("--seeds", type=int, nargs="+", default=DEFAULT_SEEDS, help="Seeds to replicate")
     parser.add_argument("--prompt", type=str, default=DEFAULT_PROMPT, help="Shared text prompt")
     parser.add_argument("--output_dir", type=str, default="output_regional_parallel_diffusion", help="Output directory")
