@@ -85,6 +85,14 @@ FONT_SIZES = [24, 26, 28, 30, 32, 34]
 DEFAULT_SEEDS = [42, 123, 777]
 CANVAS = (576, 1024)  # real 9:16 primary target
 
+# Reference point (Sept 2026): reverse-engineering scripts/demo_tendoo_poster.py's binary search
+# on the exact "Tây Tiến" recipe (playfair, box_w=896, box_h=512, 4 lines) shows it actually chose
+# 48pt -- much higher than anything tested here so far. At N_LINES=3, pushing bevietnam past ~40pt
+# drives the box's self-aspect-ratio OUT of the [0.5, 1.3] safe band (width grows with font size,
+# height is pinned by line count); at N_LINES=4 for this text, 48pt stays comfortably in-band
+# (aspect ~0.88). Use `--n_lines 4 --sizes 36 40 44 48 52` to directly test reproducing Tây Tiến's
+# recipe (bigger font enabled by more lines, not by leaving the aspect-ratio band).
+
 
 def _balanced_split(words: List[str], n_lines: int) -> List[str]:
     n_lines = max(1, min(n_lines, len(words)))
@@ -200,6 +208,7 @@ def run_probe(
     sizes: List[int], seeds: List[int], font: str = "bevietnam", prompt: str = DEFAULT_PROMPT,
     output_dir: str = "output_glyph_font_size_fine_detail", model_name: str = "flux.2-klein-base-4b",
     checkpoint_dir: str | None = None, num_steps: int = 50, guidance: float = 4.0,
+    n_lines: int = N_LINES,
 ) -> None:
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -210,7 +219,8 @@ def run_probe(
     print(" [*] TENDOO AI - FONT-SIZE FINE-DETAIL PROBE (DIACRITIC FIDELITY)")
     print("=" * 100)
     print(f"  Text     : \"{TEXT}\"")
-    print(f"  Lines    : {N_LINES} (fixed, matches Rule 29's own choice for this text at 32pt)")
+    print(f"  Lines    : {n_lines} (pass --n_lines to override; more lines keeps aspect ratio")
+    print(f"             in-band at higher font sizes -- see the Tây Tiến reference note above)")
     print(f"  Sizes    : {sizes}")
     print(f"  Seeds    : {seeds}")
     print(f"  Canvas   : {CANVAS[0]}x{CANVAS[1]} (real 9:16)")
@@ -258,7 +268,7 @@ def run_probe(
     # Render each unique font size ONCE (seed only affects diffusion sampling, not the glyph bitmap).
     glyph_cache: Dict[int, GlyphInfo] = {}
     for pt in sizes:
-        info = render_raw_multiline_glyph_ignoring_floor(TEXT, font, N_LINES, pt)
+        info = render_raw_multiline_glyph_ignoring_floor(TEXT, font, n_lines, pt)
         glyph_cache[pt] = info
         aspect = info.width_px / info.height_px
         print(f"  [{pt}pt] {info.width_px}x{info.height_px}px, {info.token_count} tokens, "
@@ -349,12 +359,18 @@ def main():
     parser.add_argument("--checkpoint_dir", type=str, default=None, help="Path to persistent-data")
     parser.add_argument("--steps", type=int, default=50, help="Euler ODE steps (default: 50)")
     parser.add_argument("--guidance", type=float, default=4.0, help="CFG guidance scale (default: 4.0)")
+    parser.add_argument(
+        "--n_lines", type=int, default=N_LINES,
+        help="Fixed line count for the sweep (default: 3). Use a higher value (e.g. 4) to keep "
+             "the self-aspect-ratio in-band [0.5, 1.3] when sweeping font sizes above ~40pt -- "
+             "see the Tây Tiến reference note above (48pt needed 4 lines to stay in-band).",
+    )
 
     args = parser.parse_args()
     run_probe(
         sizes=args.sizes, seeds=args.seeds, font=args.font, prompt=args.prompt, output_dir=args.output_dir,
         model_name=args.model_name, checkpoint_dir=args.checkpoint_dir,
-        num_steps=args.steps, guidance=args.guidance,
+        num_steps=args.steps, guidance=args.guidance, n_lines=args.n_lines,
     )
 
 
