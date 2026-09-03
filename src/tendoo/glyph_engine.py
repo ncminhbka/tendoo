@@ -39,6 +39,24 @@ MATHEMATICAL & ARCHITECTURAL FOUNDATIONS (MANDATORY TECHNICAL LAWS):
    - Prompt (via Qwen3): Steers Canvas Placement (top-left, center, bottom) and Visual Stylization.
    - RoPE Time Offset (t=10, 20, 30, 40): Identifies and disentangles slot channels independently.
    - Glyph VAE (via this Engine): Preserves 100% Vietnamese Spelling and Font Geometry.
+
+5. Rule 29 (NEW, Sept 2026): Canvas-Aware Dynamic Line Planning Law:
+   - Empirical finding: FLUX.2 Base DiT treats the glyph bitmap as a REFERENCE IMAGE to be
+     preserved near-verbatim, INCLUDING ITS LINE COUNT / INTERNAL ASPECT RATIO — not merely
+     its character content. A glyph rendered as one wide, short line (natural for a 16:9
+     canvas) still "wants" to keep that 1-line shape when the actual output canvas is a
+     narrow 9:16 poster, forcing the DiT to squeeze it into a much narrower usable width and
+     causing broken/garbled characters.
+   - Consequence: the NUMBER OF LINES must be decided from the REAL available width on the
+     TARGET OUTPUT CANVAS, not from word-count bands alone. `auto_wrap_text` /
+     `compute_optimal_glyph_box` now accept `target_canvas_w` (or an explicit
+     `max_line_width_px`) and treat pixel-width fitting as authoritative over the legacy
+     word-count heuristic whenever canvas information is available. The word-count bands are
+     kept ONLY as a fallback for isolated/canvas-agnostic probes.
+   - Status: mechanism implemented, `max_line_width_ratio` (fraction of canvas width a line
+     may occupy, default 0.85) and the minimum line-height floor (112px 1-line / 128px
+     multi-line, potentially in tension with the >=160px floor documented in AGENTS.md rule 4)
+     are NOT yet empirically locked — see `scripts/probe_glyph_engine_lock.py`.
 ====================================================================================================
 """
 
@@ -327,11 +345,47 @@ def resolve_font_path(font_name_or_path: str | None) -> Tuple[str, str, Dict[str
     raise FileNotFoundError(f"CRITICAL: No valid Vietnamese Unicode font found for '{font_name_or_path}'!")
 
 
+def _balanced_split(words: List[str], n_lines: int) -> List[str]:
+    """Splits a word list into `n_lines` as evenly as possible (by word count)."""
+    n_lines = max(1, min(n_lines, len(words)))
+    base = len(words) // n_lines
+    rem = len(words) % n_lines
+    lines = []
+    idx = 0
+    for i in range(n_lines):
+        take = base + (1 if i < rem else 0)
+        if take <= 0:
+            continue
+        lines.append(" ".join(words[idx: idx + take]))
+        idx += take
+    return lines
+
+
+def _greedy_pack_lines(words: List[str], font: "ImageFont.FreeTypeFont", max_w: int) -> List[str]:
+    """Greedily packs words into lines that each fit within `max_w` pixels."""
+    lines: List[str] = []
+    curr: List[str] = []
+    for word in words:
+        candidate = " ".join(curr + [word])
+        bbox = font.getbbox(candidate)
+        w = bbox[2] - bbox[0]
+        if w <= max_w or not curr:
+            curr.append(word)
+        else:
+            lines.append(" ".join(curr))
+            curr = [word]
+    if curr:
+        lines.append(" ".join(curr))
+    return lines
+
+
 def auto_wrap_text(
     text: str,
     font_path: str,
     font_size_pt: int,
     max_line_width_px: Optional[int] = None,
+    target_canvas_w: Optional[int] = None,
+    max_line_width_ratio: float = 0.85,
     target_lines: Optional[int] = None,
     force_single_line: bool = False,
 ) -> List[str]:
@@ -339,7 +393,14 @@ def auto_wrap_text(
     Splits text into optimal visual lines.
     - Honors explicit user newline '\\n'.
     - If force_single_line=True, returns single line.
-    - Otherwise, wraps based on natural word boundaries and visual width balance.
+    - Rule 29 (Canvas-Aware Dynamic Line Planning): if `max_line_width_px` is given, OR
+      `target_canvas_w` is given (from which max width = target_canvas_w * max_line_width_ratio
+      is derived), PIXEL-WIDTH FITTING takes strict priority over the word-count heuristic.
+      This is what actually decides line count relative to the TARGET OUTPUT CANVAS, not the
+      glyph's own isolated box — required because the model preserves the glyph's line count
+      near-verbatim regardless of what canvas it ends up composited onto.
+    - Otherwise (no width/canvas info available, e.g. isolated tight-crop probes), falls back
+      to the legacy word-count band heuristic.
     """
     clean_text = text.replace("\\n", "\n").strip()
 
@@ -352,7 +413,7 @@ def auto_wrap_text(
     words = clean_text.split()
     n_words = len(words)
 
-    if n_words <= 3:
+    if n_words <= 1:
         return [clean_text]
 
     if target_lines == 1:
@@ -364,49 +425,34 @@ def auto_wrap_text(
     except Exception:
         font = ImageFont.load_default()
 
-    # Target 2 lines for 4-9 words
+    effective_max_w = max_line_width_px
+    if effective_max_w is None and target_canvas_w:
+        effective_max_w = int(target_canvas_w * max_line_width_ratio)
+
+    # --- PIXEL-WIDTH-FIRST PACKING: authoritative whenever real width info is known ---
+    if effective_max_w is not None and effective_max_w > 0 and target_lines is None:
+        full_bbox = font.getbbox(clean_text)
+        if (full_bbox[2] - full_bbox[0]) <= effective_max_w:
+            return [clean_text]
+        return _greedy_pack_lines(words, font, effective_max_w)
+
+    if n_words <= 3:
+        return [clean_text]
+
+    # Explicit target_lines override (balanced split)
     if target_lines == 2 or (target_lines is None and 4 <= n_words <= 9):
-        mid = n_words // 2
-        line1 = " ".join(words[:mid])
-        line2 = " ".join(words[mid:])
-        return [line1, line2]
+        return _balanced_split(words, 2)
 
-    # Target 3 lines for 10-18 words
     if target_lines == 3 or (target_lines is None and 10 <= n_words <= 18):
-        p1 = n_words // 3
-        p2 = 2 * n_words // 3
-        return [" ".join(words[:p1]), " ".join(words[p1:p2]), " ".join(words[p2:])]
+        return _balanced_split(words, 3)
 
-    # Target 4 lines for 19-32 words (e.g. detailed commercial feedback quotes)
     if target_lines == 4 or (target_lines is None and 19 <= n_words <= 32):
-        p1 = n_words // 4
-        p2 = 2 * n_words // 4
-        p3 = 3 * n_words // 4
-        return [
-            " ".join(words[:p1]),
-            " ".join(words[p1:p2]),
-            " ".join(words[p2:p3]),
-            " ".join(words[p3:]),
-        ]
+        return _balanced_split(words, 4)
 
-    # Multi-line greedily bounded by max_line_width_px
-    if max_line_width_px is not None and max_line_width_px > 0:
-        lines = []
-        curr = []
-        for word in words:
-            candidate = " ".join(curr + [word])
-            bbox = font.getbbox(candidate)
-            w = bbox[2] - bbox[0]
-            if w <= max_line_width_px or not curr:
-                curr.append(word)
-            else:
-                lines.append(" ".join(curr))
-                curr = [word]
-        if curr:
-            lines.append(" ".join(curr))
-        return lines
+    if target_lines is not None and target_lines >= 2:
+        return _balanced_split(words, target_lines)
 
-    # Default fallback for >32 words: chunk by 6-7 words per line
+    # Default fallback for >32 words with no width info: chunk by ~1/5th of the words per line
     chunk_size = max(5, int(math.ceil(n_words / 5.0)))
     lines = []
     for i in range(0, n_words, chunk_size):
@@ -422,11 +468,22 @@ def compute_optimal_glyph_box(
     target_lines: Optional[int] = None,
     force_single_line: bool = False,
     safety_padding_px: int = 16,
+    target_canvas_w: Optional[int] = None,
+    target_canvas_h: Optional[int] = None,
+    max_line_width_ratio: float = 0.85,
+    min_line_height_single_px: int = 112,
+    min_line_height_multi_px: int = 128,
 ) -> Tuple[int, int, int, List[str]]:
     """
-    Universal Slot-Agnostic Sizing Function (Rules 22, 25, 26).
+    Universal Slot-Agnostic Sizing Function (Rules 22, 25, 26, 29).
     Calculates the exact minimal bounding box (width, height) snapped to multiples of 16,
     ensuring font_size satisfies the per-font Nyquist anti-aliasing floor.
+
+    If `target_canvas_w`/`target_canvas_h` are provided, line count is derived from the REAL
+    output canvas width (Rule 29: Canvas-Aware Dynamic Line Planning) instead of word-count
+    bands alone — pass these whenever the glyph's destination canvas/aspect ratio is known.
+    `min_line_height_*_px` are exposed (not hardcoded) because they are NOT yet empirically
+    locked against AGENTS.md rule 4's >=160px claim — see `scripts/probe_glyph_engine_lock.py`.
 
     Returns: (width_px, height_px, chosen_font_size_pt, lines)
     """
@@ -450,6 +507,8 @@ def compute_optimal_glyph_box(
         font_size_pt=font_size_pt,
         target_lines=target_lines,
         force_single_line=force_single_line,
+        target_canvas_w=target_canvas_w,
+        max_line_width_ratio=max_line_width_ratio,
     )
 
     try:
@@ -472,8 +531,8 @@ def compute_optimal_glyph_box(
     total_w = raw_content_w + 2 * safety_padding_px
     total_h = raw_content_h + 2 * safety_padding_px
 
-    # Guarantee minimum height per line (>= 128px per line for multi-line to satisfy Nyquist)
-    min_h_rule = len(lines) * (112 if len(lines) == 1 else 128)
+    # Guarantee minimum height per line (NOT yet empirically locked, see docstring above)
+    min_h_rule = len(lines) * (min_line_height_single_px if len(lines) == 1 else min_line_height_multi_px)
     total_h = max(total_h, min_h_rule)
 
     # Snap to integer multiples of 16 (FLUX.2 VAE Patch Size)
@@ -483,6 +542,16 @@ def compute_optimal_glyph_box(
     # Enforce minimum lower bound for VAE patch (No arbitrary 1024px ceiling)
     final_w = max(32, final_w)
     final_h = max(32, final_h)
+
+    # Diagnostic-only: if the wrapped block would still overflow the target canvas vertically,
+    # warn loudly rather than silently clip (silent clipping would re-introduce the exact
+    # "line-count preserved but squeezed" failure mode Rule 29 exists to prevent).
+    if target_canvas_h and final_h > target_canvas_h:
+        logger.warning(
+            f"Glyph block height {final_h}px exceeds target canvas height {target_canvas_h}px "
+            f"({len(lines)} lines @ {font_size_pt}pt). Consider a narrower max_line_width_ratio "
+            f"or reviewing whether this text belongs in this slot at this canvas aspect ratio."
+        )
 
     return final_w, final_h, font_size_pt, lines
 
@@ -525,6 +594,9 @@ class GlyphEngine:
         bg_color: Tuple[int, int, int] = (0, 0, 0),
         text_color: Tuple[int, int, int] = (255, 255, 255),
         safety_padding_px: int = 16,
+        target_canvas_w: Optional[int] = None,
+        target_canvas_h: Optional[int] = None,
+        max_line_width_ratio: float = 0.85,
     ) -> GlyphInfo:
         """
         Main entrypoint to generate a production-ready locked glyph image.
@@ -532,9 +604,13 @@ class GlyphEngine:
         Modes:
         - Mode A (Default: auto_size=True, target_width/height are None):
           Calculates the optimal tight-crop envelope automatically based on text length and font floor.
-          Saves massive tokens, zero size bias, guaranteed >= 36-48pt floor.
+          Saves massive tokens, zero size bias, guaranteed >= 36-48pt floor. Pass `target_canvas_w`/
+          `target_canvas_h` (the FINAL output poster size, e.g. 576x1024 for 9:16) so line count is
+          planned against the real destination canvas (Rule 29), not just the isolated glyph box.
         - Mode B (Explicit Envelopes: target_width & target_height provided):
           Fits the text into the specified bounding box via binary search, checking against Nyquist floor.
+          Here target_width/height already ARE (a region of) the destination canvas, so pixel-width-first
+          wrapping is applied directly against them.
         """
         font_key, font_path, meta = resolve_font_path(font_name_or_path or self.default_font)
         min_floor = meta["min_floor_pt"]
@@ -548,6 +624,9 @@ class GlyphEngine:
                 font_size_pt=font_size_pt,
                 force_single_line=force_single_line,
                 safety_padding_px=safety_padding_px,
+                target_canvas_w=target_canvas_w,
+                target_canvas_h=target_canvas_h,
+                max_line_width_ratio=max_line_width_ratio,
             )
             font = self.get_font(font_path, chosen_size)
         else:
@@ -555,15 +634,20 @@ class GlyphEngine:
             envelope_w = (target_width // 16) * 16
             envelope_h = (target_height // 16) * 16
 
+            max_allowed_w = envelope_w - 2 * safety_padding_px
+            max_allowed_h = envelope_h - 2 * safety_padding_px
+
+            # NOTE (bugfix, Rule 29): previously `max_allowed_w` was computed but never passed
+            # to auto_wrap_text, so line count was decided purely by word count, blind to the
+            # actual envelope width -> a long line could be "wrapped" into a shape that still
+            # doesn't fit, silently forcing the font-size search below to squeeze/overflow it.
             lines = auto_wrap_text(
                 text=text,
                 font_path=font_path,
                 font_size_pt=font_size_pt or 40,
                 force_single_line=force_single_line,
+                max_line_width_px=max_allowed_w,
             )
-
-            max_allowed_w = envelope_w - 2 * safety_padding_px
-            max_allowed_h = envelope_h - 2 * safety_padding_px
 
             # Binary search for maximum font size fitting inside envelope
             low, high = min_floor, 220
@@ -677,6 +761,9 @@ def render_glyph(
     bg_color: Tuple[int, int, int] = (0, 0, 0),
     text_color: Tuple[int, int, int] = (255, 255, 255),
     safety_padding_px: int = 16,
+    target_canvas_w: Optional[int] = None,
+    target_canvas_h: Optional[int] = None,
+    max_line_width_ratio: float = 0.85,
 ) -> GlyphInfo:
     """
     Convenience function to render a locked glyph using the singleton engine.
@@ -692,6 +779,9 @@ def render_glyph(
         bg_color=bg_color,
         text_color=text_color,
         safety_padding_px=safety_padding_px,
+        target_canvas_w=target_canvas_w,
+        target_canvas_h=target_canvas_h,
+        max_line_width_ratio=max_line_width_ratio,
     )
 
 
@@ -732,11 +822,62 @@ def main():
     parser.add_argument("--single_line", action="store_true", help="Force single-line rendering")
     parser.add_argument("--inspect", action="store_true", help="Print registry audit table")
     parser.add_argument("--test_suite", action="store_true", help="Run benchmark across diverse phrases")
+    parser.add_argument(
+        "--canvas_width", type=int, default=None,
+        help="Target OUTPUT canvas width (px) for Rule 29 canvas-aware line planning in Mode A",
+    )
+    parser.add_argument(
+        "--canvas_height", type=int, default=None,
+        help="Target OUTPUT canvas height (px) for Rule 29 canvas-aware line planning in Mode A",
+    )
+    parser.add_argument(
+        "--max_line_width_ratio", type=float, default=0.85,
+        help="Fraction of target canvas width a single line may occupy (default: 0.85)",
+    )
+    parser.add_argument(
+        "--aspect_test", action="store_true",
+        help="CPU-only sanity check (no GPU needed): renders --text across the 4 canonical "
+             "aspect ratios (1:1, 9:16, 4:5, 16:9) and prints the resulting line count/font "
+             "size/box for each, to sanity-check Rule 29 canvas-aware wrapping before running "
+             "the GPU-backed probe on the server.",
+    )
 
     args = parser.parse_args()
 
     if args.inspect:
         run_font_inspection()
+        return
+
+    if args.aspect_test:
+        canonical_canvases = [
+            ("1:1", 1024, 1024),
+            ("9:16", 576, 1024),
+            ("4:5", 896, 1120),
+            ("16:9", 1024, 576),
+        ]
+        print("\n[ASPECT_TEST] Rule 29 Canvas-Aware Line Planning Sanity Check (CPU-only, no GPU)")
+        print(f"  Text: \"{args.text}\"  |  Font: {args.font}  |  max_line_width_ratio={args.max_line_width_ratio}")
+        print("=" * 100)
+        header = f"{'Aspect':<8} | {'Canvas':<12} | {'Lines':<6} | {'FontPt':<7} | {'Box (px)':<14} | {'Tokens':<7} | Wrapped Lines"
+        print(header)
+        print("-" * 100)
+        for name, cw, ch in canonical_canvases:
+            box_w, box_h, chosen_pt, lines = compute_optimal_glyph_box(
+                text=args.text,
+                font_name_or_path=args.font,
+                target_canvas_w=cw,
+                target_canvas_h=ch,
+                max_line_width_ratio=args.max_line_width_ratio,
+            )
+            tokens = (box_w // 16) * (box_h // 16)
+            print(
+                f"{name:<8} | {cw}x{ch:<8} | {len(lines):<6} | {chosen_pt}pt{'':<4} | "
+                f"{box_w}x{box_h:<9} | {tokens:<7} | {lines}"
+            )
+        print("=" * 100)
+        print("[i] Expect: narrower canvases (9:16) force MORE lines than wide canvases (16:9) for")
+        print("    the same text. If line count is identical across all 4 rows for a long input,")
+        print("    canvas-aware wrapping is not engaging (check text length / max_line_width_ratio).\n")
         return
 
     if args.test_suite:
@@ -770,6 +911,9 @@ def main():
         font_size_pt=args.font_size,
         auto_size=(args.width is None and args.height is None),
         force_single_line=args.single_line,
+        target_canvas_w=args.canvas_width,
+        target_canvas_h=args.canvas_height,
+        max_line_width_ratio=args.max_line_width_ratio,
     )
 
     print("\n" + "=" * 80)
