@@ -164,6 +164,7 @@ def denoise_regional_parallel(
     into ONE consensus update; that single merged canvas is what every branch sees next step.
     """
     n_canvas = img.shape[1]
+    orig_dtype = img.dtype  # bfloat16 -- guarded against below, see the cast on `weight`
     for t_curr, t_prev in zip(timesteps[:-1], timesteps[1:]):
         t_vec = torch.full((2,), t_curr, dtype=img.dtype, device=img.device)
         img_cfg = torch.cat([img, img], dim=0)          # [2, n_canvas, C] for CFG [uncond, cond]
@@ -181,9 +182,15 @@ def denoise_regional_parallel(
             pred_uncond, pred_cond = pred.chunk(2)
             pred_branch = pred_uncond + guidance * (pred_cond - pred_uncond)  # [1, n_canvas, C]
 
-            merged_pred = merged_pred + weight.view(1, -1, 1) * pred_branch
+            # NOTE (bugfix): `weight` (from compute_regional_weights) is float32; multiplying it
+            # directly against a bfloat16 `pred_branch` silently upcasts the product (and then
+            # `img` itself, via the update below) to float32. On the NEXT loop iteration,
+            # `t_vec = torch.full(..., dtype=img.dtype, ...)` then builds a float32 timestep
+            # tensor, which crashes inside model.time_in's bfloat16 Linear layer ("expected mat1
+            # and mat2 to have the same dtype"). Must cast weight to match pred_branch's dtype.
+            merged_pred = merged_pred + weight.to(pred_branch.dtype).view(1, -1, 1) * pred_branch
 
-        img = img + (t_prev - t_curr) * merged_pred
+        img = (img + (t_prev - t_curr) * merged_pred).to(orig_dtype)  # defensive: keep bfloat16
 
     return img
 
