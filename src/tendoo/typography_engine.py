@@ -335,6 +335,12 @@ class PosterTemplateEngine:
             ("recruitment", "portrait"): cls._generate_recruitment_portrait,
             ("menu", "landscape"): cls._generate_menu,
             ("menu", "portrait"): cls._generate_menu_portrait,
+            # product_ad uses ONE implementation for both orientations -- unlike the card-heavy
+            # templates above, it's just 2 positioned text blocks over a full-bleed photo, and vw-
+            # relative sizing scales fine across the whole 4:5/9:16/1:1/16:9 range without needing
+            # a structurally different portrait layout.
+            ("product_ad", "landscape"): cls._generate_product_ad,
+            ("product_ad", "portrait"): cls._generate_product_ad,
         }
         fn = dispatch.get((category, orientation))
         if fn is not None:
@@ -1261,6 +1267,127 @@ class PosterTemplateEngine:
             categories_html="".join(cat_html_parts),
             footer_note=brief.get("footer_note", "✨ Giảm 10% khi check-in tại quán"),
             hotline=brief.get("hotline", "📞 Hotline: 1800 8198"),
+        )
+
+    # ----------------------------------------------------------------------------------------
+    # PRODUCT_AD -- the "100%-overlay" direction's core template: simple title+subtitle over a
+    # full-bleed photo, matching the exact shape of prompt_test.txt lines 1-19 (every one of them
+    # is just 2 positioned/styled text blocks, nothing more). Unlike the diffusion-hero direction,
+    # NEITHER block is baked into the photo -- both are pure CSS, using the hero style presets
+    # validated in scripts/test_css_hero_title_styles.py (neon_glow confirmed genuinely
+    # competitive with diffusion on a dark/neon scene; metallic_3d/gold_foil are solid but lack
+    # environment-color reflection; dark-on-light styles for bright/pastel scenes are NOT YET
+    # built -- see memory css-hero-title-overlay-direction.md).
+    # ----------------------------------------------------------------------------------------
+
+    HERO_STYLE_CSS = {
+        "metallic_3d": """
+            background: linear-gradient(180deg, #FFFFFF 0%, #D8D8D8 35%, #8A8A8A 55%, #C8C8C8 70%, #FFFFFF 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+            filter: drop-shadow(0px 1px 0px #b0b0b0) drop-shadow(0px 2px 0px #999999) drop-shadow(0px 3px 0px #808080)
+                    drop-shadow(0px 4px 0px #666666) drop-shadow(0px 5px 2px rgba(0,0,0,0.5)) drop-shadow(0px 8px 14px rgba(0,0,0,0.6));
+        """,
+        "neon_glow": """
+            color: #FFFFFF;
+            text-shadow: 0 0 4px #FFFFFF, 0 0 10px #FFFFFF, 0 0 18px #00F0FF, 0 0 34px #00F0FF,
+                         0 0 60px #00B8FF, 0 2px 2px rgba(0,0,0,0.4);
+        """,
+        "neon_glow_pink": """
+            color: #FFFFFF;
+            text-shadow: 0 0 4px #FFFFFF, 0 0 10px #FFFFFF, 0 0 18px #FF3DAE, 0 0 34px #FF3DAE,
+                         0 0 60px #E000A0, 0 2px 2px rgba(0,0,0,0.4);
+        """,
+        "gold_foil": """
+            background: linear-gradient(180deg, #FFF6D8 0%, #F5D485 20%, #C9971F 45%, #FFE9A8 55%, #B8860B 75%, #FFF2C4 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+            filter: drop-shadow(0px 1px 0px rgba(255,255,255,0.5)) drop-shadow(0px 3px 4px rgba(0,0,0,0.5)) drop-shadow(0px 6px 14px rgba(0,0,0,0.55));
+        """,
+        "plain_light": "color: #FFFFFF; text-shadow: 0 2px 14px rgba(0,0,0,0.55);",
+        "plain_dark": "color: #1A1208; text-shadow: 0 2px 10px rgba(255,255,255,0.5);",
+    }
+
+    @staticmethod
+    def _zone_css(position: str) -> str:
+        """
+        Maps a canonical 3x3 zone name (matching the "góc trên bên trái", "ở giữa phía trên"...
+        position language prompt_test.txt itself uses) to absolute-positioning CSS. Falls back to
+        top-center for an unrecognized value rather than raising, since this is fed by an LLM
+        blueprint that could occasionally emit something slightly off-spec.
+        """
+        parts = position.replace("_", "-").split("-")
+        v = parts[0] if len(parts) > 0 else "top"
+        h = parts[1] if len(parts) > 1 else "center"
+        css = "position:absolute; "
+        css += {"top": "top:6%;", "middle": "top:50%; transform:translateY(-50%);", "bottom": "bottom:6%;"}.get(v, "top:6%;")
+        css += {"left": " left:6%; right:auto; text-align:left;",
+                "right": " right:6%; left:auto; text-align:right;",
+                "center": " left:6%; right:6%; text-align:center;"}.get(h, " left:6%; right:6%; text-align:center;")
+        return css
+
+    _PRODUCT_AD_TPL = Template("""<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Playfair+Display:wght@700;800;900&family=Dancing+Script:wght@700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 100vw; height: 100vh; }
+  .poster { position: relative; width: ${w}px; height: ${h}px; overflow: hidden; $bg_css }
+  .title-text {
+    font-family: '$title_font', sans-serif; font-weight: 900; font-size: $title_size;
+    line-height: 1.15; letter-spacing: 0.5px; text-transform: $title_transform;
+    $title_style_css
+  }
+  .subtitle-text {
+    font-family: '$subtitle_font', sans-serif; font-weight: 600; font-size: $subtitle_size;
+    line-height: 1.3; letter-spacing: 0.5px;
+    $subtitle_style_css
+  }
+  .stack-gap { margin-top: 2.5%; }
+</style></head>
+<body>
+  <div class="poster">
+    $body_html
+  </div>
+</body></html>""")
+
+    @classmethod
+    def _generate_product_ad(
+        cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None
+    ) -> str:
+        title_style = brief.get("title_style", "plain_light")
+        subtitle_style = brief.get("subtitle_style", "plain_light")
+        title_position = brief.get("title_position", "top-center")
+        subtitle_position = brief.get("subtitle_position")  # None -> stack under title (most prompts: "phía dưới")
+
+        title_html = f'<div class="title-text">{brief.get("title_text", "TIÊU ĐỀ SẢN PHẨM")}</div>'
+        subtitle_html = f'<div class="subtitle-text">{brief.get("subtitle_text", "Dòng mô tả phụ")}</div>'
+
+        if subtitle_position is None or subtitle_position == title_position:
+            # Stacked mode: both blocks share ONE zone, subtitle flows directly below title --
+            # matches the dominant prompt_test.txt pattern ("Ở góc trên... Phía dưới...", i.e.
+            # subtitle is relative to title's position, not an independently-placed zone).
+            body_html = (
+                f'<div style="{cls._zone_css(title_position)}">'
+                f'{title_html}<div class="stack-gap">{subtitle_html}</div></div>'
+            )
+        else:
+            # Independent mode: title and subtitle explicitly occupy different zones (e.g.
+            # prompt_test.txt line 1's inverted case -- small subtitle top-left, larger title
+            # middle-left).
+            body_html = (
+                f'<div style="{cls._zone_css(title_position)}">{title_html}</div>'
+                f'<div style="{cls._zone_css(subtitle_position)}">{subtitle_html}</div>'
+            )
+
+        return cls._PRODUCT_AD_TPL.substitute(
+            w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
+            title_font=brief.get("title_font", "Montserrat"),
+            title_size=brief.get("title_size", "clamp(30px, 7vw, 64px)"),
+            title_transform=brief.get("title_transform", "uppercase"),
+            title_style_css=cls.HERO_STYLE_CSS.get(title_style, cls.HERO_STYLE_CSS["plain_light"]),
+            subtitle_font=brief.get("subtitle_font", "Montserrat"),
+            subtitle_size=brief.get("subtitle_size", "clamp(14px, 3vw, 24px)"),
+            subtitle_style_css=cls.HERO_STYLE_CSS.get(subtitle_style, cls.HERO_STYLE_CSS["plain_light"]),
+            body_html=body_html,
         )
 
 
