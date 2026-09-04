@@ -8,8 +8,8 @@ TENDOO AI - CẤP ĐỘ 2 PROBE: OBJECT DETECTION + MAXIMAL EMPTY RECTANGLE (GPU
 
 WHY THIS SCRIPT?
   Answers a specific conditional decision ("nếu 2 GPU A30 cho phép, và độ trễ cho phép"): does
-  adding a lightweight open-vocabulary detector (YOLO-World) to find the hero-title and product
-  bounding boxes -- so a Maximal Empty Rectangle (src/tendoo/layout_geometry.py) can dynamically
+  adding a lightweight open-vocabulary detector (Grounding DINO) to find the hero-title and
+  product bounding boxes -- so a Maximal Empty Rectangle (src/tendoo/layout_geometry.py) can dynamically
   place the HTML secondary-content card instead of a fixed safe-zone percentage -- actually fit
   the existing 2x A30 VRAM budget (DiT on cuda:0, VAE+Qwen3 on cuda:1) and run fast enough to be
   worth it?
@@ -19,18 +19,31 @@ WHY THIS SCRIPT?
   detected boxes + the resulting safe rectangle) for visual QA. Wiring the computed rect into
   typography_engine.py's templates is a follow-up once this confirms it's worth the cost.
 
-WHY YOLO-World, NOT A VLM: this only needs BOUNDING BOXES for a couple of known-vocabulary
-classes (the hero text region, the product) -- an open-vocabulary detector solves exactly this at
-~30-60ms with no risk of the "numerical coordinate blindness" a VLM would have if asked to output
-pixel coordinates directly (see AGENTS.md discussion).
+WHY A DETECTOR, NOT A VLM: this only needs BOUNDING BOXES for a couple of known-vocabulary
+classes (the hero text region, the product) -- an open-vocabulary detector solves exactly this in
+tens of ms with no risk of the "numerical coordinate blindness" a VLM would have if asked to
+output pixel coordinates directly (see AGENTS.md discussion).
 
-USAGE:
-  pip install ultralytics   # first run also auto-downloads yolov8s-worldv2.pt (~25MB) from the
-                             # internet unless already cached -- flag if the server is offline.
+WHY Grounding DINO, NOT YOLO-World: YOLO-World's weights are hosted on GitHub Releases, not
+Hugging Face Hub -- unusable on a network whose only egress is an HF-repo-mirroring proxy.
+Grounding DINO ("IDEA-Research/grounding-dino-tiny") is a genuine Hugging Face Hub model repo,
+loaded via standard `transformers.AutoModelForZeroShotObjectDetection.from_pretrained(...)`, so it
+downloads via the exact `{repo_id}/resolve/{revision}/{file}` pattern such a proxy forwards.
+
+USAGE (on a network with normal Hugging Face access):
   python scripts/probe_layout_safezone_detection.py --image images/commercial_steps8_g1.5_seed123_576x1024.png \\
       --hero_classes "3d text,title lettering,neon sign" --product_classes "headphones"
 
-  python scripts/probe_layout_safezone_detection.py --image <path> --category feedback --orientation portrait
+USAGE (internal network, HF reachable only through a mirroring proxy):
+  1. Mirror the repo to a local directory using whatever internal downloader script already
+     works for you (must fetch every file the repo lists, not just the one .safetensors --
+     config.json/preprocessor_config.json/tokenizer files etc. are also required):
+       python <your_hf_proxy_downloader>.py IDEA-Research/grounding-dino-tiny --out ./models/grounding-dino-tiny
+     Do NOT commit that downloader script or its auth token into this repo -- keep it local /
+     outside version control, it carries an internal credential.
+  2. Point this probe at the local mirror instead of the repo id:
+       python scripts/probe_layout_safezone_detection.py --image <path> \\
+           --model_dir ./models/grounding-dino-tiny --category feedback --orientation portrait
 ==================================================================================================
 """
 
@@ -64,46 +77,64 @@ def run_detection(
     product_classes: List[str],
     device: str,
     conf: float = 0.15,
+    model_dir: str = "IDEA-Research/grounding-dino-tiny",
 ) -> Tuple[Dict[str, Any], float, float]:
     """
-    Loads YOLO-World, runs it once against the given open-vocab classes.
+    Loads Grounding DINO (open-vocab detection via free-text prompts), runs it once.
     Returns (result_dict, load_time_s, infer_time_s).
+
+    NOTE: uses Grounding DINO instead of ultralytics YOLO-World deliberately -- YOLO-World's
+    weights are hosted on GitHub Releases, not Hugging Face Hub, which doesn't work through an
+    internal network that only has an HF-mirroring proxy. Grounding DINO ("IDEA-Research/
+    grounding-dino-tiny") is a genuine, canonical Hugging Face Hub model repo loaded via standard
+    `transformers.AutoModelForZeroShotObjectDetection.from_pretrained(...)`, so it downloads via
+    the exact `{repo_id}/resolve/{revision}/{file}` URL pattern an HF-repo-mirroring proxy
+    forwards. `model_dir` can be either that HF repo id (if the proxy/network allows on-the-fly
+    `from_pretrained` calls) OR a local directory the repo was already mirrored into (e.g. via
+    your own internal proxy download script) -- transformers treats both identically.
     """
     import torch
+    from PIL import Image
+    from transformers import AutoModelForZeroShotObjectDetection, AutoProcessor
 
     mem_before = get_gpu_mem_mb(device)
     t0 = time.time()
-    from ultralytics import YOLOWorld
-
-    model = YOLOWorld("yolov8s-worldv2.pt")
-    all_classes = hero_classes + product_classes
-    model.set_classes(all_classes)
-    model.to(device)
+    processor = AutoProcessor.from_pretrained(model_dir)
+    model = AutoModelForZeroShotObjectDetection.from_pretrained(model_dir).to(device).eval()
     load_time = time.time() - t0
     mem_after_load = get_gpu_mem_mb(device)
 
+    all_classes = hero_classes + product_classes
+    # Grounding DINO expects a single lowercase prompt with classes separated by " . "
+    text_prompt = " . ".join(c.lower() for c in all_classes) + " ."
+    image = Image.open(image_path).convert("RGB")
+
     t1 = time.time()
+    inputs = processor(images=image, text=text_prompt, return_tensors="pt").to(device)
     with torch.no_grad():
-        results = model.predict(image_path, conf=conf, verbose=False)
+        outputs = model(**inputs)
+    results = processor.post_process_grounded_object_detection(
+        outputs, inputs["input_ids"], threshold=conf, text_threshold=conf,
+        target_sizes=[image.size[::-1]],  # (height, width)
+    )[0]
     infer_time = time.time() - t1
     mem_after_infer = get_gpu_mem_mb(device)
 
-    r = results[0]
+    hero_set = {c.lower() for c in hero_classes}
     boxes_out = []
-    for box in r.boxes:
-        cls_idx = int(box.cls.item())
-        cls_name = all_classes[cls_idx] if cls_idx < len(all_classes) else f"class_{cls_idx}"
-        xyxy = box.xyxy[0].tolist()
+    for label, score, box in zip(results["labels"], results["scores"], results["boxes"]):
+        cls_name = label.strip()
+        xyxy = box.tolist()
         boxes_out.append({
             "class": cls_name,
-            "is_hero_class": cls_name in hero_classes,
-            "confidence": round(float(box.conf.item()), 3),
+            "is_hero_class": any(h in cls_name or cls_name in h for h in hero_set),
+            "confidence": round(float(score), 3),
             "bbox_xyxy": [round(v, 1) for v in xyxy],
         })
 
     result = {
         "image": image_path,
-        "canvas_size": [r.orig_shape[1], r.orig_shape[0]],  # (w, h)
+        "canvas_size": [image.size[0], image.size[1]],  # (w, h)
         "detections": boxes_out,
         "gpu_mem_mb": {
             "before_load": round(mem_before, 1),
@@ -150,6 +181,9 @@ def main():
                          help="Device to run the detector on (default cuda:1 -- same GPU as VAE/Qwen3, "
                               "since this runs as post-processing after DiT on cuda:0 is already done)")
     parser.add_argument("--output_dir", type=str, default="output_layout_safezone_probe")
+    parser.add_argument("--model_dir", type=str, default="IDEA-Research/grounding-dino-tiny",
+                         help="HF repo id, or a local directory the repo was already mirrored into "
+                              "(e.g. via an internal HF-proxy downloader) if direct HF access is blocked.")
     args = parser.parse_args()
 
     out_path = Path(args.output_dir)
@@ -162,12 +196,13 @@ def main():
     print(" [*] TENDOO AI - CẤP ĐỘ 2: DETECTION + MER FEASIBILITY PROBE")
     print("=" * 100)
     print(f"  Image           : {args.image}")
+    print(f"  Model dir/repo  : {args.model_dir}")
     print(f"  Hero classes    : {hero_classes}")
     print(f"  Product classes : {product_classes}")
     print(f"  Device          : {args.device}")
 
     result, load_time, infer_time = run_detection(
-        args.image, hero_classes, product_classes, args.device, conf=args.conf
+        args.image, hero_classes, product_classes, args.device, conf=args.conf, model_dir=args.model_dir
     )
 
     print(f"\n  [Timing] Model load  : {load_time:.3f}s (one-time, amortized across a whole batch/session)")
