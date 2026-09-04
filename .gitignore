@@ -266,4 +266,6 @@ logs/
 
 # Temporary Office Lock files & local Agent configs
 ~$*
+* - Copy.*
 .agents/
+scratch/
