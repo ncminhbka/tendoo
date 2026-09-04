@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tendoo Audio Hi-Res Poster</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800;900&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #050505;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden;
+    }
+
+    .poster-container {
+      position: relative;
+      width: 576px;
+      height: 1024px;
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+
+    /* ==========================================================================
+       1. TOP HEADER SAFE ZONE (y: 32px to 110px)
+       ========================================================================== */
+    .top-header {
+      position: absolute;
+      top: 36px;
+      left: 36px;
+      right: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 30;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: #FFFFFF;
+      text-transform: uppercase;
+      text-shadow: 0 0 12px rgba(0, 242, 254, 0.6);
+    }
+
+    .series-tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #00f2fe;
+      background: rgba(0, 242, 254, 0.12);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      padding: 4px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+    }
+
+    .promo-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+      color: #FFFFFF;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      border-radius: 999px;
+      box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4), inset 0 1px 1px rgba(255,255,255,0.4);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      transform: rotate(-2deg);
+    }
+
+    /* ==========================================================================
+       2. BOTTOM PODIUM SAFE ZONE (y: 710px to 840px)
+       ========================================================================== */
+    .podium-overlay {
+      position: absolute;
+      top: 715px;
+      left: 36px;
+      right: 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      z-index: 30;
+    }
+
+    .social-proof {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(13, 20, 27, 0.65);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 18px;
+      border-radius: 999px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .stars {
+      color: #fbbf24;
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    .rating-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .rating-sep {
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 12px;
+    }
+
+    .rating-reviews {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .specs-strip {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .spec-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      background: rgba(13, 20, 27, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .spec-icon {
+      font-size: 13px;
+    }
+
+    /* ==========================================================================
+       3. BOTTOM FLOOR & ACTION BAR (y: 860px to 990px)
+       ========================================================================== */
+    .bottom-cta-bar {
+      position: absolute;
+      bottom: 40px;
+      left: 36px;
+      right: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 30;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 28px;
+      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+      color: #0b132b;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.8px;
+      border-radius: 999px;
+      text-decoration: none;
+      box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4), inset 0 1px 1px rgba(255,255,255,0.6);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .cta-arrow {
+      font-size: 15px;
+      font-weight: 900;
+      transition: transform 0.2s;
+    }
+
+    .contact-details {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .contact-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hotline-highlight {
+      color: #00f2fe;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="poster-container">
+    <!-- 1. TOP HEADER SAFE ZONE -->
+    <div class="top-header">
+      <div class="brand-group">
+        <span class="brand-logo">TENDOO</span>
+        <span class="series-tag">Hi-Res Audio</span>
+      </div>
+      <div class="promo-pill">
+        <span>⚡ GIẢM 30%</span>
+      </div>
+    </div>
+
+    <!-- 2. PODIUM MIDDLE OVERLAY (Positioned below headphones, above neon floor) -->
+    <div class="podium-overlay">
+      <div class="social-proof">
+        <span class="stars">★★★★★</span>
+        <span class="rating-val">4.9/5</span>
+        <span class="rating-sep">•</span>
+        <span class="rating-reviews">2.4k+ đánh giá</span>
+      </div>
+
+      <div class="specs-strip">
+        <div class="spec-item">
+          <span class="spec-icon">🎧</span>
+          <span>ANC 45dB</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-icon">🔋</span>
+          <span>Pin 40 Giờ</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-icon">⚡</span>
+          <span>Sạc Nhanh 10m</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. BOTTOM CTA & CONTACT BAR -->
+    <div class="bottom-cta-bar">
+      <a href="#" class="cta-btn">
+        <span>SỞ HỮU NGAY</span>
+        <span class="cta-arrow">➔</span>
+      </a>
+      <div class="contact-details">
+        <div class="contact-line">
+          <span>Hotline:</span>
+          <span class="hotline-highlight">1800 8198</span>
+        </div>
+        <div class="contact-line">
+          <span>Website: www.tendoo.ai</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
