@@ -269,3 +269,13 @@ logs/
 * - Copy.*
 .agents/
 scratch/
+
+# Heavy generated output directories (HTML/PNG probe artifacts, not source)
+output_diverse_cases/
+output_typography_tests/
+
+# Docs & planning/scratch text artifacts -- not core code, kept local only
+docs/
+prompt.txt
+prompt_test.txt
+project_roadmap.txt
