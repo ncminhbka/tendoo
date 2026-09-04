@@ -317,14 +317,26 @@ class PosterTemplateEngine:
         background_image_path: Optional[str] = None,
         category: str = "generic",
     ) -> str:
-        """Dispatches to the template matching `category`, defaulting to the generic layout."""
+        """
+        Dispatches to the template matching (category, orientation), defaulting to the generic
+        layout. Orientation is a coarse "portrait" (h > w -- 9:16, 2:3...) vs "landscape/square"
+        (w >= h -- 1:1, 4:5, 16:9...) split: these two buckets need genuinely different STRUCTURE
+        (single-column stack vs side-by-side/grid), not just proportional scaling of the same
+        layout -- see AGENTS.md discussion: fixed-px templates tuned for 1024x1024 broke outright
+        (wrapped text, overlapping bands) when reused on 576x1024 or 1024x576 unchanged.
+        """
+        orientation = "portrait" if analysis.height > analysis.width else "landscape"
         dispatch = {
-            "grand_opening": cls._generate_grand_opening,
-            "feedback": cls._generate_feedback_card,
-            "recruitment": cls._generate_recruitment,
-            "menu": cls._generate_menu,
+            ("grand_opening", "landscape"): cls._generate_grand_opening,
+            ("grand_opening", "portrait"): cls._generate_grand_opening_portrait,
+            ("feedback", "landscape"): cls._generate_feedback_card,
+            ("feedback", "portrait"): cls._generate_feedback_card_portrait,
+            ("recruitment", "landscape"): cls._generate_recruitment,
+            ("recruitment", "portrait"): cls._generate_recruitment_portrait,
+            ("menu", "landscape"): cls._generate_menu,
+            ("menu", "portrait"): cls._generate_menu_portrait,
         }
-        fn = dispatch.get(category)
+        fn = dispatch.get((category, orientation))
         if fn is not None:
             return fn(analysis, brief, background_image_path)
         return cls._generate_generic(analysis, brief, background_image_path)
@@ -733,33 +745,37 @@ class PosterTemplateEngine:
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Plus Jakarta Sans', sans-serif; }
     .poster { position: relative; width: ${w}px; height: ${h}px; overflow: hidden; $bg_css box-shadow: 0 25px 60px rgba(0,0,0,0.12); border-radius: 32px; }
-    .top-bar { position: absolute; top: 48px; left: 56px; right: 56px; display: flex; justify-content: space-between; align-items: center; z-index: 20; }
-    .spa-logo { font-family: 'Quicksand', sans-serif; font-size: 26px; font-weight: 800; color: #0E9F6E; display: flex; align-items: center; gap: 8px; text-shadow: 0 2px 8px rgba(255,255,255,0.6); }
-    .spa-badge { background: #FFE4E6; color: #E02424; font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 14px; padding: 10px 20px; border-radius: 999px; border: 1px solid #FECDD3; box-shadow: 0 4px 12px rgba(224, 36, 36, 0.1); }
+    /* NOTE: bottom-stack uses flex-column + gap (not per-element top:Npx) precisely so this
+       template survives BOTH 1024x1024 (roomy) and shorter landscape canvases like 1024x576
+       (16:9) without elements overlapping or being pushed off-canvas -- see AGENTS.md discussion:
+       fixed top:250px/top:620px/bottom:50px broke outright once height dropped from 1024 to 576. */
+    .top-bar { position: absolute; top: 4%; left: 5.5%; right: 5.5%; display: flex; justify-content: space-between; align-items: center; z-index: 20; }
+    .spa-logo { font-family: 'Quicksand', sans-serif; font-size: 26px; font-weight: 800; color: #0E9F6E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; text-shadow: 0 2px 8px rgba(255,255,255,0.6); }
+    .spa-badge { background: #FFE4E6; color: #E02424; font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 14px; padding: 10px 20px; border-radius: 999px; border: 1px solid #FECDD3; white-space: nowrap; }
+    .bottom-stack { position: absolute; bottom: 4%; left: 5.5%; right: 5.5%; display: flex; flex-direction: column; gap: 1.8%; z-index: 20; max-height: 78%; }
     .feedback-card {
-      position: absolute; top: 250px; left: 70px; right: 70px;
       background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border: 2px solid rgba(255, 255, 255, 0.9); border-radius: 28px; padding: 40px 48px;
-      box-shadow: 0 20px 40px rgba(0, 150, 110, 0.12), 0 1px 3px rgba(0,0,0,0.05); z-index: 20;
+      border: 2px solid rgba(255, 255, 255, 0.9); border-radius: 24px; padding: 3% 3.5%;
+      box-shadow: 0 20px 40px rgba(0, 150, 110, 0.12), 0 1px 3px rgba(0,0,0,0.05);
+      display: flex; flex-direction: column; gap: 1.4%;
     }
-    .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .stars { color: #F59E0B; font-size: 26px; letter-spacing: 4px; }
-    .verified-pill { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #057A55; background: #DEF7EC; padding: 6px 14px; border-radius: 999px; }
-    .quote-text { font-size: 21px; line-height: 1.6; color: #374151; font-weight: 500; font-style: italic; margin-bottom: 24px; position: relative; }
-    .quote-text::before { content: "\\201C"; font-size: 70px; color: #A7F3D0; font-family: serif; position: absolute; left: -32px; top: -25px; line-height: 1; opacity: 0.6; }
-    .customer-info { display: flex; align-items: center; gap: 16px; border-top: 1px solid #E5E7EB; padding-top: 18px; }
-    .avatar { width: 52px; height: 52px; border-radius: 50%; background: #D1FAE5; display: flex; justify-content: center; align-items: center; font-size: 26px; border: 2px solid #0E9F6E; }
-    .cust-name { font-size: 17px; font-weight: 700; color: #111928; }
-    .cust-sub { font-size: 13px; color: #6B7280; font-weight: 500; }
-    .features-row { position: absolute; top: 620px; left: 70px; right: 70px; display: flex; justify-content: space-between; gap: 14px; z-index: 20; }
-    .f-pill { flex: 1; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 18px; padding: 20px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
-    .f-icon { font-size: 28px; margin-bottom: 8px; }
-    .f-text { font-size: 14px; font-weight: 700; color: #1F2A37; line-height: 1.3; }
-    .bottom-cta-strip { position: absolute; bottom: 50px; left: 70px; right: 70px; background: linear-gradient(135deg, #0E9F6E 0%, #057A55 100%); border-radius: 22px; padding: 22px 36px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 12px 30px rgba(14, 159, 110, 0.35); z-index: 20; }
-    .offer-box { color: #FFFFFF; }
-    .offer-title { font-family: 'Quicksand', sans-serif; font-size: 22px; font-weight: 800; }
-    .offer-desc { font-size: 14px; opacity: 0.9; margin-top: 2px; }
-    .btn-booking { background: #FFFFFF; color: #046C4E; font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 16px; padding: 14px 30px; border-radius: 999px; text-decoration: none; box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
+    .review-header { display: flex; justify-content: space-between; align-items: center; }
+    .stars { color: #F59E0B; font-size: 24px; letter-spacing: 3px; }
+    .verified-pill { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #057A55; background: #DEF7EC; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
+    .quote-text { font-size: 19px; line-height: 1.5; color: #374151; font-weight: 500; font-style: italic; }
+    .customer-info { display: flex; align-items: center; gap: 14px; border-top: 1px solid #E5E7EB; padding-top: 1.2%; }
+    .avatar { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: #D1FAE5; display: flex; justify-content: center; align-items: center; font-size: 22px; border: 2px solid #0E9F6E; }
+    .cust-name { font-size: 16px; font-weight: 700; color: #111928; }
+    .cust-sub { font-size: 12px; color: #6B7280; font-weight: 500; }
+    .features-row { display: flex; justify-content: space-between; gap: 12px; }
+    .f-pill { flex: 1; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 16px; padding: 14px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+    .f-icon { font-size: 24px; margin-bottom: 6px; }
+    .f-text { font-size: 12.5px; font-weight: 700; color: #1F2A37; line-height: 1.25; }
+    .bottom-cta-strip { background: linear-gradient(135deg, #0E9F6E 0%, #057A55 100%); border-radius: 20px; padding: 2.2% 3%; display: flex; justify-content: space-between; align-items: center; gap: 12px; box-shadow: 0 12px 30px rgba(14, 159, 110, 0.35); }
+    .offer-box { color: #FFFFFF; min-width: 0; }
+    .offer-title { font-family: 'Quicksand', sans-serif; font-size: 19px; font-weight: 800; }
+    .offer-desc { font-size: 13px; opacity: 0.9; margin-top: 2px; }
+    .btn-booking { flex-shrink: 0; background: #FFFFFF; color: #046C4E; font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 15px; padding: 12px 24px; border-radius: 999px; text-decoration: none; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -768,29 +784,31 @@ class PosterTemplateEngine:
       <div class="spa-logo">$brand</div>
       <div class="spa-badge">$top_badge</div>
     </div>
-    <div class="feedback-card">
-      <div class="review-header">
-        <div class="stars">$stars</div>
-        <div class="verified-pill">$verified_label</div>
-      </div>
-      <div class="quote-text">$quote_text</div>
-      <div class="customer-info">
-        <div class="avatar">$avatar_emoji</div>
-        <div>
-          <div class="cust-name">$customer_name</div>
-          <div class="cust-sub">$customer_sub</div>
+    <div class="bottom-stack">
+      <div class="feedback-card">
+        <div class="review-header">
+          <div class="stars">$stars</div>
+          <div class="verified-pill">$verified_label</div>
+        </div>
+        <div class="quote-text">$quote_text</div>
+        <div class="customer-info">
+          <div class="avatar">$avatar_emoji</div>
+          <div>
+            <div class="cust-name">$customer_name</div>
+            <div class="cust-sub">$customer_sub</div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="features-row">
-      $features_html
-    </div>
-    <div class="bottom-cta-strip">
-      <div class="offer-box">
-        <div class="offer-title">$offer_title</div>
-        <div class="offer-desc">$offer_desc</div>
+      <div class="features-row">
+        $features_html
       </div>
-      <a href="#" class="btn-booking">$cta_text</a>
+      <div class="bottom-cta-strip">
+        <div class="offer-box">
+          <div class="offer-title">$offer_title</div>
+          <div class="offer-desc">$offer_desc</div>
+        </div>
+        <a href="#" class="btn-booking">$cta_text</a>
+      </div>
     </div>
   </div>
 </body>
@@ -983,6 +1001,265 @@ class PosterTemplateEngine:
             tagline=brief.get("tagline", "Thưởng thức tinh hoa ẩm thực thủ công từ nguyên liệu cao cấp"),
             categories_html="".join(cat_html_parts),
             footer_note=brief.get("footer_note", "✨ Giảm 10% tổng hóa đơn khi check-in tại quán"),
+            hotline=brief.get("hotline", "📞 Hotline: 1800 8198"),
+        )
+
+
+    # ----------------------------------------------------------------------------------------
+    # PORTRAIT VARIANTS (9:16, 2:3, 4:5 -- h > w). Same brief keys as their landscape
+    # counterparts above, but restructured, not just rescaled: a top header (absolute, overlays
+    # wherever the hero photo puts its own header-safe zone) + a BOTTOM STACK CONTAINER that is
+    # itself absolutely positioned but whose CHILDREN flow via flex-column/gap -- so however many
+    # secondary blocks exist, they stack without needing per-element top:Npx tuning. Font sizes
+    # use vw units so the same markup scales across the whole portrait bucket (576px..832px wide),
+    # not just the one exact width it was eyeballed against. Long single-line labels get
+    # white-space:nowrap + text-overflow:ellipsis as a safety net against the wrapping breakage
+    # seen when the landscape templates were reused unchanged on a 576x1024 canvas.
+    # ----------------------------------------------------------------------------------------
+
+    _GRAND_OPENING_PORTRAIT_TPL = Template("""<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><title>Grand Opening (Portrait)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:100vw; height:100vh; font-family:'Plus Jakarta Sans', sans-serif; }
+  .poster { position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css }
+  .header { position:absolute; top:4%; left:6%; right:6%; display:flex; justify-content:space-between; align-items:center; gap:12px; z-index:20; }
+  .brand-title { font-size:4.2vw; font-weight:900; color:#FFB703; letter-spacing:1px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:58%; text-shadow:0 0 16px rgba(255,183,3,0.5); }
+  .date-pill { background:rgba(255,255,255,0.12); backdrop-filter:blur(10px); border:1px solid rgba(255,183,3,0.4); padding:2vw 3.5vw; border-radius:999px; font-size:2.8vw; font-weight:700; color:#FFF; white-space:nowrap; }
+  .bottom-stack { position:absolute; bottom:4%; left:6%; right:6%; display:flex; flex-direction:column; gap:3%; z-index:20; }
+  .badge-pill { align-self:center; background:linear-gradient(135deg,#E63946 0%,#D90429 100%); border:3px dashed #FFF; border-radius:999px; padding:3vw 6vw; text-align:center; box-shadow:0 10px 28px rgba(230,57,70,0.55); }
+  .badge-main-p { font-size:7vw; font-weight:900; color:#FFF; line-height:1; }
+  .badge-off-p { font-size:3vw; font-weight:800; color:#FFD166; letter-spacing:1px; }
+  .info-block { background:rgba(20,10,5,0.75); backdrop-filter:blur(18px); border:1px solid rgba(255,183,3,0.25); border-radius:20px; padding:5vw; display:flex; flex-direction:column; gap:2.5vw; }
+  .deal-title { font-size:4vw; font-weight:800; color:#FFF; }
+  .deal-sub { font-size:3.2vw; font-weight:500; color:#FFB703; }
+  .cta-btn { text-align:center; background:linear-gradient(135deg,#FB8500 0%,#FFB703 100%); color:#000; font-weight:900; font-size:4vw; letter-spacing:0.5px; padding:3.5vw; border-radius:999px; text-decoration:none; box-shadow:0 8px 22px rgba(251,133,0,0.5); }
+</style></head>
+<body><div class="poster">
+  <div class="header"><div class="brand-title">$brand</div><div class="date-pill">$date_range</div></div>
+  <div class="bottom-stack">
+    <div class="badge-pill"><div class="badge-main-p">$badge_percent</div><div class="badge-off-p">$badge_label $badge_sub</div></div>
+    <div class="info-block">
+      <div class="deal-title">$address</div>
+      <div class="deal-sub">$offer_desc</div>
+      <a href="#" class="cta-btn">$cta_text</a>
+    </div>
+  </div>
+</div></body></html>""")
+
+    @classmethod
+    def _generate_grand_opening_portrait(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+        return cls._GRAND_OPENING_PORTRAIT_TPL.substitute(
+            w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
+            brand=brief.get("brand", "🍔 THE BURGER CRAFT"),
+            date_range=brief.get("date_range", "05.09 - 15.09"),
+            badge_label=brief.get("badge_label", "GIẢM"),
+            badge_percent=brief.get("badge_percent", "50%"),
+            badge_sub=brief.get("badge_sub", "TOÀN MENU"),
+            address=brief.get("address", "📍 128 Nguyễn Trãi, Q1"),
+            offer_desc=brief.get("offer_desc", "Tặng 01 Coca-Cola cho hóa đơn từ 99K • Hotline: 1900 8899"),
+            cta_text=brief.get("cta_text", "NHẬN VOUCHER ➔"),
+        )
+
+    _FEEDBACK_PORTRAIT_TPL = Template("""<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><title>Feedback (Portrait)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:100vw; height:100vh; font-family:'Plus Jakarta Sans', sans-serif; }
+  .poster { position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css }
+  .top-bar { position:absolute; top:4%; left:6%; right:6%; display:flex; justify-content:space-between; align-items:center; gap:10px; z-index:20; }
+  .spa-logo { font-family:'Quicksand',sans-serif; font-size:4.2vw; font-weight:800; color:#0E9F6E; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60%; text-shadow:0 2px 6px rgba(255,255,255,0.6); }
+  .spa-badge { background:#FFE4E6; color:#E02424; font-weight:800; font-size:2.6vw; padding:1.8vw 3vw; border-radius:999px; white-space:nowrap; }
+  .bottom-stack { position:absolute; bottom:3%; left:6%; right:6%; display:flex; flex-direction:column; gap:2.5%; z-index:20; }
+  .feedback-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(18px); border:2px solid rgba(255,255,255,0.9); border-radius:22px; padding:5vw; display:flex; flex-direction:column; gap:2.5vw; }
+  .review-header { display:flex; justify-content:space-between; align-items:center; }
+  .stars { color:#F59E0B; font-size:4.5vw; letter-spacing:2px; }
+  .verified-pill { font-size:2.4vw; font-weight:700; color:#057A55; background:#DEF7EC; padding:1.2vw 2.6vw; border-radius:999px; white-space:nowrap; }
+  .quote-text { font-size:3.6vw; line-height:1.5; color:#374151; font-weight:500; font-style:italic; }
+  .customer-info { display:flex; align-items:center; gap:3vw; border-top:1px solid #E5E7EB; padding-top:3vw; }
+  .avatar { width:9vw; height:9vw; border-radius:50%; background:#D1FAE5; display:flex; justify-content:center; align-items:center; font-size:4.5vw; border:2px solid #0E9F6E; flex-shrink:0; }
+  .cust-name { font-size:3.2vw; font-weight:700; color:#111928; }
+  .cust-sub { font-size:2.6vw; color:#6B7280; font-weight:500; }
+  .features-col { display:flex; flex-direction:column; gap:2vw; }
+  .f-pill { background:#FFFFFF; border:1px solid #E5E7EB; border-radius:14px; padding:3vw 4vw; display:flex; align-items:center; gap:3vw; }
+  .f-icon { font-size:5vw; }
+  .f-text { font-size:3vw; font-weight:700; color:#1F2A37; }
+  .bottom-cta-strip { background:linear-gradient(135deg,#0E9F6E 0%,#057A55 100%); border-radius:18px; padding:4vw 5vw; display:flex; flex-direction:column; gap:2vw; }
+  .offer-title { font-family:'Quicksand',sans-serif; font-size:3.6vw; font-weight:800; color:#FFF; }
+  .offer-desc { font-size:2.8vw; color:#FFF; opacity:0.9; }
+  .btn-booking { align-self:flex-start; background:#FFFFFF; color:#046C4E; font-weight:800; font-size:3.2vw; padding:2.8vw 5vw; border-radius:999px; text-decoration:none; }
+</style></head>
+<body><div class="poster">
+  <div class="top-bar"><div class="spa-logo">$brand</div><div class="spa-badge">$top_badge</div></div>
+  <div class="bottom-stack">
+    <div class="feedback-card">
+      <div class="review-header"><div class="stars">$stars</div><div class="verified-pill">$verified_label</div></div>
+      <div class="quote-text">$quote_text</div>
+      <div class="customer-info"><div class="avatar">$avatar_emoji</div><div><div class="cust-name">$customer_name</div><div class="cust-sub">$customer_sub</div></div></div>
+    </div>
+    <div class="features-col">$features_html</div>
+    <div class="bottom-cta-strip">
+      <div class="offer-title">$offer_title</div>
+      <div class="offer-desc">$offer_desc</div>
+      <a href="#" class="btn-booking">$cta_text</a>
+    </div>
+  </div>
+</div></body></html>""")
+
+    @classmethod
+    def _generate_feedback_card_portrait(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+        features = brief.get("features", [
+            {"icon": "🌿", "text": "Chất Lượng Hữu Cơ 100% Nhập Khẩu"},
+            {"icon": "✂️", "text": "Chuyên Nghiệp Theo Yêu Cầu Riêng"},
+            {"icon": "🕊️", "text": "Không Gian Mở, Trải Nghiệm Thoải Mái"},
+        ])
+        features_html = "".join(
+            f'<div class="f-pill"><div class="f-icon">{f.get("icon","✨")}</div><div class="f-text">{f.get("text","")}</div></div>'
+            for f in features
+        )
+        return cls._FEEDBACK_PORTRAIT_TPL.substitute(
+            w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
+            brand=brief.get("brand", "🐾 PAWPARADISE SPA"),
+            top_badge=brief.get("top_badge", "✨ CHUẨN HÀN QUỐC"),
+            stars=brief.get("stars", "★★★★★"),
+            verified_label=brief.get("verified_label", "✔ ĐÃ TRẢI NGHIỆM"),
+            quote_text=brief.get("quote_text", "Dịch vụ tuyệt vời, nhân viên chuyên nghiệp và tận tâm, chắc chắn sẽ quay lại!"),
+            avatar_emoji=brief.get("avatar_emoji", "🐩"),
+            customer_name=brief.get("customer_name", "Khách hàng thân thiết"),
+            customer_sub=brief.get("customer_sub", "Đã trải nghiệm dịch vụ Premium"),
+            features_html=features_html,
+            offer_title=brief.get("offer_title", "🎁 ƯU ĐÃI ĐẶC BIỆT CHO KHÁCH MỚI"),
+            offer_desc=brief.get("offer_desc", "Áp dụng khi đặt lịch lần đầu trong tuần này!"),
+            cta_text=brief.get("cta_text", "ĐẶT LỊCH NGAY ➔"),
+        )
+
+    _RECRUITMENT_PORTRAIT_TPL = Template("""<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><title>Recruitment (Portrait)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:100vw; height:100vh; font-family:'Plus Jakarta Sans', sans-serif; }
+  .poster { position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css }
+  .rec-header { position:absolute; top:3.5%; left:6%; right:6%; display:flex; justify-content:space-between; align-items:center; gap:10px; z-index:20; }
+  .company-logo { font-size:3.6vw; font-weight:900; color:#38BDF8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60%; }
+  .urgency-badge { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#F87171; font-size:2.4vw; font-weight:700; padding:1.6vw 3vw; border-radius:999px; white-space:nowrap; }
+  .frosted-box { position:absolute; bottom:3%; left:6%; right:6%; background:rgba(15,23,42,0.7); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.14); border-radius:22px; padding:5vw; display:flex; flex-direction:column; gap:3vw; max-height:70%; }
+  .salary-tag { align-self:flex-start; background:linear-gradient(135deg,#0284C7 0%,#0369A1 100%); color:#FFF; font-weight:800; font-size:3.4vw; padding:2vw 4vw; border-radius:12px; }
+  .col-title { font-size:2.8vw; font-weight:800; color:#94A3B8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:1.5vw; }
+  .checklist { list-style:none; display:flex; flex-direction:column; gap:2vw; }
+  .check-item { display:flex; align-items:flex-start; gap:2vw; font-size:2.8vw; color:#E2E8F0; line-height:1.4; font-weight:500; }
+  .check-icon { color:#38BDF8; font-weight:900; }
+  .rec-footer { display:flex; flex-direction:column; gap:2vw; border-top:1px solid rgba(255,255,255,0.1); padding-top:3vw; }
+  .contact-email { color:#38BDF8; font-weight:700; font-size:3vw; }
+  .apply-btn { text-align:center; background:linear-gradient(135deg,#38BDF8 0%,#0284C7 100%); color:#020617; font-weight:800; font-size:3.4vw; padding:3.2vw; border-radius:999px; text-decoration:none; }
+</style></head>
+<body><div class="poster">
+  <div class="rec-header"><div class="company-logo">$company</div><div class="urgency-badge">$deadline</div></div>
+  <div class="frosted-box">
+    <div class="salary-tag">$salary</div>
+    <div>
+      <div class="col-title">📋 $pos_label</div>
+      <ul class="checklist">$requirements_html</ul>
+    </div>
+    <div>
+      <div class="col-title">🎁 QUYỀN LỢI</div>
+      <ul class="checklist">$benefits_html</ul>
+    </div>
+    <div class="rec-footer">
+      <div style="font-size:2.6vw;color:#94A3B8;">$contact_line1</div>
+      <div class="contact-email">$contact_email</div>
+      <a href="#" class="apply-btn">$cta_text</a>
+    </div>
+  </div>
+</div></body></html>""")
+
+    @classmethod
+    def _generate_recruitment_portrait(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+        requirements = brief.get("requirements", [
+            "Tối thiểu 2 năm kinh nghiệm trong lĩnh vực liên quan.",
+            "Có tư duy chủ động, khả năng làm việc độc lập tốt.",
+        ])
+        benefits = brief.get("benefits", [
+            "Thưởng dự án theo quý, đãi ngộ cạnh tranh.",
+            "Môi trường làm việc hiện đại, đồng nghiệp thân thiện.",
+        ])
+        req_html = "".join(f'<li class="check-item"><span class="check-icon">✔</span><span>{r}</span></li>' for r in requirements)
+        ben_html = "".join(f'<li class="check-item"><span class="check-icon">★</span><span>{b}</span></li>' for b in benefits)
+        return cls._RECRUITMENT_PORTRAIT_TPL.substitute(
+            w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
+            company=brief.get("company", "⚡ TENDOO AI LAB"),
+            deadline=brief.get("deadline", "HẠN: 30.09"),
+            pos_label=brief.get("pos_label", "YÊU CẦU ỨNG VIÊN"),
+            salary=brief.get("salary", "THOẢ THUẬN"),
+            requirements_html=req_html,
+            benefits_html=ben_html,
+            contact_line1=brief.get("contact_line1", "Gửi CV & Portfolio:"),
+            contact_email=brief.get("contact_email", "careers@tendoo.ai"),
+            cta_text=brief.get("cta_text", "ỨNG TUYỂN NGAY ➔"),
+        )
+
+    _MENU_PORTRAIT_TPL = Template("""<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><title>Menu (Portrait)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:100vw; height:100vh; font-family:'Plus Jakarta Sans', sans-serif; }
+  .poster { position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css padding:5vw; display:flex; flex-direction:column; justify-content:flex-end; gap:3vw; }
+  .sub-brand { font-size:2.6vw; font-weight:700; color:#D97706; letter-spacing:2px; text-transform:uppercase; text-align:center; }
+  .menu-desc { font-style:italic; font-size:2.8vw; color:#E7E5E4; text-align:center; text-shadow:0 2px 6px rgba(0,0,0,0.6); }
+  .menu-stack { display:flex; flex-direction:column; gap:5vw; background:rgba(10,6,4,0.6); backdrop-filter:blur(14px); border-radius:20px; padding:5vw; max-height:60%; overflow:hidden; }
+  .cat-title { font-family:'Playfair Display',serif; font-size:4vw; font-weight:700; color:#F59E0B; border-bottom:1px solid rgba(245,158,11,0.3); padding-bottom:1.5vw; margin-bottom:2vw; }
+  .item-list { display:flex; flex-direction:column; gap:2.5vw; }
+  .menu-row { display:flex; flex-direction:column; gap:0.5vw; }
+  .row-top { display:flex; align-items:baseline; justify-content:space-between; gap:2vw; }
+  .item-name { font-size:3.2vw; font-weight:700; color:#FFFFFF; }
+  .dotted-line { flex-grow:1; border-bottom:1px dotted rgba(255,255,255,0.3); margin:0 1vw; }
+  .item-price { font-family:'Playfair Display',serif; font-size:3.4vw; font-weight:700; color:#F59E0B; white-space:nowrap; }
+  .badge-star { font-size:2vw; font-weight:800; background:#EF4444; color:#FFF; padding:0.5vw 1.5vw; border-radius:4px; margin-left:1.5vw; }
+  .menu-footer { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.25); border-radius:14px; padding:3vw 4vw; display:flex; flex-direction:column; gap:1.5vw; }
+  .foot-note { font-size:2.6vw; color:#FFFFFF; }
+  .foot-hotline { font-weight:700; color:#F59E0B; font-size:2.8vw; }
+</style></head>
+<body><div class="poster">
+  <div class="sub-brand">$sub_brand</div>
+  <div class="menu-desc">$tagline</div>
+  <div class="menu-stack">$categories_html</div>
+  <div class="menu-footer"><div class="foot-note">$footer_note</div><div class="foot-hotline">$hotline</div></div>
+</div></body></html>""")
+
+    @classmethod
+    def _generate_menu_portrait(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+        categories = brief.get("categories", [
+            {"title": "🍔 MÓN CHÍNH", "items": [
+                {"name": "Món Đặc Trưng", "price": "89.000đ", "badge": "BEST SELLER"},
+                {"name": "Món Signature", "price": "149.000đ"},
+            ]},
+            {"title": "🍹 ĐỒ UỐNG", "items": [
+                {"name": "Thức Uống Đặc Biệt", "price": "49.000đ", "badge": "HOT"},
+            ]},
+        ])
+        cat_html_parts = []
+        for cat in categories:
+            items_html = "".join(
+                '<div class="menu-row"><div class="row-top">'
+                f'<span class="item-name">{it.get("name","")}'
+                + (f'<span class="badge-star">{it["badge"]}</span>' if it.get("badge") else "")
+                + '</span><span class="dotted-line"></span>'
+                f'<span class="item-price">{it.get("price","")}</span></div></div>'
+                for it in cat.get("items", [])
+            )
+            cat_html_parts.append(
+                f'<div><div class="cat-title">{cat.get("title","")}</div>'
+                f'<div class="item-list">{items_html}</div></div>'
+            )
+        return cls._MENU_PORTRAIT_TPL.substitute(
+            w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
+            sub_brand=brief.get("sub_brand", "ARTISAN DINING EXPERIENCE"),
+            tagline=brief.get("tagline", "Thưởng thức tinh hoa ẩm thực thủ công"),
+            categories_html="".join(cat_html_parts),
+            footer_note=brief.get("footer_note", "✨ Giảm 10% khi check-in tại quán"),
             hotline=brief.get("hotline", "📞 Hotline: 1800 8198"),
         )
 
