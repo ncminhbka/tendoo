@@ -55,13 +55,13 @@ CASES_CONFIG: List[Dict[str, Any]] = [
     {
         "id": "case1_burger_opening",
         "title": "Burger Grand Opening",
-        "hero_text": "TƯNG BỪNG KHAI TRƯƠNG",
+        "hero_text": "TƯNG BỪNG\nKHAI TRƯƠNG",
         "font": "bevietnam",
         "prompt": (
-            "Poster quảng cáo ẩm thực cao cấp, chiếc bánh burger bò đẫm phô mai tan chảy bốc khói "
-            "nghi ngút trên thớt gỗ rustic sẫm màu, hạt tiêu và sốt bơ nấm bóng bẩy, ánh sáng studio "
-            "vàng ấm tương phản cao, dòng chữ tiêu đề lớn 3D mạ vàng kim loại nổi bật phát sáng ở phía trên, "
-            "bố cục cân đối điện ảnh sang trọng, không có watermark"
+            "Poster quảng cáo ẩm thực sang trọng, mảng tường gạch tối màu phẳng ở phía trên làm nền tĩnh lặng, "
+            "dòng chữ tiêu đề lớn 3D mạ vàng kim loại đúc nổi sắc nét ở phía trên, bên dưới là bàn gỗ với chiếc "
+            "bánh burger bò đẫm phô mai vàng ươm thơm ngon, ánh sáng studio tương phản cao, phong cách điện ảnh "
+            "sang trọng, không có watermark"
         ),
         "canvas_w": 1024,
         "canvas_h": 1024,
@@ -74,13 +74,12 @@ CASES_CONFIG: List[Dict[str, Any]] = [
     {
         "id": "case2_pet_spa",
         "title": "Pet Grooming & Spa Feedback",
-        "hero_text": "PET GROOMING & SPA",
+        "hero_text": "PET GROOMING\n& SPA",
         "font": "bevietnam",
         "prompt": (
-            "Poster quảng cáo dịch vụ thú cưng cao cấp, chú chó Poodle trắng xù đáng yêu sau khi cắt tỉa "
-            "lông bồng bềnh sạch sẽ mỉm cười trong tiệm spa tone pastel xanh mint và hồng phấn sáng sủa, "
-            "bọt xà phòng nhẹ nhàng, dòng chữ tiêu đề lớn 3D màu xanh ngọc phát sáng tươi tắn ở phía trên, "
-            "ánh sáng studio mềm mại trong trẻo, không có watermark"
+            "Poster quảng cáo dịch vụ thú cưng cao cấp, mảng tường màu xanh teal sẫm tối ở phía trên làm nền tĩnh, "
+            "dòng chữ tiêu đề lớn 3D mạ vàng phát sáng sắc nét ở phía trên, bên dưới là chú chó Poodle trắng xù sau "
+            "khi tắm cắt tỉa lông bồng bềnh sạch sẽ mỉm cười trong tiệm spa, ánh sáng studio mềm mại, không có watermark"
         ),
         "canvas_w": 1024,
         "canvas_h": 1024,
@@ -93,13 +92,12 @@ CASES_CONFIG: List[Dict[str, Any]] = [
     {
         "id": "case3_recruitment",
         "title": "Tech Talent Recruitment",
-        "hero_text": "SENIOR AI DESIGNER",
-        "font": "oswald",
+        "hero_text": "TUYỂN DỤNG\nAI DESIGNER",
+        "font": "bevietnam",
         "prompt": (
-            "Poster tuyển dụng công nghệ cao, không gian văn phòng AI research lab hiện đại với tường kính "
-            "và dải đèn led neon xanh dương cyberpunk, các kỹ sư làm việc mờ ảo có chiều sâu ở hậu cảnh, "
-            "dòng chữ tiêu đề lớn 3D kim loại chrome phản chiếu ánh sáng sắc nét ở phía trên, phong cách "
-            "điện ảnh tương lai tối giản, không có watermark"
+            "Poster tuyển dụng công nghệ cao, mảng tường kính tối màu phẳng ở phía trên làm nền tĩnh, "
+            "dòng chữ tiêu đề lớn 3D kim loại chrome phản chiếu ánh sáng sắc nét ở phía trên, các kỹ sư "
+            "làm việc mờ ảo có chiều sâu ở hậu cảnh phía dưới, phong cách điện ảnh hiện đại tối giản, không có watermark"
         ),
         "canvas_w": 1024,
         "canvas_h": 1024,
