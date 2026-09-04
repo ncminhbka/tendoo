@@ -151,8 +151,8 @@ def main():
         "--boxes",
         type=str,
         nargs="+",
-        default=["768x224", "896x256", "896x288", "896x320"],
-        help="List of Glyph box sizes to test (e.g. 768x224 896x256 896x288 896x320)",
+        default=["1024x384", "1152x448", "1280x512"],
+        help="List of Glyph box sizes to test (e.g. 1024x384 1152x448 1280x512)",
     )
     parser.add_argument(
         "--fonts",
@@ -165,8 +165,8 @@ def main():
         "--guidance_list",
         type=float,
         nargs="+",
-        default=[1.5, 1.8],
-        help="Embedded guidance values to test (default: 1.5 1.8)",
+        default=[1.5],
+        help="Embedded guidance values to test (default: 1.5)",
     )
     parser.add_argument(
         "--steps",
