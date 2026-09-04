@@ -60,6 +60,66 @@ from tendoo.glyph_engine import GlyphInfo, render_glyph
 CANVAS_DEFAULT = (576, 1024)
 DEFAULT_SEEDS = [42, 123]
 
+
+def build_contact_sheet(
+    results: List[Dict[str, Any]],
+    output_dir: str,
+    row_key: str = "steps",
+    col_key: str = "seed",
+    thumb_w: int = 160,
+    sheet_name: str = "contact_sheet.png",
+) -> Path | None:
+    """
+    Builds a single grid image (rows = distinct `row_key` values e.g. steps, columns = distinct
+    `col_key` values e.g. seed) with small labeled thumbnails, so a whole sweep (which can easily
+    be 30-40+ images) can be eyeballed at a glance instead of opening every file individually.
+    Skipped (returns None) if there's nothing to compose (e.g. a single-run custom case).
+    """
+    from PIL import ImageDraw, ImageFont
+
+    if len(results) < 2:
+        return None
+
+    row_vals = sorted({r[row_key] for r in results})
+    col_vals = sorted({r[col_key] for r in results})
+    out_path = Path(output_dir)
+
+    sample_img = Image.open(out_path / results[0]["file"])
+    thumb_h = int(thumb_w * sample_img.height / sample_img.width)
+    label_h = 22
+    margin = 6
+
+    sheet_w = margin + len(col_vals) * (thumb_w + margin) + 70  # +70 for row-label column
+    sheet_h = margin + len(row_vals) * (thumb_h + label_h + margin) + 30  # +30 for col-label row
+    sheet = Image.new("RGB", (sheet_w, sheet_h), color=(24, 24, 24))
+    draw = ImageDraw.Draw(sheet)
+    try:
+        font = ImageFont.truetype("arial.ttf", 14)
+    except Exception:
+        font = ImageFont.load_default()
+
+    lookup = {(r[row_key], r[col_key]): r for r in results}
+
+    for ci, col_v in enumerate(col_vals):
+        x = margin + 70 + ci * (thumb_w + margin)
+        draw.text((x, 6), f"{col_key}={col_v}", fill=(255, 200, 80), font=font)
+
+    for ri, row_v in enumerate(row_vals):
+        y = margin + 30 + ri * (thumb_h + label_h + margin)
+        draw.text((margin, y + thumb_h // 2), f"{row_key}={row_v}", fill=(120, 220, 255), font=font)
+        for ci, col_v in enumerate(col_vals):
+            x = margin + 70 + ci * (thumb_w + margin)
+            r = lookup.get((row_v, col_v))
+            if r is None:
+                continue
+            img = Image.open(out_path / r["file"]).resize((thumb_w, thumb_h))
+            sheet.paste(img, (x, y))
+            draw.text((x, y + thumb_h + 2), f"{r['duration_s']}s", fill=(180, 180, 180), font=font)
+
+    sheet_path = out_path / sheet_name
+    sheet.save(sheet_path)
+    return sheet_path
+
 PRESETS: Dict[str, Dict[str, Any]] = {
     "commercial": {
         "name": "commercial",
@@ -477,6 +537,15 @@ def main():
             f"{r['seed']:<6} | {r['duration_s']}s{' ':<2} | {r['file']:<40}"
         )
     print("=" * 105)
+
+    # Build a per-case contact sheet (steps x seed grid) for quick visual scanning of a sweep --
+    # skipped automatically for single-run cases.
+    for c in cases_to_run:
+        case_results = [r for r in all_results if r["case"] == c["name"]]
+        sheet_path = build_contact_sheet(case_results, c["output_dir"])
+        if sheet_path:
+            print(f"\n[Contact Sheet] {c['name']}: {sheet_path}")
+
     print("\n[✓] All probe runs finished successfully!")
 
 
