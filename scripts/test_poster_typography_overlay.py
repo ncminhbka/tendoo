@@ -157,6 +157,12 @@ def main():
         help="Execution mode (default: template)",
     )
     parser.add_argument("--hero_title", type=str, default=None, help="Existing 3D Hero Title text in image")
+    parser.add_argument(
+        "--category", type=str, default="generic",
+        choices=["generic", "grand_opening", "feedback", "recruitment", "menu"],
+        help="Which template from the library to use (--mode template only). Pick this via the "
+             "Stage 1 blueprint/hero-selector category, not per-request guessing.",
+    )
     parser.add_argument("--brief_json", type=str, default=None, help="Path to custom brief JSON file")
     parser.add_argument("--html_input", type=str, default=None, help="Path to existing HTML file (for render_html mode)")
     parser.add_argument("--output_dir", type=str, default="output_typography_tests", help="Output directory")
@@ -178,6 +184,7 @@ def main():
     print("=" * 100)
     print(f"  Input Image       : {img_path.resolve()}")
     print(f"  Execution Mode    : {args.mode.upper()}")
+    print(f"  Template Category : {args.category} (--mode template only)")
     print(f"  Output Directory  : {out_dir.resolve()}")
 
     # 1. Step 1: Analyze background luminance and contrast
@@ -234,6 +241,7 @@ def main():
             analysis=analysis,
             brief=brief,
             background_image_path=str(img_path),
+            category=args.category,
         )
 
     elif args.mode == "render_html":

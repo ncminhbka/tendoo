@@ -28,6 +28,7 @@ import os
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from string import Template
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -267,16 +268,69 @@ CRITICAL ARCHITECTURAL CONSTRAINTS:
 # ==================================================================================================
 # 4. ALGORITHMIC TEMPLATE ENGINE (OFFLINE FALLBACK & STANDALONE SYNTHESIS)
 # ==================================================================================================
+#
+# TEMPLATE LIBRARY, NOT LIVE GENERATION: each category gets a hand-designed, QA'd-once layout
+# (originally authored in scripts/demo_diverse_html_cases.py as 4 standalone flat-CSS mockups,
+# migrated here and adapted to composite over a REAL diffusion-generated background instead of a
+# flat gradient). Stage 1 (the blueprint/hero-selector LLM call, see scripts/test_hero_selector.py)
+# picks WHICH template via `category` -- this is a free extra field on an already-happening call,
+# not an additional model invocation. Live VLM HTML generation (TypographyPromptBuilder + api_*
+# modes below) is reserved for DRAFTING new templates offline, reviewed by a human before being
+# hardened into this registry -- never called live in the production hot path. See AGENTS.md
+# discussion: this mirrors how PosterVerse's own PosterDNA dataset was built (LLM draft -> human
+# correction -> trusted asset), just without committing to fine-tuning anything ourselves.
+#
+# IMPORTANT: each template here renders ONLY secondary elements (badges, quotes, chips, footers).
+# The HERO text is NEVER re-created here -- it was already baked into `background_image_path` by
+# FLUX.2 glyph injection (photoreal 3D/material integration). Duplicating it here would violate
+# the same "don't re-render what diffusion already drew" rule as the VLM system prompt below.
+
+def _bg_image_css(background_image_path: Optional[str]) -> str:
+    """Shared helper: embeds a background image as base64 CSS, or returns '' if none given."""
+    if background_image_path and os.path.exists(background_image_path):
+        with open(background_image_path, "rb") as f:
+            b64_data = base64.b64encode(f.read()).decode("utf-8")
+            ext = Path(background_image_path).suffix.lower().replace(".", "")
+            mime = "image/jpeg" if ext in ["jpg", "jpeg"] else "image/png"
+            return f"background-image: url('data:{mime};base64,{b64_data}'); background-size: cover; background-position: center;"
+    return ""
+
 
 class PosterTemplateEngine:
     """
     Algorithmic typography generator that requires ZERO external API or model weights.
     Synthesizes responsive, pixel-perfect HTML/CSS overlays matching the PosterVerse standard.
     Ideal for execution on isolated internal servers without internet!
+
+    `generate_html(category=...)` dispatches into a small TEMPLATE LIBRARY (grand_opening,
+    feedback, recruitment, menu) instead of one fixed layout -- pass the category chosen by the
+    Stage 1 blueprint. Falls back to the original generic layout for "generic" or any unknown
+    category, so existing callers (e.g. test_poster_typography_overlay.py's default flow) are
+    unaffected.
     """
 
     @classmethod
     def generate_html(
+        cls,
+        analysis: BackgroundAnalysis,
+        brief: Dict[str, Any],
+        background_image_path: Optional[str] = None,
+        category: str = "generic",
+    ) -> str:
+        """Dispatches to the template matching `category`, defaulting to the generic layout."""
+        dispatch = {
+            "grand_opening": cls._generate_grand_opening,
+            "feedback": cls._generate_feedback_card,
+            "recruitment": cls._generate_recruitment,
+            "menu": cls._generate_menu,
+        }
+        fn = dispatch.get(category)
+        if fn is not None:
+            return fn(analysis, brief, background_image_path)
+        return cls._generate_generic(analysis, brief, background_image_path)
+
+    @classmethod
+    def _generate_generic(
         cls,
         analysis: BackgroundAnalysis,
         brief: Dict[str, Any],
@@ -583,6 +637,354 @@ class PosterTemplateEngine:
 </html>
 """
         return html_template
+
+    # ----------------------------------------------------------------------------------------
+    # TEMPLATE LIBRARY (migrated from scripts/demo_diverse_html_cases.py, adapted to composite
+    # over a real background image instead of a flat CSS gradient, and with the flat-CSS "hero"
+    # text element removed from each -- that text is already baked into the photo by diffusion).
+    # Uses string.Template ($placeholder) instead of f-strings/str.format to avoid having to
+    # escape the hundreds of literal CSS "{ }" in each layout.
+    # ----------------------------------------------------------------------------------------
+
+    _GRAND_OPENING_TPL = Template("""<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grand Opening</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .poster {
+      position: relative; width: ${w}px; height: ${h}px; overflow: hidden;
+      $bg_css
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+    }
+    .header { position: absolute; top: 48px; left: 56px; right: 56px; display: flex; justify-content: space-between; align-items: center; z-index: 20; }
+    .brand-title { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 900; color: #FFB703; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 20px rgba(255, 183, 3, 0.5); }
+    .date-pill { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255, 183, 3, 0.4); padding: 10px 22px; border-radius: 999px; font-size: 14px; font-weight: 700; color: #FFF; letter-spacing: 1px; }
+    .burst-badge {
+      position: absolute; top: 220px; right: 70px; width: 170px; height: 170px;
+      background: linear-gradient(135deg, #E63946 0%, #D90429 100%); border-radius: 50%;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      box-shadow: 0 12px 35px rgba(230, 57, 70, 0.6), inset 0 3px 6px rgba(255, 255, 255, 0.5);
+      border: 4px dashed #FFF; transform: rotate(12deg); z-index: 25;
+    }
+    .badge-sub { font-size: 14px; font-weight: 800; color: #FFF; letter-spacing: 2px; text-transform: uppercase; }
+    .badge-main { font-family: 'Montserrat', sans-serif; font-size: 52px; font-weight: 900; color: #FFF; line-height: 0.95; }
+    .badge-off { font-size: 16px; font-weight: 900; color: #FFD166; letter-spacing: 1.5px; }
+    .bottom-bar {
+      position: absolute; bottom: 50px; left: 56px; right: 56px; z-index: 20;
+      background: rgba(20, 10, 5, 0.75); backdrop-filter: blur(20px); border: 1px solid rgba(255, 183, 3, 0.25);
+      border-radius: 24px; padding: 24px 36px; display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+    }
+    .deal-info { display: flex; flex-direction: column; gap: 4px; }
+    .deal-title { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 800; color: #FFF; }
+    .deal-sub { font-size: 14px; font-weight: 500; color: #FFB703; }
+    .cta-btn { background: linear-gradient(135deg, #FB8500 0%, #FFB703 100%); color: #000; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 17px; letter-spacing: 0.5px; padding: 16px 36px; border-radius: 999px; text-decoration: none; box-shadow: 0 8px 25px rgba(251, 133, 0, 0.5); border: 1px solid rgba(255,255,255,0.4); }
+  </style>
+</head>
+<body>
+  <div class="poster">
+    <div class="header">
+      <div class="brand-title">$brand</div>
+      <div class="date-pill">$date_range</div>
+    </div>
+    <div class="burst-badge">
+      <span class="badge-sub">$badge_label</span>
+      <span class="badge-main">$badge_percent</span>
+      <span class="badge-off">$badge_sub</span>
+    </div>
+    <div class="bottom-bar">
+      <div class="deal-info">
+        <div class="deal-title">$address</div>
+        <div class="deal-sub">$offer_desc</div>
+      </div>
+      <a href="#" class="cta-btn">$cta_text</a>
+    </div>
+  </div>
+</body>
+</html>""")
+
+    @classmethod
+    def _generate_grand_opening(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+        return cls._GRAND_OPENING_TPL.substitute(
+            w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
+            brand=brief.get("brand", "🍔 THE BURGER CRAFT"),
+            date_range=brief.get("date_range", "DUY NHẤT 05.09 - 15.09.2026"),
+            badge_label=brief.get("badge_label", "GIẢM"),
+            badge_percent=brief.get("badge_percent", "50%"),
+            badge_sub=brief.get("badge_sub", "TOÀN MENU"),
+            address=brief.get("address", "📍 128 Nguyễn Trãi, Phường Bến Thành, Quận 1"),
+            offer_desc=brief.get("offer_desc", "Tặng 01 Coca-Cola mát lạnh cho hóa đơn từ 99K • Hotline: 1900 8899"),
+            cta_text=brief.get("cta_text", "NHẬN VOUCHER ➔"),
+        )
+
+    _FEEDBACK_TPL = Template("""<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Feedback</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .poster { position: relative; width: ${w}px; height: ${h}px; overflow: hidden; $bg_css box-shadow: 0 25px 60px rgba(0,0,0,0.12); border-radius: 32px; }
+    .top-bar { position: absolute; top: 48px; left: 56px; right: 56px; display: flex; justify-content: space-between; align-items: center; z-index: 20; }
+    .spa-logo { font-family: 'Quicksand', sans-serif; font-size: 26px; font-weight: 800; color: #0E9F6E; display: flex; align-items: center; gap: 8px; text-shadow: 0 2px 8px rgba(255,255,255,0.6); }
+    .spa-badge { background: #FFE4E6; color: #E02424; font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 14px; padding: 10px 20px; border-radius: 999px; border: 1px solid #FECDD3; box-shadow: 0 4px 12px rgba(224, 36, 36, 0.1); }
+    .feedback-card {
+      position: absolute; top: 250px; left: 70px; right: 70px;
+      background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 2px solid rgba(255, 255, 255, 0.9); border-radius: 28px; padding: 40px 48px;
+      box-shadow: 0 20px 40px rgba(0, 150, 110, 0.12), 0 1px 3px rgba(0,0,0,0.05); z-index: 20;
+    }
+    .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .stars { color: #F59E0B; font-size: 26px; letter-spacing: 4px; }
+    .verified-pill { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #057A55; background: #DEF7EC; padding: 6px 14px; border-radius: 999px; }
+    .quote-text { font-size: 21px; line-height: 1.6; color: #374151; font-weight: 500; font-style: italic; margin-bottom: 24px; position: relative; }
+    .quote-text::before { content: "\\201C"; font-size: 70px; color: #A7F3D0; font-family: serif; position: absolute; left: -32px; top: -25px; line-height: 1; opacity: 0.6; }
+    .customer-info { display: flex; align-items: center; gap: 16px; border-top: 1px solid #E5E7EB; padding-top: 18px; }
+    .avatar { width: 52px; height: 52px; border-radius: 50%; background: #D1FAE5; display: flex; justify-content: center; align-items: center; font-size: 26px; border: 2px solid #0E9F6E; }
+    .cust-name { font-size: 17px; font-weight: 700; color: #111928; }
+    .cust-sub { font-size: 13px; color: #6B7280; font-weight: 500; }
+    .features-row { position: absolute; top: 620px; left: 70px; right: 70px; display: flex; justify-content: space-between; gap: 14px; z-index: 20; }
+    .f-pill { flex: 1; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 18px; padding: 20px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+    .f-icon { font-size: 28px; margin-bottom: 8px; }
+    .f-text { font-size: 14px; font-weight: 700; color: #1F2A37; line-height: 1.3; }
+    .bottom-cta-strip { position: absolute; bottom: 50px; left: 70px; right: 70px; background: linear-gradient(135deg, #0E9F6E 0%, #057A55 100%); border-radius: 22px; padding: 22px 36px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 12px 30px rgba(14, 159, 110, 0.35); z-index: 20; }
+    .offer-box { color: #FFFFFF; }
+    .offer-title { font-family: 'Quicksand', sans-serif; font-size: 22px; font-weight: 800; }
+    .offer-desc { font-size: 14px; opacity: 0.9; margin-top: 2px; }
+    .btn-booking { background: #FFFFFF; color: #046C4E; font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 16px; padding: 14px 30px; border-radius: 999px; text-decoration: none; box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
+  </style>
+</head>
+<body>
+  <div class="poster">
+    <div class="top-bar">
+      <div class="spa-logo">$brand</div>
+      <div class="spa-badge">$top_badge</div>
+    </div>
+    <div class="feedback-card">
+      <div class="review-header">
+        <div class="stars">$stars</div>
+        <div class="verified-pill">$verified_label</div>
+      </div>
+      <div class="quote-text">$quote_text</div>
+      <div class="customer-info">
+        <div class="avatar">$avatar_emoji</div>
+        <div>
+          <div class="cust-name">$customer_name</div>
+          <div class="cust-sub">$customer_sub</div>
+        </div>
+      </div>
+    </div>
+    <div class="features-row">
+      $features_html
+    </div>
+    <div class="bottom-cta-strip">
+      <div class="offer-box">
+        <div class="offer-title">$offer_title</div>
+        <div class="offer-desc">$offer_desc</div>
+      </div>
+      <a href="#" class="btn-booking">$cta_text</a>
+    </div>
+  </div>
+</body>
+</html>""")
+
+    @classmethod
+    def _generate_feedback_card(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+        features = brief.get("features", [
+            {"icon": "🌿", "text": "Chất Lượng Hữu Cơ 100% Nhập Khẩu"},
+            {"icon": "✂️", "text": "Chuyên Nghiệp Theo Yêu Cầu Riêng"},
+            {"icon": "🕊️", "text": "Không Gian Mở, Trải Nghiệm Thoải Mái"},
+        ])
+        features_html = "".join(
+            f'<div class="f-pill"><div class="f-icon">{f.get("icon","✨")}</div>'
+            f'<div class="f-text">{f.get("text","")}</div></div>'
+            for f in features
+        )
+        return cls._FEEDBACK_TPL.substitute(
+            w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
+            brand=brief.get("brand", "🐾 PAWPARADISE SPA"),
+            top_badge=brief.get("top_badge", "✨ CHUẨN FORM HÀN QUỐC"),
+            stars=brief.get("stars", "★★★★★"),
+            verified_label=brief.get("verified_label", "✔ ĐÃ TRẢI NGHIỆM DỊCH VỤ"),
+            quote_text=brief.get("quote_text", "Dịch vụ tuyệt vời, nhân viên chuyên nghiệp và tận tâm, chắc chắn sẽ quay lại!"),
+            avatar_emoji=brief.get("avatar_emoji", "🐩"),
+            customer_name=brief.get("customer_name", "Khách hàng thân thiết"),
+            customer_sub=brief.get("customer_sub", "Đã trải nghiệm dịch vụ Premium"),
+            features_html=features_html,
+            offer_title=brief.get("offer_title", "🎁 ƯU ĐÃI ĐẶC BIỆT CHO KHÁCH MỚI"),
+            offer_desc=brief.get("offer_desc", "Áp dụng cho khách hàng đặt lịch trải nghiệm lần đầu tiên trong tuần này!"),
+            cta_text=brief.get("cta_text", "ĐẶT LỊCH NGAY ➔"),
+        )
+
+    _RECRUITMENT_TPL = Template("""<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recruitment</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .poster { position: relative; width: ${w}px; height: ${h}px; overflow: hidden; $bg_css box-shadow: 0 25px 60px rgba(0,0,0,0.8); }
+    .rec-header { position: absolute; top: 44px; left: 56px; right: 56px; display: flex; justify-content: space-between; align-items: center; z-index: 20; }
+    .company-logo { font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 900; color: #38BDF8; letter-spacing: 2px; }
+    .urgency-badge { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #F87171; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 999px; letter-spacing: 1px; }
+    .frosted-box { position: absolute; top: 110px; left: 56px; right: 56px; bottom: 44px; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 28px; padding: 40px 48px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 20; }
+    .pos-title-group { display: flex; justify-content: space-between; align-items: center; }
+    .pos-label { font-size: 14px; font-weight: 700; color: #38BDF8; letter-spacing: 2px; text-transform: uppercase; }
+    .salary-tag { background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color: #FFFFFF; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 20px; padding: 12px 24px; border-radius: 14px; box-shadow: 0 8px 20px rgba(2, 132, 199, 0.4); border: 1px solid rgba(255,255,255,0.25); }
+    .two-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin: 24px 0; }
+    .col-title { font-size: 16px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .checklist { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .check-item { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; color: #E2E8F0; line-height: 1.45; font-weight: 500; }
+    .check-icon { color: #38BDF8; font-weight: 900; font-size: 16px; }
+    .rec-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 24px; }
+    .contact-block { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: #94A3B8; }
+    .contact-email { color: #38BDF8; font-weight: 700; font-size: 16px; }
+    .apply-btn { background: linear-gradient(135deg, #38BDF8 0%, #0284C7 100%); color: #020617; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 17px; padding: 16px 40px; border-radius: 999px; text-decoration: none; box-shadow: 0 8px 25px rgba(56, 189, 248, 0.4); border: 1px solid rgba(255,255,255,0.4); }
+  </style>
+</head>
+<body>
+  <div class="poster">
+    <div class="rec-header">
+      <div class="company-logo">$company</div>
+      <div class="urgency-badge">$deadline</div>
+    </div>
+    <div class="frosted-box">
+      <div class="pos-title-group">
+        <div class="pos-label">$pos_label</div>
+        <div class="salary-tag">$salary</div>
+      </div>
+      <div class="two-col-grid">
+        <div>
+          <div class="col-title">📋 YÊU CẦU ỨNG VIÊN</div>
+          <ul class="checklist">$requirements_html</ul>
+        </div>
+        <div>
+          <div class="col-title">🎁 QUYỀN LỢI ĐẶC QUYỀN</div>
+          <ul class="checklist">$benefits_html</ul>
+        </div>
+      </div>
+      <div class="rec-footer">
+        <div class="contact-block">
+          <div>$contact_line1</div>
+          <div class="contact-email">$contact_email</div>
+        </div>
+        <a href="#" class="apply-btn">$cta_text</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>""")
+
+    @classmethod
+    def _generate_recruitment(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+        requirements = brief.get("requirements", [
+            "Tối thiểu 2 năm kinh nghiệm trong lĩnh vực liên quan.",
+            "Có tư duy chủ động, khả năng làm việc độc lập tốt.",
+        ])
+        benefits = brief.get("benefits", [
+            "Thưởng dự án theo quý, đãi ngộ cạnh tranh.",
+            "Môi trường làm việc hiện đại, đồng nghiệp thân thiện.",
+        ])
+        req_html = "".join(f'<li class="check-item"><span class="check-icon">✔</span><span>{r}</span></li>' for r in requirements)
+        ben_html = "".join(f'<li class="check-item"><span class="check-icon">★</span><span>{b}</span></li>' for b in benefits)
+        return cls._RECRUITMENT_TPL.substitute(
+            w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
+            company=brief.get("company", "⚡ TENDOO AI RESEARCH LAB"),
+            deadline=brief.get("deadline", "HẠN NỘP: 30.09.2026"),
+            pos_label=brief.get("pos_label", "WE ARE HIRING • FULL-TIME POSITION"),
+            salary=brief.get("salary", "THOẢ THUẬN"),
+            requirements_html=req_html,
+            benefits_html=ben_html,
+            contact_line1=brief.get("contact_line1", "Gửi CV & Portfolio trực tiếp về hòm thư:"),
+            contact_email=brief.get("contact_email", "careers@tendoo.ai"),
+            cta_text=brief.get("cta_text", "ỨNG TUYỂN NGAY ➔"),
+        )
+
+    _MENU_TPL = Template("""<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .poster { position: relative; width: ${w}px; height: ${h}px; overflow: hidden; $bg_css box-shadow: 0 25px 60px rgba(0,0,0,0.8); padding: 56px; display: flex; flex-direction: column; justify-content: flex-end; gap: 24px; }
+    .sub-brand { font-size: 14px; font-weight: 700; color: #D97706; letter-spacing: 4px; text-transform: uppercase; text-align: center; }
+    .menu-desc { font-style: italic; font-size: 15px; color: #E7E5E4; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+    .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; background: rgba(10,6,4,0.55); backdrop-filter: blur(16px); border-radius: 24px; padding: 32px; }
+    .cat-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #F59E0B; border-bottom: 1px solid rgba(245, 158, 11, 0.3); padding-bottom: 8px; margin-bottom: 16px; }
+    .item-list { display: flex; flex-direction: column; gap: 14px; }
+    .menu-row { display: flex; flex-direction: column; gap: 3px; }
+    .row-top { display: flex; align-items: baseline; justify-content: space-between; }
+    .item-name { font-size: 16px; font-weight: 700; color: #FFFFFF; }
+    .dotted-line { flex-grow: 1; border-bottom: 1px dotted rgba(255,255,255,0.3); margin: 0 10px; }
+    .item-price { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #F59E0B; }
+    .badge-star { font-size: 10px; font-weight: 800; background: #EF4444; color: #FFF; padding: 2px 6px; border-radius: 4px; margin-left: 6px; text-transform: uppercase; }
+    .menu-footer { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 16px; padding: 16px 28px; display: flex; justify-content: space-between; align-items: center; }
+    .foot-note { font-size: 13.5px; color: #FFFFFF; }
+    .foot-hotline { font-weight: 700; color: #F59E0B; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <div class="poster">
+    <div class="sub-brand">$sub_brand</div>
+    <div class="menu-desc">$tagline</div>
+    <div class="menu-grid">$categories_html</div>
+    <div class="menu-footer">
+      <div class="foot-note">$footer_note</div>
+      <div class="foot-hotline">$hotline</div>
+    </div>
+  </div>
+</body>
+</html>""")
+
+    @classmethod
+    def _generate_menu(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+        categories = brief.get("categories", [
+            {"title": "🍔 MÓN CHÍNH", "items": [
+                {"name": "Món Đặc Trưng", "price": "89.000đ", "badge": "BEST SELLER"},
+                {"name": "Món Signature", "price": "149.000đ"},
+            ]},
+            {"title": "🍹 ĐỒ UỐNG", "items": [
+                {"name": "Thức Uống Đặc Biệt", "price": "49.000đ", "badge": "HOT"},
+                {"name": "Thức Uống Nhẹ", "price": "45.000đ"},
+            ]},
+        ])
+        cat_html_parts = []
+        for cat in categories:
+            items_html = "".join(
+                '<div class="menu-row"><div class="row-top">'
+                f'<span class="item-name">{it.get("name","")}'
+                + (f'<span class="badge-star">{it["badge"]}</span>' if it.get("badge") else "")
+                + '</span><span class="dotted-line"></span>'
+                f'<span class="item-price">{it.get("price","")}</span></div></div>'
+                for it in cat.get("items", [])
+            )
+            cat_html_parts.append(
+                f'<div><div class="cat-title">{cat.get("title","")}</div>'
+                f'<div class="item-list">{items_html}</div></div>'
+            )
+        return cls._MENU_TPL.substitute(
+            w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
+            sub_brand=brief.get("sub_brand", "ARTISAN DINING EXPERIENCE"),
+            tagline=brief.get("tagline", "Thưởng thức tinh hoa ẩm thực thủ công từ nguyên liệu cao cấp"),
+            categories_html="".join(cat_html_parts),
+            footer_note=brief.get("footer_note", "✨ Giảm 10% tổng hóa đơn khi check-in tại quán"),
+            hotline=brief.get("hotline", "📞 Hotline: 1800 8198"),
+        )
 
 
 # ==================================================================================================
