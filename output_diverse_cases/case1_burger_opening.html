@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Burger Grand Opening</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center;
+      background: #0a0503; font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .poster {
+      position: relative; width: 1024px; height: 1024px; overflow: hidden;
+      background: radial-gradient(circle at 50% 45%, #2a1205 0%, #120601 60%, #050201 100%);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+    }
+    /* Ambient Glows */
+    .glow-orange {
+      position: absolute; width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 107, 0, 0.25) 0%, rgba(255, 60, 0, 0) 70%);
+      top: 200px; left: 212px; pointer-events: none; filter: blur(40px);
+    }
+    /* Header Brand */
+    .header {
+      position: absolute; top: 48px; left: 56px; right: 56px;
+      display: flex; justify-content: space-between; align-items: center; z-index: 20;
+    }
+    .brand-title {
+      font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 900;
+      color: #FFB703; letter-spacing: 2px; text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(255, 183, 3, 0.5);
+    }
+    .date-pill {
+      background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 183, 3, 0.4); padding: 10px 22px;
+      border-radius: 999px; font-size: 14px; font-weight: 700; color: #FFF;
+      letter-spacing: 1px;
+    }
+    /* Hero Opening Title */
+    .hero-title-box {
+      position: absolute; top: 120px; left: 56px; right: 56px; text-align: center; z-index: 15;
+    }
+    .eyebrow {
+      font-size: 18px; font-weight: 800; color: #FB8500; letter-spacing: 6px;
+      text-transform: uppercase; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .hero-main {
+      font-family: 'Montserrat', sans-serif; font-size: 68px; font-weight: 900;
+      line-height: 1.1; text-transform: uppercase; letter-spacing: 1px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #FFE8B8 50%, #FFB703 100%);
+      -webkit-background-clip: text; color: transparent;
+      filter: drop-shadow(0 6px 20px rgba(255, 136, 0, 0.6));
+    }
+    /* 50% OFF Explosive Badge */
+    .burst-badge {
+      position: absolute; top: 220px; right: 70px; width: 170px; height: 170px;
+      background: linear-gradient(135deg, #E63946 0%, #D90429 100%);
+      border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center;
+      box-shadow: 0 12px 35px rgba(230, 57, 70, 0.6), inset 0 3px 6px rgba(255, 255, 255, 0.5);
+      border: 4px dashed #FFF; transform: rotate(12deg); z-index: 25;
+      animation: pulse 2s infinite alternate;
+    }
+    .badge-sub { font-size: 14px; font-weight: 800; color: #FFF; letter-spacing: 2px; text-transform: uppercase; }
+    .badge-main { font-family: 'Montserrat', sans-serif; font-size: 52px; font-weight: 900; color: #FFF; line-height: 0.95; }
+    .badge-off { font-size: 16px; font-weight: 900; color: #FFD166; letter-spacing: 1.5px; }
+
+    /* Mockup Graphic Area (Burger Silhouette/Placeholder) */
+    .burger-center-circle {
+      position: absolute; top: 380px; left: 50%; transform: translateX(-50%);
+      width: 420px; height: 420px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 183, 3, 0.15) 0%, rgba(0,0,0,0) 70%);
+      border: 2px dashed rgba(255, 183, 3, 0.3); display: flex; justify-content: center; align-items: center;
+    }
+    .center-label {
+      font-size: 80px; filter: drop-shadow(0 10px 30px rgba(255, 107, 0, 0.8));
+    }
+
+    /* Bottom Info & CTA */
+    .bottom-bar {
+      position: absolute; bottom: 50px; left: 56px; right: 56px; z-index: 20;
+      background: rgba(20, 10, 5, 0.75); backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 183, 3, 0.25); border-radius: 24px;
+      padding: 24px 36px; display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+    }
+    .deal-info { display: flex; flex-direction: column; gap: 4px; }
+    .deal-title { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 800; color: #FFF; }
+    .deal-sub { font-size: 14px; font-weight: 500; color: #FFB703; }
+    .cta-btn {
+      background: linear-gradient(135deg, #FB8500 0%, #FFB703 100%);
+      color: #000; font-family: 'Montserrat', sans-serif; font-weight: 900;
+      font-size: 17px; letter-spacing: 0.5px; padding: 16px 36px; border-radius: 999px;
+      text-decoration: none; box-shadow: 0 8px 25px rgba(251, 133, 0, 0.5);
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="poster">
+    <div class="glow-orange"></div>
+    <div class="header">
+      <div class="brand-title">🍔 THE BURGER CRAFT</div>
+      <div class="date-pill">DUY NHẤT 05.09 - 15.09.2026</div>
+    </div>
+    <div class="hero-title-box">
+      <div class="eyebrow">TƯNG BỪNG KHAI TRƯƠNG CHI NHÁNH MỚI</div>
+      <div class="hero-main">ĂN THẢ GA • KHÔNG LO GIÁ</div>
+    </div>
+    <div class="burst-badge">
+      <span class="badge-sub">GIẢM</span>
+      <span class="badge-main">50%</span>
+      <span class="badge-off">TOÀN MENU</span>
+    </div>
+    <div class="burger-center-circle">
+      <div class="center-label">🍔✨</div>
+    </div>
+    <div class="bottom-bar">
+      <div class="deal-info">
+        <div class="deal-title">📍 128 Nguyễn Trãi, Phường Bến Thành, Quận 1</div>
+        <div class="deal-sub">Tặng 01 Coca-Cola mát lạnh cho hóa đơn từ 99K • Hotline: 1900 8899</div>
+      </div>
+      <a href="#" class="cta-btn">NHẬN VOUCHER ➔</a>
+    </div>
+  </div>
+</body>
+</html>

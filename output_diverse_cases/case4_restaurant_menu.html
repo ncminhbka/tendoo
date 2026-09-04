@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Menu</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center;
+      background: #0f0a07; font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .poster {
+      position: relative; width: 1024px; height: 1024px; overflow: hidden;
+      background: radial-gradient(circle at 50% 30%, #1f140e 0%, #120b08 60%, #080403 100%);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8); padding: 56px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .menu-header { text-align: center; }
+    .sub-brand { font-size: 14px; font-weight: 700; color: #D97706; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 6px; }
+    .menu-title {
+      font-family: 'Playfair Display', serif; font-size: 54px; font-weight: 900;
+      color: #FFFBEB; letter-spacing: 1px;
+    }
+    .menu-desc { font-style: italic; font-size: 15px; color: #A8A29E; margin-top: 4px; }
+
+    /* Menu Grid */
+    .menu-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 30px 0;
+    }
+    .cat-title {
+      font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700;
+      color: #F59E0B; border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+      padding-bottom: 8px; margin-bottom: 18px;
+    }
+    .item-list { display: flex; flex-direction: column; gap: 16px; }
+    .menu-row { display: flex; flex-direction: column; gap: 3px; }
+    .row-top { display: flex; align-items: baseline; justify-content: space-between; }
+    .item-name { font-size: 17px; font-weight: 700; color: #FFFFFF; }
+    .dotted-line { flex-grow: 1; border-bottom: 1px dotted rgba(255,255,255,0.3); margin: 0 10px; }
+    .item-price { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; color: #F59E0B; }
+    .badge-star {
+      font-size: 10px; font-weight: 800; background: #EF4444; color: #FFF;
+      padding: 2px 6px; border-radius: 4px; margin-left: 6px; text-transform: uppercase;
+    }
+    .item-ing { font-size: 12.5px; color: #78716C; }
+
+    /* Menu Footer */
+    .menu-footer {
+      background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 16px; padding: 16px 28px; display: flex;
+      justify-content: space-between; align-items: center;
+    }
+    .foot-note { font-size: 13.5px; color: #D6D3D1; }
+    .foot-hotline { font-weight: 700; color: #F59E0B; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <div class="poster">
+    <div class="menu-header">
+      <div class="sub-brand">ARTISAN DINING EXPERIENCE</div>
+      <div class="menu-title">BẾP NHÀ TENDOO</div>
+      <div class="menu-desc">Thưởng thức tinh hoa ẩm thực thủ công từ nguyên liệu cao cấp</div>
+    </div>
+
+    <div class="menu-grid">
+      <!-- Cat 1: Burgers -->
+      <div>
+        <div class="cat-title">🍔 BÒ NƯỚNG & BURGER</div>
+        <div class="item-list">
+          <div class="menu-row">
+            <div class="row-top">
+              <span class="item-name">Smash Burger Phô Mai Chảy <span class="badge-star">BEST SELLER</span></span>
+              <span class="dotted-line"></span>
+              <span class="item-price">89.000đ</span>
+            </div>
+            <div class="item-ing">Bò Black Angus xay tươi, phô mai Cheddar kép, sốt bơ nấm</div>
+          </div>
+          <div class="menu-row">
+            <div class="row-top">
+              <span class="item-name">Wagyu Truffle Burger <span class="badge-star">CHEF CHOICE</span></span>
+              <span class="dotted-line"></span>
+              <span class="item-price">149.000đ</span>
+            </div>
+            <div class="item-ing">Thịt bò Wagyu vân mỡ, sốt nấm Truffle đen thượng hạng</div>
+          </div>
+          <div class="menu-row">
+            <div class="row-top">
+              <span class="item-name">Gà Giòn Cay Sốt Mật Ong</span>
+              <span class="dotted-line"></span>
+              <span class="item-price">79.000đ</span>
+            </div>
+            <div class="item-ing">Đùi gà rút xương chiên giòn rụm, sốt mật ong mù tạt</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cat 2: Drinks & Sides -->
+      <div>
+        <div class="cat-title">🍹 ĐỒ UỐNG & MÓN ĂN KÈM</div>
+        <div class="item-list">
+          <div class="menu-row">
+            <div class="row-top">
+              <span class="item-name">Trà Sữa Trân Châu Nướng <span class="badge-star">HOT</span></span>
+              <span class="dotted-line"></span>
+              <span class="item-price">49.000đ</span>
+            </div>
+            <div class="item-ing">Trà đen ủ lạnh, sữa tươi thanh trùng, trân châu đường đen</div>
+          </div>
+          <div class="menu-row">
+            <div class="row-top">
+              <span class="item-name">Trà Đào Cam Sả Tươi</span>
+              <span class="dotted-line"></span>
+              <span class="item-price">45.000đ</span>
+            </div>
+            <div class="item-ing">Đào miếng giòn ngọt, sả cây tươi, cam vàng thanh mát</div>
+          </div>
+          <div class="menu-row">
+            <div class="row-top">
+              <span class="item-name">Khoai Tây Lắc Phô Mai Truffle</span>
+              <span class="dotted-line"></span>
+              <span class="item-price">39.000đ</span>
+            </div>
+            <div class="item-ing">Khoai tây Bỉ chiên giòn, bột phô mai Cheddar & mùi thơm nấm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-footer">
+      <div class="foot-note">✨ Giảm 10% tổng hóa đơn khi check-in tại quán • Freeship bán kính 3km</div>
+      <div class="foot-hotline">📞 Hotline Đặt Bàn: 1800 8198</div>
+    </div>
+  </div>
+</body>
+</html>
