@@ -93,9 +93,31 @@ PRESETS = {
             "phong cách typography thể thao tối giản hiện đại, bố cục sang trọng, không có watermark"
         ),
     },
+    # prompt_test.txt line 1 -- free-form scene (no product cutout reference available), --ar 4:5.
+    # Text roles are INVERTED vs headphones/shoes: the smaller tagline is positioned ABOVE (top-left)
+    # the larger headline (middle-left). Title = larger/main headline (Step 1), Subtitle = small
+    # tagline (Step 2, chained) -- deliberately using a much shorter subtitle_h to test the box-height
+    # sizing lever discussed for CTA/tagline-scale text (see AGENTS.md Rule 29/31/32 discussion).
+    "watch_prompt1": {
+        "prod_image": None,
+        "title_text": "NÂNG TẦM PHONG CÁCH\nĐỜI SỐNG",
+        "subtitle_text": "THỜI GIAN LÀ CỦA BẠN",
+        "step1_prompt": (
+            "Một chiếc đồng hồ thông minh hiện đại cao cấp với dây đeo kim loại màu bạc bóng bẩy, "
+            "đặt trên chiếc bàn cà phê bằng gỗ mộc mạc cạnh một tách cà phê latte art và cặp kính râm "
+            "thời trang, ánh nắng ban mai nhẹ nhàng chiếu qua cửa sổ, bầu không khí ấm áp, chụp bằng "
+            "ống kính 35mm chân thực 8k. Ở giữa bên trái, dòng chữ tiêu đề lớn màu trắng tinh tế nổi bật, "
+            "bố cục sạch sẽ chuyên nghiệp, không có watermark"
+        ),
+        "step2_prompt": (
+            "Poster quảng cáo kế thừa toàn bộ phong cách bố cục, ánh sáng và chiếc đồng hồ thông minh "
+            "của poster tham chiếu, bổ sung dòng chữ tagline nhỏ màu trắng phông sans-serif thanh mảnh "
+            "ở góc trên bên trái, phong cách tối giản tinh tế, không có watermark"
+        ),
+    },
 }
 
-CANVAS = (576, 1024)  # 9:16 target
+CANVAS = (576, 1024)  # 9:16 target (default; override via --canvas_w/--canvas_h, e.g. 832x1040 for --ar 4:5)
 DEFAULT_SEEDS = [42, 123, 777]
 
 
@@ -153,13 +175,17 @@ def run_chained_conditioning_probe(
     t_prod: float = 20.0,
     t_subtitle: float = 10.0,
     t_poster: float = 20.0,
+    canvas_w: int = CANVAS[0],
+    canvas_h: int = CANVAS[1],
+    title_single_line: bool = False,
+    subtitle_single_line: bool = False,
 ) -> None:
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
     # Resolve preset configurations
     cfg = PRESETS.get(preset, PRESETS["headphones"])
-    prod_img_path = prod_image or cfg["prod_image"]
+    prod_img_path = prod_image or cfg["prod_image"]  # may stay None -- free-form scenes have no product cutout
     title = title_text or cfg["title_text"]
     subtitle = subtitle_text or cfg["subtitle_text"]
     p_step1 = step1_prompt or cfg["step1_prompt"]
@@ -169,11 +195,11 @@ def run_chained_conditioning_probe(
     print(" [*] TENDOO AI - CHAINED MULTI-MODAL REFERENCE CONDITIONING PROBE (DIRECTION 4)")
     print("=" * 100)
     print(f"  Preset     : {preset.upper()}")
-    print(f"  Product Img: {prod_img_path} (Step 1 @ t={t_prod})")
+    print(f"  Product Img: {prod_img_path if prod_img_path else '(none -- free-form scene, no product cutout)'} (Step 1 @ t={t_prod})")
     print(f"  Title      : \"{title.replace(chr(10), ' ')}\" (Step 1 @ t={t_title}, {title_w}x{title_h}px)")
     print(f"  Subtitle   : \"{subtitle.replace(chr(10), ' ')}\" (Step 2 @ t={t_subtitle}, {subtitle_w}x{subtitle_h}px)")
     print(f"  Poster Ref : Step 1 output poster chained into Step 2 @ t={t_poster}")
-    print(f"  Canvas     : {CANVAS[0]}x{CANVAS[1]} (9:16 target)")
+    print(f"  Canvas     : {canvas_w}x{canvas_h}")
     print(f"  Seeds      : {seeds}")
     print(f"  Steps / CFG: {num_steps} steps | CFG guidance = {guidance:.1f}")
 
@@ -214,7 +240,6 @@ def run_chained_conditioning_probe(
     gc.collect()
     torch.cuda.empty_cache()
 
-    canvas_w, canvas_h = CANVAS
     canvas_w = (canvas_w // 16) * 16
     canvas_h = (canvas_h // 16) * 16
     lat_w, lat_h = canvas_w // 16, canvas_h // 16
@@ -224,11 +249,13 @@ def run_chained_conditioning_probe(
     title_info = render_glyph(
         text=title, font_name_or_path=font, auto_size=False,
         target_width=title_w, target_height=title_h,
+        force_single_line=title_single_line,
     )
     # Render Subtitle glyph (generous width 832px to guarantee zero edge truncation)
     subtitle_info = render_glyph(
         text=subtitle, font_name_or_path=font, auto_size=False,
         target_width=subtitle_w, target_height=subtitle_h,
+        force_single_line=subtitle_single_line,
     )
     print(f"  [Title Glyph]   : {title_info.width_px}x{title_info.height_px}px {title_info.font_size_pt}pt {title_info.token_count}tok :: {title_info.lines}")
     print(f"  [Subtitle Glyph]: {subtitle_info.width_px}x{subtitle_info.height_px}px {subtitle_info.font_size_pt}pt {subtitle_info.token_count}tok :: {subtitle_info.lines}")
@@ -251,16 +278,23 @@ def run_chained_conditioning_probe(
     title_ref_tokens, title_ref_ids = title_ref_tokens.to(device_dit), title_ref_ids.to(device_dit)
     subtitle_ref_tokens, subtitle_ref_ids = subtitle_ref_tokens.to(device_dit), subtitle_ref_ids.to(device_dit)
 
-    # Encode Product image (768x768 for optimal 2304 token density)
-    prod_pil = Image.open(prod_img_path).convert("RGB")
-    prod_ref_tokens, prod_ref_ids = encode_image_to_ref_tokens(ae, prod_pil, t_prod, device_ae, target_size=(768, 768))
-    prod_ref_tokens, prod_ref_ids = prod_ref_tokens.to(device_dit), prod_ref_ids.to(device_dit)
-    print(f"  [Product Image] : {prod_pil.size} -> 768x768 -> {prod_ref_tokens.shape[1]} tokens (t={t_prod})")
+    # Encode Product image (768x768 for optimal 2304 token density) -- OPTIONAL, skipped for free-form
+    # scenes with no product cutout reference (prod_img_path is None).
+    if prod_img_path:
+        prod_pil = Image.open(prod_img_path).convert("RGB")
+        prod_ref_tokens, prod_ref_ids = encode_image_to_ref_tokens(ae, prod_pil, t_prod, device_ae, target_size=(768, 768))
+        prod_ref_tokens, prod_ref_ids = prod_ref_tokens.to(device_dit), prod_ref_ids.to(device_dit)
+        print(f"  [Product Image] : {prod_pil.size} -> 768x768 -> {prod_ref_tokens.shape[1]} tokens (t={t_prod})")
 
-    # Step 1 Combined Reference: Title Glyph (@ t_title) + Product Image (@ t_prod)
-    step1_ref_tokens = torch.cat([title_ref_tokens, prod_ref_tokens], dim=1)
-    step1_ref_ids = torch.cat([title_ref_ids, prod_ref_ids], dim=1)
-    print(f"  [Step 1 Input]  : {step1_ref_tokens.shape[1]} total ref tokens (Title {title_ref_tokens.shape[1]}tok + Product {prod_ref_tokens.shape[1]}tok)")
+        # Step 1 Combined Reference: Title Glyph (@ t_title) + Product Image (@ t_prod)
+        step1_ref_tokens = torch.cat([title_ref_tokens, prod_ref_tokens], dim=1)
+        step1_ref_ids = torch.cat([title_ref_ids, prod_ref_ids], dim=1)
+        print(f"  [Step 1 Input]  : {step1_ref_tokens.shape[1]} total ref tokens (Title {title_ref_tokens.shape[1]}tok + Product {prod_ref_tokens.shape[1]}tok)")
+    else:
+        print("  [Product Image] : (none -- free-form scene, Step 1 relies on prompt only for the product)")
+        step1_ref_tokens = title_ref_tokens
+        step1_ref_ids = title_ref_ids
+        print(f"  [Step 1 Input]  : {step1_ref_tokens.shape[1]} total ref tokens (Title only, no product ref)")
 
     print(f"\n[4/4] Executing Chained Multi-Modal Conditioning across {len(seeds)} seed(s)...\n")
     results_summary: List[Dict[str, Any]] = []
@@ -392,7 +426,7 @@ def run_chained_conditioning_probe(
 
 def main():
     parser = argparse.ArgumentParser(description="Tendoo AI Chained Multi-Modal Reference Conditioning Probe (Direction 4)")
-    parser.add_argument("--preset", type=str, default="headphones", choices=["headphones", "shoes"],
+    parser.add_argument("--preset", type=str, default="headphones", choices=["headphones", "shoes", "watch_prompt1"],
                         help="Preset configuration (default: headphones)")
     parser.add_argument("--prod_image", type=str, default=None, help="Custom path to product image")
     parser.add_argument("--title_text", type=str, default=None, help="Custom Title text")
@@ -414,6 +448,10 @@ def main():
     parser.add_argument("--t_prod", type=float, default=20.0, help="Time offset for Product image in Step 1 (default: 20.0)")
     parser.add_argument("--t_subtitle", type=float, default=10.0, help="Time offset for Subtitle glyph in Step 2 (default: 10.0)")
     parser.add_argument("--t_poster", type=float, default=20.0, help="Time offset for Step 1 Poster in Step 2 (default: 20.0)")
+    parser.add_argument("--canvas_w", type=int, default=CANVAS[0], help=f"Canvas width in px (default: {CANVAS[0]})")
+    parser.add_argument("--canvas_h", type=int, default=CANVAS[1], help=f"Canvas height in px (default: {CANVAS[1]})")
+    parser.add_argument("--title_single_line", action="store_true", help="Force Title glyph to a single line (default: off, relies on explicit \\n)")
+    parser.add_argument("--subtitle_single_line", action="store_true", help="Force Subtitle glyph to a single line (default: off, relies on explicit \\n)")
 
     args = parser.parse_args()
     run_chained_conditioning_probe(
@@ -438,6 +476,10 @@ def main():
         t_prod=args.t_prod,
         t_subtitle=args.t_subtitle,
         t_poster=args.t_poster,
+        canvas_w=args.canvas_w,
+        canvas_h=args.canvas_h,
+        title_single_line=args.title_single_line,
+        subtitle_single_line=args.subtitle_single_line,
     )
 
 
