@@ -347,16 +347,9 @@ Dự án này **CHỈ TẬP TRUNG DUY NHẤT VÀO MÔ HÌNH**:
       + **Phân tầng nghịch đảo này PHẢI ĐƯỢC ĐƯA VÀO NGAY TỪ MILESTONE A (2 SLOTS)**!
       + Tuyệt đối không dồn tới Milestone C, nhằm triệt tiêu liên kết giả ngay từ gốc rễ, đảm bảo các milestone sau kế thừa một bộ khung chú ý hoàn toàn sạch và tổng quát.
 
-28. **TUYỆT ĐỐI CẤM VIẾT CODE OUTPUT FILE HTML TRÊN SERVER (THE FORBIDDEN SERVER HTML OUTPUT LAW)**:
-    - **Nguyên nhân & Thực tế kiểm nghiệm**:
-      + Môi trường JupyterLab trên server mạng nội bộ không có web server phục vụ file HTML phụ thuộc (bị lỗi relative image paths, preview HTML bị trắng hoặc không mở được).
-      + Việc cố tình sinh file HTML gây lãng phí công sức và ức chế trải nghiệm người dùng.
-    - **Quy tắc bắt buộc từ nay về sau**:
-      + **TUYỆT ĐỐI KHÔNG VIẾT CODE SINH RA CÁC FILE `.html` TRÊN SERVER NỮA**.
-      + Mọi script kiểm thử, suy luận, đánh giá hoặc báo cáo chạy trên server **CHỈ ĐƯỢC PHÉP XUẤT 3 LOẠI ĐẦU RA**:
-        1. Bảng tóm tắt định dạng ASCII sạch sẽ in trực tiếp ra Terminal để đọc ngay lập tức.
-        2. File dữ liệu có cấu trúc chuẩn (`.json`, `.jsonl`, `.csv`).
-        3. Các file ảnh `.png` / `.jpg` độc lập để mở xem trực tiếp trong Image Viewer tích hợp sẵn của JupyterLab.
+28. **(ĐÃ GỠ BỎ) — cũ: "Tuyệt Đối Cấm Viết Code Output File HTML Trên Server"**:
+    - Luật cũ cấm hoàn toàn việc sinh file `.html` trên server (lý do ban đầu: JupyterLab không có web server phục vụ HTML phụ thuộc, preview trắng/lỗi path). Lệnh cấm này **đã được gỡ bỏ theo yêu cầu trực tiếp**, vì `src/tendoo/typography_engine.py` (Playwright + Chromium headless) dùng HTML/CSS như một **định dạng trung gian hợp lệ** để render overlay typography rồi rasterize ra PNG — không phải để mở/preview trực tiếp trong JupyterLab như luật cũ lo ngại.
+    - Các script cũ vẫn còn comment nhắc "Rule 28: ASCII + JSON + PNG only" (nhiều probe script trong `scripts/`) — những comment đó phản ánh trạng thái tại thời điểm viết, không cần sửa lại hàng loạt, nhưng **không còn là quy tắc bắt buộc** cho code mới.
 
 29. **CHỐT (LOCKED) GLYPH ENGINE — BẢN CUỐI CÙNG: BOX RỘNG RÃI + FONT LỚN NHẤT KHẢ THI, KHÔNG CÒN SÀN CỠ CHỮ CỐ ĐỊNH (THE GENEROUS-BOX & LARGEST-FITTING-FONT LAW)** — sửa lần thứ 4 (và là bản cuối) sau 8 vòng probe GPU (`scripts/probe_glyph_*.py`), thay thế hoàn toàn cả 3 bản trước (canvas-width-ratio, self-aspect-ratio band, sàn 40pt cố định):
     - **Hành trình bác bỏ 3 giả thuyết ngày càng tinh vi hơn, trước khi quay lại đúng thuật toán gốc**:
