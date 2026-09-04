@@ -315,6 +315,11 @@ class GlyphInfo:
     padding_x_px: int
     padding_y_px: int
 
+    @property
+    def font_size(self) -> int:
+        """Alias for font_size_pt for backwards compatibility."""
+        return self.font_size_pt
+
     def summary(self) -> str:
         """Returns a concise one-line technical log."""
         safe_str = "SAFE (Silk-Smooth)" if self.is_nyquist_safe else "WARNING: Sub-Nyquist!"

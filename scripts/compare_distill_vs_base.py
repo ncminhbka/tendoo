@@ -347,7 +347,7 @@ def main():
             "txt_tokens_base": txt_tokens_base,
             "txt_ids_base": txt_ids_base,
         }
-        print(f"  [✓] Case '{cid}': Glyph rasterized -> {glyph_file.name} (Font size: {glyph_info.font_size}pt)")
+        print(f"  [✓] Case '{cid}': Glyph rasterized -> {glyph_file.name} (Font size: {glyph_info.font_size_pt}pt)")
 
     results_table: List[Dict[str, Any]] = []
     generated_files: List[Path] = []
