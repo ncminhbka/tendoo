@@ -157,16 +157,18 @@ def run_distill_glyph_probe(
         sys.exit(1)
 
     print(f"\n[1/4] Loading Distilled DiT from: {model_file}")
-    # Load Distilled DiT with Klein4BParams
+    # Load Distilled DiT with Klein4BParams via environment variable
+    os.environ["KLEIN_4B_MODEL_PATH"] = str(model_file)
     model = load_flow_model(
         model_name="flux.2-klein-4b",
         device=device_dit,
-        checkpoint_dir=str(model_file.parent),
     )
     model.eval()
 
     print("\n[2/4] Loading VAE and Text Encoder (Qwen3-4B-FP8)...")
-    ae = load_ae(model_name="flux.2-klein-4b", device=device_ae, checkpoint_dir=str(base_dir))
+    if checkpoint_dir:
+        os.environ["FLUX_CHECKPOINT_DIR"] = str(checkpoint_dir)
+    ae = load_ae(model_name="flux.2-klein-base-4b", device=device_ae)
     ae.eval()
 
     text_encoder = load_qwen3_embedder(variant="4B", device=device_ae)
