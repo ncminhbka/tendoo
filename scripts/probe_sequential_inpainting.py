@@ -78,6 +78,25 @@ SUBTITLE_PROMPT = (
     "có chữ ký, không có watermark"
 )
 
+# --quote_text variant: puts the LITERAL text string back into the prompt (in quotes, bound to
+# role/position), on top of the unchanged glyph-injection mechanism. Hypothesis (see discussion):
+# glyph injection alone gives spelling fidelity but no BINDING signal telling Qwen3 which reference
+# slot corresponds to which role/position/scale instruction -- crosstalk / uncontrollable scale may
+# be a symptom of that missing binding, not of the glyph channel itself. This is the single cheapest
+# untested lever: everything else (glyph rendering, mask, t offsets) stays byte-identical to the
+# baseline above so results are directly A/B comparable seed-for-seed.
+TITLE_PROMPT_QUOTED = (
+    "Poster quảng cáo phong cách công nghệ hiện đại, nền gradient xanh dương đậm sang trọng, "
+    "dòng chữ tiêu đề \"TUYỂN DỤNG NHÂN TÀI\" 3D dập nổi mạ vàng kim loại sắc nét ở phía trên, "
+    "bố cục sạch sẽ chuyên nghiệp, không có chữ ký, không có watermark"
+)
+
+SUBTITLE_PROMPT_QUOTED = (
+    "Poster quảng cáo phong cách công nghệ hiện đại, nền gradient xanh dương đậm sang trọng, "
+    "dòng chữ \"BỨT PHÁ MỌI GIỚI HẠN\" 3D dập nổi mạ vàng kim loại sắc nét ở phía dưới, bố cục sạch sẽ "
+    "chuyên nghiệp, không có chữ ký, không có watermark"
+)
+
 
 # ==================================================================================================
 # 2. 4D ROPE ENCODING & SMOOTH INPAINTING MASK
@@ -279,13 +298,18 @@ def run_sequential_probe(
     keep_y_end: float = 0.28,
     inpaint_y_start: float = 0.36,
     t_start: float = 1.0,
+    quote_text: bool = False,
 ) -> None:
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
+    title_prompt = TITLE_PROMPT_QUOTED if quote_text else TITLE_PROMPT
+    subtitle_prompt = SUBTITLE_PROMPT_QUOTED if quote_text else SUBTITLE_PROMPT
+
     print("=" * 100)
     print(" [*] TENDOO AI - SEQUENTIAL INPAINTING PROBE (DIRECTION 3, TRAINING-FREE)")
     print("=" * 100)
+    print(f"  Prompt mode: {'QUOTED (literal text string back in prompt, bound to role/position)' if quote_text else 'BASELINE (no literal text string in prompt)'}")
     print(f"  Title      : \"{TITLE_TEXT.replace(chr(10), ' ')}\" (top)")
     print(f"  Subtitle   : \"{SUBTITLE_TEXT.replace(chr(10), ' ')}\" (bottom)")
     print(f"  Canvas     : {CANVAS[0]}x{CANVAS[1]} (9:16 target)")
@@ -314,11 +338,13 @@ def run_sequential_probe(
     text_encoder = load_qwen3_embedder(variant="4B", device=device_te)
 
     print("\n[2/4] Encoding prompts via Qwen3-4B-FP8...")
+    print(f"  [Title Prompt]   : {title_prompt[:100]}...")
+    print(f"  [Subtitle Prompt]: {subtitle_prompt[:100]}...")
     with torch.no_grad():
-        txt_title, txt_ids_title = batched_prc_txt(text_encoder(["", TITLE_PROMPT]))
+        txt_title, txt_ids_title = batched_prc_txt(text_encoder(["", title_prompt]))
         txt_title, txt_ids_title = txt_title.to(device_dit), txt_ids_title.to(device_dit)
 
-        txt_subtitle, txt_ids_subtitle = batched_prc_txt(text_encoder(["", SUBTITLE_PROMPT]))
+        txt_subtitle, txt_ids_subtitle = batched_prc_txt(text_encoder(["", subtitle_prompt]))
         txt_subtitle, txt_ids_subtitle = txt_subtitle.to(device_dit), txt_ids_subtitle.to(device_dit)
 
     if num_gpus >= 2:
@@ -497,6 +523,10 @@ def main():
     parser.add_argument("--keep_y_end", type=float, default=0.28, help="Top fraction to freeze (default: 0.28)")
     parser.add_argument("--inpaint_y_start", type=float, default=0.36, help="Bottom fraction to inpaint (default: 0.36)")
     parser.add_argument("--t_start", type=float, default=1.0, help="Timestep to start Pass 2 (default 1.0 = full ODE, 0.75-0.85 = warm-start from Pass 1 layout)")
+    parser.add_argument("--quote_text", action="store_true",
+                         help="Put the literal text string back into the prompt (quoted, bound to role/position) "
+                              "on top of glyph injection -- tests whether missing prompt<->reference binding "
+                              "explains crosstalk/uncontrollable-scale, independent of the glyph channel itself.")
 
     args = parser.parse_args()
     run_sequential_probe(
@@ -512,6 +542,7 @@ def main():
         keep_y_end=args.keep_y_end,
         inpaint_y_start=args.inpaint_y_start,
         t_start=args.t_start,
+        quote_text=args.quote_text,
     )
 
 
