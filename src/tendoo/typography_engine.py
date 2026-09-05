@@ -1304,7 +1304,51 @@ class PosterTemplateEngine:
         """,
         "plain_light": "color: #FFFFFF; text-shadow: 0 2px 14px rgba(0,0,0,0.55);",
         "plain_dark": "color: #1A1208; text-shadow: 0 2px 10px rgba(255,255,255,0.5);",
+        # --- Dark-on-light styles, for bright/pastel scenes (prompt_test.txt lines 5/7/17/23/
+        # 29/33/39...) where the light-on-dark trio above has no contrast to work with. ---
+        "embossed_dark": """
+            background: linear-gradient(180deg, #4a4a4a 0%, #2b2b2b 40%, #1a1a1a 70%, #3a3a3a 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+            filter: drop-shadow(0px -1px 0px rgba(255,255,255,0.65)) drop-shadow(0px 1px 1px rgba(255,255,255,0.3))
+                    drop-shadow(0px 2px 3px rgba(0,0,0,0.22)) drop-shadow(0px 5px 10px rgba(0,0,0,0.16));
+        """,
+        "gold_deep": """
+            background: linear-gradient(180deg, #8a6a1f 0%, #b8860b 25%, #6b4d0a 55%, #a17d1a 75%, #4a3407 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+            filter: drop-shadow(0px 1px 0px rgba(255,255,255,0.45)) drop-shadow(0px 2px 3px rgba(0,0,0,0.22))
+                    drop-shadow(0px 5px 10px rgba(0,0,0,0.18));
+        """,
+        "pastel_pop": """
+            color: #D6318F;
+            -webkit-text-stroke: 2px #FFFFFF; paint-order: stroke fill;
+            text-shadow: 0 3px 8px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.14);
+        """,
     }
+
+    # Which style each zone's dark/light reading should prefer when the caller doesn't pin one
+    # explicitly -- see _auto_pick_style().
+    _LIGHT_BG_STYLE_ORDER = ["embossed_dark", "gold_deep", "pastel_pop"]
+    _DARK_BG_STYLE_ORDER = ["neon_glow", "metallic_3d", "gold_foil"]
+
+    @classmethod
+    def _auto_pick_style(cls, analysis: BackgroundAnalysis, position: str, style_hint: Optional[str] = None) -> str:
+        """
+        Picks a HERO_STYLE_CSS key based on the ACTUAL measured luminance of the zone the text
+        will land in (not a guess made before the image existed) -- reads header/center/footer
+        zone from PosterBackgroundAnalyzer depending on the position's vertical component. Prefers
+        `style_hint` (e.g. "neon", "gold", "metallic", "embossed", "pastel") if it names a style in
+        the right light/dark family; otherwise defaults to that family's first (best-tested) entry.
+        """
+        v = position.replace("_", "-").split("-")[0]
+        zone = {"top": analysis.header_zone, "middle": analysis.center_zone, "bottom": analysis.footer_zone}.get(v, analysis.center_zone)
+        family = cls._LIGHT_BG_STYLE_ORDER if not zone.is_dark else cls._DARK_BG_STYLE_ORDER
+
+        if style_hint:
+            hint = style_hint.lower()
+            for key in family:
+                if hint in key:
+                    return key
+        return family[0]
 
     @staticmethod
     def _zone_css(position: str) -> str:
@@ -1353,10 +1397,16 @@ class PosterTemplateEngine:
     def _generate_product_ad(
         cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None
     ) -> str:
-        title_style = brief.get("title_style", "plain_light")
-        subtitle_style = brief.get("subtitle_style", "plain_light")
         title_position = brief.get("title_position", "top-center")
         subtitle_position = brief.get("subtitle_position")  # None -> stack under title (most prompts: "phía dưới")
+
+        # Style: honor an explicit pick, else auto-select from the ACTUAL measured luminance of
+        # the zone the text lands in (PosterBackgroundAnalyzer already computed this from the
+        # real generated image -- no need to guess blind before the image existed).
+        title_style = brief.get("title_style") or cls._auto_pick_style(analysis, title_position, brief.get("style_theme"))
+        subtitle_style = brief.get("subtitle_style") or cls._auto_pick_style(
+            analysis, subtitle_position or title_position, brief.get("style_theme")
+        )
 
         title_html = f'<div class="title-text">{brief.get("title_text", "TIÊU ĐỀ SẢN PHẨM")}</div>'
         subtitle_html = f'<div class="subtitle-text">{brief.get("subtitle_text", "Dòng mô tả phụ")}</div>'
