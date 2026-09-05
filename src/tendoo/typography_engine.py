@@ -1368,6 +1368,34 @@ class PosterTemplateEngine:
                 "center": " left:6%; right:6%; text-align:center;"}.get(h, " left:6%; right:6%; text-align:center;")
         return css
 
+    # Below this height fraction of the canvas, a detected safe_rect (Cấp độ 2 MER,
+    # src/tendoo/layout_geometry.py) is considered too cramped to trust for a title -- falls back
+    # to the fixed zone rather than squeezing text into a sliver. Not a fully-designed fallback
+    # policy (that decision -- shrink content vs. accept light touch/overlap -- is still open per
+    # memory css-hero-title-overlay-direction.md), just a minimum sanity guard.
+    MIN_SAFE_RECT_HEIGHT_PCT = 10.0
+
+    @classmethod
+    def _zone_css_from_rect(cls, rect_pct: Dict[str, float]) -> Optional[str]:
+        """
+        Builds absolute-positioning CSS directly from an EmptyRect.as_css_percent()-shaped dict
+        (src/tendoo/layout_geometry.py's Cấp độ 2 MER output: left_pct/top_pct/right_pct/
+        bottom_pct/height_pct) instead of a fixed 3x3 zone -- lets a detected product/hero
+        bounding box on THIS specific generated image move the text out of the way, rather than
+        guessing a zone ahead of time (see prompt_test.txt line 1's demonstrated case: a
+        middle-left title zone overlapped the product because nothing checked where the product
+        actually landed). Returns None (caller should fall back to _zone_css) if the rect is
+        missing required keys or too short to trust.
+        """
+        try:
+            top, left, right = rect_pct["top_pct"], rect_pct["left_pct"], rect_pct["right_pct"]
+            height = rect_pct["height_pct"]
+        except (KeyError, TypeError):
+            return None
+        if height < cls.MIN_SAFE_RECT_HEIGHT_PCT:
+            return None
+        return f"position:absolute; top:{top}%; left:{left}%; right:{right}%; text-align:center;"
+
     _PRODUCT_AD_TPL = Template("""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
@@ -1411,20 +1439,28 @@ class PosterTemplateEngine:
         title_html = f'<div class="title-text">{brief.get("title_text", "TIÊU ĐỀ SẢN PHẨM")}</div>'
         subtitle_html = f'<div class="subtitle-text">{brief.get("subtitle_text", "Dòng mô tả phụ")}</div>'
 
+        # Cấp độ 2 (detection + MER, src/tendoo/layout_geometry.py) integration: if the caller
+        # already ran detection on THIS generated image and passed the resulting safe rectangle,
+        # it overrides the fixed title_position zone -- otherwise fall back to the static 3x3
+        # grid as before (fully backward compatible; safe_rect is optional).
+        safe_rect = brief.get("safe_rect")
+        title_zone_css = (cls._zone_css_from_rect(safe_rect) if safe_rect else None) or cls._zone_css(title_position)
+
         if subtitle_position is None or subtitle_position == title_position:
             # Stacked mode: both blocks share ONE zone, subtitle flows directly below title --
             # matches the dominant prompt_test.txt pattern ("Ở góc trên... Phía dưới...", i.e.
             # subtitle is relative to title's position, not an independently-placed zone).
             body_html = (
-                f'<div style="{cls._zone_css(title_position)}">'
+                f'<div style="{title_zone_css}">'
                 f'{title_html}<div class="stack-gap">{subtitle_html}</div></div>'
             )
         else:
             # Independent mode: title and subtitle explicitly occupy different zones (e.g.
             # prompt_test.txt line 1's inverted case -- small subtitle top-left, larger title
-            # middle-left).
+            # middle-left). safe_rect (if given) only overrides the title's zone -- subtitle
+            # keeps its own independent zone.
             body_html = (
-                f'<div style="{cls._zone_css(title_position)}">{title_html}</div>'
+                f'<div style="{title_zone_css}">{title_html}</div>'
                 f'<div style="{cls._zone_css(subtitle_position)}">{subtitle_html}</div>'
             )
 
