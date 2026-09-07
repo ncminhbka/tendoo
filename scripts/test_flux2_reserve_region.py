@@ -37,6 +37,17 @@ lặp (25 block x 4 bước) làm phồng VRAM. Đối chiếu `scripts/cli.py:4
 bọc `with torch.no_grad():` quanh TOÀN BỘ generation (text encode -> denoise -> ae.decode), không
 chỉ quanh ae.encode/decode như bản trước của script này. Đã sửa.
 
+CHẠY THẬT LẦN 1 (đã có ảnh, đã tìm ra bug lock_schedule): baseline.png đẹp, không dính sản phẩm/
+face. Nhưng reserve.png vùng top bị 1 MẢNG XÁM CÓ VÂN lạc hẳn tông màu (đúng "ô giả tạo" đã lo từ
+đầu) -- tính lại bằng tay (không cần GPU) xác nhận: `default_lock_schedule` dùng ngưỡng t TUYỆT
+ĐỐI (0.85/0.55) hiệu chỉnh hình dung cho lịch trình SNR-shift ~50 bước của base, nhưng với model
+4 bước distill, timesteps thực tế đo được là [1.0, 0.9306, 0.8171, 0.5982, 0.0] --> lam(t_prev)
+ra [1.0, 0.9706, 0.0624, 0.0] -- khoá CỨNG 2/4 bước (50% tổng bước) thay vì ~15% như tính cho
+50 bước, mô hình không còn đủ bước để "vẽ lại" texture tự nhiên. Đã sửa bằng
+`build_index_based_lock_schedule()` (masked_generation.py) -- tính lam THEO VỊ TRÍ BƯỚC (index),
+không phụ thuộc hình dạng đường cong t -- mặc định giờ chỉ khoá đúng 1/4 bước với model distill.
+Có thể chỉnh qua `--lock-frac`/`--anneal-frac`.
+
 Usage:
   python scripts/test_flux2_reserve_region.py \
       --prompt "A luxurious rose gold smart watch on a wooden desk, pastel pink studio background" \
@@ -64,7 +75,7 @@ from PIL import Image, ImageDraw  # noqa: E402
 from flux2 import util  # noqa: E402
 from flux2.sampling import denoise as denoise_baseline  # noqa: E402
 from flux2.sampling import get_schedule, prc_img, prc_txt  # noqa: E402
-from flux2.masked_generation import build_region_token_mask, default_lock_schedule, denoise_reserve  # noqa: E402
+from flux2.masked_generation import build_index_based_lock_schedule, build_region_token_mask, denoise_reserve  # noqa: E402
 
 
 def encode_flat_patch(ae, device, ae_dtype, color=(235, 225, 210), size=(64, 64)) -> torch.Tensor:
@@ -97,6 +108,10 @@ def main():
                           "don ca 3 model vao 1 GPU 24GB), khong thi dung chung --device.")
     ap.add_argument("--region", default="top", choices=["top", "bottom", "left", "right", "middle_left", "middle_right"],
                      help="Vung reserve don gian de test nhanh -- top/bottom = dai ngang tren/duoi 25%%, left/right = nua doc trai/phai, middle_left/middle_right = 1 nua doc nhung chi tam giua")
+    ap.add_argument("--lock-frac", type=float, default=0.25,
+                     help="Ti le SO BUOC dau tien khoa cung (lam=1.0) -- theo VI TRI BUOC, khong theo t tuyet doi. Mac dinh 0.25 (vd 4 buoc -> khoa dung buoc 1).")
+    ap.add_argument("--anneal-frac", type=float, default=0.25,
+                     help="Ti le so buoc TIEP THEO dung anneal cosine 1.0->0.0 (can >=2 buoc thuc te moi anneal, khong thi bo qua va tha han luon).")
     args = ap.parse_args()
 
     model_name = args.model_name
@@ -178,6 +193,13 @@ def main():
     region_mask = build_region_token_mask(h_lat, w_lat, row_frac, col_frac, device=device)
     print(f"Region '{args.region}': {region_mask.sum().item()}/{region_mask.numel()} token")
 
+    # Lock schedule THEO VI TRI BUOC (khong theo t tuyet doi) -- fix da xac nhan bang so lieu that:
+    # voi model 4-buoc, nguong t=0.85/0.55 (default_lock_schedule) khoa cung 2/4 buoc (50%) thay vi
+    # ~15% nhu tinh cho 50-buoc base, ra dung hien tuong "vung reserve thanh mang xam co van, lac
+    # tong" da thay trong ket qua that. build_index_based_lock_schedule tu suy tu chinh `timesteps`
+    # nen luon dung ti le bat ke so buoc/model nao.
+    lock_schedule = build_index_based_lock_schedule(timesteps, lock_frac=args.lock_frac, anneal_frac=args.anneal_frac)
+
     z_known_patch = encode_flat_patch(ae, aux_device, ae_dtype)  # (1, C, h_small, w_small), tren aux_device
     z_known = z_known_patch.mean(dim=(0, 2, 3)).to(device=device, dtype=torch.bfloat16)  # (C,) -- gia tri
     # kenh trung binh, chuyen sang `device`+bfloat16 vi day la dung chung voi img latent (bfloat16,
@@ -208,7 +230,7 @@ def main():
         print("Chay RESERVE (Co che A -- denoise_reserve)...")
         out_reserve = denoise_reserve(
             model, img.clone(), img_ids, ctx, ctx_ids, timesteps, guidance=guidance,
-            region_mask=region_mask, z_known=z_known, lock_schedule=default_lock_schedule,
+            region_mask=region_mask, z_known=z_known, lock_schedule=lock_schedule,
         )
         decode_and_save(out_reserve, out_dir / "reserve.png")
 
@@ -224,6 +246,7 @@ def main():
         "model": model_name, "prompt": args.prompt, "product_phrase": args.product_phrase,
         "region": args.region, "seed": args.seed, "num_steps": num_steps, "guidance": guidance,
         "latent_shape": [C, h_lat, w_lat],
+        "lock_frac": args.lock_frac, "anneal_frac": args.anneal_frac, "timesteps": timesteps,
     }
     (out_dir / "run_info.json").write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"XONG. Xem {out_dir}/baseline.png vs {out_dir}/reserve.png (doi chieu voi region_debug.png).")

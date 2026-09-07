@@ -86,8 +86,17 @@ def default_lock_schedule(t: float, t_full_lock_above: float = 0.85, t_release_b
     -- đặt sản phẩm ở đâu), rồi anneal cosine xuống 0 và THẢ HẲN (λ=0) ở nửa sau quá trình khử
     nhiễu -- để chi tiết/texture ảnh thật tự do hình thành trong vùng đó thay vì bị khoá thành 1
     patch chết. Ngưỡng 0.85/0.55 là ĐIỂM KHỞI ĐẦU HỢP LÝ dựa trên cùng logic FreeText's
-    early-mid injection window (docs/FreeText_paper_summary.md, t_start=0.8T/t_end=0.6T) --
-    CHƯA tự tinh chỉnh bằng thực nghiệm thật (không có GPU để test), cần user tự dò lại trên server.
+    early-mid injection window (docs/FreeText_paper_summary.md, t_start=0.8T/t_end=0.6T).
+
+    CẢNH BÁO (đã kiểm chứng bằng số liệu thật từ test trên server, seq_len=6144, model distill 4
+    bước): ngưỡng TUYỆT ĐỐI theo t này được hiệu chỉnh hình dung cho lịch trình SNR-shift ~50 bước
+    của model base -- với model 4 bước, đường cong shift co cụm khác hẳn (mu khác), timesteps thực
+    tế đo được là [1.0, 0.9306, 0.8171, 0.5982, 0.0] --> lam(t_prev) tương ứng ra
+    [1.0, 0.9706, 0.0624, 0.0] -- tức KHOÁ CỨNG 2/4 bước (50% tổng bước), không phải ~15% như tính
+    toán cho 50 bước. Kết quả thật: vùng reserve thành 1 mảng xám có vân, lạc hẳn tông màu so với
+    phần còn lại -- đúng hiện tượng "ô giả tạo" đã lo từ đầu. Dùng
+    `build_index_based_lock_schedule()` bên dưới thay cho hàm này khi số bước ít (<=10) -- nó tính
+    theo VỊ TRÍ BƯỚC (index), không phụ thuộc hình dạng đường cong t.
     """
     if t >= t_full_lock_above:
         return 1.0
@@ -96,6 +105,56 @@ def default_lock_schedule(t: float, t_full_lock_above: float = 0.85, t_release_b
     span = t_full_lock_above - t_release_below
     x = (t - t_release_below) / span  # 0..1
     return 0.5 * (1 - math.cos(math.pi * x))
+
+
+def build_index_based_lock_schedule(
+    timesteps: list[float], lock_frac: float = 0.25, anneal_frac: float = 0.25,
+) -> Callable[[float], float]:
+    """
+    Ban thay the cho `default_lock_schedule` -- tinh lam THEO VI TRI BUOC (index trong danh sach
+    `timesteps` thuc te da qua SNR-shift), KHONG theo gia tri t tuyet doi. Sinh ra de sua dung
+    "OOM lan 3" + "ket qua thuc te tren server" -- xem canh bao trong docstring
+    `default_lock_schedule` o tren: cung 1 nguong t=0.85/0.55 khoa 2/4 buoc voi model 4-buoc
+    (qua nang) nhung chi khoa ~15% buoc voi model 50-buoc (dung y).
+
+    `timesteps`: list day du tu `sampling.get_schedule(num_steps, image_seq_len)` (do dai
+    num_steps+1, tu 1.0 xuong 0.0) -- PHAI truyen dung list nay (khong phai list khac) vi ham tra
+    ve 1 closure tra cuu theo GIA TRI t_prev THUC trong chinh list nay (khop chinh xac tung buoc
+    cua vong lap `denoise_reserve`).
+
+    `lock_frac`: ti le so buoc DAU TIEN bi khoa CUNG (lam=1.0) -- it nhat 1 buoc.
+    `anneal_frac`: ti le so buoc TIEP THEO dung de anneal cosine tu 1.0 xuong 0.0 -- sau do lam=0.0
+    han cho toi het. Vi du num_steps=4, lock_frac=0.25 -> khoa cung dung buoc 1; anneal_frac=0.25
+    -> round(0.25*4)=1 buoc anneal, nhung ANNEAL CAN TOI THIEU 2 BUOC de x chay tu >0 den 1 (khong
+    bi ket cung o x=0 -> lam=1.0 hoai) -- nen khi round ra <2, ham TU DONG BO QUA anneal, khoa dung
+    1 buoc dau roi THA HAN 3 buoc con lai. Day chinh la fix cho ca "OOM lan 3" real-world: 4-buoc
+    distill chi con 1/4 buoc bi khoa (25%) thay vi 2/4 (50%) nhu default_lock_schedule kieu cu.
+    """
+    n = len(timesteps) - 1  # so buoc thuc su (Euler step), timesteps co n+1 diem
+    t_prev_list = timesteps[1:]  # t_prev cua tung buoc, dung thu tu duyet trong denoise_reserve
+    lock_upto_idx = max(1, round(lock_frac * n))
+    anneal_steps = max(0, round(anneal_frac * n))
+    anneal_upto_idx = min(n, lock_upto_idx + anneal_steps)
+
+    lam_by_tprev: dict[float, float] = {}
+    for i, t_prev in enumerate(t_prev_list):
+        if i < lock_upto_idx:
+            lam = 1.0
+        elif anneal_steps >= 2 and i < anneal_upto_idx:
+            span = anneal_upto_idx - lock_upto_idx  # >= 2 o day
+            x = (i - lock_upto_idx + 1) / span  # (0, 1], khong bao gio dung yen o 0
+            lam = 0.5 * (1 + math.cos(math.pi * x))  # ~1.0 -> 0.0
+        else:
+            lam = 0.0
+        lam_by_tprev[t_prev] = lam
+
+    def _schedule(t: float) -> float:
+        # Tra cuu gan dung (float roundtrip qua .tolist() co the lech epsilon nho) thay vi ep bang
+        # tuyet doi -- van an toan vi cac t_prev cach nhau xa hon nhieu so epsilon float.
+        closest = min(lam_by_tprev.keys(), key=lambda tp: abs(tp - t))
+        return lam_by_tprev[closest]
+
+    return _schedule
 
 
 def denoise_reserve(
