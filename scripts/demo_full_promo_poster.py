@@ -53,8 +53,10 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT / "src"))
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+for p in [PROJECT_ROOT, PROJECT_ROOT / "src", PROJECT_ROOT / "scripts"]:
+    if str(p) not in sys.path:
+        sys.path.insert(0, str(p))
 
 import numpy as np
 import torch
