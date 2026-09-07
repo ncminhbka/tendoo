@@ -46,13 +46,13 @@ from flux2.masked_generation import build_region_token_mask, default_lock_schedu
 MODEL_NAME = "flux.2-klein-base-4b"
 
 
-def encode_flat_patch(ae, device, color=(235, 225, 210), size=(64, 64)) -> torch.Tensor:
+def encode_flat_patch(ae, device, ae_dtype, color=(235, 225, 210), size=(64, 64)) -> torch.Tensor:
     """Ma hoa 1 patch mau phang don gian (dai dien 'noi dung don gian' cho vung reserve) qua VAE,
     tra ve latent shape (1, C, h_small, w_small) -- CHỈ dung de tao z_known nho roi broadcast, vi
     z_known chi can 1 vector kenh (C,), khong can dung nguyen ca patch lon."""
     img = Image.new("RGB", size, color)
     x = torch.from_numpy(__import__("numpy").array(img)).permute(2, 0, 1).float() / 127.5 - 1.0
-    x = x.unsqueeze(0).to(device)
+    x = x.unsqueeze(0).to(device=device, dtype=ae_dtype)
     with torch.no_grad():
         z = ae.encode(x)
     return z  # (1, C, h_lat_small, w_lat_small)
@@ -85,11 +85,18 @@ def main():
     defaults = util.FLUX2_MODEL_INFO[MODEL_NAME]["defaults"]
     num_steps, guidance = defaults["num_steps"], defaults["guidance"]
 
+    # AE checkpoint tren server duoc luu san o bfloat16 (khong phai fp32) -- doc dtype THAT tu
+    # chinh cac tham so da load, KHONG doan, roi ep moi tensor dua vao ae.encode/decode ve dung
+    # dtype nay (day la nguyen nhan loi "Input type (float) and bias type (c10::BFloat16)").
+    ae_dtype = next(ae.parameters()).dtype
+    print(f"AE dtype phat hien: {ae_dtype}")
+
     torch.manual_seed(args.seed)
     generator = torch.Generator(device=device).manual_seed(args.seed)
 
-    # --- Text conditioning (dung chung cho ca 2 nhanh) ---
-    ctx = text_encoder([args.prompt])  # (1, L_txt, D)
+    # --- Text conditioning (dung chung cho ca 2 nhanh) -- model DiT la bfloat16 (util.load_flow_model
+    #     ep cung), nen ctx cung phai bfloat16, dung y het pattern that trong scripts/cli.py ---
+    ctx = text_encoder([args.prompt]).to(torch.bfloat16)  # (1, L_txt, D)
     ctx, ctx_ids = prc_txt(ctx[0])
     ctx, ctx_ids = ctx.unsqueeze(0).to(device), ctx_ids.unsqueeze(0).to(device)
 
@@ -97,13 +104,14 @@ def main():
     #     so downsample --> luon dung du bao nhieu VAE/model doi ---
     blank = Image.new("RGB", (args.width, args.height), (255, 255, 255))
     import numpy as np
-    x_probe = torch.from_numpy(np.array(blank)).permute(2, 0, 1).float().unsqueeze(0).to(device) / 127.5 - 1.0
+    x_probe = torch.from_numpy(np.array(blank)).permute(2, 0, 1).float().unsqueeze(0).to(device=device, dtype=ae_dtype) / 127.5 - 1.0
     with torch.no_grad():
         z_probe = ae.encode(x_probe)
     _, C, h_lat, w_lat = z_probe.shape
     print(f"Latent size suy ra tu anh that: C={C} h_lat={h_lat} w_lat={w_lat}")
 
-    noise = torch.randn((1, C, h_lat, w_lat), device=device, generator=generator)
+    # Noise cho DiT phai la bfloat16 ngay tu luc tao (khop dtype model), dung y het scripts/cli.py
+    noise = torch.randn((1, C, h_lat, w_lat), device=device, generator=generator, dtype=torch.bfloat16)
     img, img_ids = prc_img(noise[0])
     img, img_ids = img.unsqueeze(0).to(device), img_ids.unsqueeze(0).to(device)
 
@@ -122,14 +130,17 @@ def main():
     region_mask = build_region_token_mask(h_lat, w_lat, row_frac, col_frac, device=device)
     print(f"Region '{args.region}': {region_mask.sum().item()}/{region_mask.numel()} token")
 
-    z_known_patch = encode_flat_patch(ae, device)  # (1, C, h_small, w_small)
-    z_known = z_known_patch.mean(dim=(0, 2, 3))  # (C,) -- gia tri kenh trung binh, broadcast cho ca vung
+    z_known_patch = encode_flat_patch(ae, device, ae_dtype)  # (1, C, h_small, w_small)
+    z_known = z_known_patch.mean(dim=(0, 2, 3)).to(torch.bfloat16)  # (C,) -- gia tri kenh trung binh,
+    # broadcast cho ca vung; ep ve bfloat16 vi day la dung chung voi img latent (bfloat16) trong
+    # denoise_reserve, khong phai dua thang vao AE.
 
     def decode_and_save(latent_tokens: torch.Tensor, path: Path):
-        # latent_tokens: (1, L, C) -> ve lai (1, C, h_lat, w_lat) truoc khi decode
-        z = latent_tokens[0].transpose(0, 1).reshape(1, C, h_lat, w_lat)
+        # latent_tokens: (1, L, C) -> ve lai (1, C, h_lat, w_lat) truoc khi decode; ep ve dung
+        # dtype cua AE (co the khac dtype cua DiT) truoc khi goi ae.decode.
+        z = latent_tokens[0].transpose(0, 1).reshape(1, C, h_lat, w_lat).to(ae_dtype)
         with torch.no_grad():
-            x = ae.decode(z)
+            x = ae.decode(z).float()
         x = ((x[0].clamp(-1, 1) + 1) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
         Image.fromarray(x).save(path)
 
