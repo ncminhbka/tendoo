@@ -77,6 +77,7 @@ from flux2.sampling import (
     denoise as denoise_baseline,
     get_schedule,
     prc_img,
+    prc_txt,
 )
 
 DEFAULT_SCENE_PROMPT = (
@@ -208,25 +209,23 @@ def main():
         print(f"\n🎨 [2/4] Generating baseline scene image first...")
         torch.manual_seed(args.seed)
         z_init = torch.randn(1, C, h_lat, w_lat, device=device, dtype=torch.bfloat16)
-        img_tokens, img_ids = prc_img(z_init[0], t_coord=torch.tensor([0.0]))
+        img_tokens, img_ids = prc_img(z_init[0])
         img_tokens = img_tokens.unsqueeze(0).to(device)
         img_ids = img_ids.unsqueeze(0).to(device)
 
         timesteps_base = get_schedule(num_steps=args.steps, image_seq_len=img_tokens.shape[1])
         with torch.no_grad():
             if is_base:
-                ctx, ctx_ids = text_encoder(["", args.scene_prompt])
-                ctx, ctx_ids = batched_prc_txt(ctx)
+                ctx_raw = text_encoder(["", args.scene_prompt]).to(torch.bfloat16)
+                ctx, ctx_ids = batched_prc_txt(ctx_raw)
                 ctx, ctx_ids = ctx.to(device), ctx_ids.to(device)
-                # True CFG denoise for baseline
                 out_base = denoise_baseline(model, img_tokens, img_ids, ctx, ctx_ids, timesteps_base, guidance=args.guidance)
             else:
-                ctx, ctx_ids = text_encoder(args.scene_prompt)
-                ctx, ctx_ids = prc_img(ctx) if hasattr(ctx, 'shape') and ctx.dim() == 3 else (ctx, ctx_ids)
-                # In sampling.py, text tokens are converted via prc_txt or batched_prc_txt
-                ctx_batched, ctx_ids_batched = batched_prc_txt([ctx])
-                ctx_batched, ctx_ids_batched = ctx_batched.to(device), ctx_ids_batched.to(device)
-                out_base = denoise_baseline(model, img_tokens, img_ids, ctx_batched, ctx_ids_batched, timesteps_base, guidance=args.guidance)
+                ctx_raw = text_encoder([args.scene_prompt]).to(torch.bfloat16)
+                ctx, ctx_ids = prc_txt(ctx_raw[0])
+                ctx = ctx.unsqueeze(0).to(device)
+                ctx_ids = ctx_ids.unsqueeze(0).to(device)
+                out_base = denoise_baseline(model, img_tokens, img_ids, ctx, ctx_ids, timesteps_base, guidance=args.guidance)
 
             # Decode baseline
             z_dec = out_base[0].transpose(0, 1).reshape(1, C, h_lat, w_lat).to(device=aux_device, dtype=ae_dtype)
@@ -261,20 +260,21 @@ def main():
         ref_tokens, ref_ids = build_reference_tokens_from_latent(z_orig, t_offset=args.ref_t_offset, device=device)
 
         # Canvas tokens at t=0.0
-        z_orig_tokens, img_ids = prc_img(z_orig, t_coord=torch.tensor([0.0]))
+        z_orig_tokens, img_ids = prc_img(z_orig)
         z_orig_tokens = z_orig_tokens.unsqueeze(0).to(device=device, dtype=torch.bfloat16)
         img_ids = img_ids.unsqueeze(0).to(device=device)
 
         # Encode Inpaint Prompt
         print(f"  Inpaint Prompt: \"{args.inpaint_prompt}\"")
         if is_base:
-            ctx_inp, ctx_ids_inp = text_encoder(["", args.inpaint_prompt])
-            ctx_inp, ctx_ids_inp = batched_prc_txt(ctx_inp)
+            ctx_raw = text_encoder(["", args.inpaint_prompt]).to(torch.bfloat16)
+            ctx_inp, ctx_ids_inp = batched_prc_txt(ctx_raw)
             ctx_inp, ctx_ids_inp = ctx_inp.to(device), ctx_ids_inp.to(device)
         else:
-            ctx_raw, _ = text_encoder(args.inpaint_prompt)
-            ctx_inp, ctx_ids_inp = batched_prc_txt([ctx_raw])
-            ctx_inp, ctx_ids_inp = ctx_inp.to(device), ctx_ids_inp.to(device)
+            ctx_raw = text_encoder([args.inpaint_prompt]).to(torch.bfloat16)
+            ctx_inp, ctx_ids_inp = prc_txt(ctx_raw[0])
+            ctx_inp = ctx_inp.unsqueeze(0).to(device)
+            ctx_ids_inp = ctx_ids_inp.unsqueeze(0).to(device)
 
     # 7. Run Unified Inpaint Denoise Loop
     print(f"\n⚡ [4/4] Running Unified Inpaint (Steps={args.steps}, Guidance={args.guidance})...")

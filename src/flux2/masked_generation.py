@@ -623,10 +623,11 @@ def build_reference_tokens_from_latent(
     dev = device or z_latent.device
     c, h, w = z_latent.shape
     
-    t_coords = torch.full((h, w), fill_value=float(t_offset), dtype=torch.float32, device=dev)
-    h_coords = torch.arange(h, dtype=torch.float32, device=dev).unsqueeze(1).expand(h, w)
-    w_coords = torch.arange(w, dtype=torch.float32, device=dev).unsqueeze(0).expand(h, w)
-    l_coords = torch.zeros((h, w), dtype=torch.float32, device=dev)
+    t_val = int(round(t_offset))
+    t_coords = torch.full((h, w), fill_value=t_val, dtype=torch.int64, device=dev)
+    h_coords = torch.arange(h, dtype=torch.int64, device=dev).unsqueeze(1).expand(h, w)
+    w_coords = torch.arange(w, dtype=torch.int64, device=dev).unsqueeze(0).expand(h, w)
+    l_coords = torch.zeros((h, w), dtype=torch.int64, device=dev)
     
     ref_ids = torch.stack([t_coords, h_coords, w_coords, l_coords], dim=-1)
     ref_ids = ref_ids.reshape(-1, 4).unsqueeze(0)  # (1, h*w, 4)
