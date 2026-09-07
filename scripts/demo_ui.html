@@ -567,6 +567,7 @@
           <div class="preset-chip" onclick="loadPreset('perfume')">🧴 Nước Hoa Pháp</div>
           <div class="preset-chip" onclick="loadPreset('midautumn')">🥮 Bánh Trung Thu</div>
           <div class="preset-chip" onclick="loadPreset('suv')">🏎️ SUV Điện Ảnh</div>
+          <div class="preset-chip" onclick="loadPreset('lookbook')">👗 Lookbook Thời Trang</div>
         </div>
 
         <form id="poster-form" onsubmit="handleGenerate(event)">
@@ -581,9 +582,11 @@
                 <option value="top_dome" selected>🏛️ Vòm Đỉnh (Top Arch Dome)</option>
                 <option value="center_hourglass">⏳ Đồng Hồ Cát (Center Hourglass)</option>
                 <option value="bottom_platform">🚘 Bệ Đáy Điện Ảnh (Bottom Platform)</option>
+                <option value="split_column">👗 Dải Lụa Phân Cột (Split Column)</option>
               </select>
             </div>
           </div>
+
 
 
           <div class="form-group">
@@ -731,6 +734,17 @@
         brand: "Tendoo Motors",
         hotline: "1900 8888",
         prompt_scene: "Commercial automobile advertising photography of a sleek luxury metallic dark grey SUV driving on a winding mountain road at golden hour twilight, motion blur wheels, sharp car body reflection, dramatic sky, unbranded, zero text"
+      },
+      lookbook: {
+        layout: "split_column",
+        pre_header: "BỘ SƯU TẬP THU ĐÔNG 2026",
+        headline: "ÁO KHOÁC MĂNG TÔ\nDẠ LÔNG CỪU Ý",
+        slogan: "Chất liệu dạ lông cừu thượng hạng dệt tay, tôn vinh nét thanh lịch vượt thời gian cho quý cô thành thị",
+        offer_main: "ƯU ĐÃI ĐẾN 25%",
+        offer_sub: "Tặng khăn choàng lụa tơ tằm cao cấp cho hóa đơn từ 3 triệu",
+        brand: "Tendoo Atelier",
+        hotline: "1900 6868",
+        prompt_scene: "Editorial high fashion photography of an elegant Asian female model wearing a tailored luxury wool coat, studio portrait, soft warm rim lighting, dramatic pose, high-end lookbook magazine, unbranded, zero text"
       }
     };
 
@@ -742,7 +756,9 @@
 
     function onLayoutChange(val) {
       const ind = document.getElementById('layout-indicator');
-      if (val === 'bottom_platform') {
+      if (val === 'split_column') {
+        ind.textContent = "Layout: Dải Lụa Phân Cột (Split Column)";
+      } else if (val === 'bottom_platform') {
         ind.textContent = "Layout: Bệ Đáy Điện Ảnh (Bottom Platform)";
       } else if (val === 'center_hourglass') {
         ind.textContent = "Layout: Đồng Hồ Cát (Center Hourglass)";
@@ -750,6 +766,7 @@
         ind.textContent = "Layout: Vòm Đỉnh (Top Dome)";
       }
     }
+
 
 
     function loadPreset(key) {

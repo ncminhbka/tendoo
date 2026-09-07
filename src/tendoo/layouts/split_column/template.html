@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width={{width}}, height={{height}}, initial-scale=1.0">
+  <title>{{headline_plain}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700&display=swap&subset=vietnamese" rel="stylesheet">
+  <style>
+    {{css_vars}}
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      background-color: #000;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+    }
+
+    /* Background image layer */
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    /* Ambient Silk Column Gradient Shim (Subtle darkening for contrast) */
+    .column-gradient-shim {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 40%;
+      background: linear-gradient(
+        to right,
+        rgba(8, 12, 20, 0.75) 0%,
+        rgba(8, 12, 20, 0.50) 65%,
+        rgba(8, 12, 20, 0.0) 100%
+      );
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Vertical Editorial Column (Safe Zone: x in [0.045, 0.35], y in [0.04, 0.96]) */
+    .editorial-column {
+      position: absolute;
+      top: 4.5%;
+      bottom: 4.5%;
+      left: 4.5%;
+      width: 32.5%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: left;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Top & Main Typography Stack */
+    .column-main-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+    }
+
+    .kicker-tag {
+      display: {{pre_header_display}};
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent-color);
+      margin-bottom: 12px;
+      text-shadow: var(--text-shadow);
+    }
+
+    .kicker-line {
+      width: 28px;
+      height: 2px;
+      background: var(--accent-color);
+      border-radius: 2px;
+    }
+
+    .title-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+      margin-bottom: 12px;
+      {{wrap_filter_css}}
+    }
+
+    .headline-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      width: 100%;
+    }
+
+    .headline-line {
+      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      font-size: {{font_size}}px;
+      line-height: {{line_height}};
+      letter-spacing: {{letter_spacing}}px;
+      font-weight: 900;
+      text-transform: uppercase;
+      text-align: left;
+      text-wrap: balance;
+      {{headline_fill_css}}
+    }
+
+    .divider-rule {
+      width: 50px;
+      height: 1.5px;
+      background: rgba(255, 255, 255, 0.25);
+      margin-bottom: 12px;
+    }
+
+    .slogan {
+      font-size: 13.5px;
+      font-weight: 500;
+      line-height: 1.5;
+      letter-spacing: 0.4px;
+      color: var(--sub-color);
+      text-shadow: var(--text-shadow);
+      margin-bottom: 22px;
+      width: 100%;
+      text-wrap: balance;
+      display: {{slogan_display}};
+    }
+
+    /* Promotional Offer Section */
+    .promo-section {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .badge-pill {
+      display: {{badge_display}};
+      align-items: center;
+      justify-content: center;
+      padding: 7px 20px;
+      border-radius: 9999px;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      box-shadow: var(--badge-shadow);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      border: 1px solid {{badge_border}};
+      white-space: nowrap;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge-pill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -50%;
+      width: 200%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: skewX(-20deg);
+      pointer-events: none;
+    }
+
+    .offer-sub {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.35;
+      letter-spacing: 0.4px;
+      text-shadow: var(--text-shadow);
+      display: {{offer_sub_display}};
+    }
+
+    .dates-chip {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--sub-color);
+      letter-spacing: 0.5px;
+      display: {{dates_display}};
+    }
+
+    /* Bottom Brand & Store Anchor */
+    .column-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      width: 100%;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .brand-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--footer-text);
+      text-shadow: var(--text-shadow);
+      display: {{brand_display}};
+    }
+
+    .hotline-chip {
+      display: {{hotline_display}};
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: var(--footer-text);
+      text-shadow: var(--text-shadow);
+    }
+
+    .applicable-note {
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.55);
+      line-height: 1.35;
+      display: {{applicable_display}};
+    }
+
+    {{custom_css}}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    <div class="column-gradient-shim"></div>
+
+    <!-- Vertical Editorial Column -->
+    <div class="editorial-column">
+      
+      <!-- Upper & Center Text Hierarchy -->
+      <div class="column-main-stack">
+        <div class="kicker-tag">
+          <div class="kicker-line"></div>
+          <span>{{pre_header}}</span>
+        </div>
+
+        <div class="title-wrap">
+          <div class="headline-wrap">
+            {{headline_html}}
+          </div>
+        </div>
+
+        <div class="divider-rule"></div>
+
+        <div class="slogan">{{slogan}}</div>
+
+        <div class="promo-section">
+          <div class="badge-pill">{{offer_main}}</div>
+          <div class="offer-sub">{{offer_sub}}</div>
+          <div class="dates-chip">{{dates}}</div>
+        </div>
+      </div>
+
+      <!-- Bottom Brand & Boutique Anchor -->
+      <div class="column-footer">
+        <div class="brand-title">{{brand}}</div>
+        <div class="hotline-chip">{{hotline}}</div>
+        <div class="applicable-note">{{applicable}}</div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
