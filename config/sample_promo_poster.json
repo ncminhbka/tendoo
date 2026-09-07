@@ -1,0 +1,21 @@
+{
+  "scene_prompt": "A modern elegant coffee shop counter with an iced caramel macchiato glass with layered milk and espresso, condensation droplets, soft warm morning lighting, blur background",
+  "layout": "hero_top",
+  "font_style": "modern_sans",
+  "color_mode": "auto",
+  "headline": "HƯƠNG VỊ ĐẬM ĐÀ\\nKHỞI ĐẦU NGÀY MỚI",
+  "slogan": "Cà phê pha máy nguyên chất 100% hạt Robusta Cầu Đất",
+  "offer_main": "ĐỒNG GIÁ 29K TẤT CẢ ĐỒ UỐNG",
+  "offer_sub": "TẶNG 01 BÁNH CROISSANT CHO HOÁ ĐƠN TỪ 60K",
+  "applicable": "Áp dụng từ 7h00 đến 11h00 mỗi ngày",
+  "dates": "Thời gian: 01/10 - 10/10/2026",
+  "brand": "Tendoo Coffee & Tea",
+  "hotline": "Hotline: 0334842155",
+  "web": "Website: coffee.tendoo.click",
+  "steps": 8,
+  "guidance": 1.5,
+  "seed": 42,
+  "width": 576,
+  "height": 1024,
+  "out_dir": "output_custom_coffee"
+}
