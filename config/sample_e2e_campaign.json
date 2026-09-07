@@ -1,0 +1,20 @@
+{
+  "campaign_id": "cafe_summer_opening",
+  "title_id": "Summer Opening Campaign - Cafe & Tea",
+  "layout": "dome",
+  "prompt_scene": "Commercial beverage photography of a plain clear unbranded glass of iced peach lemongrass tea with crystal clear ice cubes, fresh sliced peaches, orange slices and vibrant green mint leaves, dynamic water splash droplets frozen in mid-air, bright morning sunlight shining through condensation, plain transparent glass, zero text, no labels, no words, no typography, no logos",
+  "prompt_corridor": "Clean bright pastel cream and soft mint green gradient studio wall illuminated by diffused directional morning sunlight beam, smooth blank wall, airy open atmosphere, subtle bokeh light dust, completely empty backdrop, zero text, no letters, no typography, no words, no signs",
+  "theme": "fresh_mint",
+  "content": {
+    "headline": "THANH MÁT TỰ NHIÊN\\nBỪNG TỈNH NĂNG LƯỢNG",
+    "slogan": "Trà đào cam sả 100% trái cây nhiệt đới tươi sạch",
+    "offer_main": "MUA 2 TẶNG 1 TOÀN MENU",
+    "offer_sub": "TẶNG 01 BÌNH GIỮ NHIỆT CAO CẤP",
+    "applicable": "Áp dụng cho mọi đơn hàng đặt trực tiếp hôm nay",
+    "dates": "Thời gian: Áp dụng trong tuần lễ khai trương",
+    "brand": "Tendoo Tea & Coffee",
+    "hotline": "Hotline: 0334842155",
+    "web": "Web: tea.tendoo.click",
+    "address": "Hệ thống Tendoo Cafe toàn quốc"
+  }
+}
