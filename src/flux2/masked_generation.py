@@ -596,3 +596,135 @@ def denoise_trajectory_inpaint_exact(
     final_known = known_trajectory[-1].to(device=device, dtype=orig_dtype)
     img = (mask * img + (1.0 - mask) * final_known).to(orig_dtype)
     return img
+
+
+# ==================================================================================================
+# CƠ CHẾ E (HƯỚNG A - UNIFIED INPAINT: MASKED-LATENT CONDITIONING + REFERENCE-LATENT)
+# Hỗ trợ cả DISTILL (1-pass guidance, 4-8 steps, ~2s) và BASE (True CFG, 20-50 steps).
+# Dựa trên workflow ComfyUI "FLUX Klein Unified Image Editing" (runcomfy.com):
+#   1. Reference path (img_cond_seq ở t=10.0): Chứa toàn bộ ảnh gốc đã encode (đầy đủ chi tiết/ánh sáng)
+#      làm mốc định hướng cho Attention Heads.
+#   2. Canvas path (t=0.0): Khởi tạo x_1 = (1 - mask) * (z_orig + noise) + mask * noise.
+#   3. ODE loop: Tại mỗi bước t_prev, vùng ngoài mask (mask=0) được đồng bộ hóa chính xác theo
+#      đúng phương trình Flow Matching: z_known(t_prev) = (1 - t_prev) * z_orig + t_prev * noise_fixed.
+#      Vùng trong mask (mask=1) được khử nhiễu tự do theo prompt vùng trống kết hợp Reference guidance.
+# ==================================================================================================
+
+def build_reference_tokens_from_latent(
+    z_latent: Tensor, t_offset: float = 10.0, device=None,
+) -> tuple[Tensor, Tensor]:
+    """
+    Biến 1 latent tensor (C, H, W) hoặc (1, C, H, W) thành reference tokens và reference position IDs
+    tại mốc thời gian rời rạc tiền huấn luyện `t_offset` (mặc định 10.0 chuẩn BFL).
+    Trả về: (ref_tokens, ref_ids) dạng (1, L_ref, C) và (1, L_ref, 4).
+    """
+    if z_latent.dim() == 4:
+        z_latent = z_latent[0]
+    dev = device or z_latent.device
+    c, h, w = z_latent.shape
+    
+    t_coords = torch.full((h, w), fill_value=float(t_offset), dtype=torch.float32, device=dev)
+    h_coords = torch.arange(h, dtype=torch.float32, device=dev).unsqueeze(1).expand(h, w)
+    w_coords = torch.arange(w, dtype=torch.float32, device=dev).unsqueeze(0).expand(h, w)
+    l_coords = torch.zeros((h, w), dtype=torch.float32, device=dev)
+    
+    ref_ids = torch.stack([t_coords, h_coords, w_coords, l_coords], dim=-1)
+    ref_ids = ref_ids.reshape(-1, 4).unsqueeze(0)  # (1, h*w, 4)
+    ref_tokens = z_latent.permute(1, 2, 0).reshape(-1, c).unsqueeze(0)  # (1, h*w, c)
+    return ref_tokens.to(dev), ref_ids.to(dev)
+
+
+def denoise_unified_inpaint(
+    model,
+    z_orig_tokens: Tensor,       # shape (1, L_img, C) - latent cua anh goc
+    img_ids: Tensor,             # shape (1, L_img, 4) - position ids cua canvas (t=0)
+    ref_tokens: Tensor,          # shape (1, L_ref, C) - reference tokens cua anh goc tai t=10.0
+    ref_ids: Tensor,             # shape (1, L_ref, 4) - reference ids tai t=10.0
+    soft_mask: Tensor,           # shape (L_img,) gia tri [0, 1] - 1 la vung can inpaint, 0 la giu nguyen
+    txt: Tensor,                 # txt embedding cua inpaint prompt (batch=1 cho distill, batch=2 cho base CFG)
+    txt_ids: Tensor,
+    timesteps: list[float],
+    guidance: float = 1.5,
+    noise_fixed: Optional[Tensor] = None,
+    is_cfg: bool = False,
+) -> Tensor:
+    """
+    Unified Inpainting Denoising Loop:
+    - Vùng trong mask (soft_mask > 0): Được mô hình vẽ lại tự do theo prompt vùng trống kết hợp
+      tham chiếu quang học từ `ref_tokens` (ảnh gốc tại t=10.0).
+    - Vùng ngoài mask (soft_mask = 0): Được khóa chính xác theo nghiệm vi phân Flow Matching của ảnh gốc:
+      z_known(t) = (1 - t) * z_orig + t * noise_fixed.
+    - Hỗ trợ cả DISTILL (is_cfg=False, 1 forward pass/bước, guidance nhúng) lẫn BASE (is_cfg=True, True CFG).
+    """
+    orig_dtype = z_orig_tokens.dtype
+    device = z_orig_tokens.device
+    mask = soft_mask.to(device=device, dtype=orig_dtype).view(1, -1, 1)  # (1, L_img, 1)
+
+    if noise_fixed is None:
+        noise_fixed = torch.randn_like(z_orig_tokens)
+
+    # Khởi tạo Canvas tại timestep đầu tiên (thường t=1.0):
+    # Theo Flow Matching x_t = (1-t)*z_orig + t*noise. Tại t=1.0, cả trong lẫn ngoài đều là noise_fixed.
+    t_start = timesteps[0]
+    z_start_known = (1.0 - t_start) * z_orig_tokens + t_start * noise_fixed
+    img = ((1.0 - mask) * z_start_known + mask * noise_fixed).to(orig_dtype)
+
+    for step_idx in range(len(timesteps) - 1):
+        t_curr = timesteps[step_idx]
+        t_prev = timesteps[step_idx + 1]
+
+        if not is_cfg:
+            # --------------------------------------------------------------------------------------
+            # 1. DISTILL / SINGLE-PASS MODE (Bản Distill-4B, 4-8 bước, ~2s)
+            # --------------------------------------------------------------------------------------
+            t_vec = torch.full((img.shape[0],), t_curr, dtype=orig_dtype, device=device)
+            guidance_vec = torch.full((img.shape[0],), guidance, dtype=orig_dtype, device=device)
+
+            # Ghép Canvas + Reference tokens theo trục sequence
+            img_input = torch.cat([img, ref_tokens], dim=1)
+            img_input_ids = torch.cat([img_ids, ref_ids], dim=1)
+
+            pred = model(
+                x=img_input,
+                x_ids=img_input_ids,
+                timesteps=t_vec,
+                ctx=txt,
+                ctx_ids=txt_ids,
+                guidance=guidance_vec,
+            )
+            pred = pred[:, : img.shape[1]]
+            img_next = img + (t_prev - t_curr) * pred
+        else:
+            # --------------------------------------------------------------------------------------
+            # 2. BASE / TRUE CFG MODE (Bản Base-4B, 20-50 bước)
+            # --------------------------------------------------------------------------------------
+            t_vec = torch.full((2,), t_curr, dtype=orig_dtype, device=device)
+            img_cfg = torch.cat([img, img], dim=0)
+            img_ids_cfg = torch.cat([img_ids, img_ids], dim=0)
+            ref_cfg = torch.cat([ref_tokens, ref_tokens], dim=0)
+            ref_ids_cfg = torch.cat([ref_ids, ref_ids], dim=0)
+
+            img_input = torch.cat([img_cfg, ref_cfg], dim=1)
+            img_input_ids = torch.cat([img_ids_cfg, ref_ids_cfg], dim=1)
+
+            pred = model(
+                x=img_input,
+                x_ids=img_input_ids,
+                timesteps=t_vec,
+                ctx=txt,
+                ctx_ids=txt_ids,
+                guidance=None,
+            )
+            pred = pred[:, : img.shape[1]]
+            pred_uncond, pred_cond = pred.chunk(2)
+            v_pred = pred_uncond + guidance * (pred_cond - pred_uncond)
+            img_next = img + (t_prev - t_curr) * v_pred
+
+        # Đồng bộ hóa chính xác trạng thái Flow Matching của ảnh gốc tại t_prev
+        z_known_prev = (1.0 - t_prev) * z_orig_tokens + t_prev * noise_fixed
+        img = ((1.0 - mask) * z_known_prev + mask * img_next).to(orig_dtype)
+
+    # Bước kết thúc (t=0): Ép 100% pixel vùng ngoài mask về đúng ảnh gốc z_orig_tokens
+    img = ((1.0 - mask) * z_orig_tokens + mask * img).to(orig_dtype)
+    return img
+

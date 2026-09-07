@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import colorsys
 import json
 import logging
 import os
@@ -285,15 +286,35 @@ CRITICAL ARCHITECTURAL CONSTRAINTS:
 # FLUX.2 glyph injection (photoreal 3D/material integration). Duplicating it here would violate
 # the same "don't re-render what diffusion already drew" rule as the VLM system prompt below.
 
-def _bg_image_css(background_image_path: Optional[str]) -> str:
-    """Shared helper: embeds a background image as base64 CSS, or returns '' if none given."""
+def _bg_data_uri(background_image_path: Optional[str]) -> Optional[str]:
+    """Shared helper: builds a base64 data: URI for an image path, or None if none/missing.
+    Split out of `_bg_image_css` so the "Type Collage" giant-title technique (see
+    PosterTemplateEngine._giant_title_block) can reference the SAME encoded photo without
+    re-reading/re-encoding the file a second time per template."""
     if background_image_path and os.path.exists(background_image_path):
         with open(background_image_path, "rb") as f:
             b64_data = base64.b64encode(f.read()).decode("utf-8")
-            ext = Path(background_image_path).suffix.lower().replace(".", "")
-            mime = "image/jpeg" if ext in ["jpg", "jpeg"] else "image/png"
-            return f"background-image: url('data:{mime};base64,{b64_data}'); background-size: cover; background-position: center;"
+        ext = Path(background_image_path).suffix.lower().replace(".", "")
+        mime = "image/jpeg" if ext in ["jpg", "jpeg"] else "image/png"
+        return f"data:{mime};base64,{b64_data}"
+    return None
+
+
+def _bg_image_css(background_image_path: Optional[str]) -> str:
+    """Shared helper: embeds a background image as base64 CSS (full `.poster` background
+    treatment: cover + centered), or returns '' if none given."""
+    uri = _bg_data_uri(background_image_path)
+    if uri:
+        return f"background-image: url('{uri}'); background-size: cover; background-position: center;"
     return ""
+
+
+def _bg_image_only_css(background_image_path: Optional[str]) -> str:
+    """Just the `background-image: url(...)` declaration, no size/position -- for callers (the
+    Type Collage giant-title technique) that need to set their OWN background-size/position to
+    align a crop of the same photo, rather than the `.poster`-wide cover+center treatment."""
+    uri = _bg_data_uri(background_image_path)
+    return f"background-image: url('{uri}');" if uri else ""
 
 
 class PosterTemplateEngine:
@@ -331,6 +352,15 @@ class PosterTemplateEngine:
             ("grand_opening", "portrait"): cls._generate_grand_opening_portrait,
             ("feedback", "landscape"): cls._generate_feedback_card,
             ("feedback", "portrait"): cls._generate_feedback_card_portrait,
+            # before_after (single-image split-scene) deliberately reuses feedback's own render
+            # code, not a new template: every real prompt_test.txt example (lines 21/23/29/33)
+            # describes before/after as ONE diffusion-drawn split composition always paired with
+            # review-card content -- the exact shape `feedback` already renders. Stage 1's job is
+            # to write a `background_prompt` describing the split scene; Stage 4 needs no new
+            # layout code for it. See docs/DESIGN_PRINCIPLES.md and AGENTS.md Rule 23 (dataset
+            # topology already names "Ảnh Before-After" as a variant of this same half/half shape).
+            ("before_after", "landscape"): cls._generate_feedback_card,
+            ("before_after", "portrait"): cls._generate_feedback_card_portrait,
             ("recruitment", "landscape"): cls._generate_recruitment,
             ("recruitment", "portrait"): cls._generate_recruitment_portrait,
             ("menu", "landscape"): cls._generate_menu,
@@ -664,6 +694,243 @@ class PosterTemplateEngine:
     # escape the hundreds of literal CSS "{ }" in each layout.
     # ----------------------------------------------------------------------------------------
 
+    # Card-stack templates (feedback/recruitment/grand_opening) hold much more content than a
+    # single title -- a MER rect big enough for one line of text is nowhere near big enough for a
+    # whole review card + features + CTA strip, so this uses a much higher floor than
+    # `MIN_SAFE_RECT_HEIGHT_PCT` (10%, tuned for product_ad's single title zone -- see below).
+    # Tuned against the real Case B probe (scripts/probe_mer_representative_cases.py): the
+    # existing hand-designed fixed layout's own card group occupies roughly ~35-40% of canvas
+    # height, so a MER result below ~30% is very likely too cramped to hold this much content.
+    MIN_SAFE_RECT_HEIGHT_PCT_CARD = 30.0
+
+    @classmethod
+    def _derive_theme_palette(
+        cls, accent_hex: Optional[str], defaults: Dict[str, str], secondary_hex: Optional[str] = None,
+    ) -> Dict[str, str]:
+        """
+        Fixes a real gap the user caught by inspection: feedback/recruitment/menu/grand_opening
+        each hardcode their OWN brand accent color unconditionally, regardless of the poster's
+        actual subject matter -- a "cinematic wedding" feedback poster rendered with
+        PawParadise Spa's green branding, because nothing in the template's CSS could ever be
+        anything other than green. This builds a coherent tonal palette (accent / accent_dark /
+        accent_darker / accent_tint / accent_rgb) from ONE brief-supplied hex color
+        (`brief["brand_color"]`) via HSL lightness shifts, instead of requiring the caller to hand-
+        pick 3-4 separate coordinated hex values. Falls back to `defaults` (each template's own
+        historical hardcoded hex values) when no override is given, or the given hex fails to
+        parse -- zero regression for every existing caller that doesn't pass `brand_color`.
+
+        `defaults` must supply the same 5 keys this returns: accent, accent_dark, accent_darker,
+        accent_tint, accent_rgb (the last for `rgba(var(--accent-rgb), alpha)` usage in CSS, since
+        a CSS custom property holding a hex string can't be alpha-blended directly).
+
+        `secondary_hex` -- ADDED after a real audit of prompt_test.txt found 10/11 feedback/
+        before_after lines ask for a genuine TWO-TONE palette (vd "tone đen đỏ", "hồng pastel và
+        xanh mint"), which a single accent color can never express (it only shades ONE hue).
+        Optional and additive: when given (and it parses), overlays `secondary`/`secondary_rgb`/
+        `secondary_tint_rgb` computed the same HSL way as the primary accent; when absent, those 3
+        keys fall through from `defaults` unchanged (each caller's own historical hardcoded values,
+        e.g. feedback's badge red) -- zero regression for every caller that doesn't pass it
+        (currently only feedback's badge actually reads `--secondary`; other categories don't
+        declare the CSS custom property at all, so the extra keys are simply unused, harmless).
+
+        NOT an auto-pick-from-measured-luminance system like product_ad's `_auto_pick_style` --
+        these templates have many differently-colored UI pieces (badges, gradients, text) rather
+        than one text zone to measure, so there's no single "zone luminance" to read the way
+        product_ad does. This only makes the color CONFIGURABLE; auto-selecting a good one from
+        the background is a further enhancement, not done here.
+        """
+        def _shade(hh: float, ll: float, ss: float) -> Tuple[str, str]:
+            rr, gg, bb = colorsys.hls_to_rgb(hh, max(0.0, min(1.0, ll)), ss)
+            ri, gi, bi = int(round(rr * 255)), int(round(gg * 255)), int(round(bb * 255))
+            return f"#{ri:02x}{gi:02x}{bi:02x}", f"{ri},{gi},{bi}"
+
+        def _parse(hex_str: str) -> Optional[Tuple[int, int, int]]:
+            hexs = hex_str.lstrip("#")
+            try:
+                return tuple(int(hexs[i:i + 2], 16) for i in (0, 2, 4))  # type: ignore[return-value]
+            except (ValueError, IndexError):
+                return None
+
+        result = dict(defaults)
+
+        accent_rgb_parsed = _parse(accent_hex) if accent_hex else None
+        if accent_rgb_parsed:
+            h, l, s = colorsys.rgb_to_hls(*(c / 255.0 for c in accent_rgb_parsed))
+            accent_hex_out, accent_rgb_out = _shade(h, l, s)
+            accent_dark_hex, accent_dark_rgb = _shade(h, l - 0.15, s)
+            accent_darker_hex, accent_darker_rgb = _shade(h, l - 0.28, s)
+            result.update({
+                "accent": accent_hex_out,
+                "accent_dark": accent_dark_hex,
+                "accent_darker": accent_darker_hex,
+                "accent_tint": _shade(h, l + (1.0 - l) * 0.85, min(s, 0.35))[0],
+                # A second, slightly paler tint -- some templates use 2 distinct light tints for
+                # different pieces (e.g. feedback's verified-pill background vs avatar background).
+                "accent_tint2": _shade(h, l + (1.0 - l) * 0.78, min(s, 0.30))[0],
+                "accent_rgb": accent_rgb_out,
+                "accent_dark_rgb": accent_dark_rgb,
+                "accent_darker_rgb": accent_darker_rgb,
+            })
+
+        secondary_rgb_parsed = _parse(secondary_hex) if secondary_hex else None
+        if secondary_rgb_parsed:
+            h2, l2, s2 = colorsys.rgb_to_hls(*(c / 255.0 for c in secondary_rgb_parsed))
+            secondary_hex_out, secondary_rgb_out = _shade(h2, l2, s2)
+            result.update({
+                "secondary": secondary_hex_out,
+                "secondary_rgb": secondary_rgb_out,
+                "secondary_tint_rgb": _shade(h2, l2 + (1.0 - l2) * 0.85, min(s2, 0.35))[1],
+            })
+        return result
+
+    @classmethod
+    def _safe_rect_style_attr(cls, brief: Dict[str, Any]) -> str:
+        """
+        Cap do 2 (MER, src/tendoo/layout_geometry.py) hook for the "one big absolutely-positioned
+        content container" templates -- feedback's `.bottom-stack`, recruitment's `.frosted-box`,
+        grand_opening's `.bottom-bar`/`.bottom-stack`. Generalizes product_ad's
+        `_zone_css_from_rect` to an INLINE style override spliced onto the container's existing
+        div, instead of building a zone from scratch -- these templates already have a
+        fully-designed fixed layout; Cap do 2 should nudge the box away from a detected
+        face/product, not replace the whole thing.
+
+        Returns '' (a safe no-op -- the template's own fixed CSS wins, exactly as before this
+        hook existed) if `brief` has no `"safe_rect"`, it's missing required keys, or it's too
+        short to trust for a content block this size (see MIN_SAFE_RECT_HEIGHT_PCT_CARD above).
+        NOT wired into `menu`/`menu_portrait` yet -- those templates flow content from a flex
+        container (`justify-content: flex-end`), not one absolutely-positioned box, so this
+        simple inline-style-splice approach doesn't apply there without a bigger restructure.
+
+        Returned string includes a leading space so it can be spliced directly after a
+        `class="..."` attribute in the HTML, e.g. `<div class="bottom-stack"$safe_rect_style>`.
+
+        REAL BUG found+fixed after the first real-pipeline run on live model content (2026-09-05,
+        see memory css-hero-title-overlay-direction.md): the original version also set `bottom`
+        from the rect and stripped `max-height` (`max-height:none`) -- this forces an EXACT
+        computed height on the container (top+bottom both fixed = height is whatever's between
+        them), regardless of whether the actual content (review card + features + CTA strip) needs
+        more room than that. On a real run this genuinely happened -- MER found a real, correctly
+        placed top edge (clearing 2 detected faces) but the resulting height was shorter than the
+        content's natural height, and the CTA button + a whole feature row were silently pushed
+        past the canvas edge and clipped by `.poster`'s `overflow:hidden` -- not just visually
+        cramped, GONE from the rendered poster entirely. Only `top` (+ left/right) is overridden
+        now; `bottom` and `max-height` are left as the template's own CSS class already defines
+        them, preserving the "anchored to bottom, grows upward, capped at max-height" behavior
+        these templates were designed around. Trade-off: an obstacle sitting very close to the
+        BOTTOM of the frame is no longer specifically avoided by this hook -- a smaller, rarer risk
+        than silently deleting the CTA button.
+        """
+        rect_pct = brief.get("safe_rect")
+        if not rect_pct:
+            return ""
+        try:
+            top, left, right, height = (
+                rect_pct["top_pct"], rect_pct["left_pct"], rect_pct["right_pct"], rect_pct["height_pct"],
+            )
+        except (KeyError, TypeError):
+            return ""
+        if height < cls.MIN_SAFE_RECT_HEIGHT_PCT_CARD:
+            return ""
+        # `bottom:auto` explicitly CANCELS the template class's own fixed `bottom:4%`-style rule --
+        # setting only `top` here is not enough on its own, because the class rule still applies
+        # for any property the inline style doesn't touch. With both `top` (inline) and `bottom`
+        # (class) specified, the box's height is STILL forced to the distance between them --
+        # confirmed on a real re-test after the first fix attempt: identical clipped output,
+        # because the safe_rect's own bottom_pct happened to numerically match the class's default
+        # anyway. `bottom:auto` makes height content-driven (shrink-to-fit), anchored at `top` and
+        # growing downward -- guarantees the full card+features+CTA always renders, at the cost of
+        # the box no longer hugging the canvas bottom edge the way the original fixed design did.
+        return f' style="top:{top}%; left:{left}%; right:{right}%; bottom:auto;"'
+
+    @classmethod
+    def _corner_card_top_override(cls, brief: Dict[str, Any]) -> str:
+        """
+        Cấp độ 2 hook for feedback's compact `.corner-card` (redesigned 2026-09-05, per direct
+        user request -- see the template's own comment). Deliberately NARROWER than
+        `_safe_rect_style_attr`: only nudges `top` (+ `bottom:auto` so it can still grow downward
+        without being height-capped) to clear an obstacle near the card's default position --
+        does NOT touch `left`/`right`/`width` at all. Reusing `_safe_rect_style_attr` here was
+        tried first and confirmed wrong on a real render: setting `right` from the MER rect fights
+        the CSS class's own fixed `width` (an "over-constrained" box per the CSS abspos spec), and
+        the card rendered noticeably WIDER than its intended compact size. The whole point of this
+        redesign is a small corner card, not a full-width one -- width must stay exactly what the
+        class defines, regardless of what Cấp độ 2 found.
+        """
+        rect_pct = brief.get("safe_rect")
+        if not rect_pct:
+            return ""
+        try:
+            top, height = rect_pct["top_pct"], rect_pct["height_pct"]
+        except (KeyError, TypeError):
+            return ""
+        if height < cls.MIN_SAFE_RECT_HEIGHT_PCT_CARD:
+            return ""
+        return f' style="top:{top}%; bottom:auto;"'
+
+    # ----------------------------------------------------------------------------------------
+    # "TYPE COLLAGE" -- oversized see-through title (DESIGN_PRINCIPLES.md #6), added to
+    # recruitment/menu only. ADDITIVE: doesn't replace/remove any existing element, just paints
+    # one extra big headline-shaped "window" into the same photo already used as `.poster`'s own
+    # background, in the empty space each of those 2 templates naturally has.
+    #
+    # The crop-math this relies on: PosterBackgroundAnalyzer.analyze() opens the SAME file later
+    # passed as `background_image_path` (see PosterBackgroundAnalyzer.analyze, ~line 152), so
+    # `analysis.width`/`analysis.height` are always exactly the photo's native pixel size --
+    # `.poster`'s own `background-size:cover` therefore never actually scales/crops anything (a
+    # `cover` fit where the box and the image are the same size is a no-op, scale factor 1). That
+    # means: for a child positioned at (left_px, top_px) inside `.poster`, giving IT the same
+    # photo with `background-size: <full poster w>px <full poster h>px; background-position:
+    # -{left_px}px -{top_px}px;` shows EXACTLY the same photo pixels that would be visible there
+    # if the child were transparent -- not an arbitrary crop. Using `background-size:cover` sized
+    # to the child's own (much smaller) box instead would recompute an unrelated scale/crop --
+    # deliberately NOT done here.
+    # ----------------------------------------------------------------------------------------
+
+    _GIANT_TITLE_DARK_CSS = "filter: invert(1) brightness(1.15) contrast(1.05); mix-blend-mode: screen;"
+    _GIANT_TITLE_LIGHT_CSS = "mix-blend-mode: soft-light;"
+    _EMOJI_PREFIX_RE = re.compile(r"^[\s\U0001F300-\U0001FAFF☀-➿]+")
+
+    @classmethod
+    def _giant_title_blend_css(cls, analysis: BackgroundAnalysis) -> str:
+        """Picks the blend technique from the ACTUAL measured luminance of the zone the giant
+        title sits in (same `header_zone` PosterBackgroundAnalyzer already computes, same pattern
+        as `_auto_pick_style`) -- soft-light reads nicely on a bright photo but goes muddy/too dark
+        on a dark one; invert+screen guarantees a bright, visible letterform on a dark photo at
+        the cost of literal photo fidelity through the glyphs."""
+        return cls._GIANT_TITLE_DARK_CSS if analysis.header_zone.is_dark else cls._GIANT_TITLE_LIGHT_CSS
+
+    @classmethod
+    def _giant_title_text(cls, raw: str) -> str:
+        """Strips a leading emoji (COLR/emoji glyphs paint their own opaque bitmap in Chromium,
+        ignoring `background-clip:text`/`color:transparent` masking, which would show as a solid
+        ugly glyph breaking the see-through effect) -- only for the giant-title copy; the
+        original element (`.company-logo`/`.sub-brand`) keeps its emoji untouched."""
+        stripped = cls._EMOJI_PREFIX_RE.sub("", raw).strip()
+        return stripped or raw
+
+    @classmethod
+    def _giant_title_block(
+        cls, analysis: BackgroundAnalysis, background_image_path: Optional[str], text_raw: str,
+        left_px: int, top_px: int, width_px: int, height_px: int, z_index: int, font_clamp: str,
+    ) -> str:
+        """Builds the giant see-through title <div>, or '' (safe no-op) if there's no photo to
+        show through -- nothing to "window" into without one."""
+        if not background_image_path or not os.path.exists(background_image_path):
+            return ""
+        text = cls._giant_title_text(text_raw)
+        style = (
+            f"position:absolute; left:{left_px}px; top:{top_px}px; width:{width_px}px; height:{height_px}px; "
+            f"z-index:{z_index}; overflow:hidden; pointer-events:none; "
+            f"font-family:'Montserrat',sans-serif; font-weight:900; text-transform:uppercase; "
+            f"letter-spacing:-2px; line-height:0.92; white-space:nowrap; font-size:{font_clamp}; "
+            f"{_bg_image_only_css(background_image_path)} "
+            f"background-size:{analysis.width}px {analysis.height}px; "
+            f"background-position:-{left_px}px -{top_px}px; background-repeat:no-repeat; "
+            f"-webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; "
+            f"{cls._giant_title_blend_css(analysis)}"
+        )
+        return f'<div class="giant-title" style="{style}">{text}</div>'
+
     _GRAND_OPENING_TPL = Template("""<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -678,10 +945,12 @@ class PosterTemplateEngine:
       position: relative; width: ${w}px; height: ${h}px; overflow: hidden;
       $bg_css
       box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+      --accent: $accent; --accent-dark: $accent_dark; --accent-darker: $accent_darker;
+      --accent-tint: $accent_tint; --accent-rgb: $accent_rgb; --accent-darker-rgb: $accent_darker_rgb;
     }
     .header { position: absolute; top: 48px; left: 56px; right: 56px; display: flex; justify-content: space-between; align-items: center; z-index: 20; }
-    .brand-title { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 900; color: #FFB703; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 20px rgba(255, 183, 3, 0.5); }
-    .date-pill { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255, 183, 3, 0.4); padding: 10px 22px; border-radius: 999px; font-size: 14px; font-weight: 700; color: #FFF; letter-spacing: 1px; }
+    .brand-title { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 900; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 20px rgba(var(--accent-rgb), 0.5); }
+    .date-pill { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); border: 1px solid rgba(var(--accent-rgb), 0.4); padding: 10px 22px; border-radius: 999px; font-size: 14px; font-weight: 700; color: #FFF; letter-spacing: 1px; }
     .burst-badge {
       position: absolute; top: 220px; right: 70px; width: 170px; height: 170px;
       background: linear-gradient(135deg, #E63946 0%, #D90429 100%); border-radius: 50%;
@@ -691,17 +960,17 @@ class PosterTemplateEngine:
     }
     .badge-sub { font-size: 14px; font-weight: 800; color: #FFF; letter-spacing: 2px; text-transform: uppercase; }
     .badge-main { font-family: 'Montserrat', sans-serif; font-size: 52px; font-weight: 900; color: #FFF; line-height: 0.95; }
-    .badge-off { font-size: 16px; font-weight: 900; color: #FFD166; letter-spacing: 1.5px; }
+    .badge-off { font-size: 16px; font-weight: 900; color: var(--accent-tint); letter-spacing: 1.5px; }
     .bottom-bar {
       position: absolute; bottom: 50px; left: 56px; right: 56px; z-index: 20;
-      background: rgba(20, 10, 5, 0.75); backdrop-filter: blur(20px); border: 1px solid rgba(255, 183, 3, 0.25);
+      background: rgba(20, 10, 5, 0.75); backdrop-filter: blur(20px); border: 1px solid rgba(var(--accent-rgb), 0.25);
       border-radius: 24px; padding: 24px 36px; display: flex; justify-content: space-between; align-items: center;
       box-shadow: 0 15px 40px rgba(0,0,0,0.6);
     }
     .deal-info { display: flex; flex-direction: column; gap: 4px; }
     .deal-title { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 800; color: #FFF; }
-    .deal-sub { font-size: 14px; font-weight: 500; color: #FFB703; }
-    .cta-btn { background: linear-gradient(135deg, #FB8500 0%, #FFB703 100%); color: #000; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 17px; letter-spacing: 0.5px; padding: 16px 36px; border-radius: 999px; text-decoration: none; box-shadow: 0 8px 25px rgba(251, 133, 0, 0.5); border: 1px solid rgba(255,255,255,0.4); }
+    .deal-sub { font-size: 14px; font-weight: 500; color: var(--accent); }
+    .cta-btn { background: linear-gradient(135deg, var(--accent-darker) 0%, var(--accent) 100%); color: #000; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 17px; letter-spacing: 0.5px; padding: 16px 36px; border-radius: 999px; text-decoration: none; box-shadow: 0 8px 25px rgba(var(--accent-darker-rgb), 0.5); border: 1px solid rgba(255,255,255,0.4); }
   </style>
 </head>
 <body>
@@ -715,7 +984,7 @@ class PosterTemplateEngine:
       <span class="badge-main">$badge_percent</span>
       <span class="badge-off">$badge_sub</span>
     </div>
-    <div class="bottom-bar">
+    <div class="bottom-bar"$safe_rect_style>
       <div class="deal-info">
         <div class="deal-title">$address</div>
         <div class="deal-sub">$offer_desc</div>
@@ -726,8 +995,14 @@ class PosterTemplateEngine:
 </body>
 </html>""")
 
+    _GRAND_OPENING_DEFAULT_PALETTE = {
+        "accent": "#FFB703", "accent_dark": "#FB8500", "accent_darker": "#FB8500",
+        "accent_tint": "#FFD166", "accent_rgb": "255,183,3", "accent_darker_rgb": "251,133,0",
+    }
+
     @classmethod
     def _generate_grand_opening(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+        palette = cls._derive_theme_palette(brief.get("brand_color"), cls._GRAND_OPENING_DEFAULT_PALETTE)
         return cls._GRAND_OPENING_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
             brand=brief.get("brand", "🍔 THE BURGER CRAFT"),
@@ -738,6 +1013,8 @@ class PosterTemplateEngine:
             address=brief.get("address", "📍 128 Nguyễn Trãi, Phường Bến Thành, Quận 1"),
             offer_desc=brief.get("offer_desc", "Tặng 01 Coca-Cola mát lạnh cho hóa đơn từ 99K • Hotline: 1900 8899"),
             cta_text=brief.get("cta_text", "NHẬN VOUCHER ➔"),
+            safe_rect_style=cls._safe_rect_style_attr(brief),
+            **palette,
         )
 
     _FEEDBACK_TPL = Template("""<!DOCTYPE html>
@@ -747,105 +1024,229 @@ class PosterTemplateEngine:
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Customer Feedback</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Dancing+Script:wght@700&family=Playfair+Display:ital,wght@0,700;1,400&family=Oswald:wght@600;700&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Plus Jakarta Sans', sans-serif; }
-    .poster { position: relative; width: ${w}px; height: ${h}px; overflow: hidden; $bg_css box-shadow: 0 25px 60px rgba(0,0,0,0.12); border-radius: 32px; }
-    /* NOTE: bottom-stack uses flex-column + gap (not per-element top:Npx) precisely so this
-       template survives BOTH 1024x1024 (roomy) and shorter landscape canvases like 1024x576
-       (16:9) without elements overlapping or being pushed off-canvas -- see AGENTS.md discussion:
-       fixed top:250px/top:620px/bottom:50px broke outright once height dropped from 1024 to 576. */
-    .top-bar { position: absolute; top: 4%; left: 5.5%; right: 5.5%; display: flex; justify-content: space-between; align-items: center; z-index: 20; }
-    .spa-logo { font-family: 'Quicksand', sans-serif; font-size: 26px; font-weight: 800; color: #0E9F6E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; text-shadow: 0 2px 8px rgba(255,255,255,0.6); }
-    .spa-badge { background: #FFE4E6; color: #E02424; font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 14px; padding: 10px 20px; border-radius: 999px; border: 1px solid #FECDD3; white-space: nowrap; }
-    .bottom-stack { position: absolute; bottom: 4%; left: 5.5%; right: 5.5%; display: flex; flex-direction: column; gap: 1.8%; z-index: 20; max-height: 78%; }
-    .feedback-card {
-      background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border: 2px solid rgba(255, 255, 255, 0.9); border-radius: 24px; padding: 3% 3.5%;
-      box-shadow: 0 20px 40px rgba(0, 150, 110, 0.12), 0 1px 3px rgba(0,0,0,0.05);
-      display: flex; flex-direction: column; gap: 1.4%;
+    .poster {
+      position: relative; width: ${w}px; height: ${h}px; overflow: hidden; $bg_css box-shadow: 0 25px 60px rgba(0,0,0,0.12); border-radius: 32px;
+      --accent: $accent; --accent-dark: $accent_dark; --accent-tint: $accent_tint; --accent-tint2: $accent_tint2; --accent-rgb: $accent_rgb;
+      --secondary: $secondary; --secondary-tint-rgb: $secondary_tint_rgb;
+      --mood-quote-font: $mood_quote_font; --mood-name-font: $mood_name_font;
     }
-    .review-header { display: flex; justify-content: space-between; align-items: center; }
-    .stars { color: #F59E0B; font-size: 24px; letter-spacing: 3px; }
-    .verified-pill { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #057A55; background: #DEF7EC; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
-    .quote-text { font-size: 19px; line-height: 1.5; color: #374151; font-weight: 500; font-style: italic; }
-    .customer-info { display: flex; align-items: center; gap: 14px; border-top: 1px solid #E5E7EB; padding-top: 1.2%; }
-    .avatar { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: #D1FAE5; display: flex; justify-content: center; align-items: center; font-size: 22px; border: 2px solid #0E9F6E; }
-    .cust-name { font-size: 16px; font-weight: 700; color: #111928; }
-    .cust-sub { font-size: 12px; color: #6B7280; font-weight: 500; }
-    .features-row { display: flex; justify-content: space-between; gap: 12px; }
-    .f-pill { flex: 1; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 16px; padding: 14px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
-    .f-icon { font-size: 24px; margin-bottom: 6px; }
-    .f-text { font-size: 12.5px; font-weight: 700; color: #1F2A37; line-height: 1.25; }
-    .bottom-cta-strip { background: linear-gradient(135deg, #0E9F6E 0%, #057A55 100%); border-radius: 20px; padding: 2.2% 3%; display: flex; justify-content: space-between; align-items: center; gap: 12px; box-shadow: 0 12px 30px rgba(14, 159, 110, 0.35); }
-    .offer-box { color: #FFFFFF; min-width: 0; }
-    .offer-title { font-family: 'Quicksand', sans-serif; font-size: 19px; font-weight: 800; }
-    .offer-desc { font-size: 13px; opacity: 0.9; margin-top: 2px; }
-    .btn-booking { flex-shrink: 0; background: #FFFFFF; color: #046C4E; font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 15px; padding: 12px 24px; border-radius: 999px; text-decoration: none; white-space: nowrap; }
+    .top-bar { position: absolute; top: 4%; left: 5.5%; right: 5.5%; display: flex; justify-content: space-between; align-items: center; z-index: 20; gap: 12px; }
+    /* Wraps to 2 lines instead of forcing 1-line ellipsis -- a real bug found in production: a
+       longer English brand string ("Deep Cleaning Home Service") got sliced mid-word into "...".
+       2-line wrap loses far less of the actual name than a hard truncation. */
+    .spa-logo { font-family: 'Quicksand', sans-serif; font-size: 22px; font-weight: 800; color: var(--accent); max-width: 62%; line-height: 1.2; text-shadow: 0 2px 8px rgba(255,255,255,0.6); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    /* Translucent, not solid -- a large-ish badge with an opaque fill blocks a real chunk of the
+       photo behind it (user feedback, 2026-09-05: "badge text lớn chiếm kha khá diện tích... nên
+       để badge trong suốt hoặc mờ để nhìn xuyên được"). backdrop-filter keeps the text readable
+       against whatever's behind it without needing a fully opaque fill.
+       Recolored to `--secondary` (was hardcoded #E02424/rgba(255,228,230,...)) -- real gap found
+       auditing prompt_test.txt: a 2-tone brand request ("tone đen đỏ", "hồng pastel và xanh
+       mint"...) never reached this element even when `brand_color` WAS set, since it was pinned to
+       one hardcoded hue regardless. Default palette value for `--secondary` equals the old
+       hardcoded hex exactly, so a brief without a 2nd color renders byte-identical. */
+    .spa-badge { background: rgba(var(--secondary-tint-rgb), 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--secondary); font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 13px; padding: 9px 18px; border-radius: 999px; border: 1px solid rgba(var(--secondary-tint-rgb), 0.55); white-space: nowrap; flex-shrink: 0; }
+    /* REDESIGNED (2026-09-05, per direct user request): the old design was a nearly-full-width
+       stack (card + features-row + CTA strip) covering most of the photo -- appropriate for
+       menu/recruitment (genuinely info-dense categories) but wrong for feedback, whose whole point
+       is to let a real customer/before-after PHOTO read as the hero. Now ONE small corner card,
+       ~38% wide, auto height (not stretched to fill a big region) -- the photo does the talking,
+       text stays compact and secondary. */
+    /* Genuinely see-through, not just "slightly less than fully opaque" -- user feedback,
+       2026-09-05: the previous 0.92 opacity read as solid white in practice. Heavier blur (28px,
+       up from 20px) compensates so the dark quote/name text stays legible against whatever
+       texture shows through. */
+    .corner-card {
+      position: absolute; left: 5.5%; bottom: 5%; width: 38%; max-width: 420px;
+      background: rgba(255,255,255,0.55); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      border: 1.5px solid rgba(255,255,255,0.6); border-radius: 20px; padding: 4% 4.5% 4.5%;
+      display: flex; flex-direction: column; gap: 10px;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.22), 0 1px 3px rgba(0,0,0,0.05);
+      z-index: 20;
+    }
+    .review-header-mini { display: flex; justify-content: space-between; align-items: center; }
+    .stars-mini { color: #F59E0B; font-size: 15px; letter-spacing: 2px; }
+    .verified-mini { font-size: 10px; font-weight: 700; color: var(--accent-dark); background: var(--accent-tint); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+    /* Clamped to 3 lines -- a long quote grows the card only up to a point, never pushes the
+       whole thing tall enough to fight Cấp độ 2's safe_rect for room (see memory
+       css-hero-title-overlay-direction.md, the "MER vs content height" open issue this also
+       helps with, even though it's not a full fix for that issue on its own). */
+    .quote-mini { font-family: var(--mood-quote-font); font-size: 13px; line-height: 1.38; color: #374151; font-weight: 500; font-style: italic; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .customer-mini { display: flex; align-items: center; gap: 8px; }
+    .avatar-mini { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; background: var(--accent-tint2); display: flex; justify-content: center; align-items: center; font-size: 15px; border: 1.5px solid var(--accent); }
+    .cust-name-mini { font-family: var(--mood-name-font); font-size: 12.5px; font-weight: 700; color: #111928; line-height: 1.2; }
+    .cust-sub-mini { font-size: 10px; color: #6B7280; font-weight: 500; }
+    .tags-mini { display: flex; flex-wrap: wrap; gap: 5px; }
+    /* Translucent, matching the card now (not solid white) -- an opaque pill sitting on top of a
+       see-through card read as a separate shape "poking out" past the card's own edge (user
+       feedback, 2026-09-05), especially once a long feature label made the pill stretch across
+       most of the card's width. */
+    /* Wraps to 2 lines instead of truncating with "..." -- same fix already applied to the brand
+       name: a real feature label ("Nhân viên được đào tạo chuẩn khách sạn 5 sao") is long enough
+       to get cut mid-word if forced onto one line, which is worse than a shorter pill wrapping to
+       2 lines. `border-radius` reduced from a full pill (999px) to a softer chip shape, since a
+       full pill looks odd once a tag is tall enough to hold 2 lines. */
+    .tag-mini { font-size: 10px; font-weight: 600; color: #1F2A37; background: rgba(255,255,255,0.55); border: 1px solid rgba(229,231,235,0.7); border-radius: 12px; padding: 4px 9px; line-height: 1.3; max-width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .cta-row-mini { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.07); }
+    .offer-mini { font-size: 11px; font-weight: 700; color: var(--accent-dark); line-height: 1.25; flex: 1; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .cta-mini { flex-shrink: 0; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: #FFFFFF; font-weight: 700; font-size: 11.5px; padding: 7px 14px; border-radius: 999px; text-decoration: none; white-space: nowrap; box-shadow: 0 6px 16px rgba(var(--accent-rgb), 0.35); }
   </style>
 </head>
 <body>
   <div class="poster">
     <div class="top-bar">
       <div class="spa-logo">$brand</div>
-      <div class="spa-badge">$top_badge</div>
+      $badge_html
     </div>
-    <div class="bottom-stack">
-      <div class="feedback-card">
-        <div class="review-header">
-          <div class="stars">$stars</div>
-          <div class="verified-pill">$verified_label</div>
-        </div>
-        <div class="quote-text">$quote_text</div>
-        <div class="customer-info">
-          <div class="avatar">$avatar_emoji</div>
-          <div>
-            <div class="cust-name">$customer_name</div>
-            <div class="cust-sub">$customer_sub</div>
-          </div>
+    <div class="corner-card"$safe_rect_style>
+      <div class="review-header-mini">
+        $stars_html
+        <span class="verified-mini">$verified_label</span>
+      </div>
+      <div class="quote-mini">$quote_text</div>
+      <div class="customer-mini">
+        <div class="avatar-mini">$avatar_emoji</div>
+        <div>
+          <div class="cust-name-mini">$customer_name</div>
+          <div class="cust-sub-mini">$customer_sub</div>
         </div>
       </div>
-      <div class="features-row">
-        $features_html
-      </div>
-      <div class="bottom-cta-strip">
-        <div class="offer-box">
-          <div class="offer-title">$offer_title</div>
-          <div class="offer-desc">$offer_desc</div>
-        </div>
-        <a href="#" class="btn-booking">$cta_text</a>
+      $features_block_html
+      <div class="cta-row-mini">
+        $offer_html
+        <a href="#" class="cta-mini">$cta_text</a>
       </div>
     </div>
   </div>
 </body>
 </html>""")
 
+    _FEEDBACK_DEFAULT_PALETTE = {
+        "accent": "#0E9F6E", "accent_dark": "#057A55", "accent_darker": "#057A55",
+        "accent_tint": "#DEF7EC", "accent_tint2": "#D1FAE5",
+        "accent_rgb": "14,159,110", "accent_darker_rgb": "5,122,85",
+        # Secondary tone -- matches today's hardcoded .spa-badge red/pink exactly (255,228,230 tint
+        # bg + #E02424 text), so a caller that doesn't pass a 2nd color gets byte-identical output.
+        "secondary": "#E02424", "secondary_rgb": "224,36,36", "secondary_tint_rgb": "255,228,230",
+    }
+
+    # font_mood -- ADDED after the same prompt_test.txt audit: feedback/before_after had NO font
+    # customization at all (unlike product_ad's title_style/title_font), yet 6/11 lines ask for a
+    # specific typography mood ("chữ ký bay bổng mềm mại" for a wedding, "typography năng động"...).
+    # Closed enum (not a free-text font name) -- deliberately avoids repeating the exact bug already
+    # found+fixed once for product_ad's title_font (an invented/unloaded font name silently falls
+    # through to the generic sans-serif with no warning). Each entry names 2 already-`@import`ed
+    # families (quote text, customer name) -- "warm_friendly" is the literal pre-existing default
+    # (Quicksand/Plus Jakarta Sans), named explicitly so picking it (or omitting font_mood) is a
+    # true no-op.
+    _FEEDBACK_FONT_MOODS = {
+        "warm_friendly": {"quote_font": "'Quicksand', sans-serif", "name_font": "'Quicksand', sans-serif"},
+        "elegant_script": {"quote_font": "'Dancing Script', cursive", "name_font": "'Playfair Display', serif"},
+        "bold_sporty": {"quote_font": "'Oswald', sans-serif", "name_font": "'Oswald', sans-serif"},
+        "clean_readable": {"quote_font": "'Plus Jakarta Sans', sans-serif", "name_font": "'Plus Jakarta Sans', sans-serif"},
+    }
+    _FEEDBACK_DEFAULT_FONT_MOOD = "warm_friendly"
+
+    # hidden_elements -- ADDED for the same reason: testers sometimes explicitly don't want a piece
+    # of the card ("không cần hiện rating sao"). Closed enum of the 4 genuinely optional pieces
+    # (CTA button and the quote itself are never optional -- the whole card is pointless without
+    # them). Blanking the whole wrapper element (not just its text) so hiding something doesn't
+    # leave an empty translucent pill/row-shaped gap behind.
+    _FEEDBACK_HIDEABLE_ELEMENTS = {"badge", "stars", "features", "offer"}
+
     @classmethod
-    def _generate_feedback_card(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+    def _resolve_font_mood(cls, font_mood: Optional[str]) -> Dict[str, str]:
+        return cls._FEEDBACK_FONT_MOODS.get(font_mood, cls._FEEDBACK_FONT_MOODS[cls._FEEDBACK_DEFAULT_FONT_MOOD])
+
+    @classmethod
+    def _build_feedback_conditional_html(
+        cls, brief: Dict[str, Any],
+        top_badge_default: str = "✨ CHUẨN FORM HÀN QUỐC", stars_default: str = "★★★★★",
+    ) -> Dict[str, str]:
+        """
+        Builds the 4 optionally-hidden fragments (badge/stars/features/offer) + the features list
+        + the offer_title/offer_desc combo, shared by BOTH orientations (landscape/portrait use
+        identical class names, only sizing units differ).
+
+        `hidden_elements` -- closed enum (`_FEEDBACK_HIDEABLE_ELEMENTS`), added after finding no
+        existing mechanism let a tester's explicit "không cần hiện rating sao"-style request be
+        honored at all. Unknown values are ignored (not raised) -- an LLM emitting a slightly-off
+        string here shouldn't hard-fail the whole render, same tolerant-degrade spirit as
+        `_zone_css`'s fallback for an unrecognized position.
+
+        `offer_desc` -- REAL BUG fix: this field is required by `TEMPLATE_BRIEF_SCHEMAS` (Stage 1
+        is told to always fill it) but was never read by either `_generate_feedback_card`/
+        `_portrait` at all -- 11/11 real prompt_test.txt lines supply a detailed offer description
+        that was silently discarded. Appended as a 2nd line under `offer_title` inside the EXISTING
+        `.offer-mini` (`-webkit-line-clamp:2`) -- reuses the already-designed compact clamp instead
+        of adding a new element that would grow the card, consistent with this template's whole
+        "stay compact" redesign intent.
+        """
+        hidden = {h for h in (brief.get("hidden_elements") or []) if h in cls._FEEDBACK_HIDEABLE_ELEMENTS}
+
+        badge_html = "" if "badge" in hidden else f'<div class="spa-badge">{brief.get("top_badge", top_badge_default)}</div>'
+        # REAL BUG found testing this against a live Stage 1 call (not hypothetical): gpt-4o-mini
+        # sometimes emits `stars` as a bare int (5) instead of a "★★★★★" string, even though no
+        # schema/prompt guidance said either way -- rendered literally, a poster would show the
+        # digit "5" instead of star glyphs. Normalize defensively: an int/numeric value becomes
+        # that many filled stars (clamped 0-5); any other truthy value (the intended string case)
+        # passes through unchanged.
+        stars_value = brief.get("stars", stars_default)
+        if isinstance(stars_value, (int, float)) or (isinstance(stars_value, str) and stars_value.strip().lstrip("-").isdigit()):
+            stars_value = "★" * max(0, min(5, int(stars_value)))
+        stars_html = "" if "stars" in hidden else f'<span class="stars-mini">{stars_value}</span>'
+
         features = brief.get("features", [
             {"icon": "🌿", "text": "Chất Lượng Hữu Cơ 100% Nhập Khẩu"},
             {"icon": "✂️", "text": "Chuyên Nghiệp Theo Yêu Cầu Riêng"},
             {"icon": "🕊️", "text": "Không Gian Mở, Trải Nghiệm Thoải Mái"},
         ])
-        features_html = "".join(
-            f'<div class="f-pill"><div class="f-icon">{f.get("icon","✨")}</div>'
-            f'<div class="f-text">{f.get("text","")}</div></div>'
-            for f in features
+        # Capped to 3 -- a deliberate design choice, not an accidental truncation: a compact corner
+        # card showing every highlight a verbose brief supplies is exactly the "che hết ảnh" clutter
+        # this whole redesign was meant to fix (real ads don't list 5+ bullet points in a small
+        # corner card). NOTE: HERO_SELECTOR_SYSTEM_PROMPT is updated alongside this fix to actually
+        # tell Stage 1 about this 3-item cap (previously promised "unlimited", a real prompt/code
+        # mismatch found auditing prompt_test.txt) so content isn't generated only to be dropped.
+        features_inner = "".join(
+            f'<span class="tag-mini">{f.get("icon","✨")} {f.get("text","")}</span>'
+            for f in features[:3]
         )
+        features_block_html = "" if "features" in hidden else f'<div class="tags-mini">{features_inner}</div>'
+
+        offer_title = brief.get("offer_title", "🎁 ƯU ĐÃI ĐẶC BIỆT CHO KHÁCH MỚI")
+        offer_desc = brief.get("offer_desc", "")
+        offer_desc_suffix = f"<br/>{offer_desc}" if offer_desc else ""
+        # Empty (not omitted) span when hidden -- keeps `.cta-row-mini`'s flex alignment steady
+        # (CTA button stays right-aligned) rather than collapsing the row's layout.
+        offer_html = '<span class="offer-mini"></span>' if "offer" in hidden else f'<span class="offer-mini">{offer_title}{offer_desc_suffix}</span>'
+
+        return {
+            "badge_html": badge_html, "stars_html": stars_html,
+            "features_block_html": features_block_html, "offer_html": offer_html,
+        }
+
+    @classmethod
+    def _generate_feedback_card(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+        conditional = cls._build_feedback_conditional_html(brief)
+        palette = cls._derive_theme_palette(
+            brief.get("brand_color"), cls._FEEDBACK_DEFAULT_PALETTE, secondary_hex=brief.get("secondary_color"),
+        )
+        font_mood = cls._resolve_font_mood(brief.get("font_mood"))
         return cls._FEEDBACK_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
             brand=brief.get("brand", "🐾 PAWPARADISE SPA"),
-            top_badge=brief.get("top_badge", "✨ CHUẨN FORM HÀN QUỐC"),
-            stars=brief.get("stars", "★★★★★"),
             verified_label=brief.get("verified_label", "✔ ĐÃ TRẢI NGHIỆM DỊCH VỤ"),
             quote_text=brief.get("quote_text", "Dịch vụ tuyệt vời, nhân viên chuyên nghiệp và tận tâm, chắc chắn sẽ quay lại!"),
             avatar_emoji=brief.get("avatar_emoji", "🐩"),
             customer_name=brief.get("customer_name", "Khách hàng thân thiết"),
             customer_sub=brief.get("customer_sub", "Đã trải nghiệm dịch vụ Premium"),
-            features_html=features_html,
-            offer_title=brief.get("offer_title", "🎁 ƯU ĐÃI ĐẶC BIỆT CHO KHÁCH MỚI"),
-            offer_desc=brief.get("offer_desc", "Áp dụng cho khách hàng đặt lịch trải nghiệm lần đầu tiên trong tuần này!"),
             cta_text=brief.get("cta_text", "ĐẶT LỊCH NGAY ➔"),
+            safe_rect_style=cls._corner_card_top_override(brief),
+            mood_quote_font=font_mood["quote_font"], mood_name_font=font_mood["name_font"],
+            **conditional,
+            **palette,
         )
 
     _RECRUITMENT_TPL = Template("""<!DOCTYPE html>
@@ -858,32 +1259,41 @@ class PosterTemplateEngine:
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Plus Jakarta Sans', sans-serif; }
-    .poster { position: relative; width: ${w}px; height: ${h}px; overflow: hidden; $bg_css box-shadow: 0 25px 60px rgba(0,0,0,0.8); }
+    .poster {
+      position: relative; width: ${w}px; height: ${h}px; overflow: hidden; $bg_css box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+      isolation: isolate;
+      --accent: $accent; --accent-dark: $accent_dark; --accent-darker: $accent_darker;
+      --accent-rgb: $accent_rgb; --accent-dark-rgb: $accent_dark_rgb;
+    }
     .rec-header { position: absolute; top: 44px; left: 56px; right: 56px; display: flex; justify-content: space-between; align-items: center; z-index: 20; }
-    .company-logo { font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 900; color: #38BDF8; letter-spacing: 2px; }
+    .company-logo { font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 900; color: var(--accent); letter-spacing: 2px; }
     .urgency-badge { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #F87171; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 999px; letter-spacing: 1px; }
     .frosted-box { position: absolute; top: 110px; left: 56px; right: 56px; bottom: 44px; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 28px; padding: 40px 48px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 20; }
     .pos-title-group { display: flex; justify-content: space-between; align-items: center; }
-    .pos-label { font-size: 14px; font-weight: 700; color: #38BDF8; letter-spacing: 2px; text-transform: uppercase; }
-    .salary-tag { background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color: #FFFFFF; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 20px; padding: 12px 24px; border-radius: 14px; box-shadow: 0 8px 20px rgba(2, 132, 199, 0.4); border: 1px solid rgba(255,255,255,0.25); }
+    .pos-label { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+    /* Translucent, not a solid gradient fill -- a badge this size with an opaque fill blocks a
+       real chunk of the photo behind it (user feedback, 2026-09-05). backdrop-filter keeps the
+       bold white text readable without needing full opacity. */
+    .salary-tag { background: rgba(var(--accent-dark-rgb), 0.45); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #FFFFFF; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 20px; padding: 12px 24px; border-radius: 14px; box-shadow: 0 8px 20px rgba(var(--accent-dark-rgb), 0.3); border: 1px solid rgba(255,255,255,0.3); }
     .two-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin: 24px 0; }
     .col-title { font-size: 16px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
     .checklist { list-style: none; display: flex; flex-direction: column; gap: 12px; }
     .check-item { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; color: #E2E8F0; line-height: 1.45; font-weight: 500; }
-    .check-icon { color: #38BDF8; font-weight: 900; font-size: 16px; }
+    .check-icon { color: var(--accent); font-weight: 900; font-size: 16px; }
     .rec-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 24px; }
     .contact-block { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: #94A3B8; }
-    .contact-email { color: #38BDF8; font-weight: 700; font-size: 16px; }
-    .apply-btn { background: linear-gradient(135deg, #38BDF8 0%, #0284C7 100%); color: #020617; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 17px; padding: 16px 40px; border-radius: 999px; text-decoration: none; box-shadow: 0 8px 25px rgba(56, 189, 248, 0.4); border: 1px solid rgba(255,255,255,0.4); }
+    .contact-email { color: var(--accent); font-weight: 700; font-size: 16px; }
+    .apply-btn { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: #020617; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 17px; padding: 16px 40px; border-radius: 999px; text-decoration: none; box-shadow: 0 8px 25px rgba(var(--accent-rgb), 0.4); border: 1px solid rgba(255,255,255,0.4); }
   </style>
 </head>
 <body>
   <div class="poster">
+    $giant_title_html
     <div class="rec-header">
       <div class="company-logo">$company</div>
       <div class="urgency-badge">$deadline</div>
     </div>
-    <div class="frosted-box">
+    <div class="frosted-box"$safe_rect_style>
       <div class="pos-title-group">
         <div class="pos-label">$pos_label</div>
         <div class="salary-tag">$salary</div>
@@ -910,6 +1320,12 @@ class PosterTemplateEngine:
 </body>
 </html>""")
 
+    _RECRUITMENT_DEFAULT_PALETTE = {
+        "accent": "#38BDF8", "accent_dark": "#0284C7", "accent_darker": "#0369A1",
+        "accent_tint": "#DBEAFE", "accent_tint2": "#DBEAFE",
+        "accent_rgb": "56,189,248", "accent_dark_rgb": "2,132,199", "accent_darker_rgb": "3,105,161",
+    }
+
     @classmethod
     def _generate_recruitment(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
         requirements = brief.get("requirements", [
@@ -922,9 +1338,17 @@ class PosterTemplateEngine:
         ])
         req_html = "".join(f'<li class="check-item"><span class="check-icon">✔</span><span>{r}</span></li>' for r in requirements)
         ben_html = "".join(f'<li class="check-item"><span class="check-icon">★</span><span>{b}</span></li>' for b in benefits)
+        palette = cls._derive_theme_palette(brief.get("brand_color"), cls._RECRUITMENT_DEFAULT_PALETTE)
+        company = brief.get("company", "⚡ TENDOO AI RESEARCH LAB")
+        giant_title_html = cls._giant_title_block(
+            analysis, background_image_path, company,
+            left_px=round(analysis.width * 0.04), top_px=0,
+            width_px=round(analysis.width * 0.92), height_px=round(analysis.height * 0.30),
+            z_index=1, font_clamp="clamp(48px, 9vw, 160px)",
+        )
         return cls._RECRUITMENT_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
-            company=brief.get("company", "⚡ TENDOO AI RESEARCH LAB"),
+            company=company,
             deadline=brief.get("deadline", "HẠN NỘP: 30.09.2026"),
             pos_label=brief.get("pos_label", "WE ARE HIRING • FULL-TIME POSITION"),
             salary=brief.get("salary", "THOẢ THUẬN"),
@@ -933,6 +1357,9 @@ class PosterTemplateEngine:
             contact_line1=brief.get("contact_line1", "Gửi CV & Portfolio trực tiếp về hòm thư:"),
             contact_email=brief.get("contact_email", "careers@tendoo.ai"),
             cta_text=brief.get("cta_text", "ỨNG TUYỂN NGAY ➔"),
+            safe_rect_style=cls._safe_rect_style_attr(brief),
+            giant_title_html=giant_title_html,
+            **palette,
         )
 
     _MENU_TPL = Template("""<!DOCTYPE html>
@@ -945,25 +1372,30 @@ class PosterTemplateEngine:
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Plus Jakarta Sans', sans-serif; }
-    .poster { position: relative; width: ${w}px; height: ${h}px; overflow: hidden; $bg_css box-shadow: 0 25px 60px rgba(0,0,0,0.8); padding: 56px; display: flex; flex-direction: column; justify-content: flex-end; gap: 24px; }
-    .sub-brand { font-size: 14px; font-weight: 700; color: #D97706; letter-spacing: 4px; text-transform: uppercase; text-align: center; }
+    .poster {
+      position: relative; width: ${w}px; height: ${h}px; overflow: hidden; $bg_css box-shadow: 0 25px 60px rgba(0,0,0,0.8); padding: 56px; display: flex; flex-direction: column; justify-content: flex-end; gap: 24px;
+      isolation: isolate;
+      --accent: $accent; --accent-dark: $accent_dark; --accent-rgb: $accent_rgb;
+    }
+    .sub-brand { font-size: 14px; font-weight: 700; color: var(--accent-dark); letter-spacing: 4px; text-transform: uppercase; text-align: center; }
     .menu-desc { font-style: italic; font-size: 15px; color: #E7E5E4; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
     .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; background: rgba(10,6,4,0.55); backdrop-filter: blur(16px); border-radius: 24px; padding: 32px; }
-    .cat-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #F59E0B; border-bottom: 1px solid rgba(245, 158, 11, 0.3); padding-bottom: 8px; margin-bottom: 16px; }
+    .cat-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--accent); border-bottom: 1px solid rgba(var(--accent-rgb), 0.3); padding-bottom: 8px; margin-bottom: 16px; }
     .item-list { display: flex; flex-direction: column; gap: 14px; }
     .menu-row { display: flex; flex-direction: column; gap: 3px; }
     .row-top { display: flex; align-items: baseline; justify-content: space-between; }
     .item-name { font-size: 16px; font-weight: 700; color: #FFFFFF; }
     .dotted-line { flex-grow: 1; border-bottom: 1px dotted rgba(255,255,255,0.3); margin: 0 10px; }
-    .item-price { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #F59E0B; }
-    .badge-star { font-size: 10px; font-weight: 800; background: #EF4444; color: #FFF; padding: 2px 6px; border-radius: 4px; margin-left: 6px; text-transform: uppercase; }
-    .menu-footer { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 16px; padding: 16px 28px; display: flex; justify-content: space-between; align-items: center; }
+    .item-price { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--accent); }
+    .badge-star { font-size: 10px; font-weight: 800; background: rgba(239,68,68,0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); color: #FFF; padding: 2px 6px; border-radius: 4px; margin-left: 6px; text-transform: uppercase; }
+    .menu-footer { background: rgba(var(--accent-rgb), 0.1); border: 1px solid rgba(var(--accent-rgb), 0.25); border-radius: 16px; padding: 16px 28px; display: flex; justify-content: space-between; align-items: center; }
     .foot-note { font-size: 13.5px; color: #FFFFFF; }
-    .foot-hotline { font-weight: 700; color: #F59E0B; font-size: 15px; }
+    .foot-hotline { font-weight: 700; color: var(--accent); font-size: 15px; }
   </style>
 </head>
 <body>
   <div class="poster">
+    $giant_title_html
     <div class="sub-brand">$sub_brand</div>
     <div class="menu-desc">$tagline</div>
     <div class="menu-grid">$categories_html</div>
@@ -974,6 +1406,11 @@ class PosterTemplateEngine:
   </div>
 </body>
 </html>""")
+
+    _MENU_DEFAULT_PALETTE = {
+        "accent": "#F59E0B", "accent_dark": "#D97706", "accent_darker": "#D97706",
+        "accent_tint": "#FEF3C7", "accent_tint2": "#FEF3C7", "accent_rgb": "245,158,11",
+    }
 
     @classmethod
     def _generate_menu(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
@@ -1001,13 +1438,23 @@ class PosterTemplateEngine:
                 f'<div><div class="cat-title">{cat.get("title","")}</div>'
                 f'<div class="item-list">{items_html}</div></div>'
             )
+        palette = cls._derive_theme_palette(brief.get("brand_color"), cls._MENU_DEFAULT_PALETTE)
+        sub_brand = brief.get("sub_brand", "ARTISAN DINING EXPERIENCE")
+        giant_title_html = cls._giant_title_block(
+            analysis, background_image_path, sub_brand,
+            left_px=round(analysis.width * 0.06), top_px=round(analysis.height * 0.06),
+            width_px=round(analysis.width * 0.88), height_px=round(analysis.height * 0.34),
+            z_index=-1, font_clamp="clamp(44px, 8vw, 150px)",
+        )
         return cls._MENU_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
-            sub_brand=brief.get("sub_brand", "ARTISAN DINING EXPERIENCE"),
+            sub_brand=sub_brand,
             tagline=brief.get("tagline", "Thưởng thức tinh hoa ẩm thực thủ công từ nguyên liệu cao cấp"),
             categories_html="".join(cat_html_parts),
             footer_note=brief.get("footer_note", "✨ Giảm 10% tổng hóa đơn khi check-in tại quán"),
             hotline=brief.get("hotline", "📞 Hotline: 1800 8198"),
+            giant_title_html=giant_title_html,
+            **palette,
         )
 
 
@@ -1029,22 +1476,33 @@ class PosterTemplateEngine:
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
   body { width:100vw; height:100vh; font-family:'Plus Jakarta Sans', sans-serif; }
-  .poster { position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css }
+  .poster {
+    position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css
+    --accent: $accent; --accent-dark: $accent_dark; --accent-darker: $accent_darker;
+    --accent-tint: $accent_tint; --accent-rgb: $accent_rgb; --accent-darker-rgb: $accent_darker_rgb;
+  }
+  /* Font-sizes below fixed (2026-09-06, real audit finding, not a guess): every `vw` value in this
+     portrait template was picked independently of the landscape version's PX values, and on the
+     real portrait canvas (1024px wide, vs landscape's 1536px -- see `run_full_pipeline.py`'s
+     `_pick_image_size`) the resulting text was actually LARGER in real pixels than landscape's,
+     despite the canvas itself being smaller (~44% the area) -- backwards from "ảnh nhỏ hơn thì chữ
+     phải nhỏ hơn". Recalibrated so portrait_px ~= landscape_px * 0.9 (deliberately a bit SMALLER,
+     not just equal) at the real 1024px width: vw = landscape_px * 0.9 / 1024 * 100. */
   .header { position:absolute; top:4%; left:6%; right:6%; display:flex; justify-content:space-between; align-items:center; gap:12px; z-index:20; }
-  .brand-title { font-size:4.2vw; font-weight:900; color:#FFB703; letter-spacing:1px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:58%; text-shadow:0 0 16px rgba(255,183,3,0.5); }
-  .date-pill { background:rgba(255,255,255,0.12); backdrop-filter:blur(10px); border:1px solid rgba(255,183,3,0.4); padding:2vw 3.5vw; border-radius:999px; font-size:2.8vw; font-weight:700; color:#FFF; white-space:nowrap; }
+  .brand-title { font-size:2.1vw; font-weight:900; color:var(--accent); letter-spacing:1px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:58%; text-shadow:0 0 16px rgba(var(--accent-rgb),0.5); }
+  .date-pill { background:rgba(255,255,255,0.12); backdrop-filter:blur(10px); border:1px solid rgba(var(--accent-rgb),0.4); padding:1.4vw 2.6vw; border-radius:999px; font-size:1.2vw; font-weight:700; color:#FFF; white-space:nowrap; }
   .bottom-stack { position:absolute; bottom:4%; left:6%; right:6%; display:flex; flex-direction:column; gap:3%; z-index:20; }
   .badge-pill { align-self:center; background:linear-gradient(135deg,#E63946 0%,#D90429 100%); border:3px dashed #FFF; border-radius:999px; padding:3vw 6vw; text-align:center; box-shadow:0 10px 28px rgba(230,57,70,0.55); }
-  .badge-main-p { font-size:7vw; font-weight:900; color:#FFF; line-height:1; }
-  .badge-off-p { font-size:3vw; font-weight:800; color:#FFD166; letter-spacing:1px; }
-  .info-block { background:rgba(20,10,5,0.75); backdrop-filter:blur(18px); border:1px solid rgba(255,183,3,0.25); border-radius:20px; padding:5vw; display:flex; flex-direction:column; gap:2.5vw; }
-  .deal-title { font-size:4vw; font-weight:800; color:#FFF; }
-  .deal-sub { font-size:3.2vw; font-weight:500; color:#FFB703; }
-  .cta-btn { text-align:center; background:linear-gradient(135deg,#FB8500 0%,#FFB703 100%); color:#000; font-weight:900; font-size:4vw; letter-spacing:0.5px; padding:3.5vw; border-radius:999px; text-decoration:none; box-shadow:0 8px 22px rgba(251,133,0,0.5); }
+  .badge-main-p { font-size:4.6vw; font-weight:900; color:#FFF; line-height:1; }
+  .badge-off-p { font-size:1.4vw; font-weight:800; color:var(--accent-tint); letter-spacing:1px; }
+  .info-block { background:rgba(20,10,5,0.75); backdrop-filter:blur(18px); border:1px solid rgba(var(--accent-rgb),0.25); border-radius:20px; padding:5vw; display:flex; flex-direction:column; gap:2.5vw; }
+  .deal-title { font-size:1.8vw; font-weight:800; color:#FFF; }
+  .deal-sub { font-size:1.2vw; font-weight:500; color:var(--accent); }
+  .cta-btn { text-align:center; background:linear-gradient(135deg,var(--accent-darker) 0%,var(--accent) 100%); color:#000; font-weight:900; font-size:1.5vw; letter-spacing:0.5px; padding:3.5vw; border-radius:999px; text-decoration:none; box-shadow:0 8px 22px rgba(var(--accent-darker-rgb),0.5); }
 </style></head>
 <body><div class="poster">
   <div class="header"><div class="brand-title">$brand</div><div class="date-pill">$date_range</div></div>
-  <div class="bottom-stack">
+  <div class="bottom-stack"$safe_rect_style>
     <div class="badge-pill"><div class="badge-main-p">$badge_percent</div><div class="badge-off-p">$badge_label $badge_sub</div></div>
     <div class="info-block">
       <div class="deal-title">$address</div>
@@ -1056,6 +1514,7 @@ class PosterTemplateEngine:
 
     @classmethod
     def _generate_grand_opening_portrait(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
+        palette = cls._derive_theme_palette(brief.get("brand_color"), cls._GRAND_OPENING_DEFAULT_PALETTE)
         return cls._GRAND_OPENING_PORTRAIT_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
             brand=brief.get("brand", "🍔 THE BURGER CRAFT"),
@@ -1066,79 +1525,109 @@ class PosterTemplateEngine:
             address=brief.get("address", "📍 128 Nguyễn Trãi, Q1"),
             offer_desc=brief.get("offer_desc", "Tặng 01 Coca-Cola cho hóa đơn từ 99K • Hotline: 1900 8899"),
             cta_text=brief.get("cta_text", "NHẬN VOUCHER ➔"),
+            safe_rect_style=cls._safe_rect_style_attr(brief),
+            **palette,
         )
 
     _FEEDBACK_PORTRAIT_TPL = Template("""<!DOCTYPE html>
 <html lang="vi"><head><meta charset="utf-8"><title>Feedback (Portrait)</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Dancing+Script:wght@700&family=Playfair+Display:ital,wght@0,700;1,400&family=Oswald:wght@600;700&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
   body { width:100vw; height:100vh; font-family:'Plus Jakarta Sans', sans-serif; }
-  .poster { position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css }
+  .poster {
+    position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css
+    --accent: $accent; --accent-dark: $accent_dark; --accent-tint: $accent_tint; --accent-tint2: $accent_tint2; --accent-rgb: $accent_rgb;
+    --secondary: $secondary; --secondary-tint-rgb: $secondary_tint_rgb;
+    --mood-quote-font: $mood_quote_font; --mood-name-font: $mood_name_font;
+  }
   .top-bar { position:absolute; top:4%; left:6%; right:6%; display:flex; justify-content:space-between; align-items:center; gap:10px; z-index:20; }
-  .spa-logo { font-family:'Quicksand',sans-serif; font-size:4.2vw; font-weight:800; color:#0E9F6E; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60%; text-shadow:0 2px 6px rgba(255,255,255,0.6); }
-  .spa-badge { background:#FFE4E6; color:#E02424; font-weight:800; font-size:2.6vw; padding:1.8vw 3vw; border-radius:999px; white-space:nowrap; }
-  .bottom-stack { position:absolute; bottom:3%; left:6%; right:6%; display:flex; flex-direction:column; gap:2.5%; z-index:20; }
-  .feedback-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(18px); border:2px solid rgba(255,255,255,0.9); border-radius:22px; padding:5vw; display:flex; flex-direction:column; gap:2.5vw; }
-  .review-header { display:flex; justify-content:space-between; align-items:center; }
-  .stars { color:#F59E0B; font-size:4.5vw; letter-spacing:2px; }
-  .verified-pill { font-size:2.4vw; font-weight:700; color:#057A55; background:#DEF7EC; padding:1.2vw 2.6vw; border-radius:999px; white-space:nowrap; }
-  .quote-text { font-size:3.6vw; line-height:1.5; color:#374151; font-weight:500; font-style:italic; }
-  .customer-info { display:flex; align-items:center; gap:3vw; border-top:1px solid #E5E7EB; padding-top:3vw; }
-  .avatar { width:9vw; height:9vw; border-radius:50%; background:#D1FAE5; display:flex; justify-content:center; align-items:center; font-size:4.5vw; border:2px solid #0E9F6E; flex-shrink:0; }
-  .cust-name { font-size:3.2vw; font-weight:700; color:#111928; }
-  .cust-sub { font-size:2.6vw; color:#6B7280; font-weight:500; }
-  .features-col { display:flex; flex-direction:column; gap:2vw; }
-  .f-pill { background:#FFFFFF; border:1px solid #E5E7EB; border-radius:14px; padding:3vw 4vw; display:flex; align-items:center; gap:3vw; }
-  .f-icon { font-size:5vw; }
-  .f-text { font-size:3vw; font-weight:700; color:#1F2A37; }
-  .bottom-cta-strip { background:linear-gradient(135deg,#0E9F6E 0%,#057A55 100%); border-radius:18px; padding:4vw 5vw; display:flex; flex-direction:column; gap:2vw; }
-  .offer-title { font-family:'Quicksand',sans-serif; font-size:3.6vw; font-weight:800; color:#FFF; }
-  .offer-desc { font-size:2.8vw; color:#FFF; opacity:0.9; }
-  .btn-booking { align-self:flex-start; background:#FFFFFF; color:#046C4E; font-weight:800; font-size:3.2vw; padding:2.8vw 5vw; border-radius:999px; text-decoration:none; }
+  .spa-logo { font-family:'Quicksand',sans-serif; font-size:4vw; font-weight:800; color:var(--accent); max-width:60%; line-height:1.2; text-shadow:0 2px 6px rgba(255,255,255,0.6); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .spa-badge { background:rgba(var(--secondary-tint-rgb),0.4); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); color:var(--secondary); font-weight:800; font-size:2.4vw; padding:1.6vw 2.8vw; border-radius:999px; border:1px solid rgba(var(--secondary-tint-rgb),0.55); white-space:nowrap; flex-shrink:0; }
+  /* REDESIGNED (2026-09-05, per direct user request) -- see landscape .corner-card comment:
+     was a near-full-width stack covering most of the photo; now one small corner card so the
+     customer/before-after photo stays the visual hero. */
+  .corner-card {
+    position:absolute; left:6%; bottom:5%; width:58%;
+    background:rgba(255,255,255,0.55); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+    border:1.5px solid rgba(255,255,255,0.6); border-radius:18px; padding:4.5vw 4.5vw 5vw;
+    display:flex; flex-direction:column; gap:2.2vw;
+    box-shadow:0 2.5vw 5vw rgba(0,0,0,0.28);
+    z-index:20;
+  }
+  .review-header-mini { display:flex; justify-content:space-between; align-items:center; }
+  .stars-mini { color:#F59E0B; font-size:3.6vw; letter-spacing:1px; }
+  .verified-mini { font-size:2.2vw; font-weight:700; color:var(--accent-dark); background:var(--accent-tint); padding:0.8vw 2.2vw; border-radius:999px; white-space:nowrap; }
+  .quote-mini { font-family:var(--mood-quote-font); font-size:2.9vw; line-height:1.36; color:#374151; font-weight:500; font-style:italic; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
+  .customer-mini { display:flex; align-items:center; gap:2.2vw; }
+  .avatar-mini { width:7.5vw; height:7.5vw; border-radius:50%; background:var(--accent-tint2); display:flex; justify-content:center; align-items:center; font-size:3.6vw; border:1.5px solid var(--accent); flex-shrink:0; }
+  .cust-name-mini { font-family:var(--mood-name-font); font-size:2.9vw; font-weight:700; color:#111928; line-height:1.2; }
+  .cust-sub-mini { font-size:2.3vw; color:#6B7280; font-weight:500; }
+  .tags-mini { display:flex; flex-wrap:wrap; gap:1.4vw; }
+  .tag-mini { font-size:2.2vw; font-weight:600; color:#1F2A37; background:rgba(255,255,255,0.55); border:1px solid rgba(229,231,235,0.7); border-radius:2.2vw; padding:1vw 2.2vw; line-height:1.3; max-width:100%; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .cta-row-mini { display:flex; align-items:center; justify-content:space-between; gap:2vw; padding-top:1.5vw; border-top:1px solid rgba(0,0,0,0.07); }
+  .offer-mini { font-size:2.5vw; font-weight:700; color:var(--accent-dark); line-height:1.25; flex:1; min-width:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .cta-mini { flex-shrink:0; background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%); color:#FFFFFF; font-weight:700; font-size:2.6vw; padding:1.6vw 3.2vw; border-radius:999px; text-decoration:none; white-space:nowrap; }
+
+  /* REVERTED the 2026-09-06 blanket shrink (width 58%->42% + every font scaled 0.8x): user pointed
+     at line21_real_gpt4o_render.png and clarified the actual preference -- the CARD's own internal
+     text (quote/name/tags) should shrink, but the BRAND TITLE (`.spa-logo`, in `.top-bar`, outside
+     `.corner-card`) must stay large/prominent regardless. A single blanket scale factor couldn't
+     express that (it shrank the title along with everything else). Replaced with an OPT-IN
+     `.compact-card` class (driven by `brief["card_size"] == "compact"`) that overrides ONLY
+     `.corner-card` and its children below -- `.spa-logo`/`.spa-badge` are never touched by it, so
+     the title stays exactly as prominent in compact mode as in normal mode. Default (`card_size`
+     absent/"normal") renders BYTE-IDENTICAL to before this whole compact-card exploration began. */
+  .poster.compact-card .corner-card { width:42%; max-width:380px; padding:3.6vw 3.6vw 4vw; gap:1.8vw; box-shadow:0 2vw 4vw rgba(0,0,0,0.28); border-radius:16px; }
+  .poster.compact-card .stars-mini { font-size:2.9vw; }
+  .poster.compact-card .verified-mini { font-size:1.8vw; padding:0.6vw 1.8vw; }
+  .poster.compact-card .quote-mini { font-size:2.3vw; }
+  .poster.compact-card .avatar-mini { width:6vw; height:6vw; font-size:2.9vw; }
+  .poster.compact-card .cust-name-mini { font-size:2.3vw; }
+  .poster.compact-card .cust-sub-mini { font-size:1.8vw; }
+  .poster.compact-card .tags-mini { gap:1.1vw; }
+  .poster.compact-card .tag-mini { font-size:1.8vw; border-radius:1.8vw; padding:0.8vw 1.8vw; }
+  /* Stacked (column), not the base row layout -- REAL bug found testing the original shrink: at
+     42% width there's no longer room for offer text + CTA button side by side (text wrapped 1-2
+     characters per line). Only applied in compact mode -- normal mode's 58%-wide row layout never
+     had this problem. */
+  .poster.compact-card .cta-row-mini { flex-direction:column; align-items:stretch; gap:1.6vw; padding-top:1.2vw; }
+  .poster.compact-card .offer-mini { font-size:2vw; flex:none; }
+  .poster.compact-card .cta-mini { font-size:2.1vw; padding:1.3vw 2.6vw; flex-shrink:1; text-align:center; }
 </style></head>
-<body><div class="poster">
-  <div class="top-bar"><div class="spa-logo">$brand</div><div class="spa-badge">$top_badge</div></div>
-  <div class="bottom-stack">
-    <div class="feedback-card">
-      <div class="review-header"><div class="stars">$stars</div><div class="verified-pill">$verified_label</div></div>
-      <div class="quote-text">$quote_text</div>
-      <div class="customer-info"><div class="avatar">$avatar_emoji</div><div><div class="cust-name">$customer_name</div><div class="cust-sub">$customer_sub</div></div></div>
-    </div>
-    <div class="features-col">$features_html</div>
-    <div class="bottom-cta-strip">
-      <div class="offer-title">$offer_title</div>
-      <div class="offer-desc">$offer_desc</div>
-      <a href="#" class="btn-booking">$cta_text</a>
-    </div>
+<body><div class="poster$compact_class">
+  <div class="top-bar"><div class="spa-logo">$brand</div>$badge_html</div>
+  <div class="corner-card"$safe_rect_style>
+    <div class="review-header-mini">$stars_html<span class="verified-mini">$verified_label</span></div>
+    <div class="quote-mini">$quote_text</div>
+    <div class="customer-mini"><div class="avatar-mini">$avatar_emoji</div><div><div class="cust-name-mini">$customer_name</div><div class="cust-sub-mini">$customer_sub</div></div></div>
+    $features_block_html
+    <div class="cta-row-mini">$offer_html<a href="#" class="cta-mini">$cta_text</a></div>
   </div>
 </div></body></html>""")
 
     @classmethod
     def _generate_feedback_card_portrait(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
-        features = brief.get("features", [
-            {"icon": "🌿", "text": "Chất Lượng Hữu Cơ 100% Nhập Khẩu"},
-            {"icon": "✂️", "text": "Chuyên Nghiệp Theo Yêu Cầu Riêng"},
-            {"icon": "🕊️", "text": "Không Gian Mở, Trải Nghiệm Thoải Mái"},
-        ])
-        features_html = "".join(
-            f'<div class="f-pill"><div class="f-icon">{f.get("icon","✨")}</div><div class="f-text">{f.get("text","")}</div></div>'
-            for f in features
+        conditional = cls._build_feedback_conditional_html(brief, top_badge_default="✨ CHUẨN HÀN QUỐC")
+        palette = cls._derive_theme_palette(
+            brief.get("brand_color"), cls._FEEDBACK_DEFAULT_PALETTE, secondary_hex=brief.get("secondary_color"),
         )
+        font_mood = cls._resolve_font_mood(brief.get("font_mood"))
+        compact_class = " compact-card" if brief.get("card_size") == "compact" else ""
         return cls._FEEDBACK_PORTRAIT_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
+            compact_class=compact_class,
             brand=brief.get("brand", "🐾 PAWPARADISE SPA"),
-            top_badge=brief.get("top_badge", "✨ CHUẨN HÀN QUỐC"),
-            stars=brief.get("stars", "★★★★★"),
             verified_label=brief.get("verified_label", "✔ ĐÃ TRẢI NGHIỆM"),
             quote_text=brief.get("quote_text", "Dịch vụ tuyệt vời, nhân viên chuyên nghiệp và tận tâm, chắc chắn sẽ quay lại!"),
             avatar_emoji=brief.get("avatar_emoji", "🐩"),
             customer_name=brief.get("customer_name", "Khách hàng thân thiết"),
             customer_sub=brief.get("customer_sub", "Đã trải nghiệm dịch vụ Premium"),
-            features_html=features_html,
-            offer_title=brief.get("offer_title", "🎁 ƯU ĐÃI ĐẶC BIỆT CHO KHÁCH MỚI"),
-            offer_desc=brief.get("offer_desc", "Áp dụng khi đặt lịch lần đầu trong tuần này!"),
             cta_text=brief.get("cta_text", "ĐẶT LỊCH NGAY ➔"),
+            safe_rect_style=cls._corner_card_top_override(brief),
+            mood_quote_font=font_mood["quote_font"], mood_name_font=font_mood["name_font"],
+            **conditional,
+            **palette,
         )
 
     _RECRUITMENT_PORTRAIT_TPL = Template("""<!DOCTYPE html>
@@ -1147,23 +1636,31 @@ class PosterTemplateEngine:
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
   body { width:100vw; height:100vh; font-family:'Plus Jakarta Sans', sans-serif; }
-  .poster { position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css }
+  .poster {
+    position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css
+    isolation: isolate;
+    --accent: $accent; --accent-dark: $accent_dark; --accent-darker: $accent_darker; --accent-dark-rgb: $accent_dark_rgb;
+  }
+  /* Font-sizes recalibrated (2026-09-06, same audit/fix as grand_opening portrait above): every
+     `vw` value here independently produced LARGER real pixels than the landscape version despite
+     this canvas being smaller (1024px vs 1536px wide) -- vw = landscape_px * 0.9 / 1024 * 100. */
   .rec-header { position:absolute; top:3.5%; left:6%; right:6%; display:flex; justify-content:space-between; align-items:center; gap:10px; z-index:20; }
-  .company-logo { font-size:3.6vw; font-weight:900; color:#38BDF8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60%; }
-  .urgency-badge { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#F87171; font-size:2.4vw; font-weight:700; padding:1.6vw 3vw; border-radius:999px; white-space:nowrap; }
-  .frosted-box { position:absolute; bottom:3%; left:6%; right:6%; background:rgba(15,23,42,0.7); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.14); border-radius:22px; padding:5vw; display:flex; flex-direction:column; gap:3vw; max-height:70%; }
-  .salary-tag { align-self:flex-start; background:linear-gradient(135deg,#0284C7 0%,#0369A1 100%); color:#FFF; font-weight:800; font-size:3.4vw; padding:2vw 4vw; border-radius:12px; }
-  .col-title { font-size:2.8vw; font-weight:800; color:#94A3B8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:1.5vw; }
+  .company-logo { font-size:1.9vw; font-weight:900; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60%; }
+  .urgency-badge { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#F87171; font-size:1.1vw; font-weight:700; padding:1vw 2vw; border-radius:999px; white-space:nowrap; }
+  .frosted-box { position:absolute; bottom:3%; left:6%; right:6%; background:rgba(15,23,42,0.7); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.14); border-radius:22px; padding:5vw; display:flex; flex-direction:column; gap:3vw; max-height:70%; z-index:20; }
+  .salary-tag { align-self:flex-start; background:rgba(var(--accent-dark-rgb),0.45); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); color:#FFF; font-weight:800; font-size:1.8vw; padding:1.3vw 2.6vw; border-radius:12px; border:1px solid rgba(255,255,255,0.3); }
+  .col-title { font-size:1.4vw; font-weight:800; color:#94A3B8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:1.5vw; }
   .checklist { list-style:none; display:flex; flex-direction:column; gap:2vw; }
-  .check-item { display:flex; align-items:flex-start; gap:2vw; font-size:2.8vw; color:#E2E8F0; line-height:1.4; font-weight:500; }
-  .check-icon { color:#38BDF8; font-weight:900; }
+  .check-item { display:flex; align-items:flex-start; gap:2vw; font-size:1.3vw; color:#E2E8F0; line-height:1.4; font-weight:500; }
+  .check-icon { color:var(--accent); font-weight:900; }
   .rec-footer { display:flex; flex-direction:column; gap:2vw; border-top:1px solid rgba(255,255,255,0.1); padding-top:3vw; }
-  .contact-email { color:#38BDF8; font-weight:700; font-size:3vw; }
-  .apply-btn { text-align:center; background:linear-gradient(135deg,#38BDF8 0%,#0284C7 100%); color:#020617; font-weight:800; font-size:3.4vw; padding:3.2vw; border-radius:999px; text-decoration:none; }
+  .contact-email { color:var(--accent); font-weight:700; font-size:1.4vw; }
+  .apply-btn { text-align:center; background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%); color:#020617; font-weight:800; font-size:1.5vw; padding:3.2vw; border-radius:999px; text-decoration:none; }
 </style></head>
 <body><div class="poster">
+  $giant_title_html
   <div class="rec-header"><div class="company-logo">$company</div><div class="urgency-badge">$deadline</div></div>
-  <div class="frosted-box">
+  <div class="frosted-box"$safe_rect_style>
     <div class="salary-tag">$salary</div>
     <div>
       <div class="col-title">📋 $pos_label</div>
@@ -1174,7 +1671,7 @@ class PosterTemplateEngine:
       <ul class="checklist">$benefits_html</ul>
     </div>
     <div class="rec-footer">
-      <div style="font-size:2.6vw;color:#94A3B8;">$contact_line1</div>
+      <div style="font-size:1.2vw;color:#94A3B8;">$contact_line1</div>
       <div class="contact-email">$contact_email</div>
       <a href="#" class="apply-btn">$cta_text</a>
     </div>
@@ -1193,9 +1690,17 @@ class PosterTemplateEngine:
         ])
         req_html = "".join(f'<li class="check-item"><span class="check-icon">✔</span><span>{r}</span></li>' for r in requirements)
         ben_html = "".join(f'<li class="check-item"><span class="check-icon">★</span><span>{b}</span></li>' for b in benefits)
+        palette = cls._derive_theme_palette(brief.get("brand_color"), cls._RECRUITMENT_DEFAULT_PALETTE)
+        company = brief.get("company", "⚡ TENDOO AI LAB")
+        giant_title_html = cls._giant_title_block(
+            analysis, background_image_path, company,
+            left_px=round(analysis.width * 0.04), top_px=round(analysis.height * 0.11),
+            width_px=round(analysis.width * 0.92), height_px=round(analysis.height * 0.55),
+            z_index=1, font_clamp="clamp(40px, 13vw, 140px)",
+        )
         return cls._RECRUITMENT_PORTRAIT_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
-            company=brief.get("company", "⚡ TENDOO AI LAB"),
+            company=company,
             deadline=brief.get("deadline", "HẠN: 30.09"),
             pos_label=brief.get("pos_label", "YÊU CẦU ỨNG VIÊN"),
             salary=brief.get("salary", "THOẢ THUẬN"),
@@ -1204,6 +1709,9 @@ class PosterTemplateEngine:
             contact_line1=brief.get("contact_line1", "Gửi CV & Portfolio:"),
             contact_email=brief.get("contact_email", "careers@tendoo.ai"),
             cta_text=brief.get("cta_text", "ỨNG TUYỂN NGAY ➔"),
+            safe_rect_style=cls._safe_rect_style_attr(brief),
+            giant_title_html=giant_title_html,
+            **palette,
         )
 
     _MENU_PORTRAIT_TPL = Template("""<!DOCTYPE html>
@@ -1212,23 +1720,30 @@ class PosterTemplateEngine:
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
   body { width:100vw; height:100vh; font-family:'Plus Jakarta Sans', sans-serif; }
-  .poster { position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css padding:5vw; display:flex; flex-direction:column; justify-content:flex-end; gap:3vw; }
-  .sub-brand { font-size:2.6vw; font-weight:700; color:#D97706; letter-spacing:2px; text-transform:uppercase; text-align:center; }
-  .menu-desc { font-style:italic; font-size:2.8vw; color:#E7E5E4; text-align:center; text-shadow:0 2px 6px rgba(0,0,0,0.6); }
+  .poster {
+    position:relative; width:${w}px; height:${h}px; overflow:hidden; $bg_css padding:5vw; display:flex; flex-direction:column; justify-content:flex-end; gap:3vw;
+    isolation: isolate;
+    --accent: $accent; --accent-dark: $accent_dark; --accent-rgb: $accent_rgb;
+  }
+  /* Font-sizes recalibrated (2026-09-06, same audit/fix as grand_opening/recruitment portrait) --
+     vw = landscape_px * 0.9 / 1024 * 100, see grand_opening portrait's comment for the full story. */
+  .sub-brand { font-size:1.2vw; font-weight:700; color:var(--accent-dark); letter-spacing:2px; text-transform:uppercase; text-align:center; }
+  .menu-desc { font-style:italic; font-size:1.3vw; color:#E7E5E4; text-align:center; text-shadow:0 2px 6px rgba(0,0,0,0.6); }
   .menu-stack { display:flex; flex-direction:column; gap:5vw; background:rgba(10,6,4,0.6); backdrop-filter:blur(14px); border-radius:20px; padding:5vw; max-height:60%; overflow:hidden; }
-  .cat-title { font-family:'Playfair Display',serif; font-size:4vw; font-weight:700; color:#F59E0B; border-bottom:1px solid rgba(245,158,11,0.3); padding-bottom:1.5vw; margin-bottom:2vw; }
+  .cat-title { font-family:'Playfair Display',serif; font-size:1.9vw; font-weight:700; color:var(--accent); border-bottom:1px solid rgba(var(--accent-rgb),0.3); padding-bottom:1.5vw; margin-bottom:2vw; }
   .item-list { display:flex; flex-direction:column; gap:2.5vw; }
   .menu-row { display:flex; flex-direction:column; gap:0.5vw; }
   .row-top { display:flex; align-items:baseline; justify-content:space-between; gap:2vw; }
-  .item-name { font-size:3.2vw; font-weight:700; color:#FFFFFF; }
+  .item-name { font-size:1.4vw; font-weight:700; color:#FFFFFF; }
   .dotted-line { flex-grow:1; border-bottom:1px dotted rgba(255,255,255,0.3); margin:0 1vw; }
-  .item-price { font-family:'Playfair Display',serif; font-size:3.4vw; font-weight:700; color:#F59E0B; white-space:nowrap; }
-  .badge-star { font-size:2vw; font-weight:800; background:#EF4444; color:#FFF; padding:0.5vw 1.5vw; border-radius:4px; margin-left:1.5vw; }
-  .menu-footer { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.25); border-radius:14px; padding:3vw 4vw; display:flex; flex-direction:column; gap:1.5vw; }
-  .foot-note { font-size:2.6vw; color:#FFFFFF; }
-  .foot-hotline { font-weight:700; color:#F59E0B; font-size:2.8vw; }
+  .item-price { font-family:'Playfair Display',serif; font-size:1.6vw; font-weight:700; color:var(--accent); white-space:nowrap; }
+  .badge-star { font-size:0.9vw; font-weight:800; background:rgba(239,68,68,0.45); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); color:#FFF; padding:0.4vw 1.2vw; border-radius:4px; margin-left:1.5vw; }
+  .menu-footer { background:rgba(var(--accent-rgb),0.1); border:1px solid rgba(var(--accent-rgb),0.25); border-radius:14px; padding:3vw 4vw; display:flex; flex-direction:column; gap:1.5vw; }
+  .foot-note { font-size:1.2vw; color:#FFFFFF; }
+  .foot-hotline { font-weight:700; color:var(--accent); font-size:1.3vw; }
 </style></head>
 <body><div class="poster">
+  $giant_title_html
   <div class="sub-brand">$sub_brand</div>
   <div class="menu-desc">$tagline</div>
   <div class="menu-stack">$categories_html</div>
@@ -1260,13 +1775,23 @@ class PosterTemplateEngine:
                 f'<div><div class="cat-title">{cat.get("title","")}</div>'
                 f'<div class="item-list">{items_html}</div></div>'
             )
+        palette = cls._derive_theme_palette(brief.get("brand_color"), cls._MENU_DEFAULT_PALETTE)
+        sub_brand = brief.get("sub_brand", "ARTISAN DINING EXPERIENCE")
+        giant_title_html = cls._giant_title_block(
+            analysis, background_image_path, sub_brand,
+            left_px=round(analysis.width * 0.06), top_px=round(analysis.height * 0.05),
+            width_px=round(analysis.width * 0.88), height_px=round(analysis.height * 0.38),
+            z_index=-1, font_clamp="clamp(36px, 11vw, 130px)",
+        )
         return cls._MENU_PORTRAIT_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
-            sub_brand=brief.get("sub_brand", "ARTISAN DINING EXPERIENCE"),
+            sub_brand=sub_brand,
             tagline=brief.get("tagline", "Thưởng thức tinh hoa ẩm thực thủ công"),
             categories_html="".join(cat_html_parts),
             footer_note=brief.get("footer_note", "✨ Giảm 10% khi check-in tại quán"),
             hotline=brief.get("hotline", "📞 Hotline: 1800 8198"),
+            giant_title_html=giant_title_html,
+            **palette,
         )
 
     # ----------------------------------------------------------------------------------------
@@ -1330,6 +1855,35 @@ class PosterTemplateEngine:
     _LIGHT_BG_STYLE_ORDER = ["embossed_dark", "gold_deep", "pastel_pop"]
     _DARK_BG_STYLE_ORDER = ["neon_glow", "metallic_3d", "gold_foil"]
 
+    # Real bug found+fixed after the first real Stage-1 (gpt-4o-mini) pipeline run (2026-09-05, see
+    # memory css-hero-title-overlay-direction.md): Stage 1 isn't told a strict enum for
+    # title_style/subtitle_style, so it invents plausible-sounding-but-invalid names ("elegant",
+    # "bold", "adventure"...). The OLD code (`brief.get("title_style") or _auto_pick_style(...)`)
+    # treated ANY non-empty string as "caller has an opinion", so an invalid name never fell
+    # through to auto-pick -- it silently hit HERO_STYLE_CSS.get(title_style, ...["plain_light"]),
+    # turning every poster flat white with zero metallic/neon/gold/glow effect. Same root cause hit
+    # title_font/subtitle_font: a generic CSS keyword like "serif"/"sans-serif" (not a real font
+    # name) got quoted as a specific font-family in the template (`font-family: '$title_font',
+    # sans-serif;` -> `font-family: 'serif', sans-serif;`), so the browser can't find a font
+    # literally named "serif" and silently falls through to the generic sans-serif at the end --
+    # the requested serif LOOK is lost even though nothing crashed or looked obviously broken.
+    _GENERIC_FONT_FALLBACK = {
+        "serif": "Playfair Display", "sans-serif": "Montserrat", "monospace": "Montserrat",
+        "cursive": "Dancing Script", "fantasy": "Montserrat", "system-ui": "Montserrat",
+    }
+
+    @classmethod
+    def _resolve_font(cls, font_name: Optional[str], default: str) -> str:
+        """Returns `font_name` as-is if it looks like a real font name, or a curated real font
+        matching the intent if it's actually a generic CSS family keyword, or `default` if empty.
+        A genuine (if uncommon) font name that isn't in this file's @import list still degrades
+        safely -- the browser just falls through to the stack's own trailing generic keyword,
+        which is the normal/correct CSS behavior; only the generic-keyword-as-a-name case above is
+        actually broken and worth guarding against here."""
+        if not font_name:
+            return default
+        return cls._GENERIC_FONT_FALLBACK.get(font_name.strip().lower(), font_name)
+
     @classmethod
     def _auto_pick_style(cls, analysis: BackgroundAnalysis, position: str, style_hint: Optional[str] = None) -> str:
         """
@@ -1375,24 +1929,38 @@ class PosterTemplateEngine:
     # memory css-hero-title-overlay-direction.md), just a minimum sanity guard.
     MIN_SAFE_RECT_HEIGHT_PCT = 10.0
 
+    # Below this WIDTH fraction of the canvas, MER's raw output is rejected for a title even if
+    # its area/height look fine -- a narrow-tall rectangle can be a perfectly valid zero-overlap
+    # answer geometrically while still forcing an ugly extra line wrap, since title text needs
+    # width more than height (unlike the bottom-stack cards MER was originally scoped for). Value
+    # is grounded in 2 real before/after comparisons (scripts/probe_mer_representative_cases.py,
+    # see memory css-hero-title-overlay-direction.md): a 37%-width rect forced a cramped 3-line
+    # wrap (prompt7 fashion-portrait case), while 46.8-48.3%-width rects gave a clean 2-line wrap
+    # (Case C hiker case) -- 40% sits between the two, closer to the "bad" data point so it stays
+    # conservative until more real data points narrow it further.
+    MIN_SAFE_RECT_WIDTH_PCT = 40.0
+
     @classmethod
     def _zone_css_from_rect(cls, rect_pct: Dict[str, float]) -> Optional[str]:
         """
         Builds absolute-positioning CSS directly from an EmptyRect.as_css_percent()-shaped dict
         (src/tendoo/layout_geometry.py's Cấp độ 2 MER output: left_pct/top_pct/right_pct/
-        bottom_pct/height_pct) instead of a fixed 3x3 zone -- lets a detected product/hero
-        bounding box on THIS specific generated image move the text out of the way, rather than
-        guessing a zone ahead of time (see prompt_test.txt line 1's demonstrated case: a
-        middle-left title zone overlapped the product because nothing checked where the product
+        bottom_pct/height_pct/width_pct) instead of a fixed 3x3 zone -- lets a detected
+        product/hero bounding box on THIS specific generated image move the text out of the way,
+        rather than guessing a zone ahead of time (see prompt_test.txt line 1's demonstrated case:
+        a middle-left title zone overlapped the product because nothing checked where the product
         actually landed). Returns None (caller should fall back to _zone_css) if the rect is
-        missing required keys or too short to trust.
+        missing required keys, too short (MIN_SAFE_RECT_HEIGHT_PCT), or too NARROW
+        (MIN_SAFE_RECT_WIDTH_PCT) to trust for a title -- both are real, independently-measured
+        failure modes, not just a theoretical concern (see round-2 probe in memory
+        css-hero-title-overlay-direction.md).
         """
         try:
             top, left, right = rect_pct["top_pct"], rect_pct["left_pct"], rect_pct["right_pct"]
-            height = rect_pct["height_pct"]
+            height, width = rect_pct["height_pct"], rect_pct["width_pct"]
         except (KeyError, TypeError):
             return None
-        if height < cls.MIN_SAFE_RECT_HEIGHT_PCT:
+        if height < cls.MIN_SAFE_RECT_HEIGHT_PCT or width < cls.MIN_SAFE_RECT_WIDTH_PCT:
             return None
         return f"position:absolute; top:{top}%; left:{left}%; right:{right}%; text-align:center;"
 
@@ -1421,6 +1989,51 @@ class PosterTemplateEngine:
   </div>
 </body></html>""")
 
+    # DESIGN_PRINCIPLES.md #1 (typographic scale): subtitle size should derive from title size via
+    # a fixed modular-scale ratio, not an unrelated hand-picked literal (the old default pairing,
+    # clamp(30px,7vw,64px) title vs clamp(14px,3vw,24px) subtitle, is a ~2.67x ratio that matches
+    # none of the standard scales). Premium/metallic styles get the more dramatic Golden Ratio;
+    # everything else gets the safer Perfect Fourth.
+    _PREMIUM_STYLE_FAMILY = {"gold_foil", "gold_deep", "metallic_3d"}
+    _CLAMP_RE = re.compile(r"clamp\(\s*([\d.]+)(\w+)\s*,\s*([\d.]+)(\w+)\s*,\s*([\d.]+)(\w+)\s*\)")
+
+    @classmethod
+    def _modular_ratio(cls, title_style: str) -> float:
+        return 1.618 if title_style in cls._PREMIUM_STYLE_FAMILY else 1.333
+
+    @classmethod
+    def _scaled_clamp_str(cls, base_clamp: str, ratio: float) -> str:
+        """Derives a proportionally-smaller clamp() string from a larger one using `ratio`,
+        instead of an unrelated hand-picked literal. Falls back to `base_clamp` unchanged if it
+        doesn't parse as clamp(...) -- backward-compatible with a raw px/vw value."""
+        m = cls._CLAMP_RE.match(base_clamp.strip())
+        if not m:
+            return base_clamp
+        parts = []
+        for i in range(0, 6, 2):
+            num, unit = m.group(i + 1), m.group(i + 2)
+            scaled = float(num) / ratio
+            parts.append(f"{scaled:.2f}".rstrip("0").rstrip(".") + unit)
+        return f"clamp({parts[0]}, {parts[1]}, {parts[2]})"
+
+    # DESIGN_PRINCIPLES.md #5 (legibility scrim): a soft gradient behind the title, not just
+    # text-shadow -- the 4 card-heavy templates already have `backdrop-filter:blur()`, product_ad
+    # had nothing. Keyed off the TEXT's own light/dark style family (not the raw zone luminance),
+    # so an explicit style override still gets a scrim that actually helps THAT text stay legible.
+    # Wraps the title content in an inline-block inner div (shrink-wraps to the text's own size)
+    # so the scrim hugs the text rather than spanning the whole (often much wider) positioned zone
+    # -- deliberately NOT touching the outer zone div's own position/transform math.
+    @classmethod
+    def _title_scrim_css(cls, title_style: str) -> str:
+        if title_style in cls._DARK_BG_STYLE_ORDER:
+            tint = "0,0,0"
+        else:
+            tint = "255,255,255"
+        return (
+            f"display:inline-block; background: linear-gradient(to bottom, rgba({tint},0.32), rgba({tint},0)); "
+            f"border-radius: 12px; padding: 1.5% 2%;"
+        )
+
     @classmethod
     def _generate_product_ad(
         cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None
@@ -1428,16 +2041,28 @@ class PosterTemplateEngine:
         title_position = brief.get("title_position", "top-center")
         subtitle_position = brief.get("subtitle_position")  # None -> stack under title (most prompts: "phía dưới")
 
-        # Style: honor an explicit pick, else auto-select from the ACTUAL measured luminance of
-        # the zone the text lands in (PosterBackgroundAnalyzer already computed this from the
-        # real generated image -- no need to guess blind before the image existed).
-        title_style = brief.get("title_style") or cls._auto_pick_style(analysis, title_position, brief.get("style_theme"))
-        subtitle_style = brief.get("subtitle_style") or cls._auto_pick_style(
+        # Style: honor an explicit pick ONLY if it's a real key in HERO_STYLE_CSS, else auto-select
+        # from the ACTUAL measured luminance of the zone the text lands in (PosterBackgroundAnalyzer
+        # already computed this from the real generated image -- no need to guess blind before the
+        # image existed). Validated by MEMBERSHIP, not truthiness -- an invalid/invented style name
+        # from Stage 1 (e.g. "elegant", "bold") must fall through to auto-pick, not silently resolve
+        # to plain_light at the CSS lookup below (see _GENERIC_FONT_FALLBACK's comment for the real
+        # bug this fixes).
+        title_style_raw = brief.get("title_style")
+        title_style = title_style_raw if title_style_raw in cls.HERO_STYLE_CSS else cls._auto_pick_style(
+            analysis, title_position, brief.get("style_theme")
+        )
+        subtitle_style_raw = brief.get("subtitle_style")
+        subtitle_style = subtitle_style_raw if subtitle_style_raw in cls.HERO_STYLE_CSS else cls._auto_pick_style(
             analysis, subtitle_position or title_position, brief.get("style_theme")
         )
 
+        title_size = brief.get("title_size", "clamp(30px, 7vw, 64px)")
+        default_subtitle_size = cls._scaled_clamp_str(title_size, cls._modular_ratio(title_style))
+
         title_html = f'<div class="title-text">{brief.get("title_text", "TIÊU ĐỀ SẢN PHẨM")}</div>'
         subtitle_html = f'<div class="subtitle-text">{brief.get("subtitle_text", "Dòng mô tả phụ")}</div>'
+        scrim_css = cls._title_scrim_css(title_style)
 
         # Cấp độ 2 (detection + MER, src/tendoo/layout_geometry.py) integration: if the caller
         # already ran detection on THIS generated image and passed the resulting safe rectangle,
@@ -1446,33 +2071,57 @@ class PosterTemplateEngine:
         safe_rect = brief.get("safe_rect")
         title_zone_css = (cls._zone_css_from_rect(safe_rect) if safe_rect else None) or cls._zone_css(title_position)
 
-        if subtitle_position is None or subtitle_position == title_position:
+        # REAL BUG found testing a live Stage 1 (gpt-4o) call: told to "BỎ TRỐNG subtitle_position"
+        # (leave it blank) for the stacked case, the model emitted an EMPTY STRING "" rather than
+        # omitting the key or using JSON null. `subtitle_position is None` doesn't catch "" (a
+        # different, truthy-in-JSON-terms value that isn't equal to title_position either), so the
+        # check below silently fell through to the INDEPENDENT branch -- title and subtitle got two
+        # separate absolutely-positioned boxes (title at the safe_rect's top, subtitle hardcoded at
+        # a fixed `top:6%`) instead of one stacked block, and the two visibly overlapped/collided
+        # once the title wrapped to 2 lines. Using a falsy check (not just `is None`) treats ""
+        # the same as an omitted/null value -- matches run_full_pipeline.py's own
+        # `subtitle_position and subtitle_position != title_position` check, which already used
+        # `and` (falsy-safe) rather than `is not None`.
+        if not subtitle_position or subtitle_position == title_position:
             # Stacked mode: both blocks share ONE zone, subtitle flows directly below title --
             # matches the dominant prompt_test.txt pattern ("Ở góc trên... Phía dưới...", i.e.
             # subtitle is relative to title's position, not an independently-placed zone).
             body_html = (
-                f'<div style="{title_zone_css}">'
-                f'{title_html}<div class="stack-gap">{subtitle_html}</div></div>'
+                f'<div style="{title_zone_css}"><div style="{scrim_css}">'
+                f'{title_html}<div class="stack-gap">{subtitle_html}</div></div></div>'
             )
         else:
             # Independent mode: title and subtitle explicitly occupy different zones (e.g.
             # prompt_test.txt line 1's inverted case -- small subtitle top-left, larger title
-            # middle-left). safe_rect (if given) only overrides the title's zone -- subtitle
-            # keeps its own independent zone.
+            # middle-left). REAL BUG found+fixed after the first real-pipeline run (2026-09-05,
+            # see memory): `safe_rect` only ever protected the TITLE zone here -- the subtitle's
+            # independent zone always used the plain fixed 3x3 grid, completely unprotected by
+            # Cấp độ 2, even when a real product/obstacle sat exactly where that fixed zone landed
+            # (prompt7-line1's own case: "middle-left" subtitle rendered squarely over the coffee
+            # cup). Made worse by (1.1)'s modular-scale change, which made the subtitle noticeably
+            # bigger by default -- a bigger box in an unprotected fixed zone collides more often.
+            # Fix: honor `brief["subtitle_safe_rect"]` (a SEPARATE MER result computed for the
+            # subtitle's own anchor band -- see scripts/run_full_pipeline.py's call_stage3) the same
+            # way `safe_rect` protects the title; falls back to the old fixed zone if absent, so
+            # this is fully backward-compatible for any caller that doesn't compute one.
+            subtitle_safe_rect = brief.get("subtitle_safe_rect")
+            subtitle_zone_css = (
+                cls._zone_css_from_rect(subtitle_safe_rect) if subtitle_safe_rect else None
+            ) or cls._zone_css(subtitle_position)
             body_html = (
-                f'<div style="{title_zone_css}">{title_html}</div>'
-                f'<div style="{cls._zone_css(subtitle_position)}">{subtitle_html}</div>'
+                f'<div style="{title_zone_css}"><div style="{scrim_css}">{title_html}</div></div>'
+                f'<div style="{subtitle_zone_css}">{subtitle_html}</div>'
             )
 
         return cls._PRODUCT_AD_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
-            title_font=brief.get("title_font", "Montserrat"),
-            title_size=brief.get("title_size", "clamp(30px, 7vw, 64px)"),
+            title_font=cls._resolve_font(brief.get("title_font"), "Montserrat"),
+            title_size=title_size,
             title_transform=brief.get("title_transform", "uppercase"),
-            title_style_css=cls.HERO_STYLE_CSS.get(title_style, cls.HERO_STYLE_CSS["plain_light"]),
-            subtitle_font=brief.get("subtitle_font", "Montserrat"),
-            subtitle_size=brief.get("subtitle_size", "clamp(14px, 3vw, 24px)"),
-            subtitle_style_css=cls.HERO_STYLE_CSS.get(subtitle_style, cls.HERO_STYLE_CSS["plain_light"]),
+            title_style_css=cls.HERO_STYLE_CSS[title_style],
+            subtitle_font=cls._resolve_font(brief.get("subtitle_font"), "Montserrat"),
+            subtitle_size=brief.get("subtitle_size", default_subtitle_size),
+            subtitle_style_css=cls.HERO_STYLE_CSS[subtitle_style],
             body_html=body_html,
         )
 

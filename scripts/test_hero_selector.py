@@ -138,40 +138,141 @@ diffusion nào vẽ chữ, kể cả tiêu đề chính):
 NHIỆM VỤ CỦA BẠN:
 1. Đọc yêu cầu người dùng (có thể sơ sài hoặc rất chi tiết, thuộc 1 trong các loại: giới thiệu sản
    phẩm/khuyến mại/ưu đãi (category "product_ad"), banner khai trương ("grand_opening"), feedback
-   khách hàng ("feedback"), tin tuyển dụng ("recruitment"), menu món ("menu"), hoặc tự do khác
-   không khớp loại nào ("generic")).
+   khách hàng ("feedback"), feedback dạng TRƯỚC/SAU rõ ràng ("before_after" -- xem hướng dẫn riêng
+   bên dưới), tin tuyển dụng ("recruitment"), menu món ("menu"), hoặc tự do khác không khớp loại
+   nào ("generic")).
 2. Viết "background_prompt" mô tả THUẦN CẢNH/SẢN PHẨM/ÁNH SÁNG/BỐ CỤC cho Tầng 2 -- KHÔNG được
    chứa bất kỳ chuỗi chữ nội dung nào (kể cả trong ngoặc kép, kể cả một phần của tiêu đề) -- vì
    nếu nhắc tới chữ trong prompt, mô hình sinh ảnh dễ bị cám dỗ tự vẽ vài nét chữ mờ/sai vào ảnh
    dù không có glyph reference nào dẫn dắt, phá hỏng đúng mục tiêu "ảnh nền hoàn toàn sạch chữ"
-   của Tầng 2. Được phép mô tả VỊ TRÍ/KHÔNG GIAN nên chừa trống (ví dụ "chừa khoảng trống sạch
-   phía trên cho tiêu đề") -- đó là chỉ dẫn bố cục, không phải nội dung chữ.
+   của Tầng 2.
+   BẮT BUỘC (lỗi thật đã xảy ra: chữ đè lên ly cà phê/sản phẩm vì ảnh nền không hề chừa chỗ) --
+   trước khi viết background_prompt, hãy XÁC ĐỊNH TRƯỚC title_position (và subtitle_position nếu
+   có, độc lập) sẽ dùng ở mục 4 bên dưới, rồi mô tả CỤ THỂ trong background_prompt việc bố trí vật
+   thể/ánh sáng để vùng đó thực sự trống/mờ/tối giản -- không chỉ nói chung chung "chừa khoảng
+   trống phía trên", mà phải khớp đúng vùng đã chọn.
+   QUAN TRỌNG -- lỗi thật đã xảy ra: mô tả "chừa chỗ cho SẢN PHẨM CHÍNH" là CHƯA ĐỦ, vì các vật
+   TRANG TRÍ/PHỤ KIỆN phụ (kính râm, nhẫn, lá cây, đồ trang sức...) vẫn có thể trôi dạt vào đúng
+   vùng đó dù sản phẩm chính đã né đúng chỗ. BẮT BUỘC nói rõ vùng chừa chỗ không được có BẤT KỲ vật
+   thể rời rạc/có hình khối rõ ràng nào (kể cả phụ kiện, đồ trang trí nhỏ) -- vùng đó CHỈ được phép
+   có ánh sáng/kết cấu/nhoè hậu cảnh (bokeh, tia sáng, vải lụa, gradient, khói mờ...), không phải
+   "trống trơn" mà là "chỉ có hiệu ứng thị giác, không có vật thể".
+   Dùng 1 trong 2 CÔNG THỨC BỐ CỤC đã kiểm chứng sau đây, chọn theo vùng đã xác định ở trên (lấy ý
+   tưởng thật từ các mẫu quảng cáo chuyên nghiệp) thay vì tự mô tả bố cục tuỳ ý:
+   (a) "Bệ trưng bày" (khi vùng chữ ở top-center/bottom-center) -- sản phẩm đặt trên bệ/mặt phẳng
+       ở 2/3 dưới (hoặc trên) khung hình; 1/3 còn lại (đối diện vùng đặt sản phẩm) chỉ có tia sáng
+       toả ra/bầu trời/gradient toả sáng, không có vật thể nào khác.
+   (b) "Chia đôi 2 bên" (khi vùng chữ ở middle-left/middle-right hoặc góc bất kỳ) -- toàn bộ sản
+       phẩm VÀ mọi phụ kiện/vật trang trí dồn hẳn về 1 nửa/1 phần ba khung hình; nửa/phần ba còn
+       lại mô tả rõ CHỈ có vải lụa/nước bắn/khói/bokeh mờ ảo LÀM NỀN, không đặt thêm vật thể nào.
+   Đây là chỉ dẫn bố cục/không gian, không phải nội dung chữ, nên không vi phạm quy tắc cấm chữ
+   literal ở trên.
+   LỖI THẬT MỚI PHÁT HIỆN, BẮT BUỘC TRÁNH -- khi mô tả lý do chừa chỗ, TUYỆT ĐỐI KHÔNG dùng chính
+   các từ "text", "title", "caption", "watermark", "label", "wording", "letters", "writing" (hay
+   "chữ", "tiêu đề", "văn bản" nếu lỡ viết tiếng Việt) ở BẤT KỲ đâu trong background_prompt -- kể cả
+   khi chỉ nhắc đến KHÁI NIỆM "chỗ này để dành cho chữ" chứ không trích dẫn nội dung cụ thể, việc
+   nhắc tới các từ này vẫn khiến mô hình sinh ảnh tự vẽ vài nét chữ/watermark giả vào đúng chỗ đó
+   (lỗi thật: "The top area is reserved for blue neon text..." khiến ảnh xuất hiện chữ "CYBERPHANK"/
+   "WATCH" tự bịa; "...to support the title text" khiến ảnh xuất hiện chữ "AESTHETIC FLATLAY" tự
+   bịa). CHỈ ĐƯỢC mô tả vùng đó bằng ngôn ngữ THỊ GIÁC THUẦN TUÝ, không nhắc lý do -- ví dụ viết "the
+   upper third of the frame is a smooth, softly lit gradient with no objects" thay vì "the upper
+   third is reserved for the title text" -- xoá hẳn mọi cụm từ giải thích MỤC ĐÍCH của vùng trống,
+   chỉ còn mô tả nó TRÔNG NHƯ THẾ NÀO.
+   RIÊNG category "before_after": Tầng 2 vẫn chỉ sinh MỘT ảnh duy nhất (không phải 2 ảnh ghép) --
+   "background_prompt" PHẢI mô tả rõ ràng một bố cục chia đôi khung hình trong CHÍNH ảnh đó (ví dụ
+   "chia đôi khung hình theo chiều dọc, nửa trái là căn phòng bừa bộn bụi bặm trước khi dọn dẹp,
+   nửa phải là căn phòng sạch bóng sau khi dọn dẹp, ánh sáng đồng nhất cả 2 bên"), không chỉ nói
+   chung chung "ảnh before/after" rồi để mặc định Tầng 2 tự hiểu.
 3. Chọn "style_theme" -- 1 từ khoá gợi ý phong cách chữ chủ đạo cho toàn bài, chọn theo tông màu/
    mood mô tả trong yêu cầu (vd: "neon" cho cảnh cyberpunk/đèn màu, "gold" cho sang trọng/kim
    loại, "metallic" cho công nghệ/bạc, "embossed" cho tối giản/khắc chìm, "pastel" cho tông màu
    pastel/dễ thương). Tầng 4 sẽ tự đo độ sáng/tối thật của ảnh Tầng 2 rồi mới quyết định dùng style
    sáng-trên-tối hay tối-trên-sáng -- style_theme chỉ là gợi ý chọn GIỮA CÁC STYLE CÙNG PHE, không
    phải quyết định cuối cùng.
+   QUAN TRỌNG -- "style_theme" KHÔNG PHẢI mã màu hex thật, nó chỉ chọn 1 từ khoá phong cách CHỮ.
+   Nếu yêu cầu người dùng mô tả tông màu CỤ THỂ cho cả bài (vd "tone đen đỏ", "tông xanh dương và
+   vàng gold", "trắng be sang trọng"), đây là 1 VIỆC KHÁC, ĐỘC LẬP, và BẮT BUỘC: với category có hỗ
+   trợ (xem "brand_color"/"secondary_color" trong bộ khoá template_brief ở mục 4 bên dưới), PHẢI quy
+   đổi mô tả đó thành mã hex thật và điền vào 2 khoá này -- đừng chỉ dừng lại ở style_theme rồi bỏ
+   qua brand_color/secondary_color.
 4. Điền "template_brief" -- dữ liệu THẬT sẽ đổ trực tiếp vào layout HTML cố định của Tầng 4 (không
    qua model nào nữa), nên PHẢI dùng ĐÚNG BỘ KHOÁ theo "category" đã chọn bên dưới, không tự bịa
    thêm khoá lạ, không đổi tên khoá. Nếu yêu cầu người dùng có bao nhiêu mục (ví dụ 5 món ăn, 6 yêu
    cầu tuyển dụng...) thì liệt kê đủ bấy nhiêu -- KHÔNG giới hạn số lượng theo ví dụ dưới đây, ví
    dụ chỉ để minh hoạ hình dạng dữ liệu.
+5. Điền "product_keywords" -- 2-4 cụm danh từ TIẾNG ANH ngắn, mô tả đúng vật thể vật lý chính được
+   nhắc tới trong "background_prompt" (vd yêu cầu về đồng hồ thông minh -> ["smart watch",
+   "wristwatch", "watch"]) -- dùng để Tầng 3 chạy object detection thật lên ảnh Tầng 2 sinh ra, né
+   đúng vật thể đó khi đặt chữ. Tiếng Anh vì đây là input cho 1 detector open-vocabulary đã kiểm
+   chứng hoạt động tốt với tên lớp tiếng Anh. Nếu request không có vật thể cụ thể nào đáng né (ảnh
+   phong cảnh/con người/khung cảnh chung chung), để mảng rỗng [].
 
 BỘ KHOÁ "template_brief" THEO TỪNG CATEGORY (* = bắt buộc, còn lại tuỳ chọn -- không điền cũng
 được, Tầng 4 tự chọn giá trị/style hợp lý):
 - product_ad: *title_text, *title_position, *subtitle_text, subtitle_position, title_style,
         subtitle_style, title_font, subtitle_font
+        (title_style/subtitle_style CHỈ được nhận đúng 1 trong các giá trị sau -- KHÔNG tự bịa tên
+        khác: "metallic_3d", "neon_glow", "neon_glow_pink", "gold_foil", "plain_light",
+        "plain_dark", "embossed_dark", "gold_deep", "pastel_pop". KHUYẾN NGHỊ MẠNH: BỎ TRỐNG 2
+        field này trong đa số trường hợp -- Tầng 4 tự đo độ sáng/tối THẬT của ảnh vừa sinh ra rồi
+        chọn style phù hợp, luôn đáng tin hơn một lựa chọn đoán mù trước khi ảnh tồn tại. Chỉ điền
+        khi yêu cầu người dùng nêu RÕ RÀNG 1 hiệu ứng cụ thể khớp đúng tên trên (vd "chữ neon xanh"
+        -> "neon_glow"). Một giá trị KHÔNG khớp danh sách trên sẽ khiến chữ mất toàn bộ hiệu ứng,
+        hiện trắng phẳng -- một lỗi thật đã xảy ra khi model tự đặt tên "elegant"/"bold". Tương tự,
+        title_font/subtitle_font: chỉ điền TÊN FONT THẬT (vd "Playfair Display", "Dancing Script")
+        nếu người dùng có yêu cầu font cụ thể -- TUYỆT ĐỐI KHÔNG điền từ khoá CSS chung chung như
+        "serif"/"sans-serif"/"monospace" (không phải tên font thật, sẽ khiến trình duyệt không tìm
+        thấy font và render sai). Không chắc thì để trống, Tầng 4 sẽ dùng font mặc định hợp lý.
         (position là 1 trong 9 giá trị: top-left, top-center, top-right, middle-left,
         middle-center, middle-right, bottom-left, bottom-center, bottom-right -- đọc đúng theo
         ngôn ngữ vị trí của yêu cầu gốc, ví dụ "góc trên bên trái"->top-left, "ở giữa"->
-        middle-center. Nếu yêu cầu nói khối 2 nằm "phía dưới" khối 1 mà không chỉ rõ toạ độ khác,
-        BỎ TRỐNG subtitle_position để nó tự xếp ngay dưới title, đừng gán cùng 1 zone với title.)
+        middle-center.
+        QUAN TRỌNG, LỖI THẬT ĐÃ XẢY RA -- phân biệt 2 tình huống sau, ĐỪNG NHẦM LẪN:
+        (a) Yêu cầu chỉ tả khối 2 bằng từ TƯƠNG ĐỐI so với khối 1 ("phía dưới", "bên dưới", "ngay
+        dưới", không kèm tên vùng cụ thể nào khác) -- đây là 1 khối chữ DUY NHẤT xếp chồng (tiêu đề
+        lớn + dòng phụ nhỏ ngay dưới nó), KHÔNG PHẢI 2 vùng tách biệt. BẮT BUỘC BỎ TRỐNG
+        subtitle_position (không tự gán "bottom-center" hay bất kỳ giá trị nào) để Tầng 4 tự xếp
+        subtitle ngay dưới title trong cùng khối. Ví dụ thật: "Phía trên, văn bản A... Phía dưới,
+        văn bản B nhỏ hơn." -> subtitle_position PHẢI để trống. (Lỗi đã xảy ra: model từng gán
+        title_position="top-center" + subtitle_position="bottom-center" cho câu này, khiến 2 dòng
+        chữ trôi dạt xa nhau ở 2 đầu ảnh thay vì nằm sát nhau như ý yêu cầu.)
+        (b) Yêu cầu tả CẢ HAI khối bằng tên VÙNG CỤ THỂ, RIÊNG BIỆT cho từng khối (vd "Ở góc trên
+        bên trái, văn bản A... Ở giữa bên trái, văn bản B...") -- đây MỚI là 2 vùng thật sự tách
+        biệt, hãy điền title_position/subtitle_position đúng theo 2 vùng đó (kể cả khi khối xuất
+        hiện sau trong câu lại là khối LỚN hơn/quan trọng hơn -- title_text/title_position vẫn nên
+        ứng với khối chữ chính/nổi bật nhất về mặt thị giác, không nhất thiết là khối xuất hiện
+        trước trong câu).
+        VÍ DỤ THẬT ĐỂ SO SÁNH TRỰC TIẾP (lỗi (a) đã lặp lại 2 lần trên 2 câu gần giống hệt nhau,
+        đọc kỹ 2 câu dưới đây khác nhau ở đâu trước khi quyết định):
+        - "Ở giữa phía trên, văn bản A... Phía dưới, văn bản B nhỏ hơn." -> CHỈ có 1 tên vùng cụ
+          thể (giữa phía trên, dành cho A) -- "Phía dưới" của B KHÔNG kèm tên vùng nào khác, chỉ là
+          từ tương đối -> ĐÚNG: title_position="top-center", subtitle_position="" (để trống). SAI
+          (lỗi thật đã xảy ra 2 lần): title_position="top-center", subtitle_position="bottom-center".
+        - "Ở góc trên bên trái, văn bản A... Ở giữa bên trái, văn bản B..." -> CẢ HAI đều có tên
+          vùng cụ thể riêng -> ĐÚNG: title_position/subtitle_position là 2 vùng khác nhau thật.
 - grand_opening: *brand, *date_range, *badge_label, *badge_percent, *badge_sub, *address,
         *offer_desc, *cta_text
-- feedback: *brand, *top_badge, *stars, *verified_label, *quote_text, *avatar_emoji,
-        *customer_name, *customer_sub, *features (list các {"icon","text"}, SỐ LƯỢNG TUỲ THEO YÊU
-        CẦU), *offer_title, *offer_desc, *cta_text
+- feedback: *brand, *top_badge, *stars (chuỗi ký tự sao, vd "★★★★★" -- KHÔNG điền số nguyên như 5),
+        *verified_label, *quote_text, *avatar_emoji,
+        *customer_name, *customer_sub, *features (list các {"icon","text"} -- LƯU Ý: card chỉ hiển
+        thị TỐI ĐA 3 mục đầu tiên dù liệt kê bao nhiêu, hãy chọn 3 điểm ấn tượng nhất thay vì liệt kê
+        dài), *offer_title, *offer_desc (hiển thị rút gọn dưới offer_title, không cần viết quá dài),
+        *cta_text, brand_color (tuỳ chọn, mã hex "#RRGGBB" cho tông màu CHÍNH -- badge xác thực/CTA/
+        viền avatar), secondary_color (tuỳ chọn, mã hex cho tông màu PHỤ -- áp cho badge góc trên
+        cùng; CHỈ điền khi yêu cầu người dùng thực sự mô tả 2 TÔNG MÀU khác nhau, ví dụ "tone đen đỏ"
+        -> brand_color đen + secondary_color đỏ; nếu chỉ có 1 tông màu thì chỉ điền brand_color),
+        font_mood (tuỳ chọn, CHỈ 1 trong: "warm_friendly" (mặc định, ấm áp thân thiện),
+        "elegant_script" (chữ ký bay bổng, dùng cho cưới hỏi/sang trọng), "bold_sporty" (đậm, năng
+        động, thể thao/công nghệ), "clean_readable" (tối giản dễ đọc) -- KHÔNG tự bịa tên khác),
+        hidden_elements (tuỳ chọn, list các chuỗi trong {"badge","stars","features","offer"} -- CHỈ
+        điền khi yêu cầu người dùng nói rõ muốn ẩn phần đó, ví dụ "không cần hiện rating sao" ->
+        ["stars"]), card_size (tuỳ chọn, CHỈ 1 trong "normal" (mặc định) hoặc "compact" -- chỉ điền
+        "compact" khi yêu cầu người dùng nói rõ muốn card/khung chữ nhỏ gọn, nhường phần lớn khung
+        hình cho ảnh; "compact" chỉ thu nhỏ CHÍNH card review (quote/tên khách/tag), KHÔNG ảnh hưởng
+        tiêu đề thương hiệu -- tiêu đề vẫn giữ nguyên kích thước lớn)
+- before_after: DÙNG CHUNG bộ khoá với feedback ở trên (không có khoá riêng) -- điểm khác biệt
+        DUY NHẤT so với feedback nằm ở "background_prompt" (mô tả cảnh chia đôi, xem mục 2 ở trên),
+        không phải ở template_brief.
 - recruitment: *company, *deadline, *pos_label, *salary, *requirements (list string, số lượng tuỳ
         ý), *benefits (list string, số lượng tuỳ ý), *contact_line1, *contact_email, *cta_text
 - menu: *sub_brand, *tagline, *categories (list các {"title", "items": [{"name","price",
@@ -182,10 +283,11 @@ BỘ KHOÁ "template_brief" THEO TỪNG CATEGORY (* = bắt buộc, còn lại t
 
 Trả về DUY NHẤT 1 khối JSON hợp lệ theo đúng schema sau, không thêm giải thích:
 {
-  "category": "product_ad|grand_opening|feedback|recruitment|menu|generic",
+  "category": "product_ad|grand_opening|feedback|before_after|recruitment|menu|generic",
   "canvas": {"width": <int>, "height": <int>, "aspect_ratio": "<vd 9:16>"},
   "background_prompt": "<mô tả cảnh/sản phẩm/ánh sáng/bố cục -- TUYỆT ĐỐI KHÔNG chứa chữ literal>",
   "style_theme": "<neon|gold|metallic|embossed|pastel|...>",
+  "product_keywords": ["<2-4 cụm danh từ tiếng Anh ngắn mô tả vật thể chính, hoặc [] nếu không có>"],
   "template_brief": { "<đúng bộ khoá theo category đã chọn ở trên, điền đủ số lượng mục thực tế>": "..." }
 }
 """
@@ -202,7 +304,24 @@ TEMPLATE_BRIEF_SCHEMAS: Dict[str, Any] = {
         "optional": ["subtitle_position", "title_style", "subtitle_style", "title_font", "subtitle_font"],
     },
     "grand_opening": ["brand", "date_range", "badge_label", "badge_percent", "badge_sub", "address", "offer_desc", "cta_text"],
-    "feedback": ["brand", "top_badge", "stars", "verified_label", "quote_text", "avatar_emoji", "customer_name", "customer_sub", "features", "offer_title", "offer_desc", "cta_text"],
+    # Converted from a plain required-only list to the {"required","optional"} shape (2026-09-06)
+    # to add brand_color/secondary_color/font_mood/hidden_elements -- all genuinely optional
+    # (typography_engine.py's _generate_feedback_card*/_build_feedback_conditional_html cover their
+    # absence with sane defaults, same as product_ad's style/font keys already do).
+    "feedback": {
+        "required": ["brand", "top_badge", "stars", "verified_label", "quote_text", "avatar_emoji",
+                      "customer_name", "customer_sub", "features", "offer_title", "offer_desc", "cta_text"],
+        "optional": ["brand_color", "secondary_color", "font_mood", "hidden_elements", "card_size"],
+    },
+    # before_after aliases feedback's exact schema -- see typography_engine.py's dispatch table
+    # (PosterTemplateEngine.generate_html), which routes both to the same _generate_feedback_card*
+    # functions. The only real difference is what Stage 1 is told to write in background_prompt
+    # (a literal split-scene composition), not the template_brief shape.
+    "before_after": {
+        "required": ["brand", "top_badge", "stars", "verified_label", "quote_text", "avatar_emoji",
+                      "customer_name", "customer_sub", "features", "offer_title", "offer_desc", "cta_text"],
+        "optional": ["brand_color", "secondary_color", "font_mood", "hidden_elements", "card_size"],
+    },
     "recruitment": ["company", "deadline", "pos_label", "salary", "requirements", "benefits", "contact_line1", "contact_email", "cta_text"],
     "menu": ["sub_brand", "tagline", "categories", "footer_note", "hotline"],
     "generic": ["brand", "eyebrow", "badge", "rating_value", "rating_count", "specs", "sub_slogan", "cta_text", "hotline", "website"],
@@ -222,12 +341,22 @@ def _normalize(s: str) -> str:
 def _extract_literal_texts(node: Any) -> List[str]:
     """Recursively collects every string leaf-value out of a template_brief (which nests lists
     of dicts for categories like feedback's `features` or menu's `categories`/`items`) -- used to
-    check none of them leaked into background_prompt, regardless of how deep they're nested."""
+    check none of them leaked into background_prompt, regardless of how deep they're nested.
+
+    Skips any key ending in `_position` (title_position/subtitle_position...) -- REAL false
+    positive found testing the new "describe the chosen position's region as clear in
+    background_prompt" instruction: a value like "middle-left" is positional METADATA, not
+    content text, but a background_prompt correctly saying "...middle left areas remains clear..."
+    (exactly what was asked for) got flagged as a literal-text leak because "middle-left" also
+    happens to be a raw substring of that English sentence. The guard's actual intent is catching
+    QUOTE/BRAND/CONTENT strings, not position enum values."""
     texts: List[str] = []
     if isinstance(node, str):
         texts.append(node)
     elif isinstance(node, dict):
-        for v in node.values():
+        for k, v in node.items():
+            if isinstance(k, str) and k.endswith("_position"):
+                continue
             texts.extend(_extract_literal_texts(v))
     elif isinstance(node, list):
         for item in node:
@@ -266,6 +395,24 @@ def validate_blueprint(blueprint: Dict[str, Any]) -> List[str]:
                 )
     else:
         errors.append("template_brief is not a dict")
+
+    # Meta-word guard: REAL bug found testing the "describe why this zone is kept clear" fix --
+    # Stage 1 sometimes writes background_prompt like "...reserved for the title text..." (never
+    # quoting actual content, just naming the CONCEPT of text) -- this alone was enough to make
+    # Stage 2 hallucinate its own fake glyphs there (real cases: "CYBERPHANK"/"WATCH" appeared from
+    # "...reserved for blue neon text...", "AESTHETIC FLATLAY" appeared from "...to support the
+    # title text"). Distinct from the literal-content-leak guard above (that one checks for actual
+    # quoted strings from template_brief; this one flags the bare CONCEPT words regardless of
+    # content).
+    _TEXT_META_WORDS = ("text", "title", "caption", "watermark", "wording", "lettering", "writing")
+    for w in _TEXT_META_WORDS:
+        if re.search(rf"\b{re.escape(w)}\b", bg_prompt_norm):  # word-boundary -- "title" must not match inside "subtitle"
+            errors.append(
+                f"[TEXT META-WORD LEAK] background_prompt contains the word \"{w}\" -- even naming "
+                f"the CONCEPT of text (not quoting real content) risks Stage 2 hallucinating its own "
+                f"fake glyphs into the region described that way. Describe the zone by how it LOOKS "
+                f"(empty, soft-lit, no objects), never by WHY it's kept clear."
+            )
 
     # template_brief guard: must use the EXACT key set typography_engine.py's PosterTemplateEngine
     # actually reads for the chosen category -- catches the model inventing keys (silently ignored
