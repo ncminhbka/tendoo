@@ -566,6 +566,7 @@
           <div class="preset-chip" onclick="loadPreset('headphones')">🎧 Tai Nghe Hi-Res</div>
           <div class="preset-chip" onclick="loadPreset('perfume')">🧴 Nước Hoa Pháp</div>
           <div class="preset-chip" onclick="loadPreset('midautumn')">🥮 Bánh Trung Thu</div>
+          <div class="preset-chip" onclick="loadPreset('suv')">🏎️ SUV Điện Ảnh</div>
         </div>
 
         <form id="poster-form" onsubmit="handleGenerate(event)">
@@ -579,9 +580,11 @@
               <select id="layout" class="form-select" onchange="onLayoutChange(this.value)">
                 <option value="top_dome" selected>🏛️ Vòm Đỉnh (Top Arch Dome)</option>
                 <option value="center_hourglass">⏳ Đồng Hồ Cát (Center Hourglass)</option>
+                <option value="bottom_platform">🚘 Bệ Đáy Điện Ảnh (Bottom Platform)</option>
               </select>
             </div>
           </div>
+
 
           <div class="form-group">
             <label class="form-label">Tiêu đề chính (Headline):</label>
@@ -717,6 +720,17 @@
         brand: "Tendoo Mooncake",
         hotline: "0988 123 456",
         prompt_scene: "Traditional Mid-Autumn festival scene with traditional wooden street stalls, glowing lanterns, golden full moon light beam shining down, wooden floorboards, festive atmosphere, unbranded, zero text"
+      },
+      suv: {
+        layout: "bottom_platform",
+        pre_header: "PHIÊN BẢN GIỚI HẠN 2026",
+        headline: "KHÁM PHÁ ĐẲNG CẤP\nSUV THẾ HỆ MỚI",
+        slogan: "Chinh phục mọi cung đường hiểm trở với công nghệ truyền động thông minh",
+        offer_main: "ƯU ĐÃI 100 TRIỆU",
+        offer_sub: "Tặng gói bảo hiểm thân vỏ và 3 năm bảo dưỡng miễn phí",
+        brand: "Tendoo Motors",
+        hotline: "1900 8888",
+        prompt_scene: "Commercial automobile advertising photography of a sleek luxury metallic dark grey SUV driving on a winding mountain road at golden hour twilight, motion blur wheels, sharp car body reflection, dramatic sky, unbranded, zero text"
       }
     };
 
@@ -728,12 +742,15 @@
 
     function onLayoutChange(val) {
       const ind = document.getElementById('layout-indicator');
-      if (val === 'center_hourglass') {
+      if (val === 'bottom_platform') {
+        ind.textContent = "Layout: Bệ Đáy Điện Ảnh (Bottom Platform)";
+      } else if (val === 'center_hourglass') {
         ind.textContent = "Layout: Đồng Hồ Cát (Center Hourglass)";
       } else {
         ind.textContent = "Layout: Vòm Đỉnh (Top Dome)";
       }
     }
+
 
     function loadPreset(key) {
       const p = PRESETS[key];
