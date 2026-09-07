@@ -70,31 +70,33 @@ from tendoo.typography_engine import PosterRenderer
 # 1. PARAMETRIC CORRIDOR MASK GENERATORS
 # ==================================================================================================
 
-def build_hourglass_corridor_mask(h: int, w: int, delta: float = 0.08) -> np.ndarray:
+def build_hourglass_corridor_mask(h: int, w: int, delta: float = 0.04) -> np.ndarray:
     """
-    Constructs the Gemini-style Mid-Autumn hourglass corridor:
-    - Top (y < 0.35): Wide moonlit cone (width 76% -> 56%), leaving top corners for roof eaves & lanterns.
-    - Mid (0.35 <= y < 0.65): Narrower waist (width 56% -> 44%) between wooden stalls & product table.
-    - Bottom (y >= 0.65): Expanding perspective floor (width 44% -> 84%) for wooden plank walkway.
+    Mid-Autumn Gemini-parity Hourglass Corridor:
+    - Top (y < 0.30): Wide moonlit sky (w_half 0.485 -> 0.44), core covers x in [0.055, 0.945]
+      guaranteeing clean negative space behind headline & slogan with a 15-20% buffer.
+    - Waist (0.30 <= y < 0.64): Tapers smoothly to 0.32 at center (y=0.47), allowing traditional
+      stalls and glowing lanterns to frame the sides while mooncakes sit illuminated in the center.
+    - Bottom (y >= 0.64): Expands back to 0.485, core covers x in [0.055, 0.945] for the promo footer card.
     """
     mask = np.zeros((h, w), dtype=np.float32)
     for i in range(h):
         y = i / float(h - 1)
-        if y < 0.35:
-            t = y / 0.35
-            s = t * t * (3.0 - 2.0 * t)  # smoothstep
-            w_half = 0.38 * (1.0 - s) + 0.28 * s
-            intensity = 1.0 * (1.0 - s) + 0.85 * s
-        elif y < 0.65:
-            t = (y - 0.35) / 0.30
+        if y < 0.30:
+            t = y / 0.30
             s = t * t * (3.0 - 2.0 * t)
-            w_half = 0.28 * (1.0 - s) + 0.22 * s
-            intensity = 0.85 * (1.0 - s) + 0.70 * s
+            w_half = 0.485 * (1.0 - s) + 0.44 * s
+            intensity = 1.0 * (1.0 - s) + 0.95 * s
+        elif y < 0.64:
+            t = (y - 0.30) / 0.34
+            dip = 4.0 * t * (1.0 - t)  # 0 at t=0, 1.0 at midpoint (y=0.47), 0 at t=1.0
+            w_half = 0.44 * (1.0 - dip) + 0.32 * dip
+            intensity = 0.95 * (1.0 - dip) + 0.85 * dip
         else:
-            t = (y - 0.65) / 0.35
+            t = (y - 0.64) / 0.36
             s = t * t * (3.0 - 2.0 * t)
-            w_half = 0.22 * (1.0 - s) + 0.42 * s
-            intensity = 0.70 * (1.0 - s) + 0.90 * s
+            w_half = 0.44 * (1.0 - s) + 0.485 * s
+            intensity = 0.95 * (1.0 - s) + 1.0 * s
 
         for j in range(w):
             x = j / float(w - 1)
@@ -110,52 +112,67 @@ def build_hourglass_corridor_mask(h: int, w: int, delta: float = 0.08) -> np.nda
     return mask
 
 
-def build_beverage_dome_mask(h: int, w: int, delta: float = 0.08) -> np.ndarray:
+def build_beverage_dome_mask(h: int, w: int, delta: float = 0.04) -> np.ndarray:
     """
-    Constructs an upper daylight dome for F&B / Beverage:
-    - Top (y < 0.38): Generous sunny copy space across the upper band.
-    - Transition (0.38 <= y < 0.48): Drops smoothly to 0.
-    - Bottom (y >= 0.48): Mask is strictly 0.0 -> glass body and water splashes spray freely!
+    Fresh Beverage Upper Daylight Dome:
+    - Top (y < 0.36): Wide sunny studio wall (w_half 0.49 -> 0.46), core covers x in [0.05, 0.95]
+      providing 100% clean background behind all headline, slogan, and offer pills.
+    - Transition (0.36 <= y < 0.46): Drops smoothly to 0.0 without any hard borders.
+    - Bottom (y >= 0.46): Strictly 0.0 -> tea glass, ice cubes, and dynamic splash spray 100% unconstrained!
+    """
+    mask = np.zeros((h, w), dtype=np.float32)
+    for i in range(h):
+        y = i / float(h - 1)
+        if y >= 0.46:
+            continue
+        if y < 0.36:
+            t = y / 0.36
+            s = t * t * (3.0 - 2.0 * t)
+            w_half = 0.49 * (1.0 - s) + 0.46 * s
+            intensity = 1.0
+        else:
+            t = (y - 0.36) / 0.10
+            s = t * t * (3.0 - 2.0 * t)
+            w_half = 0.46 * (1.0 - s) + 0.20 * s
+            intensity = 1.0 * (1.0 - s)
+
+        for j in range(w):
+            x = j / float(w - 1)
+            dist = abs(x - 0.5)
+            if dist <= w_half - delta:
+                v = 1.0
+            elif dist >= w_half:
+                v = 0.0
+            else:
+                ratio = (dist - (w_half - delta)) / delta
+                v = 0.5 * (1.0 + np.cos(ratio * np.pi))
+            mask[i, j] = v * intensity
+    return mask
+
+
+def build_hero_top_corridor_mask(h: int, w: int, delta: float = 0.04) -> np.ndarray:
+    """
+    Luxury Hero Top Spotlight Corridor:
+    - Top (y < 0.35): Solid charcoal studio spotlight (w_half 0.49 -> 0.46), core covers x in [0.05, 0.95]
+      for metallic typography with drop shadows.
+    - Transition (0.35 <= y < 0.48): Drops smoothly to 0.0.
+    - Bottom (y >= 0.48): Strictly 0.0 -> black slate pedestal & luxury wallet 100% unconstrained.
     """
     mask = np.zeros((h, w), dtype=np.float32)
     for i in range(h):
         y = i / float(h - 1)
         if y >= 0.48:
             continue
-        t = y / 0.48
-        s = t * t * (3.0 - 2.0 * t)
-        w_half = 0.42 * (1.0 - s) + 0.22 * s
-        intensity = 1.0 * (1.0 - s)
-
-        for j in range(w):
-            x = j / float(w - 1)
-            dist = abs(x - 0.5)
-            if dist <= w_half - delta:
-                v = 1.0
-            elif dist >= w_half:
-                v = 0.0
-            else:
-                ratio = (dist - (w_half - delta)) / delta
-                v = 0.5 * (1.0 + np.cos(ratio * np.pi))
-            mask[i, j] = v * intensity
-    return mask
-
-
-def build_hero_top_corridor_mask(h: int, w: int, delta: float = 0.08) -> np.ndarray:
-    """
-    Constructs an upper hero negative space for luxury products:
-    - Top (y < 0.42): Clean dark atmospheric studio spotlight corridor.
-    - Bottom (y >= 0.52): Mask is 0.0 -> pedestal and product 100% intact.
-    """
-    mask = np.zeros((h, w), dtype=np.float32)
-    for i in range(h):
-        y = i / float(h - 1)
-        if y >= 0.52:
-            continue
-        t = y / 0.52
-        s = t * t * (3.0 - 2.0 * t)
-        w_half = 0.45 * (1.0 - s) + 0.30 * s
-        intensity = 1.0 * (1.0 - s)
+        if y < 0.35:
+            t = y / 0.35
+            s = t * t * (3.0 - 2.0 * t)
+            w_half = 0.49 * (1.0 - s) + 0.46 * s
+            intensity = 1.0
+        else:
+            t = (y - 0.35) / 0.13
+            s = t * t * (3.0 - 2.0 * t)
+            w_half = 0.46 * (1.0 - s) + 0.20 * s
+            intensity = 1.0 * (1.0 - s)
 
         for j in range(w):
             x = j / float(w - 1)
@@ -370,7 +387,7 @@ def render_native_poster(
 
     if theme == "mid_autumn":
         # 1. Top Glassmorphic Card for Title & Slogan
-        card_top = [(int(width * 0.05), int(height * 0.035)), (int(width * 0.95), int(height * 0.26))]
+        card_top = [(int(width * 0.06), int(height * 0.035)), (int(width * 0.94), int(height * 0.26))]
         draw.rounded_rectangle(card_top, radius=18, fill=(255, 248, 235, 210), outline=(215, 145, 45, 255), width=2)
 
         hl = c.get("headline", "")
@@ -380,7 +397,7 @@ def render_native_poster(
         draw.text((width // 2, int(height * 0.19)), c.get("slogan", ""), font=font_sub, fill=(120, 50, 15, 255), anchor="mm", align="center")
 
         # 2. Bottom Glassmorphic Card for Offer & Footer
-        card_bot = [(int(width * 0.05), int(height * 0.65)), (int(width * 0.95), int(height * 0.965))]
+        card_bot = [(int(width * 0.06), int(height * 0.65)), (int(width * 0.94), int(height * 0.965))]
         draw.rounded_rectangle(card_bot, radius=18, fill=(255, 250, 240, 225), outline=(215, 145, 45, 255), width=2)
 
         # Pill Badge
@@ -402,7 +419,7 @@ def render_native_poster(
 
     elif theme == "fresh_mint":
         # Fresh Beverage: Upper clean card, leaving whole lower canvas open for glass & splash!
-        card_top = [(int(width * 0.05), int(height * 0.035)), (int(width * 0.95), int(height * 0.32))]
+        card_top = [(int(width * 0.06), int(height * 0.035)), (int(width * 0.94), int(height * 0.32))]
         draw.rounded_rectangle(card_top, radius=18, fill=(245, 255, 248, 215), outline=(35, 140, 65, 220), width=2)
 
         hl = c.get("headline", "")
@@ -419,14 +436,14 @@ def render_native_poster(
         draw.text((width // 2, int(height * 0.285)), c.get("offer_sub", ""), font=font_meta, fill=(200, 60, 10), anchor="mm")
 
         # Bottom footer bar
-        draw.rounded_rectangle([(int(width * 0.05), int(height * 0.94)), (int(width * 0.95), int(height * 0.98))],
+        draw.rounded_rectangle([(int(width * 0.06), int(height * 0.94)), (int(width * 0.94), int(height * 0.98))],
                                radius=12, fill=(255, 255, 255, 200), outline=(35, 140, 65, 150), width=1)
         draw.text((int(width * 0.08), int(height * 0.96)), c.get("brand", ""), font=font_meta, fill=(15, 65, 28), anchor="lm")
         draw.text((int(width * 0.92), int(height * 0.96)), c.get("hotline", ""), font=font_meta, fill=(15, 65, 28), anchor="rm")
 
     else:
         # Luxury Gold / Wallet
-        card_top = [(int(width * 0.05), int(height * 0.04)), (int(width * 0.95), int(height * 0.35))]
+        card_top = [(int(width * 0.06), int(height * 0.04)), (int(width * 0.94), int(height * 0.35))]
         draw.rounded_rectangle(card_top, radius=18, fill=(10, 10, 10, 190), outline=(216, 178, 87, 220), width=2)
 
         hl = c.get("headline", "")
@@ -484,7 +501,7 @@ def run_case(
 
     # 1. Build Smooth Parametric Corridor Mask
     mask_fn = case_info["mask_fn"]
-    mask_np = mask_fn(h_lat, w_lat, delta=0.08)  # (h_lat, w_lat) in [0, 1]
+    mask_np = mask_fn(h_lat, w_lat, delta=0.04)  # (h_lat, w_lat) in [0, 1]
     mask_tensor = torch.from_numpy(mask_np).view(1, -1, 1).to(device=device)
 
     # Save mask visualization

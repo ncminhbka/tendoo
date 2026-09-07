@@ -72,29 +72,36 @@ from tendoo.typography_engine import PosterRenderer
 
 
 # ==================================================================================================
-# 1. PARAMETRIC CORRIDOR MASKS (NO RECTANGULAR CUTS)
+# 1. PARAMETRIC CORRIDOR MASKS (NO RECTANGULAR CUTS, PRECISION TEXT-FITTED)
 # ==================================================================================================
 
-def build_hourglass_corridor_mask(h: int, w: int, delta: float = 0.08) -> np.ndarray:
-    """Mid-Autumn Gemini-parity Hourglass: broad moonlit cone top, tapers between stalls, floor bottom."""
+def build_hourglass_corridor_mask(h: int, w: int, delta: float = 0.04) -> np.ndarray:
+    """
+    Mid-Autumn Gemini-parity Hourglass Corridor:
+    - Top (y < 0.30): Wide moonlit sky (w_half 0.485 -> 0.44), core covers x in [0.055, 0.945]
+      guaranteeing clean negative space behind headline & slogan with a 15-20% buffer.
+    - Waist (0.30 <= y < 0.64): Tapers smoothly to 0.32 at center (y=0.47), allowing traditional
+      stalls and glowing lanterns to frame the sides while mooncakes sit illuminated in the center.
+    - Bottom (y >= 0.64): Expands back to 0.485, core covers x in [0.055, 0.945] for the promo footer card.
+    """
     mask = np.zeros((h, w), dtype=np.float32)
     for i in range(h):
         y = i / float(h - 1)
-        if y < 0.35:
-            t = y / 0.35
+        if y < 0.30:
+            t = y / 0.30
             s = t * t * (3.0 - 2.0 * t)
-            w_half = 0.38 * (1.0 - s) + 0.28 * s
-            intensity = 1.0 * (1.0 - s) + 0.85 * s
-        elif y < 0.65:
-            t = (y - 0.35) / 0.30
-            s = t * t * (3.0 - 2.0 * t)
-            w_half = 0.28 * (1.0 - s) + 0.22 * s
-            intensity = 0.85 * (1.0 - s) + 0.70 * s
+            w_half = 0.485 * (1.0 - s) + 0.44 * s
+            intensity = 1.0 * (1.0 - s) + 0.95 * s
+        elif y < 0.64:
+            t = (y - 0.30) / 0.34
+            dip = 4.0 * t * (1.0 - t)  # 0 at t=0, 1.0 at midpoint (y=0.47), 0 at t=1.0
+            w_half = 0.44 * (1.0 - dip) + 0.32 * dip
+            intensity = 0.95 * (1.0 - dip) + 0.85 * dip
         else:
-            t = (y - 0.65) / 0.35
+            t = (y - 0.64) / 0.36
             s = t * t * (3.0 - 2.0 * t)
-            w_half = 0.22 * (1.0 - s) + 0.42 * s
-            intensity = 0.70 * (1.0 - s) + 0.90 * s
+            w_half = 0.44 * (1.0 - s) + 0.485 * s
+            intensity = 0.95 * (1.0 - s) + 1.0 * s
 
         for j in range(w):
             x = j / float(w - 1)
@@ -110,17 +117,29 @@ def build_hourglass_corridor_mask(h: int, w: int, delta: float = 0.08) -> np.nda
     return mask
 
 
-def build_beverage_dome_mask(h: int, w: int, delta: float = 0.08) -> np.ndarray:
-    """Fresh Beverage Upper Daylight Dome: top copy space, drops to 0 at mid-frame (splashes 100% free)."""
+def build_beverage_dome_mask(h: int, w: int, delta: float = 0.04) -> np.ndarray:
+    """
+    Fresh Beverage Upper Daylight Dome:
+    - Top (y < 0.36): Wide sunny studio wall (w_half 0.49 -> 0.46), core covers x in [0.05, 0.95]
+      providing 100% clean background behind all headline, slogan, and offer pills.
+    - Transition (0.36 <= y < 0.46): Drops smoothly to 0.0 without any hard borders.
+    - Bottom (y >= 0.46): Strictly 0.0 -> tea glass, ice cubes, and dynamic splash spray 100% unconstrained!
+    """
     mask = np.zeros((h, w), dtype=np.float32)
     for i in range(h):
         y = i / float(h - 1)
         if y >= 0.46:
             continue
-        t = y / 0.46
-        s = t * t * (3.0 - 2.0 * t)
-        w_half = 0.42 * (1.0 - s) + 0.22 * s
-        intensity = 1.0 * (1.0 - s)
+        if y < 0.36:
+            t = y / 0.36
+            s = t * t * (3.0 - 2.0 * t)
+            w_half = 0.49 * (1.0 - s) + 0.46 * s
+            intensity = 1.0
+        else:
+            t = (y - 0.36) / 0.10
+            s = t * t * (3.0 - 2.0 * t)
+            w_half = 0.46 * (1.0 - s) + 0.20 * s
+            intensity = 1.0 * (1.0 - s)
 
         for j in range(w):
             x = j / float(w - 1)
@@ -136,17 +155,29 @@ def build_beverage_dome_mask(h: int, w: int, delta: float = 0.08) -> np.ndarray:
     return mask
 
 
-def build_hero_top_corridor_mask(h: int, w: int, delta: float = 0.08) -> np.ndarray:
-    """Luxury Hero Top Spotlight Corridor: top copy space for metallic title, product pedestal bottom."""
+def build_hero_top_corridor_mask(h: int, w: int, delta: float = 0.04) -> np.ndarray:
+    """
+    Luxury Hero Top Spotlight Corridor:
+    - Top (y < 0.35): Solid charcoal studio spotlight (w_half 0.49 -> 0.46), core covers x in [0.05, 0.95]
+      for metallic typography with drop shadows.
+    - Transition (0.35 <= y < 0.48): Drops smoothly to 0.0.
+    - Bottom (y >= 0.48): Strictly 0.0 -> black slate pedestal & luxury wallet 100% unconstrained.
+    """
     mask = np.zeros((h, w), dtype=np.float32)
     for i in range(h):
         y = i / float(h - 1)
-        if y >= 0.50:
+        if y >= 0.48:
             continue
-        t = y / 0.50
-        s = t * t * (3.0 - 2.0 * t)
-        w_half = 0.45 * (1.0 - s) + 0.30 * s
-        intensity = 1.0 * (1.0 - s)
+        if y < 0.35:
+            t = y / 0.35
+            s = t * t * (3.0 - 2.0 * t)
+            w_half = 0.49 * (1.0 - s) + 0.46 * s
+            intensity = 1.0
+        else:
+            t = (y - 0.35) / 0.13
+            s = t * t * (3.0 - 2.0 * t)
+            w_half = 0.46 * (1.0 - s) + 0.20 * s
+            intensity = 1.0 * (1.0 - s)
 
         for j in range(w):
             x = j / float(w - 1)
@@ -159,6 +190,59 @@ def build_hero_top_corridor_mask(h: int, w: int, delta: float = 0.08) -> np.ndar
                 ratio = (dist - (w_half - delta)) / delta
                 v = 0.5 * (1.0 + np.cos(ratio * np.pi))
             mask[i, j] = v * intensity
+    return mask
+
+
+def build_adaptive_text_corridor_mask(
+    h: int,
+    w: int,
+    text_zones: Optional[List[Dict[str, float]]] = None,
+    delta: float = 0.04,
+) -> np.ndarray:
+    """
+    Dynamic Text-Fitted Corridor Mask Generator:
+    Guarantees that at every y-level where a text zone exists, the mask core (v=1.0)
+    fully encompasses the text zone [x_min, x_max] with a 15-20% breathing margin.
+    """
+    if not text_zones:
+        return build_hourglass_corridor_mask(h, w, delta=delta)
+
+    mask = np.zeros((h, w), dtype=np.float32)
+    for i in range(h):
+        y = i / float(h - 1)
+        # Find if y is inside or near any text zone
+        in_zone = False
+        target_w_half = 0.28
+        target_intensity = 0.80
+
+        for z in text_zones:
+            y0, y1 = z.get("y_min", 0.0), z.get("y_max", 0.0)
+            x0, x1 = z.get("x_min", 0.06), z.get("x_max", 0.94)
+            pad_y = 0.04
+            if (y0 - pad_y) <= y <= (y1 + pad_y):
+                in_zone = True
+                zone_w = max(abs(x0 - 0.5), abs(x1 - 0.5)) + 0.02 + delta
+                target_w_half = max(target_w_half, min(0.49, zone_w))
+                target_intensity = 1.0
+                break
+
+        if not in_zone:
+            # Scenic breathing space
+            target_w_half = 0.30
+            target_intensity = 0.82
+
+        for j in range(w):
+            x = j / float(w - 1)
+            dist = abs(x - 0.5)
+            if dist <= target_w_half - delta:
+                v = 1.0
+            elif dist >= target_w_half:
+                v = 0.0
+            else:
+                ratio = (dist - (target_w_half - delta)) / delta
+                v = 0.5 * (1.0 + np.cos(ratio * np.pi))
+            mask[i, j] = v * target_intensity
+
     return mask
 
 
@@ -166,6 +250,7 @@ MASK_DISPATCH = {
     "hourglass": build_hourglass_corridor_mask,
     "dome": build_beverage_dome_mask,
     "hero_top": build_hero_top_corridor_mask,
+    "adaptive": build_adaptive_text_corridor_mask,
 }
 
 
@@ -368,7 +453,7 @@ def build_html_template(
   }}
   .headline {{
     font-family: 'Playfair Display', serif;
-    font-size: 34px; font-weight: 900;
+    font-size: 32px; font-weight: 900;
     line-height: 1.15; letter-spacing: 0.5px;
     background: linear-gradient(180deg, #FFF6D1 0%, #E6B84A 35%, #B37D14 70%, #6E4504 100%);
     -webkit-background-clip: text;
@@ -378,19 +463,19 @@ def build_html_template(
   }}
   .slogan {{
     margin-top: 8px;
-    font-size: 13.5px; font-weight: 700; letter-spacing: 0.8px;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.8px;
     color: #FFF2D6;
     text-shadow: 0 2px 8px rgba(0,0,0,0.9);
     text-transform: uppercase;
   }}
   /* --- FOOTER & PROMO BAND --- */
   .footer-band {{
-    position: absolute; bottom: 3.2%; left: 5%; right: 5%;
-    background: rgba(255, 248, 235, 0.92);
-    border: 1.5px solid rgba(215, 145, 45, 0.8);
+    position: absolute; bottom: 3.0%; left: 6%; right: 6%;
+    background: rgba(255, 248, 235, 0.94);
+    border: 1.5px solid rgba(215, 145, 45, 0.85);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     border-radius: 16px;
-    padding: 12px 16px;
+    padding: 11px 16px;
     text-align: center;
     box-shadow: 0 6px 24px rgba(0,0,0,0.25);
   }}
@@ -459,7 +544,7 @@ def build_html_template(
     position: relative;
   }}
   .fresh-header {{
-    position: absolute; top: 4.5%; left: 5%; right: 5%;
+    position: absolute; top: 4.0%; left: 6%; right: 6%;
     text-align: center;
   }}
   .fresh-headline {{
@@ -489,10 +574,10 @@ def build_html_template(
     color: #D33A00; letter-spacing: 0.3px;
   }}
   .beverage-footer {{
-    position: absolute; bottom: 2.5%; left: 5%; right: 5%;
+    position: absolute; bottom: 2.5%; left: 6%; right: 6%;
     display: flex; justify-content: space-between;
     font-size: 11.5px; font-weight: 800; color: #0E4723;
-    background: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.88);
     backdrop-filter: blur(8px);
     padding: 7px 16px; border-radius: 20px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
@@ -648,10 +733,13 @@ def run_e2e_case(
     w_lat = width // 16
     C = 128
 
-    # 1. Build Smooth Parametric Corridor Mask
+    # 1. Build Smooth Parametric Corridor Mask (Text-Fitted, delta=0.04)
     mask_type = case_info.get("layout", "hourglass")
-    mask_fn = MASK_DISPATCH.get(mask_type, build_hourglass_corridor_mask)
-    mask_np = mask_fn(h_lat, w_lat, delta=0.08)
+    if mask_type == "adaptive" or "text_zones" in case_info:
+        mask_np = build_adaptive_text_corridor_mask(h_lat, w_lat, text_zones=case_info.get("text_zones"), delta=0.04)
+    else:
+        mask_fn = MASK_DISPATCH.get(mask_type, build_hourglass_corridor_mask)
+        mask_np = mask_fn(h_lat, w_lat, delta=0.04)
     mask_tensor = torch.from_numpy(mask_np).view(1, -1, 1).to(device=device)
 
     mask_vis = Image.fromarray((mask_np * 255).astype(np.uint8)).resize((width, height), Image.Resampling.BILINEAR)
