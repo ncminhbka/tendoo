@@ -8,11 +8,26 @@ baseline (`sampling.denoise()` gốc, không sửa) vs `masked_generation.denois
 -- ép vùng reserve giữ đơn giản/ít vật thể) TRÊN CÙNG 1 seed/prompt, để xem cơ chế A có thực sự
 "chừa chỗ ít vật thể hơn" mà KHÔNG tạo ô chết/giả tạo hay không.
 
-CHỈ chạy được trên máy có GPU + đã có sẵn weights FLUX.2 klein base 4B (theo đúng cách
-`src/flux2/util.py` tự tìm -- xem `find_persistent_data_root()`, hoặc set biến môi trường
-KLEIN_4B_BASE_MODEL_PATH trỏ thẳng tới file .safetensors). Model MẶC ĐỊNH dùng
-"flux.2-klein-base-4b" (50 bước, guidance=4.0, True CFG) -- đúng bản Base mà
-docs/PHASE_3_LORA_TRAINING_ROADMAP.md nhắm tới, KHÔNG phải bản distill 4-bước.
+Model MẶC ĐỊNH: "flux.2-klein-4b" (bản DISTILL, 4 bước, guidance_distilled=True) -- KHÔNG PHẢI
+bản base như bản đầu tiên của script này. Đổi lại theo đúng góp ý: spike này không train LoRA
+(chỉ test cơ chế reserve/attention-bias, training-free), nên không có lý do bắt buộc dùng base --
+base (guidance_distilled=False, 50 bước) cần TRUE CFG (2 forward pass/bước, xem
+`scripts/cli.py:576-626` `denoise_cfg`) mà `denoise()`/`denoise_reserve()` ở đây KHÔNG cài -- tức
+chạy base qua các hàm này trước đó không chỉ CHẬM HƠN mà còn SAI ngữ nghĩa guidance. Vẫn có thể
+chọn base qua `--model-name flux.2-klein-base-4b` để so sánh, nhưng script sẽ in cảnh báo.
+
+Weights tìm theo đúng cách `src/flux2/util.py` tự tìm (`find_persistent_data_root()`), hoặc set
+biến môi trường riêng theo model (xem `FLUX2_MODEL_INFO[...]["model_path"]`):
+  - distill 4B:  KLEIN_4B_MODEL_PATH
+  - base 4B:     KLEIN_4B_BASE_MODEL_PATH
+LƯU Ý: `find_persistent_data_root()` hiện CHỈ tự nhận diện thư mục "FLUX.2-klein-base-4B" -- nếu
+server có CẢ 2 thư mục weights (base 4B và distill 4B) cạnh nhau, hàm này sẽ luôn trỏ về thư mục
+base bất kể `--model-name` là gì. Vì vậy khi chạy distill, PHẢI set KLEIN_4B_MODEL_PATH trỏ thẳng
+tới file .safetensors của bản distill (xem hướng dẫn chạy ở cuối file/README lệnh).
+
+Dùng 2 GPU (mặc định tự phát hiện qua torch.cuda.device_count()): DiT đặt ở `--device` (mặc định
+cuda:0), text-encoder + AE đặt ở GPU còn lại (tự chọn cuda:1 nếu có, không thì dùng chung/CPU) --
+để tránh OOM khi tải cả 3 model cùng lúc lên 1 GPU 24GB (đã gặp thật khi cả 3 dồn vào cuda:0).
 
 Usage:
   python scripts/test_flux2_reserve_region.py \
@@ -43,8 +58,6 @@ from flux2.sampling import denoise as denoise_baseline  # noqa: E402
 from flux2.sampling import get_schedule, prc_img, prc_txt  # noqa: E402
 from flux2.masked_generation import build_region_token_mask, default_lock_schedule, denoise_reserve  # noqa: E402
 
-MODEL_NAME = "flux.2-klein-base-4b"
-
 
 def encode_flat_patch(ae, device, ae_dtype, color=(235, 225, 210), size=(64, 64)) -> torch.Tensor:
     """Ma hoa 1 patch mau phang don gian (dai dien 'noi dung don gian' cho vung reserve) qua VAE,
@@ -62,27 +75,52 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--prompt", required=True, help="Mo ta canh/san pham, TIENG ANH, KHONG nhac chu/text/title (dung quy tac da co)")
     ap.add_argument("--product-phrase", required=True, help="Cum tu san pham xuat hien NGUYEN VAN trong --prompt (dung cho Co che B neu ban tu bat -- Co che A khong can)")
+    ap.add_argument("--model-name", default="flux.2-klein-4b", choices=["flux.2-klein-4b", "flux.2-klein-base-4b"],
+                     help="Mac dinh ban DISTILL (4 buoc, khong can True CFG -- khop dung denoise()/denoise_reserve() da viet). "
+                          "Chon 'flux.2-klein-base-4b' se in canh bao: ham nay chua cai True CFG cho base.")
     ap.add_argument("--width", type=int, default=1024)
     ap.add_argument("--height", type=int, default=1536)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--out-dir", default="output_flux2_reserve_test")
+    ap.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu",
+                     help="Device cho DiT (buoc nang nhat). Mac dinh cuda:0.")
+    ap.add_argument("--aux-device", default=None,
+                     help="Device cho text-encoder + AE. Mac dinh: cuda:1 neu may co >=2 GPU (tranh OOM do "
+                          "don ca 3 model vao 1 GPU 24GB), khong thi dung chung --device.")
     ap.add_argument("--region", default="top", choices=["top", "bottom", "left", "right", "middle_left", "middle_right"],
                      help="Vung reserve don gian de test nhanh -- top/bottom = dai ngang tren/duoi 25%%, left/right = nua doc trai/phai, middle_left/middle_right = 1 nua doc nhung chi tam giua")
     args = ap.parse_args()
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model_name = args.model_name
+    device = args.device
     if device == "cpu":
         print("[CANH BAO] Khong thay CUDA -- script se rat cham hoac khong chay noi tren CPU voi model that.")
+
+    if args.aux_device:
+        aux_device = args.aux_device
+    elif device.startswith("cuda") and torch.cuda.device_count() >= 2:
+        aux_device = "cuda:1" if device != "cuda:1" else "cuda:0"
+    else:
+        aux_device = device
+    print(f"DiT device: {device} | text-encoder+AE device: {aux_device}")
+
+    if model_name == "flux.2-klein-base-4b":
+        print(
+            "[CANH BAO] --model-name flux.2-klein-base-4b: model nay guidance_distilled=False, can "
+            "TRUE CFG (2 forward pass/buoc, xem scripts/cli.py denoise_cfg) de guidance hoat dong dung. "
+            "denoise()/denoise_reserve() trong file nay KHONG cai True CFG (chi 1 forward pass/buoc) -- "
+            "ket qua co the khac ky vong. Dung ban distill (mac dinh) neu chi test co che reserve/attention-bias."
+        )
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Loading {MODEL_NAME} model/text-encoder/AE ({device})...")
-    model = util.load_flow_model(MODEL_NAME, device=device)
-    text_encoder = util.load_text_encoder(MODEL_NAME, device=device)
-    ae = util.load_ae(MODEL_NAME, device=device)
+    print(f"Loading {model_name} model/text-encoder/AE...")
+    model = util.load_flow_model(model_name, device=device)
+    text_encoder = util.load_text_encoder(model_name, device=aux_device)
+    ae = util.load_ae(model_name, device=aux_device)
 
-    defaults = util.FLUX2_MODEL_INFO[MODEL_NAME]["defaults"]
+    defaults = util.FLUX2_MODEL_INFO[model_name]["defaults"]
     num_steps, guidance = defaults["num_steps"], defaults["guidance"]
 
     # AE checkpoint tren server duoc luu san o bfloat16 (khong phai fp32) -- doc dtype THAT tu
@@ -94,17 +132,18 @@ def main():
     torch.manual_seed(args.seed)
     generator = torch.Generator(device=device).manual_seed(args.seed)
 
-    # --- Text conditioning (dung chung cho ca 2 nhanh) -- model DiT la bfloat16 (util.load_flow_model
-    #     ep cung), nen ctx cung phai bfloat16, dung y het pattern that trong scripts/cli.py ---
-    ctx = text_encoder([args.prompt]).to(torch.bfloat16)  # (1, L_txt, D)
+    # --- Text conditioning (dung chung cho ca 2 nhanh) -- text_encoder chay tren aux_device, sau do
+    #     chuyen ctx sang `device` (noi DiT chay) -- model DiT la bfloat16 (util.load_flow_model ep
+    #     cung), nen ctx cung phai bfloat16, dung y het pattern that trong scripts/cli.py ---
+    ctx = text_encoder([args.prompt]).to(torch.bfloat16)  # (1, L_txt, D), tren aux_device
     ctx, ctx_ids = prc_txt(ctx[0])
     ctx, ctx_ids = ctx.unsqueeze(0).to(device), ctx_ids.unsqueeze(0).to(device)
 
     # --- Latent kich thuoc canvas: suy ra tu 1 lan encode anh trang cung kich thuoc, KHONG doan he
-    #     so downsample --> luon dung du bao nhieu VAE/model doi ---
+    #     so downsample --> luon dung du bao nhieu VAE/model doi. AE o aux_device. ---
     blank = Image.new("RGB", (args.width, args.height), (255, 255, 255))
     import numpy as np
-    x_probe = torch.from_numpy(np.array(blank)).permute(2, 0, 1).float().unsqueeze(0).to(device=device, dtype=ae_dtype) / 127.5 - 1.0
+    x_probe = torch.from_numpy(np.array(blank)).permute(2, 0, 1).float().unsqueeze(0).to(device=aux_device, dtype=ae_dtype) / 127.5 - 1.0
     with torch.no_grad():
         z_probe = ae.encode(x_probe)
     _, C, h_lat, w_lat = z_probe.shape
@@ -130,15 +169,15 @@ def main():
     region_mask = build_region_token_mask(h_lat, w_lat, row_frac, col_frac, device=device)
     print(f"Region '{args.region}': {region_mask.sum().item()}/{region_mask.numel()} token")
 
-    z_known_patch = encode_flat_patch(ae, device, ae_dtype)  # (1, C, h_small, w_small)
-    z_known = z_known_patch.mean(dim=(0, 2, 3)).to(torch.bfloat16)  # (C,) -- gia tri kenh trung binh,
-    # broadcast cho ca vung; ep ve bfloat16 vi day la dung chung voi img latent (bfloat16) trong
-    # denoise_reserve, khong phai dua thang vao AE.
+    z_known_patch = encode_flat_patch(ae, aux_device, ae_dtype)  # (1, C, h_small, w_small), tren aux_device
+    z_known = z_known_patch.mean(dim=(0, 2, 3)).to(device=device, dtype=torch.bfloat16)  # (C,) -- gia tri
+    # kenh trung binh, chuyen sang `device`+bfloat16 vi day la dung chung voi img latent (bfloat16,
+    # tren device cua DiT) trong denoise_reserve, khong phai dua thang vao AE.
 
     def decode_and_save(latent_tokens: torch.Tensor, path: Path):
-        # latent_tokens: (1, L, C) -> ve lai (1, C, h_lat, w_lat) truoc khi decode; ep ve dung
-        # dtype cua AE (co the khac dtype cua DiT) truoc khi goi ae.decode.
-        z = latent_tokens[0].transpose(0, 1).reshape(1, C, h_lat, w_lat).to(ae_dtype)
+        # latent_tokens: (1, L, C) tren `device` (DiT) -> ve lai (1, C, h_lat, w_lat), chuyen sang
+        # aux_device + dung dtype cua AE truoc khi goi ae.decode (AE nam o aux_device).
+        z = latent_tokens[0].transpose(0, 1).reshape(1, C, h_lat, w_lat).to(device=aux_device, dtype=ae_dtype)
         with torch.no_grad():
             x = ae.decode(z).float()
         x = ((x[0].clamp(-1, 1) + 1) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
@@ -164,7 +203,7 @@ def main():
     dbg.save(out_dir / "region_debug.png")
 
     info = {
-        "model": MODEL_NAME, "prompt": args.prompt, "product_phrase": args.product_phrase,
+        "model": model_name, "prompt": args.prompt, "product_phrase": args.product_phrase,
         "region": args.region, "seed": args.seed, "num_steps": num_steps, "guidance": guidance,
         "latent_shape": [C, h_lat, w_lat],
     }
