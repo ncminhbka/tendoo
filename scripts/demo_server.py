@@ -316,7 +316,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
 
     total_latency = round(time.time() - t_start, 2)
 
-    rel_case = f"/outputs/{case_dir.name}"
+    rel_case = f"outputs/{case_dir.name}"
     return {
         "success": True,
         "latency_s": total_latency,

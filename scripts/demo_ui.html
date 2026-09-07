@@ -768,13 +768,23 @@
         prompt_scene: document.getElementById('prompt_scene').value
       };
 
-      const t0 = performance.now();
+    const BASE_URL = window.location.pathname.replace(/\/+$/, '');
+
+    function resolveUrl(relPath) {
+      if (!relPath) return '';
+      if (relPath.startsWith('http://') || relPath.startsWith('https://')) return relPath;
+      const cleanRel = relPath.replace(/^\/+/, '');
+      return BASE_URL ? `${BASE_URL}/${cleanRel}` : `/${cleanRel}`;
+    }
+
+    const t0 = performance.now();
 
       try {
         progressTitle.textContent = "Đang sinh ảnh FLUX.2 Klein DiT (8 steps)...";
         progressDesc.textContent = "Single-pass Regional Velocity Blending trên 2x NVIDIA A30...";
 
-        const resp = await fetch('/api/generate', {
+        const apiUrl = BASE_URL ? `${BASE_URL}/api/generate` : '/api/generate';
+        const resp = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -788,16 +798,16 @@
         const data = await resp.json();
         const durationSec = ((performance.now() - t0) / 1000).toFixed(2);
 
-        currentImages.poster = data.final_poster_url;
-        currentImages.bg = data.blended_bg_url;
-        currentImages.mask = data.mask_url;
+        currentImages.poster = resolveUrl(data.final_poster_url);
+        currentImages.bg = resolveUrl(data.blended_bg_url);
+        currentImages.mask = resolveUrl(data.mask_url);
 
-        previewImg.src = data.final_poster_url;
+        previewImg.src = currentImages.poster;
         previewImg.style.display = 'block';
         placeholder.style.display = 'none';
         document.getElementById('preview-container').classList.add('has-image');
 
-        document.getElementById('btn-download').href = data.final_poster_url;
+        document.getElementById('btn-download').href = currentImages.poster;
         resultActions.style.display = 'flex';
         viewTabs.style.display = 'flex';
 
