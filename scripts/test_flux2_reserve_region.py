@@ -63,9 +63,18 @@ không phải hack tự chế như Cơ chế A. Ảnh tham chiếu do `masked_ge
 dựng: 1 gradient nền mềm (giữ tông màu chung, ít áp đặt bố cục) + vùng reserve (giờ CHO PHÉP hợp
 nhiều hình chữ nhật xếp chồng, khớp đúng hình dung "bậc thang theo từng dòng text" của user, xem
 `build_region_token_mask_multi`/`--region title_two_line`) tô phẳng 1 màu tương phản -- tín hiệu
-"vùng này giữ đơn giản". Script giờ chạy CẢ 3 nhánh: baseline / reserve (Cơ chế A) / ref_guided
-(Cơ chế C) trên CÙNG seed/prompt/vùng để so trực tiếp. CHƯA verify thật trên GPU -- lần chạy đầu
-tiên của cơ chế này, cần user tự đánh giá.
+"vùng này giữ đơn giản". Script chạy CẢ 3 nhánh: baseline / reserve (Cơ chế A) / ref_guided (Cơ chế
+C) trên CÙNG seed/vùng để so trực tiếp.
+
+CHẠY THẬT LẦN 3 (2 case: macro watch qua cực đoan, sau đó chợ đêm Trung Thu): cả 2 case, 3 ảnh
+KHÔNG khác nhau nhiều -- user chỉ ra đúng nguyên nhân: `ctx` (prompt) dùng Y HỆT cho ca 3 nhanh,
+KHONG co chi dan text nao bao model phai de y anh tham chieu -- model "multi-reference editing"
+nhieu kha nang duoc huan luyen voi prompt kieu CHI DAN LIEN HE toi anh tham chieu (vd "giu bo cuc
+nhu anh tham chieu, chi doi X"), khong phai 1 mo ta canh thuan tuy giong het nhau -- nen no co
+toan quyen lo anh tham chieu di. Da sua: them `--ref-guided-instruction` (mac dinh 1 cau chi dan
+tieng Anh, khong dung tu cam text/title/caption), CHỈ nhanh ref_guided moi dung prompt = goc +
+instruction nay (ctx RIENG, khong con dung chung voi baseline/reserve). CHUA verify that tren GPU
+-- gia thuyet thu 2, can user tu do lai.
 
 Usage:
   python scripts/test_flux2_reserve_region.py \
@@ -140,6 +149,15 @@ def main():
     ap.add_argument("--ref-t-offset", type=float, default=10.0,
                      help="Gia tri 't' rieng gan cho token anh tham chieu (Co che C) -- GIU MAC DINH 10.0, dung y het "
                           "quy uoc cua encode_image_refs() that trong sampling.py/scripts/cli.py, khong bay dat.")
+    ap.add_argument(
+        "--ref-guided-instruction",
+        default="The reference image shows the intended open, uncluttered areas of the composition -- keep those same areas simple and free of complex objects, and populate the rest of the frame according to the scene description.",
+        help="Cau CHI DAN gan THEM vao --prompt CHỈ cho nhanh ref_guided (Co che C) -- model 'multi-reference "
+             "editing' nhieu kha nang duoc huan luyen voi prompt kieu chi dan-lien-he-toi-anh-tham-chieu, khong "
+             "phai chi cung 1 mo ta canh nhu prompt goc (neu khong co cau nay, model co the lo hoan toan anh "
+             "tham chieu vi khong co tin hieu text nao bao no phai de y). Truyen chuoi rong '' de tat (dung "
+             "prompt goc y het baseline/reserve, kiem tra lai gia thuyet nay).",
+    )
     ap.add_argument("--lock-frac", type=float, default=0.25,
                      help="Ti le SO BUOC dau tien khoa cung (lam=1.0) -- theo VI TRI BUOC, khong theo t tuyet doi. Mac dinh 0.25 (vd 4 buoc -> khoa dung buoc 1).")
     ap.add_argument("--anneal-frac", type=float, default=0.25,
@@ -191,13 +209,25 @@ def main():
     torch.manual_seed(args.seed)
     generator = torch.Generator(device=device).manual_seed(args.seed)
 
-    # --- Text conditioning (dung chung cho ca 2 nhanh) -- text_encoder chay tren aux_device, sau do
-    #     chuyen ctx sang `device` (noi DiT chay) -- model DiT la bfloat16 (util.load_flow_model ep
-    #     cung), nen ctx cung phai bfloat16, dung y het pattern that trong scripts/cli.py ---
+    # --- Text conditioning -- text_encoder chay tren aux_device, sau do chuyen ctx sang `device`
+    #     (noi DiT chay) -- model DiT la bfloat16 (util.load_flow_model ep cung), nen ctx cung phai
+    #     bfloat16, dung y het pattern that trong scripts/cli.py ---
+    # QUAN TRONG: nhanh ref_guided (Co che C) dung 1 CTX RIENG (prompt goc + --ref-guided-instruction)
+    # -- KHONG dung chung ctx voi baseline/reserve. Ly do (chi ra boi user, dung): model
+    # "multi-reference editing" nhieu kha nang duoc huan luyen voi prompt CO CHI DAN lien he toi anh
+    # tham chieu (kieu "giu bo cuc nhu anh tham chieu, chi doi X"), khong phai chi 1 mo ta canh thuan
+    # tuy -- neu dung y het prompt cho ca 2 nhanh, model KHONG CO TIN HIEU TEXT nao bao no phai de y
+    # toi anh tham chieu, hoan toan co the lo no di (dung nhu ket qua thuc te ref_guided ~ baseline).
+    ref_guided_prompt = args.prompt
+    if args.ref_guided_instruction.strip():
+        ref_guided_prompt = f"{args.prompt} {args.ref_guided_instruction.strip()}"
     with torch.no_grad():
         ctx = text_encoder([args.prompt]).to(torch.bfloat16)  # (1, L_txt, D), tren aux_device
+        ctx_ref_guided = text_encoder([ref_guided_prompt]).to(torch.bfloat16)
     ctx, ctx_ids = prc_txt(ctx[0])
     ctx, ctx_ids = ctx.unsqueeze(0).to(device), ctx_ids.unsqueeze(0).to(device)
+    ctx_ref_guided, ctx_ref_guided_ids = prc_txt(ctx_ref_guided[0])
+    ctx_ref_guided, ctx_ref_guided_ids = ctx_ref_guided.unsqueeze(0).to(device), ctx_ref_guided_ids.unsqueeze(0).to(device)
 
     # --- Latent kich thuoc canvas: suy ra tu 1 lan encode anh trang cung kich thuoc, KHONG doan he
     #     so downsample --> luon dung du bao nhieu VAE/model doi. AE o aux_device. ---
@@ -300,9 +330,9 @@ def main():
         if device.startswith("cuda"):
             torch.cuda.empty_cache()
 
-        print("Chay REF_GUIDED (Co che C -- denoise_cached voi anh tham chieu that)...")
+        print("Chay REF_GUIDED (Co che C -- denoise_cached voi anh tham chieu that + prompt co chi dan)...")
         out_ref_guided = denoise_cached(
-            model, img.clone(), img_ids, ctx, ctx_ids, timesteps, guidance=guidance,
+            model, img.clone(), img_ids, ctx_ref_guided, ctx_ref_guided_ids, timesteps, guidance=guidance,
             img_cond_seq=ref_tokens, img_cond_seq_ids=ref_ids,
         )
         decode_and_save(out_ref_guided, out_dir / "ref_guided.png")
@@ -317,7 +347,8 @@ def main():
     dbg.save(out_dir / "region_debug.png")
 
     info = {
-        "model": model_name, "prompt": args.prompt, "product_phrase": args.product_phrase,
+        "model": model_name, "prompt": args.prompt, "ref_guided_prompt": ref_guided_prompt,
+        "product_phrase": args.product_phrase,
         "region": args.region, "num_rects": len(rects), "seed": args.seed, "num_steps": num_steps,
         "guidance": guidance, "latent_shape": [C, h_lat, w_lat],
         "lock_frac": args.lock_frac, "anneal_frac": args.anneal_frac, "lock_strength": args.lock_strength,
