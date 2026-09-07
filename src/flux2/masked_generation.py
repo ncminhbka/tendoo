@@ -46,6 +46,7 @@ from contextlib import contextmanager
 from typing import Callable, Optional
 
 import torch
+from PIL import Image, ImageDraw
 from torch import Tensor
 from torch.nn import functional as F
 
@@ -73,6 +74,27 @@ def build_region_token_mask(h_lat: int, w_lat: int, row_frac: tuple[float, float
     c1 = round(col_frac[1] * w_lat)
     mask2d = torch.zeros((h_lat, w_lat), dtype=torch.bool, device=device)
     mask2d[r0:r1, c0:c1] = True
+    return mask2d.flatten()
+
+
+def build_region_token_mask_multi(
+    h_lat: int, w_lat: int, rects: list[tuple[tuple[float, float], tuple[float, float]]], device=None,
+) -> Tensor:
+    """
+    Ban HOP (union) cua `build_region_token_mask` -- moi phan tu trong `rects` la 1 cap
+    (row_frac, col_frac) CUNG DINH DANG nhu ham tren. Dung khi vung reserve THUC TE la nhieu dong
+    text co do rong khac nhau xep chong len nhau (hinh bac thang/chu T -- vd tieu de 2 dong, dong
+    1 rong hon dong 2), KHONG phai 1 hinh chu nhat don gian -- dung y hinh dung nguoi dung ve ra
+    (mask theo TUNG DONG text, khong phai 1 box lon bao tron ca khoi, cung khong phai ve vien tung
+    con chu). Voi 1 phan tu duy nhat trong `rects`, ket qua giong het `build_region_token_mask`.
+    """
+    mask2d = torch.zeros((h_lat, w_lat), dtype=torch.bool, device=device)
+    for row_frac, col_frac in rects:
+        r0 = round(row_frac[0] * h_lat)
+        r1 = round(row_frac[1] * h_lat)
+        c0 = round(col_frac[0] * w_lat)
+        c1 = round(col_frac[1] * w_lat)
+        mask2d[r0:r1, c0:c1] = True
     return mask2d.flatten()
 
 
@@ -345,6 +367,91 @@ def find_product_txt_token_span(
             f"{max_length} token) hoac loi offset."
         )
     return token_start, token_end
+
+
+# ==================================================================================================
+# CO CHE C -- reference-image conditioning THAT (denoise_cached + forward_kv_extract), KHONG phai
+# ghi de latent tho bao nhu Co che A. Them sau khi Co che A cho ket qua mo/xam that tren server
+# (2026-09-07) -- root-cause: Co che A ep ghi de latent GIUA CHUNG qua trinh denoise, model chua
+# tung duoc huan luyen de xu ly kieu can thiep nay (dac biet voi model distill 4-buoc, xem canh bao
+# trong build_index_based_lock_schedule/denoise_reserve o tren). FLUX.2 klein DUOC TAI LIEU HOA la
+# co "multi-reference editing capabilities" -- co che THAT cho dieu nay la anh tham chieu duoc dua
+# vao qua `img_cond_seq`/`img_cond_seq_ids` (xem `sampling.denoise_cached()`, da doc truc tiep code
+# that): anh tham chieu duoc coi la "clean" (ref_fixed_timestep=0.0 trong `Flux2.forward_kv_extract`)
+# va model ATTEND toi no qua KV-cache XUYEN SUOT qua trinh denoise anh chinh (KHONG ghi de truc
+# tiep pixel/latent nao) -- day la co che DA DUOC HUAN LUYEN (documented), khong phai hack tu che
+# nhu Co che A. Ham `encode_image_refs` trong `sampling.py` (dung that trong scripts/cli.py) da lam
+# dung viec nay -- CAC HAM DUOI DAY MIRROR CHINH XAC quy uoc cua no (t_off = scale + scale*t,
+# scale=10.0) nhung nhan device/dtype tuong minh (khong hardcode .cuda() nhu ban goc) de tuong
+# thich voi kieu tach GPU DiT/AE cua `scripts/test_flux2_reserve_region.py`.
+# ==================================================================================================
+
+def build_reserve_guide_image(
+    width: int, height: int, rects: list[tuple[tuple[float, float], tuple[float, float]]],
+    bg_top_rgb: tuple[int, int, int] = (250, 238, 222),
+    bg_bottom_rgb: tuple[int, int, int] = (238, 220, 196),
+    scrim_rgb: tuple[int, int, int] = (205, 190, 168),
+) -> Image.Image:
+    """
+    Dung 1 anh PIL DON GIAN lam 'anh tham chieu' cho Co che C -- KHONG phai anh that/khong can
+    dep, chi la 1 goi y bo cuc THO: nen la 1 gradient mem doc (giu tong mau chung, it thong tin
+    cu the ve noi dung de KHONG ap dat bo cuc phan con lai cua canvas), vung reserve (`rects`,
+    CUNG DINH DANG (row_frac,col_frac) nhu build_region_token_mask/_multi) duoc to PHANG 1 mau
+    tuong phan ro rang -- tin hieu "vung nay giu don gian, dung ve vat the phuc tap" cho model
+    tham chieu qua attention (KHONG phai ep giu nguyen pixel -- day khong phai inpainting cung).
+
+    `rects` PHAI cung 1 danh sach da dung cho `build_region_token_mask_multi` (kich thuoc token) --
+    dam bao vung to scrim tren anh pixel THAT KHOP vi tri voi vung mask token, vi day chinh la diem
+    manh cua co che nay: anh tham chieu duoc encode O DUNG DO PHAN GIAI CANVAS CHINH (width/height
+    truyen vao day PHAI bang canvas that) nen RoPE h/w id cua no khop 1-1 voi anh chinh (chi khac
+    o "t" id qua `encode_reserve_guide_ref`) -- tao tuong ung khong gian THAT giua tham chieu va
+    anh dang denoise, khong chi la "1 anh vi du chung chung".
+    """
+    img = Image.new("RGB", (width, height))
+    draw = ImageDraw.Draw(img)
+    for y in range(height):
+        f = y / max(1, height - 1)
+        r = round(bg_top_rgb[0] + (bg_bottom_rgb[0] - bg_top_rgb[0]) * f)
+        g = round(bg_top_rgb[1] + (bg_bottom_rgb[1] - bg_top_rgb[1]) * f)
+        b = round(bg_top_rgb[2] + (bg_bottom_rgb[2] - bg_top_rgb[2]) * f)
+        draw.line([(0, y), (width, y)], fill=(r, g, b))
+    for row_frac, col_frac in rects:
+        x0, x1 = col_frac[0] * width, col_frac[1] * width
+        y0, y1 = row_frac[0] * height, row_frac[1] * height
+        draw.rectangle([x0, y0, x1, y1], fill=scrim_rgb)
+    return img
+
+
+def encode_reserve_guide_ref(
+    ae, ae_device, ae_dtype, guide_image: Image.Image, t_offset: float = 10.0,
+) -> tuple[Tensor, Tensor]:
+    """
+    Ma hoa `guide_image` (PIL, CUNG kich thuoc canvas chinh) thanh (img_cond_seq, img_cond_seq_ids)
+    de dung truc tiep voi `sampling.denoise_cached()`. Mirror CHINH XAC quy uoc cua
+    `encode_image_refs()` that trong `sampling.py` (dung boi `scripts/cli.py` production):
+    `t_off = scale + scale*t` voi `scale=10.0` -- GIU NGUYEN gia tri 10.0 (khong bay dat) de dung
+    dung quy uoc production, cho model phan biet day la "anh tham chieu" (t=10) khac voi anh chinh
+    dang denoise (t=0 mac dinh trong `prc_img`).
+
+    Tra ve tensor CON O `ae_device` -- goi ham nay xong PHAI TU `.to(device=dit_device)` truoc khi
+    ghep vao `denoise_cached()` (giong het cach `z_known`/`ctx` da chuyen device trong script), vi
+    ham nay khong biet DiT dang chay o GPU nao (co the khac AE, xem --aux-device).
+    """
+    from .sampling import default_prep, prc_img  # tranh circular import o module-level
+
+    x = default_prep(guide_image, limit_pixels=None)  # (C,H,W), da chuan hoa ve [-1,1]
+    x = x.unsqueeze(0).to(device=ae_device, dtype=ae_dtype)
+    with torch.no_grad():
+        z = ae.encode(x)[0]  # (C, h_lat, w_lat) -- bo batch dim
+    # QUAN TRONG: encode_image_refs() that (sampling.py) dung t_off KIEU int64 (tu torch.arange(...)
+    # + scale la python int) -- torch.arange(h)/torch.arange(w) trong prc_img cung mac dinh int64.
+    # Neu truyen t_coord dang float se lech dtype voi 2 truc con lai trong torch.cartesian_prod --
+    # ep long() de dung y het quy uoc production, tranh loi/upcast am tham.
+    t_coord = torch.tensor([int(round(t_offset))], dtype=torch.long)
+    ref_tokens, ref_ids = prc_img(z, t_coord=t_coord)  # (L_ref, C), (L_ref, 4)
+    ref_tokens = ref_tokens.unsqueeze(0).to(torch.bfloat16)  # (1, L_ref, C)
+    ref_ids = ref_ids.unsqueeze(0)  # (1, L_ref, 4)
+    return ref_tokens, ref_ids
 
 
 def build_product_suppression_bias(

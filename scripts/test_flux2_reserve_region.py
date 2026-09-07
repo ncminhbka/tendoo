@@ -48,6 +48,25 @@ ra [1.0, 0.9706, 0.0624, 0.0] -- khoá CỨNG 2/4 bước (50% tổng bước) t
 không phụ thuộc hình dạng đường cong t -- mặc định giờ chỉ khoá đúng 1/4 bước với model distill.
 Có thể chỉnh qua `--lock-frac`/`--anneal-frac`.
 
+CHẠY THẬT LẦN 2 (--lock-strength 0.1): mượt, hết mảng xám -- NHƯNG prompt/case đó baseline vốn
+đã trống sẵn ở vùng top, nên không đo được Cơ chế A có tác dụng thật hay không (2 nhánh trùng
+nhau vì không có gì để "đẩy ra"). Đồng thời user chỉ ra: `denoise_reserve` (Cơ chế A) about bản
+chất là ghi đè latent thô GIỮA CHỪNG quá trình denoise -- model chưa từng được huấn luyện để xử
+lý kiểu can thiệp này, đặc biệt với model 4-bước (rất ít "đường băng" để hoà trộn sau khi ghi đè).
+
+CƠ CHẾ C (MỚI, 2026-09-07) -- reference-image conditioning THẬT, KHÔNG ghi đè latent: FLUX.2
+klein được tài liệu hoá là có "multi-reference editing capabilities" -- cơ chế thật cho việc này
+là `sampling.denoise_cached()` (đã đọc trực tiếp code): 1 ảnh tham chiếu được coi là "clean" (qua
+`Flux2.forward_kv_extract(..., ref_fixed_timestep=0.0)`) và model ATTEND tới nó qua KV-cache
+XUYÊN SUỐT quá trình denoise ảnh chính -- đây là cơ chế ĐÃ ĐƯỢC HUẤN LUYỆN (multi-reference),
+không phải hack tự chế như Cơ chế A. Ảnh tham chiếu do `masked_generation.build_reserve_guide_image()`
+dựng: 1 gradient nền mềm (giữ tông màu chung, ít áp đặt bố cục) + vùng reserve (giờ CHO PHÉP hợp
+nhiều hình chữ nhật xếp chồng, khớp đúng hình dung "bậc thang theo từng dòng text" của user, xem
+`build_region_token_mask_multi`/`--region title_two_line`) tô phẳng 1 màu tương phản -- tín hiệu
+"vùng này giữ đơn giản". Script giờ chạy CẢ 3 nhánh: baseline / reserve (Cơ chế A) / ref_guided
+(Cơ chế C) trên CÙNG seed/prompt/vùng để so trực tiếp. CHƯA verify thật trên GPU -- lần chạy đầu
+tiên của cơ chế này, cần user tự đánh giá.
+
 Usage:
   python scripts/test_flux2_reserve_region.py \
       --prompt "A luxurious rose gold smart watch on a wooden desk, pastel pink studio background" \
@@ -55,8 +74,9 @@ Usage:
       --out-dir output_flux2_reserve_test \
       --seed 42
 
-Output: <out-dir>/baseline.png, <out-dir>/reserve.png, <out-dir>/region_debug.png (vùng reserve
-tô đỏ để đối chiếu 2 ảnh), <out-dir>/run_info.json.
+Output: <out-dir>/baseline.png, <out-dir>/reserve.png (Cơ chế A), <out-dir>/ref_guided.png (Cơ chế
+C), <out-dir>/guide.png (ảnh tham chiếu đã dựng cho Cơ chế C, để kiểm tra), <out-dir>/region_debug.png
+(vùng reserve tô đỏ để đối chiếu), <out-dir>/run_info.json.
 ==================================================================================================
 """
 from __future__ import annotations
@@ -74,8 +94,14 @@ from PIL import Image, ImageDraw  # noqa: E402
 
 from flux2 import util  # noqa: E402
 from flux2.sampling import denoise as denoise_baseline  # noqa: E402
-from flux2.sampling import get_schedule, prc_img, prc_txt  # noqa: E402
-from flux2.masked_generation import build_index_based_lock_schedule, build_region_token_mask, denoise_reserve  # noqa: E402
+from flux2.sampling import denoise_cached, get_schedule, prc_img, prc_txt  # noqa: E402
+from flux2.masked_generation import (  # noqa: E402
+    build_index_based_lock_schedule,
+    build_region_token_mask_multi,
+    build_reserve_guide_image,
+    denoise_reserve,
+    encode_reserve_guide_ref,
+)
 
 
 def encode_flat_patch(ae, device, ae_dtype, color=(235, 225, 210), size=(64, 64)) -> torch.Tensor:
@@ -106,8 +132,14 @@ def main():
     ap.add_argument("--aux-device", default=None,
                      help="Device cho text-encoder + AE. Mac dinh: cuda:1 neu may co >=2 GPU (tranh OOM do "
                           "don ca 3 model vao 1 GPU 24GB), khong thi dung chung --device.")
-    ap.add_argument("--region", default="top", choices=["top", "bottom", "left", "right", "middle_left", "middle_right"],
-                     help="Vung reserve don gian de test nhanh -- top/bottom = dai ngang tren/duoi 25%%, left/right = nua doc trai/phai, middle_left/middle_right = 1 nua doc nhung chi tam giua")
+    ap.add_argument("--region", default="top",
+                     choices=["top", "bottom", "left", "right", "middle_left", "middle_right", "title_two_line"],
+                     help="Vung reserve de test -- top/bottom = dai ngang tren/duoi 25%%, left/right = nua doc trai/phai, "
+                          "middle_left/middle_right = 1 nua doc nhung chi tam giua, title_two_line = HOP 2 hinh chu nhat "
+                          "xep chong (dong 1 rong, dong 2 hep hon o giua) mo phong tieu de 2 dong nguoi dung ve ra.")
+    ap.add_argument("--ref-t-offset", type=float, default=10.0,
+                     help="Gia tri 't' rieng gan cho token anh tham chieu (Co che C) -- GIU MAC DINH 10.0, dung y het "
+                          "quy uoc cua encode_image_refs() that trong sampling.py/scripts/cli.py, khong bay dat.")
     ap.add_argument("--lock-frac", type=float, default=0.25,
                      help="Ti le SO BUOC dau tien khoa cung (lam=1.0) -- theo VI TRI BUOC, khong theo t tuyet doi. Mac dinh 0.25 (vd 4 buoc -> khoa dung buoc 1).")
     ap.add_argument("--anneal-frac", type=float, default=0.25,
@@ -184,18 +216,26 @@ def main():
 
     timesteps = get_schedule(num_steps, image_seq_len=img.shape[1])
 
-    # --- Vung reserve (vi du don gian de test nhanh -- thay bang safe_rect thuc te khi tich hop) ---
-    region_specs = {
-        "top": ((0.0, 0.25), (0.0, 1.0)),
-        "bottom": ((0.75, 1.0), (0.0, 1.0)),
-        "left": ((0.0, 1.0), (0.0, 0.4)),
-        "right": ((0.0, 1.0), (0.6, 1.0)),
-        "middle_left": ((0.3, 0.7), (0.0, 0.45)),
-        "middle_right": ((0.3, 0.7), (0.55, 1.0)),
+    # --- Vung reserve: MOI phan tu la 1 hinh chu nhat (row_frac, col_frac); >1 phan tu = HOP nhieu
+    #     hinh xep chong (vd tieu de 2 dong, do rong khac nhau) -- thay bang safe_rect/per-line-box
+    #     thuc te (typography_engine.py) khi tich hop. ---
+    region_specs: dict[str, list[tuple[tuple[float, float], tuple[float, float]]]] = {
+        "top": [((0.0, 0.25), (0.0, 1.0))],
+        "bottom": [((0.75, 1.0), (0.0, 1.0))],
+        "left": [((0.0, 1.0), (0.0, 0.4))],
+        "right": [((0.0, 1.0), (0.6, 1.0))],
+        "middle_left": [((0.3, 0.7), (0.0, 0.45))],
+        "middle_right": [((0.3, 0.7), (0.55, 1.0))],
+        # Mo phong tieu de 2 dong hinh bac thang user ve ra: dong 1 rong+ngan (kicker/dong dai),
+        # dong 2 hep hon+cao hon, can giua -- HOP cua 2 rect, khong phai 1 box lon bao tron ca khoi.
+        "title_two_line": [
+            ((0.05, 0.20), (0.08, 0.92)),
+            ((0.20, 0.38), (0.28, 0.72)),
+        ],
     }
-    row_frac, col_frac = region_specs[args.region]
-    region_mask = build_region_token_mask(h_lat, w_lat, row_frac, col_frac, device=device)
-    print(f"Region '{args.region}': {region_mask.sum().item()}/{region_mask.numel()} token")
+    rects = region_specs[args.region]
+    region_mask = build_region_token_mask_multi(h_lat, w_lat, rects, device=device)
+    print(f"Region '{args.region}' ({len(rects)} rect): {region_mask.sum().item()}/{region_mask.numel()} token")
 
     # Lock schedule THEO VI TRI BUOC (khong theo t tuyet doi) -- fix da xac nhan bang so lieu that:
     # voi model 4-buoc, nguong t=0.85/0.55 (default_lock_schedule) khoa cung 2/4 buoc (50%) thay vi
@@ -211,6 +251,23 @@ def main():
     # kenh trung binh, chuyen sang `device`+bfloat16 vi day la dung chung voi img latent (bfloat16,
     # tren device cua DiT) trong denoise_reserve, khong phai dua thang vao AE.
 
+    # --- Co che C: dung 1 anh tham chieu THAT (khong phai ghi de latent) -- xem docstring dau file.
+    #     Anh dung DUNG kich thuoc canvas chinh de RoPE h/w id khop 1-1 voi anh dang denoise. ---
+    guide_image = build_reserve_guide_image(args.width, args.height, rects)
+    guide_image.save(out_dir / "guide.png")
+    ref_tokens, ref_ids = encode_reserve_guide_ref(ae, aux_device, ae_dtype, guide_image, t_offset=args.ref_t_offset)
+    ref_tokens, ref_ids = ref_tokens.to(device), ref_ids.to(device)  # chuyen tu aux_device (AE) sang device (DiT)
+    # `default_prep` (dung trong encode_reserve_guide_ref) crop ve boi so cua 16 -- neu --width/--height
+    # KHONG phai boi so 16, anh guide se bi crop lech, h_lat/w_lat cua no khac canvas chinh (tinh qua
+    # x_probe o tren, khong qua default_prep) --> RoPE h/w id KHONG con khop 1-1 nua. Chan som thay vi
+    # de lech am tham.
+    if ref_tokens.shape[1] != h_lat * w_lat:
+        raise ValueError(
+            f"Anh guide sau default_prep co {ref_tokens.shape[1]} token, khac {h_lat * w_lat} token "
+            f"cua canvas chinh (h_lat={h_lat}, w_lat={w_lat}) -- --width/--height phai la BOI SO CUA 16 "
+            f"de default_prep khong crop lech (hien tai: {args.width}x{args.height})."
+        )
+
     def decode_and_save(latent_tokens: torch.Tensor, path: Path):
         # latent_tokens: (1, L, C) tren `device` (DiT) -> ve lai (1, C, h_lat, w_lat), chuyen sang
         # aux_device + dung dtype cua AE truoc khi goi ae.decode (AE nam o aux_device).
@@ -220,7 +277,7 @@ def main():
         x = ((x[0].clamp(-1, 1) + 1) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
         Image.fromarray(x).save(path)
 
-    # QUAN TRONG: ca 2 nhanh denoise PHAI chay trong torch.no_grad() -- day chinh la nguyen nhan
+    # QUAN TRONG: CA 3 nhanh denoise PHAI chay trong torch.no_grad() -- day chinh la nguyen nhan
     # OOM that tren server (model 4B, seq len ~6656 token, chi 5+20=25 block, KHONG the tu no can
     # 23GB neu inference thuan tuy; thieu no_grad khien autograd giu nguyen do thi tinh toan qua
     # het 25 block x 4 buoc, dung y het cai bay da gap va sua trong scripts/cli.py:453/`with
@@ -231,32 +288,47 @@ def main():
         decode_and_save(out_baseline, out_dir / "baseline.png")
         del out_baseline
         if device.startswith("cuda"):
-            torch.cuda.empty_cache()  # giai phong cache truoc khi chay nhanh thu 2, bien an toan them
+            torch.cuda.empty_cache()  # giai phong cache truoc khi chay nhanh ke tiep, bien an toan them
 
-        print("Chay RESERVE (Co che A -- denoise_reserve)...")
+        print("Chay RESERVE (Co che A -- denoise_reserve, ghi de latent)...")
         out_reserve = denoise_reserve(
             model, img.clone(), img_ids, ctx, ctx_ids, timesteps, guidance=guidance,
             region_mask=region_mask, z_known=z_known, lock_schedule=lock_schedule,
         )
         decode_and_save(out_reserve, out_dir / "reserve.png")
+        del out_reserve
+        if device.startswith("cuda"):
+            torch.cuda.empty_cache()
 
-    # --- Debug overlay: to do vung reserve len anh baseline de doi chieu ---
+        print("Chay REF_GUIDED (Co che C -- denoise_cached voi anh tham chieu that)...")
+        out_ref_guided = denoise_cached(
+            model, img.clone(), img_ids, ctx, ctx_ids, timesteps, guidance=guidance,
+            img_cond_seq=ref_tokens, img_cond_seq_ids=ref_ids,
+        )
+        decode_and_save(out_ref_guided, out_dir / "ref_guided.png")
+
+    # --- Debug overlay: to do (hop) vung reserve len anh baseline de doi chieu ---
     dbg = Image.open(out_dir / "baseline.png").convert("RGB")
     draw = ImageDraw.Draw(dbg, "RGBA")
-    r0, r1 = row_frac[0] * dbg.height, row_frac[1] * dbg.height
-    c0, c1 = col_frac[0] * dbg.width, col_frac[1] * dbg.width
-    draw.rectangle([c0, r0, c1, r1], outline=(255, 0, 0, 255), width=4, fill=(255, 0, 0, 60))
+    for row_frac, col_frac in rects:
+        r0, r1 = row_frac[0] * dbg.height, row_frac[1] * dbg.height
+        c0, c1 = col_frac[0] * dbg.width, col_frac[1] * dbg.width
+        draw.rectangle([c0, r0, c1, r1], outline=(255, 0, 0, 255), width=4, fill=(255, 0, 0, 60))
     dbg.save(out_dir / "region_debug.png")
 
     info = {
         "model": model_name, "prompt": args.prompt, "product_phrase": args.product_phrase,
-        "region": args.region, "seed": args.seed, "num_steps": num_steps, "guidance": guidance,
-        "latent_shape": [C, h_lat, w_lat],
+        "region": args.region, "num_rects": len(rects), "seed": args.seed, "num_steps": num_steps,
+        "guidance": guidance, "latent_shape": [C, h_lat, w_lat],
         "lock_frac": args.lock_frac, "anneal_frac": args.anneal_frac, "lock_strength": args.lock_strength,
-        "timesteps": timesteps,
+        "ref_t_offset": args.ref_t_offset, "timesteps": timesteps,
     }
     (out_dir / "run_info.json").write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"XONG. Xem {out_dir}/baseline.png vs {out_dir}/reserve.png (doi chieu voi region_debug.png).")
+    print(
+        f"XONG. So sanh {out_dir}/baseline.png vs {out_dir}/reserve.png (Co che A) vs "
+        f"{out_dir}/ref_guided.png (Co che C), doi chieu voi {out_dir}/region_debug.png va "
+        f"{out_dir}/guide.png (anh tham chieu da dung cho Co che C)."
+    )
 
 
 if __name__ == "__main__":
