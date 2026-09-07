@@ -29,6 +29,14 @@ Dùng 2 GPU (mặc định tự phát hiện qua torch.cuda.device_count()): DiT
 cuda:0), text-encoder + AE đặt ở GPU còn lại (tự chọn cuda:1 nếu có, không thì dùng chung/CPU) --
 để tránh OOM khi tải cả 3 model cùng lúc lên 1 GPU 24GB (đã gặp thật khi cả 3 dồn vào cuda:0).
 
+OOM LẦN 3 (đã sửa): sau khi tách GPU + đổi sang bản distill, vẫn OOM ngay ở block DiT đầu tiên --
+nguyên nhân THẬT không phải thiếu VRAM (model 4B, ~25 block, seq len ~6656 token không thể tự
+cần 23GB nếu chạy inference thuần), mà là 2 lệnh gọi `denoise_baseline()`/`denoise_reserve()`
+CHƯA được bọc trong `torch.no_grad()` -- autograd giữ nguyên đồ thị tính toán suốt toàn bộ vòng
+lặp (25 block x 4 bước) làm phồng VRAM. Đối chiếu `scripts/cli.py:453` xác nhận: production code
+bọc `with torch.no_grad():` quanh TOÀN BỘ generation (text encode -> denoise -> ae.decode), không
+chỉ quanh ae.encode/decode như bản trước của script này. Đã sửa.
+
 Usage:
   python scripts/test_flux2_reserve_region.py \
       --prompt "A luxurious rose gold smart watch on a wooden desk, pastel pink studio background" \
@@ -135,7 +143,8 @@ def main():
     # --- Text conditioning (dung chung cho ca 2 nhanh) -- text_encoder chay tren aux_device, sau do
     #     chuyen ctx sang `device` (noi DiT chay) -- model DiT la bfloat16 (util.load_flow_model ep
     #     cung), nen ctx cung phai bfloat16, dung y het pattern that trong scripts/cli.py ---
-    ctx = text_encoder([args.prompt]).to(torch.bfloat16)  # (1, L_txt, D), tren aux_device
+    with torch.no_grad():
+        ctx = text_encoder([args.prompt]).to(torch.bfloat16)  # (1, L_txt, D), tren aux_device
     ctx, ctx_ids = prc_txt(ctx[0])
     ctx, ctx_ids = ctx.unsqueeze(0).to(device), ctx_ids.unsqueeze(0).to(device)
 
@@ -183,16 +192,25 @@ def main():
         x = ((x[0].clamp(-1, 1) + 1) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
         Image.fromarray(x).save(path)
 
-    print("Chay BASELINE (denoise goc, khong sua)...")
-    out_baseline = denoise_baseline(model, img.clone(), img_ids, ctx, ctx_ids, timesteps, guidance=guidance)
-    decode_and_save(out_baseline, out_dir / "baseline.png")
+    # QUAN TRONG: ca 2 nhanh denoise PHAI chay trong torch.no_grad() -- day chinh la nguyen nhan
+    # OOM that tren server (model 4B, seq len ~6656 token, chi 5+20=25 block, KHONG the tu no can
+    # 23GB neu inference thuan tuy; thieu no_grad khien autograd giu nguyen do thi tinh toan qua
+    # het 25 block x 4 buoc, dung y het cai bay da gap va sua trong scripts/cli.py:453/`with
+    # torch.no_grad():` bao quanh toan bo generation, khong chi ae.encode/decode).
+    with torch.no_grad():
+        print("Chay BASELINE (denoise goc, khong sua)...")
+        out_baseline = denoise_baseline(model, img.clone(), img_ids, ctx, ctx_ids, timesteps, guidance=guidance)
+        decode_and_save(out_baseline, out_dir / "baseline.png")
+        del out_baseline
+        if device.startswith("cuda"):
+            torch.cuda.empty_cache()  # giai phong cache truoc khi chay nhanh thu 2, bien an toan them
 
-    print("Chay RESERVE (Co che A -- denoise_reserve)...")
-    out_reserve = denoise_reserve(
-        model, img.clone(), img_ids, ctx, ctx_ids, timesteps, guidance=guidance,
-        region_mask=region_mask, z_known=z_known, lock_schedule=default_lock_schedule,
-    )
-    decode_and_save(out_reserve, out_dir / "reserve.png")
+        print("Chay RESERVE (Co che A -- denoise_reserve)...")
+        out_reserve = denoise_reserve(
+            model, img.clone(), img_ids, ctx, ctx_ids, timesteps, guidance=guidance,
+            region_mask=region_mask, z_known=z_known, lock_schedule=default_lock_schedule,
+        )
+        decode_and_save(out_reserve, out_dir / "reserve.png")
 
     # --- Debug overlay: to do vung reserve len anh baseline de doi chieu ---
     dbg = Image.open(out_dir / "baseline.png").convert("RGB")
