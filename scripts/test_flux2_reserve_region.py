@@ -112,6 +112,10 @@ def main():
                      help="Ti le SO BUOC dau tien khoa cung (lam=1.0) -- theo VI TRI BUOC, khong theo t tuyet doi. Mac dinh 0.25 (vd 4 buoc -> khoa dung buoc 1).")
     ap.add_argument("--anneal-frac", type=float, default=0.25,
                      help="Ti le so buoc TIEP THEO dung anneal cosine 1.0->0.0 (can >=2 buoc thuc te moi anneal, khong thi bo qua va tha han luon).")
+    ap.add_argument("--lock-strength", type=float, default=1.0,
+                     help="Dinh lam toi da khi bi khoa (mac dinh 1.0 = khoa CUNG hoan toan). Voi model qua it buoc (4 buoc "
+                          "distill), 1 buoc khoa cung o t gan 1.0 co the da du 'cam ket' vung do vao 1 texture co dinh, "
+                          "khong con du buoc con lai de hoa tron -- thu ha xuong 0.4-0.6 de chi 'goi y nhe' thay vi ep cung.")
     args = ap.parse_args()
 
     model_name = args.model_name
@@ -198,7 +202,9 @@ def main():
     # ~15% nhu tinh cho 50-buoc base, ra dung hien tuong "vung reserve thanh mang xam co van, lac
     # tong" da thay trong ket qua that. build_index_based_lock_schedule tu suy tu chinh `timesteps`
     # nen luon dung ti le bat ke so buoc/model nao.
-    lock_schedule = build_index_based_lock_schedule(timesteps, lock_frac=args.lock_frac, anneal_frac=args.anneal_frac)
+    lock_schedule = build_index_based_lock_schedule(
+        timesteps, lock_frac=args.lock_frac, anneal_frac=args.anneal_frac, lock_strength=args.lock_strength,
+    )
 
     z_known_patch = encode_flat_patch(ae, aux_device, ae_dtype)  # (1, C, h_small, w_small), tren aux_device
     z_known = z_known_patch.mean(dim=(0, 2, 3)).to(device=device, dtype=torch.bfloat16)  # (C,) -- gia tri
@@ -246,7 +252,8 @@ def main():
         "model": model_name, "prompt": args.prompt, "product_phrase": args.product_phrase,
         "region": args.region, "seed": args.seed, "num_steps": num_steps, "guidance": guidance,
         "latent_shape": [C, h_lat, w_lat],
-        "lock_frac": args.lock_frac, "anneal_frac": args.anneal_frac, "timesteps": timesteps,
+        "lock_frac": args.lock_frac, "anneal_frac": args.anneal_frac, "lock_strength": args.lock_strength,
+        "timesteps": timesteps,
     }
     (out_dir / "run_info.json").write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"XONG. Xem {out_dir}/baseline.png vs {out_dir}/reserve.png (doi chieu voi region_debug.png).")

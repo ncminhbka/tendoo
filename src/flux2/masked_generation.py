@@ -108,7 +108,7 @@ def default_lock_schedule(t: float, t_full_lock_above: float = 0.85, t_release_b
 
 
 def build_index_based_lock_schedule(
-    timesteps: list[float], lock_frac: float = 0.25, anneal_frac: float = 0.25,
+    timesteps: list[float], lock_frac: float = 0.25, anneal_frac: float = 0.25, lock_strength: float = 1.0,
 ) -> Callable[[float], float]:
     """
     Ban thay the cho `default_lock_schedule` -- tinh lam THEO VI TRI BUOC (index trong danh sach
@@ -122,13 +122,23 @@ def build_index_based_lock_schedule(
     ve 1 closure tra cuu theo GIA TRI t_prev THUC trong chinh list nay (khop chinh xac tung buoc
     cua vong lap `denoise_reserve`).
 
-    `lock_frac`: ti le so buoc DAU TIEN bi khoa CUNG (lam=1.0) -- it nhat 1 buoc.
-    `anneal_frac`: ti le so buoc TIEP THEO dung de anneal cosine tu 1.0 xuong 0.0 -- sau do lam=0.0
-    han cho toi het. Vi du num_steps=4, lock_frac=0.25 -> khoa cung dung buoc 1; anneal_frac=0.25
-    -> round(0.25*4)=1 buoc anneal, nhung ANNEAL CAN TOI THIEU 2 BUOC de x chay tu >0 den 1 (khong
-    bi ket cung o x=0 -> lam=1.0 hoai) -- nen khi round ra <2, ham TU DONG BO QUA anneal, khoa dung
-    1 buoc dau roi THA HAN 3 buoc con lai. Day chinh la fix cho ca "OOM lan 3" real-world: 4-buoc
-    distill chi con 1/4 buoc bi khoa (25%) thay vi 2/4 (50%) nhu default_lock_schedule kieu cu.
+    `lock_frac`: ti le so buoc DAU TIEN bi khoa (lam dinh = lock_strength) -- it nhat 1 buoc.
+    `anneal_frac`: ti le so buoc TIEP THEO dung de anneal cosine tu lock_strength xuong 0.0 -- sau
+    do lam=0.0 han cho toi het. Vi du num_steps=4, lock_frac=0.25 -> khoa cung dung buoc 1;
+    anneal_frac=0.25 -> round(0.25*4)=1 buoc anneal, nhung ANNEAL CAN TOI THIEU 2 BUOC de x chay
+    tu >0 den 1 (khong bi ket cung o x=0) -- nen khi round ra <2, ham TU DONG BO QUA anneal, khoa
+    dung 1 buoc dau roi THA HAN 3 buoc con lai.
+
+    `lock_strength` (MOI, xem CANH BAO ket qua thuc te ben duoi): dinh lam toi da khi bi "khoa"
+    -- MAC DINH 1.0 (khoa CUNG hoan toan, giu nguyen hanh vi cu). Voi model qua it buoc (vd 4 buoc
+    distill), CHI 1 buoc bi khoa CUNG (lam=1.0) o t gan 1.0 (buoc dau, quyet dinh BO CUC/TEXTURE
+    TOAN CUC) da du de "cam ket cung" vung do vao 1 mau/texture co dinh -- 3 buoc con lai (du da
+    lam=0.0, khong con ep lai z_known nua) KHONG DU "ngan sach" Euler-step de model ve lai/hoa
+    tron texture do vao phong cach anh con lai (moi buoc rectified-flow o day la 1 buoc NHAY LON,
+    khong phai 1 buoc refine nho nhu diffusion nhieu buoc) -- ket qua THUC TE (server, 2026-09-07):
+    van ra mang xam co van lac tong, GIONG HET truoc khi sua tu default_lock_schedule sang ham
+    nay. Ha `lock_strength` xuong (vd 0.4-0.6) de buoc dau chi "goi y nhe" thay vi ep cung hoan
+    toan -- CHUA verify that tren GPU, can user tu do lai.
     """
     n = len(timesteps) - 1  # so buoc thuc su (Euler step), timesteps co n+1 diem
     t_prev_list = timesteps[1:]  # t_prev cua tung buoc, dung thu tu duyet trong denoise_reserve
@@ -139,11 +149,11 @@ def build_index_based_lock_schedule(
     lam_by_tprev: dict[float, float] = {}
     for i, t_prev in enumerate(t_prev_list):
         if i < lock_upto_idx:
-            lam = 1.0
+            lam = lock_strength
         elif anneal_steps >= 2 and i < anneal_upto_idx:
             span = anneal_upto_idx - lock_upto_idx  # >= 2 o day
             x = (i - lock_upto_idx + 1) / span  # (0, 1], khong bao gio dung yen o 0
-            lam = 0.5 * (1 + math.cos(math.pi * x))  # ~1.0 -> 0.0
+            lam = lock_strength * 0.5 * (1 + math.cos(math.pi * x))  # ~lock_strength -> 0.0
         else:
             lam = 0.0
         lam_by_tprev[t_prev] = lam
