@@ -556,7 +556,7 @@
       <div class="panel">
         <div class="panel-header">
           <span>📝 Thông tin Poster Khuyến Mại</span>
-          <span style="font-size: 13px; color: var(--accent-cyan);">Layout: Vòm Đỉnh (Top Dome)</span>
+          <span id="layout-indicator" style="font-size: 13px; color: var(--accent-cyan);">Layout: Vòm Đỉnh (Top Dome)</span>
         </div>
 
         <!-- 1-Click Preset Chips -->
@@ -576,8 +576,9 @@
             </div>
             <div class="form-group">
               <label class="form-label">Bố cục thị giác:</label>
-              <select id="layout" class="form-select">
+              <select id="layout" class="form-select" onchange="onLayoutChange(this.value)">
                 <option value="top_dome" selected>🏛️ Vòm Đỉnh (Top Arch Dome)</option>
+                <option value="center_hourglass">⏳ Đồng Hồ Cát (Center Hourglass)</option>
               </select>
             </div>
           </div>
@@ -674,6 +675,7 @@
     // Presets catalog
     const PRESETS = {
       beverage: {
+        layout: "top_dome",
         pre_header: "BỘ SƯU TẬP MÙA HÈ",
         headline: "TRÀ ĐÀO CAM SẢ\nTHANH MÁT TỰ NHIÊN",
         slogan: "Thưởng thức trọn vẹn từng giọt tươi mát từ thiên nhiên",
@@ -684,6 +686,7 @@
         prompt_scene: "Commercial beverage advertisement photo of a tall glass of iced peach tea with fresh sliced oranges, lemongrass stalks, floating mint leaves, crystalline water splash, sunlight studio lighting, 8k crisp details, unbranded, zero text"
       },
       headphones: {
+        layout: "top_dome",
         pre_header: "ÂM THANH ĐỈNH CAO",
         headline: "TAI NGHE KHÔNG DÂY\nHI-RES AUDIO",
         slogan: "Công nghệ chống ồn chủ động Hybrid ANC thế hệ mới",
@@ -694,6 +697,7 @@
         prompt_scene: "Commercial product photography of sleek matte black premium wireless over-ear headphones on a dark polished slate pedestal, dramatic studio rim light, moody neon blue atmospheric glow, hyper-detailed, clean backdrop, unbranded, zero text"
       },
       perfume: {
+        layout: "top_dome",
         pre_header: "QUYẾN RŨ & QUÝ PHÁI",
         headline: "HƯƠNG NƯỚC HOA PHÁP\nĐẲNG CẤP HOÀNG GIA",
         slogan: "Lưu giữ dấu ấn sang trọng suốt 24 giờ",
@@ -704,6 +708,7 @@
         prompt_scene: "Luxury French perfume glass bottle on an elegant marble pedestal, soft pastel pink silk fabric drapery, floating rose petals, soft golden morning light, high-end commercial cosmetic advertisement, unbranded, zero text"
       },
       midautumn: {
+        layout: "center_hourglass",
         pre_header: "TẾT TRÔNG TRĂNG ĐOÀN VIÊN",
         headline: "HỘP BÁNH TRUNG THU\nHOÀNG GIA THƯỢNG HẠNG",
         slogan: "Món quà trọn vẹn ân tình gửi gắm gia đình",
@@ -721,9 +726,22 @@
       mask: null
     };
 
+    function onLayoutChange(val) {
+      const ind = document.getElementById('layout-indicator');
+      if (val === 'center_hourglass') {
+        ind.textContent = "Layout: Đồng Hồ Cát (Center Hourglass)";
+      } else {
+        ind.textContent = "Layout: Vòm Đỉnh (Top Dome)";
+      }
+    }
+
     function loadPreset(key) {
       const p = PRESETS[key];
       if (!p) return;
+      const layoutVal = p.layout || 'top_dome';
+      document.getElementById('layout').value = layoutVal;
+      onLayoutChange(layoutVal);
+
       document.getElementById('pre_header').value = p.pre_header;
       document.getElementById('headline').value = p.headline;
       document.getElementById('slogan').value = p.slogan;
@@ -733,6 +751,7 @@
       document.getElementById('hotline').value = p.hotline;
       document.getElementById('prompt_scene').value = p.prompt_scene;
     }
+
 
     function selectIntent(type) {
       document.getElementById('form-section').scrollIntoView({ behavior: 'smooth' });

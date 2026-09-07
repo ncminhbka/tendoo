@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 from tendoo.layouts.base import BaseLayout
+from tendoo.layouts.center_hourglass.layout import CenterHourglassLayout
 from tendoo.layouts.top_dome.layout import TopDomeLayout
 
 
@@ -42,3 +43,4 @@ def list_layouts() -> List[Dict[str, str]]:
 
 # Auto-register canonical layouts
 register_layout(TopDomeLayout())
+register_layout(CenterHourglassLayout())

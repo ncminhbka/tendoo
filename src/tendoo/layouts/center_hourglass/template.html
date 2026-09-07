@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width={{width}}, height={{height}}, initial-scale=1.0">
+  <title>{{headline_plain}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap&subset=vietnamese" rel="stylesheet">
+  <style>
+    {{css_vars}}
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      background-color: #000;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+    }
+
+    /* Background image layer */
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    /* Upper Funnel Stream (Safe Zone: y in [0.03, 0.42]) */
+    .top-stream {
+      position: absolute;
+      top: 3.2%;
+      left: 6%;
+      right: 6%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .pre-header {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 3.5px;
+      text-transform: uppercase;
+      color: var(--accent-color);
+      margin-bottom: 5px;
+      text-shadow: var(--text-shadow);
+      display: {{pre_header_display}};
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 4px;
+      {{wrap_filter_css}}
+    }
+
+    .headline-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      max-width: 92%;
+    }
+
+    .headline-line {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: {{font_size}}px;
+      line-height: {{line_height}};
+      letter-spacing: {{letter_spacing}}px;
+      font-weight: 900;
+      text-transform: uppercase;
+      text-wrap: balance;
+      {{headline_fill_css}}
+    }
+
+    .slogan {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.35;
+      letter-spacing: 0.8px;
+      color: var(--sub-color);
+      text-shadow: var(--text-shadow);
+      margin-top: 4px;
+      margin-bottom: 10px;
+      max-width: 85%;
+      text-wrap: balance;
+      display: {{slogan_display}};
+    }
+
+    /* Promotional Offer Stream */
+    .promo-stream {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .badge-pill {
+      display: {{badge_display}};
+      align-items: center;
+      justify-content: center;
+      padding: 6px 24px;
+      border-radius: 9999px;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      box-shadow: var(--badge-shadow);
+      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border: 1px solid {{badge_border}};
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge-pill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -50%;
+      width: 200%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.25) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: skewX(-20deg);
+      pointer-events: none;
+    }
+
+    .offer-sub {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sub-color);
+      letter-spacing: 0.5px;
+      text-shadow: var(--text-shadow);
+      display: {{offer_sub_display}};
+    }
+
+    .dates-chip {
+      display: {{dates_display}};
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 9999px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--sub-color);
+      letter-spacing: 0.5px;
+      text-shadow: var(--text-shadow);
+      margin-top: 2px;
+    }
+
+    /* Minimalist Perspective Floor Footer (y in [0.78, 0.96]) */
+    .floor-footer {
+      position: absolute;
+      bottom: 2.8%;
+      left: 6%;
+      right: 6%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .floor-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      max-width: 50%;
+      text-align: left;
+    }
+
+    .floor-applicable {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--footer-text);
+      line-height: 1.35;
+      text-shadow: var(--text-shadow);
+      display: {{applicable_display}};
+    }
+
+    .floor-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+    }
+
+    .floor-brand {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--footer-text);
+      text-shadow: var(--text-shadow);
+      display: {{brand_display}};
+    }
+
+    .floor-hotline {
+      display: {{hotline_display}};
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 9999px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--footer-text);
+      text-shadow: var(--text-shadow);
+    }
+
+    {{custom_css}}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <!-- Upper Funnel Stream -->
+    <div class="top-stream">
+      <div class="pre-header">{{pre_header}}</div>
+      <div class="title-wrap">
+        <div class="headline-wrap">
+          {{headline_html}}
+        </div>
+      </div>
+      <div class="slogan">{{slogan}}</div>
+      <div class="promo-stream">
+        <div class="badge-pill">{{offer_main}}</div>
+        <div class="offer-sub">{{offer_sub}}</div>
+        <div class="dates-chip">{{dates}}</div>
+      </div>
+    </div>
+
+    <!-- Perspective Floor Footer -->
+    <div class="floor-footer">
+      <div class="floor-left">
+        <div class="floor-applicable">{{applicable}}</div>
+      </div>
+      <div class="floor-right">
+        <div class="floor-brand">{{brand}}</div>
+        <div class="floor-hotline">{{hotline}}</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
