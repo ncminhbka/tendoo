@@ -478,3 +478,121 @@ def build_product_suppression_bias(
     p0, p1 = product_txt_token_span
     bias[region_query_idx.unsqueeze(1), p0:p1] = suppress_value
     return bias
+
+
+# ==================================================================================================
+# CO CHE D (2026-09-07) -- Sequential exact-trajectory latent injection + True CFG, tren
+# flux.2-klein-base-4b (50 buoc). Them sau khi Co che A (ghi de latent tu 1 patch mau gia) va
+# Co che C (reference-conditioning mem qua denoise_cached) DEU khong cho hieu qua ro tren server
+# that (3 lan chay, 2 canh khac nhau): C bi model "lo" di vi khong co chi dan text lien he ro rang
+# den anh tham chieu (dung y user chi ra); A bi han che boi model 4-buoc khong du "duong bang" de
+# hoa tron 1 gia tri gia (khong phai noi dung THAT).
+#
+# Co che nay ke thua TRUC TIEP tu 1 file DA CO SAN, DA CHAY DUOC trong repo --
+# `scripts/probe_sequential_inpainting.py` (doc truc tiep, khong doan mu) -- von dung cho viec
+# GHEP TIEU DE+PHU DE (2 lan sinh anh rieng, moi lan giu nguyen vung da sinh truoc do), khong phai
+# cho viec "tranh vat the lon xon". Diem manh cua co che nay so voi Co che A: thay vi ep vung
+# reserve ve 1 GIA TRI GIA (mau phang), no ghi lai TOAN BO trajectory THAT tu 1 lan sinh anh
+# THAT KHAC (Pass 1 -- vd chi ve "bau troi/trang don gian"), roi o Pass 2 (sinh canh day du), buoc
+# nao cung EP vung reserve ve DUNG latent THAT cua Pass 1 tai buoc tuong ung -- vi day la noi dung
+# ĐÃ ĐUỢC MODEL TU SINH RA (khong phai gia tri ngoai lai), model o Pass 2 "thay" no nhu 1 phan tu
+# nhien cua chinh canvas dang ve, khong bi coi la "vat la".
+#
+# Model BAT BUOC la flux.2-klein-base-4b (hoac klein-9b-base) -- KHONG phai ban distill: base co
+# 50 buoc (du "duong bang" de hoa tron bien), va params.use_guidance_embed=False cho CA 2 bien the
+# 4B (xac nhan tu util.py: ca "flux.2-klein-4b" lan "flux.2-klein-base-4b" dung chung Klein4BParams)
+# nen guidance PHAI lam qua True CFG thu cong (batch doi ["", prompt], KHONG qua guidance_embed) --
+# dung Y HET pattern DA CO SAN va DA CHAY DUOC trong probe_sequential_inpainting.py (dong 173-197),
+# khong phai tu nghi ra.
+# ==================================================================================================
+
+def soften_region_mask(region_mask: Tensor, h_lat: int, w_lat: int, feather_iters: int = 3) -> Tensor:
+    """
+    Bien 1 bool mask PHANG (tu build_region_token_mask/_multi, shape (h_lat*w_lat,)) thanh 1 mask
+    MEM [0,1] CUNG SHAPE -- lam mem bien qua vai lan average-pool 3x3 lien tiep (xap xi Gaussian
+    blur, khong can dependency ngoai torch). Thay cho `compute_inpainting_mask` trong
+    `probe_sequential_inpainting.py` (o do chi la 1 dai ngang don gian, cosine ramp theo 1 truc y)
+    -- o day TONG QUAT cho BAT KY hinh dang mask nao (ke ca hop nhieu hinh chu nhat khong loi nhu
+    `title_two_line`), vi lam mem hau-ky tren chinh mask 2D thay vi tinh cong thuc rieng cho tung
+    hinh dang.
+
+    `feather_iters` cang lon, bien cang rong/mem hon -- 3 la diem khoi dau hop ly (moi lan avg_pool
+    3x3 mo rong vung anh huong 1 pixel latent moi phia, 3 lan ~ 3 pixel latent ~ 48px anh that voi
+    downsample factor 16).
+    """
+    m = region_mask.float().reshape(1, 1, h_lat, w_lat)
+    for _ in range(feather_iters):
+        m = F.avg_pool2d(F.pad(m, (1, 1, 1, 1), mode="replicate"), kernel_size=3, stride=1)
+    return m.reshape(-1).clamp(0.0, 1.0)
+
+
+def denoise_trajectory_cfg(
+    model, img: Tensor, img_ids: Tensor, txt: Tensor, txt_ids: Tensor,
+    timesteps: list[float], guidance: float,
+) -> tuple[Tensor, list[Tensor]]:
+    """
+    Euler ODE True-CFG, GHI LAI TOAN BO trajectory (1 phan tu moi buoc, CHUYEN VE CPU ngay de
+    khong don VRAM). Mirror CHINH XAC `denoise_single_slot_with_trajectory` trong
+    `probe_sequential_inpainting.py` (dong 155-202, da doc truc tiep) -- CHI khac: KHONG ghep
+    ref_tokens (khong can anh tham chieu glyph o day, chi la 2 lan sinh anh full-scene thuan tuy).
+
+    `txt`/`txt_ids` PHAI da la CFG-batch (["", prompt] -> batch=2, dung `batched_prc_txt` hoac
+    tuong duong) -- ham nay se TU DOUBLE `img`/`img_ids` de khop batch=2, KHONG double txt (txt
+    da double tu truoc, chi 1 lan encode).
+    """
+    orig_dtype = img.dtype
+    trajectory: list[Tensor] = [img.clone().cpu()]
+    for t_curr, t_prev in zip(timesteps[:-1], timesteps[1:]):
+        t_vec = torch.full((2,), t_curr, dtype=img.dtype, device=img.device)
+        img_cfg = torch.cat([img, img], dim=0)
+        img_ids_cfg = torch.cat([img_ids, img_ids], dim=0)
+        pred = model(x=img_cfg, x_ids=img_ids_cfg, timesteps=t_vec, ctx=txt, ctx_ids=txt_ids, guidance=None)
+        pred_uncond, pred_cond = pred.chunk(2)
+        v_pred = pred_uncond + guidance * (pred_cond - pred_uncond)
+        img = (img + (t_prev - t_curr) * v_pred).to(orig_dtype)
+        trajectory.append(img.clone().cpu())
+    return img, trajectory
+
+
+def denoise_trajectory_inpaint_exact(
+    model, img_init: Tensor, known_trajectory: list[Tensor], soft_mask: Tensor,
+    img_ids: Tensor, txt: Tensor, txt_ids: Tensor, timesteps: list[float], guidance: float,
+) -> Tensor:
+    """
+    Mirror CHINH XAC `denoise_flow_matching_inpaint_exact` trong `probe_sequential_inpainting.py`
+    (dong 205-281, da doc truc tiep) -- CHI khac: KHONG ghep ref_tokens, va nhan `soft_mask` da lam
+    mem san (tu `soften_region_mask`) thay vi 1 mask cosine-ramp 1-truc.
+
+    `soft_mask`: shape (L_img,), gia tri [0,1] -- 0.0 = giu Y HET latent that cua `known_trajectory`
+    (Pass 1) tai moi buoc, 1.0 = de Pass 2 (model dang chay day, dieu kien boi `txt`/`txt_ids`
+    RIENG cua Pass 2) tu quyet dinh hoan toan, gia tri trung gian = hoa tron tuyen tinh (vung bien
+    mem). `known_trajectory`: list tra ve tu `denoise_trajectory_cfg` cua Pass 1 (PHAI cung do dai
+    `timesteps`, PHAI cung h_lat/w_lat canvas).
+
+    QUAN TRONG (dung y het file goc): moi buoc EP LAI vung mask=0 ve DUNG latent that cua Pass 1
+    tai CHINH XAC buoc do (khong phai xap xi (1-t)*z+t*noise nhu Co che A) -- day la diem khac
+    biet cot loi giup tranh "o gia tao": noi dung duoc ghep vao la noi dung THAT model da tung
+    sinh ra, khong phai gia tri ngoai lai.
+    """
+    orig_dtype = img_init.dtype
+    device = img_init.device
+    mask = soft_mask.to(device=device, dtype=orig_dtype).view(1, -1, 1)  # (1, L_img, 1) de broadcast kenh
+
+    img = img_init.clone()
+    for step_idx in range(len(timesteps) - 1):
+        t_curr, t_prev = timesteps[step_idx], timesteps[step_idx + 1]
+        t_vec = torch.full((2,), t_curr, dtype=img.dtype, device=img.device)
+        img_cfg = torch.cat([img, img], dim=0)
+        img_ids_cfg = torch.cat([img_ids, img_ids], dim=0)
+        pred = model(x=img_cfg, x_ids=img_ids_cfg, timesteps=t_vec, ctx=txt, ctx_ids=txt_ids, guidance=None)
+        pred_uncond, pred_cond = pred.chunk(2)
+        v_pred = pred_uncond + guidance * (pred_cond - pred_uncond)
+
+        img_model_next = img + (t_prev - t_curr) * v_pred
+        img_known_next = known_trajectory[step_idx + 1].to(device=device, dtype=orig_dtype)
+        img = (mask * img_model_next + (1.0 - mask) * img_known_next).to(orig_dtype)
+
+    # Buoc cuoi (t=0): ep dung latent sach cuoi cung cua Pass 1 tai vung mask=0, dung y het file goc.
+    final_known = known_trajectory[-1].to(device=device, dtype=orig_dtype)
+    img = (mask * img + (1.0 - mask) * final_known).to(orig_dtype)
+    return img
