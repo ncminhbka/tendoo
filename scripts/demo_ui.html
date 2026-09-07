@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tendoo AI Studio - Commercial Poster Generation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap&subset=vietnamese" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0B0F19;
+      --card-bg: #111827;
+      --card-border: #1F293D;
+      --accent-blue: #2563EB;
+      --accent-cyan: #06B6D4;
+      --accent-amber: #F59E0B;
+      --accent-emerald: #10B981;
+      --text-main: #F9FAFB;
+      --text-muted: #9CA3AF;
+      --input-bg: #161F30;
+      --input-border: #243048;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* Header Navbar */
+    .navbar {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 16px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .logo-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2563EB 0%, #06B6D4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 20px;
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
+    }
+
+    .logo-text {
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-text span {
+      background: linear-gradient(90deg, #38BDF8, #818CF8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-size: 13px;
+      font-weight: 600;
+      color: #34D399;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    /* Section Header */
+    .section-title {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 24px;
+    }
+
+    /* 6 Suggestions Cards Grid */
+    .intent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 40px;
+    }
+
+    .intent-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .intent-card.active {
+      border-color: #38BDF8;
+      background: linear-gradient(180deg, #131E35 0%, #111827 100%);
+      box-shadow: 0 8px 24px rgba(6, 182, 212, 0.18);
+    }
+
+    .intent-card.active:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(6, 182, 212, 0.25);
+    }
+
+    .intent-card.disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .card-icon {
+      font-size: 32px;
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .card-badge {
+      align-self: flex-start;
+      margin-top: auto;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-live {
+      background: rgba(6, 182, 212, 0.2);
+      color: #38BDF8;
+      border: 1px solid rgba(6, 182, 212, 0.4);
+    }
+
+    .badge-soon {
+      background: rgba(156, 163, 175, 0.15);
+      color: #9CA3AF;
+      border: 1px solid rgba(156, 163, 175, 0.25);
+    }
+
+    /* Workspace: Form & Preview */
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 960px) {
+      .workspace { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+    }
+
+    .panel-header {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 14px;
+    }
+
+    /* Preset Chips */
+    .presets-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .preset-chip {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 9999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #E2E8F0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .preset-chip:hover {
+      border-color: #38BDF8;
+      background: #1E293B;
+      transform: translateY(-1px);
+    }
+
+    /* Form inputs */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      color: #E2E8F0;
+    }
+
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #fff;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: #38BDF8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 64px;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* Submit Button */
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #2563EB 0%, #06B6D4 100%);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+      transition: all 0.25s ease;
+      margin-top: 24px;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 26px rgba(6, 182, 212, 0.45);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+    }
+
+    /* Preview Canvas Area */
+    .preview-box {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #0D131F;
+      border: 2px dashed var(--card-border);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-box.has-image {
+      border-style: solid;
+      border-color: #243048;
+    }
+
+    .preview-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .preview-placeholder {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 24px;
+    }
+
+    .preview-placeholder .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
+
+    /* Progress Overlay */
+    .progress-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 15, 25, 0.90);
+      backdrop-filter: blur(8px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      text-align: center;
+      z-index: 20;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(56, 189, 248, 0.2);
+      border-top-color: #38BDF8;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 18px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .progress-text {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .progress-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Result Actions */
+    .result-actions {
+      display: none;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-action:hover {
+      border-color: #38BDF8;
+      background: #1E293B;
+    }
+
+    .btn-download {
+      background: #10B981;
+      border-color: #059669;
+    }
+    .btn-download:hover {
+      background: #059669;
+    }
+
+    /* Tab switcher for views */
+    .tabs-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .tab-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--card-border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: #1E293B;
+      color: #38BDF8;
+      border-color: #38BDF8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <a href="#" class="brand-logo">
+      <div class="logo-badge">T</div>
+      <div class="logo-text">TENDOO <span>AI</span></div>
+    </a>
+    <div class="status-chip">
+      <div class="status-dot"></div>
+      <span>FLUX.2 Klein 4B Online (2x A30 Ready)</span>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Section 1: Intent Selection -->
+    <h2 class="section-title">✨ Bạn muốn tạo ảnh nội dung gì?</h2>
+    <p class="section-desc">Chọn mục đích thương mại để hệ thống tự động tải định dạng bố cục và typography tối ưu.</p>
+
+    <div class="intent-grid">
+      <!-- 1. Active Intent: Promo Poster -->
+      <div class="intent-card active" onclick="selectIntent('promo')">
+        <div class="card-icon">🏷️</div>
+        <div class="card-title">Tạo Poster Khuyến Mại / Ưu Đãi</div>
+        <div class="card-desc">Thiết kế poster bán hàng, flash sale, giảm giá đa tầng với typography chuẩn nhận diện.</div>
+        <span class="card-badge badge-live">Đang hoạt động</span>
+      </div>
+
+      <!-- 2. Disabled: Product Intro -->
+      <div class="intent-card disabled" title="Tính năng đang hoàn thiện">
+        <div class="card-icon">📦</div>
+        <div class="card-title">Ảnh Giới Thiệu Sản Phẩm / Dịch Vụ</div>
+        <div class="card-desc">Tập trung làm nổi bật chi tiết chất liệu, tính năng cao cấp trên bục studio.</div>
+        <span class="card-badge badge-soon">Sắp ra mắt</span>
+      </div>
+
+      <!-- 3. Disabled: Opening Banner -->
+      <div class="intent-card disabled">
+        <div class="card-icon">🎊</div>
+        <div class="card-title">Banner Khai Trương Chi Nhánh</div>
+        <div class="card-desc">Băng rôn khánh thành, pháo hoa rực rỡ, ngày giờ và quà tặng mừng khai trương.</div>
+        <span class="card-badge badge-soon">Sắp ra mắt</span>
+      </div>
+
+      <!-- 4. Disabled: Customer Feedback -->
+      <div class="intent-card disabled">
+        <div class="card-icon">💬</div>
+        <div class="card-title">Feedback / Đánh Giá Khách Hàng</div>
+        <div class="card-desc">Trích dẫn phản hồi thực tế, 5 sao chất lượng, tăng độ uy tín thương hiệu.</div>
+        <span class="card-badge badge-soon">Sắp ra mắt</span>
+      </div>
+
+      <!-- 5. Disabled: Recruitment -->
+      <div class="intent-card disabled">
+        <div class="card-icon">👥</div>
+        <div class="card-title">Poster Tuyển Dụng Nhân Tài</div>
+        <div class="card-desc">Thông báo vị trí, mức lương hấp dẫn, văn hóa doanh nghiệp hiện đại.</div>
+        <span class="card-badge badge-soon">Sắp ra mắt</span>
+      </div>
+
+      <!-- 6. Disabled: Guides -->
+      <div class="intent-card disabled">
+        <div class="card-icon">📖</div>
+        <div class="card-title">Quy Trình & Hướng Dẫn Sử Dụng</div>
+        <div class="card-desc">Infographic các bước sử dụng sản phẩm hoặc hướng dẫn đặt mua nhanh.</div>
+        <span class="card-badge badge-soon">Sắp ra mắt</span>
+      </div>
+    </div>
+
+    <!-- Section 2: Workspace -->
+    <div class="workspace" id="form-section">
+      
+      <!-- Left Panel: Form Controls -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>📝 Thông tin Poster Khuyến Mại</span>
+          <span style="font-size: 13px; color: var(--accent-cyan);">Layout: Vòm Đỉnh (Top Dome)</span>
+        </div>
+
+        <!-- 1-Click Preset Chips -->
+        <label class="form-label">Chọn mẫu nhanh (1-Click Presets):</label>
+        <div class="presets-row">
+          <div class="preset-chip" onclick="loadPreset('beverage')">🍵 Trà Đào Cam Sả</div>
+          <div class="preset-chip" onclick="loadPreset('headphones')">🎧 Tai Nghe Hi-Res</div>
+          <div class="preset-chip" onclick="loadPreset('perfume')">🧴 Nước Hoa Pháp</div>
+          <div class="preset-chip" onclick="loadPreset('midautumn')">🥮 Bánh Trung Thu</div>
+        </div>
+
+        <form id="poster-form" onsubmit="handleGenerate(event)">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Kicker / Dòng phụ trên cùng:</label>
+              <input type="text" id="pre_header" class="form-input" placeholder="BỘ SƯU TẬP MÙA HÈ">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bố cục thị giác:</label>
+              <select id="layout" class="form-select">
+                <option value="top_dome" selected>🏛️ Vòm Đỉnh (Top Arch Dome)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tiêu đề chính (Headline):</label>
+            <textarea id="headline" class="form-textarea" placeholder="TRÀ ĐÀO CAM SẢ&#10;THANH MÁT TỰ NHIÊN" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Slogan / Lời kêu gọi phụ:</label>
+            <input type="text" id="slogan" class="form-input" placeholder="Thưởng thức trọn vẹn từng giọt tươi mát từ thiên nhiên">
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Ưu đãi nổi bật (Nút Badge Pill):</label>
+              <input type="text" id="offer_main" class="form-input" placeholder="MUA 2 TẶNG 1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Điều kiện áp dụng:</label>
+              <input type="text" id="offer_sub" class="form-input" placeholder="Áp dụng tại mọi chi nhánh trên toàn quốc">
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Tên thương hiệu:</label>
+              <input type="text" id="brand" class="form-input" placeholder="Tendoo Beverage">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hotline / Liên hệ:</label>
+              <input type="text" id="hotline" class="form-input" placeholder="1900 8888">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Mô tả bối cảnh sinh ảnh AI (Scene Prompt):</label>
+            <textarea id="prompt_scene" class="form-textarea" rows="3" placeholder="Commercial advertisement product photo of cold peach iced tea with ice cubes and fresh mint splash..." required></textarea>
+          </div>
+
+          <button type="submit" id="btn-generate" class="btn-submit">
+            <span>🚀 Tạo Poster Thương Mại Ngay (~3.5s)</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Right Panel: Live Output & Preview -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>🖼️ Kết quả Poster Hoàn Thiện</span>
+          <span id="timing-badge" style="font-size: 13px; color: #10B981; display: none;">⚡ 3.52s</span>
+        </div>
+
+        <div class="tabs-row" id="view-tabs" style="display: none;">
+          <button class="tab-btn active" onclick="switchTab('poster')">Poster Hoàn Thiện</button>
+          <button class="tab-btn" onclick="switchTab('bg')">Background Sạch (DiT)</button>
+          <button class="tab-btn" onclick="switchTab('mask')">Mặt Nạ An Toàn (Mask)</button>
+        </div>
+
+        <div class="preview-box" id="preview-container">
+          <img id="preview-image" class="preview-img" style="display: none;" alt="Rendered Poster">
+          
+          <div class="preview-placeholder" id="placeholder-box">
+            <div class="icon">🎨</div>
+            <div style="font-weight: 700; margin-bottom: 6px; color: #fff;">Chưa có ảnh nào được tạo</div>
+            <div style="font-size: 13px;">Chọn một mẫu nhanh bên trái hoặc nhập form rồi nhấn "Tạo Poster Thương Mại".</div>
+          </div>
+
+          <!-- Progress Overlay -->
+          <div class="progress-overlay" id="progress-box">
+            <div class="spinner"></div>
+            <div class="progress-text" id="progress-title">Đang khởi chạy luồng sinh ảnh...</div>
+            <div class="progress-sub" id="progress-desc">FLUX.2 Klein DiT Regional Velocity Blending</div>
+          </div>
+        </div>
+
+        <!-- Result Action Buttons -->
+        <div class="result-actions" id="result-actions">
+          <a id="btn-download" href="#" download="tendoo_poster.png" class="btn-action btn-download">
+            <span>💾 Tải ảnh Poster HD (1024x1024)</span>
+          </a>
+          <button class="btn-action" onclick="copyImageLink()">
+            <span>🔗 Copy Link Ảnh</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    // Presets catalog
+    const PRESETS = {
+      beverage: {
+        pre_header: "BỘ SƯU TẬP MÙA HÈ",
+        headline: "TRÀ ĐÀO CAM SẢ\nTHANH MÁT TỰ NHIÊN",
+        slogan: "Thưởng thức trọn vẹn từng giọt tươi mát từ thiên nhiên",
+        offer_main: "MUA 2 TẶNG 1",
+        offer_sub: "Áp dụng tại mọi chi nhánh trên toàn quốc",
+        brand: "Tendoo Beverage",
+        hotline: "1900 8888",
+        prompt_scene: "Commercial beverage advertisement photo of a tall glass of iced peach tea with fresh sliced oranges, lemongrass stalks, floating mint leaves, crystalline water splash, sunlight studio lighting, 8k crisp details, unbranded, zero text"
+      },
+      headphones: {
+        pre_header: "ÂM THANH ĐỈNH CAO",
+        headline: "TAI NGHE KHÔNG DÂY\nHI-RES AUDIO",
+        slogan: "Công nghệ chống ồn chủ động Hybrid ANC thế hệ mới",
+        offer_main: "GIẢM NGAY 30%",
+        offer_sub: "Tặng kèm bao da cao cấp trị giá 500.000đ",
+        brand: "Tendoo Audio Lab",
+        hotline: "0334 842 155",
+        prompt_scene: "Commercial product photography of sleek matte black premium wireless over-ear headphones on a dark polished slate pedestal, dramatic studio rim light, moody neon blue atmospheric glow, hyper-detailed, clean backdrop, unbranded, zero text"
+      },
+      perfume: {
+        pre_header: "QUYẾN RŨ & QUÝ PHÁI",
+        headline: "HƯƠNG NƯỚC HOA PHÁP\nĐẲNG CẤP HOÀNG GIA",
+        slogan: "Lưu giữ dấu ấn sang trọng suốt 24 giờ",
+        offer_main: "ƯU ĐÃI 25%",
+        offer_sub: "Tặng mini vial 10ml cho đơn hàng đầu tiên",
+        brand: "Tendoo Parfums",
+        hotline: "1800 6688",
+        prompt_scene: "Luxury French perfume glass bottle on an elegant marble pedestal, soft pastel pink silk fabric drapery, floating rose petals, soft golden morning light, high-end commercial cosmetic advertisement, unbranded, zero text"
+      },
+      midautumn: {
+        pre_header: "TẾT TRÔNG TRĂNG ĐOÀN VIÊN",
+        headline: "HỘP BÁNH TRUNG THU\nHOÀNG GIA THƯỢNG HẠNG",
+        slogan: "Món quà trọn vẹn ân tình gửi gắm gia đình",
+        offer_main: "CHIẾT KHẤU ĐẾN 20%",
+        offer_sub: "Tặng kèm trà sen Tây Hồ hảo hạng",
+        brand: "Tendoo Mooncake",
+        hotline: "0988 123 456",
+        prompt_scene: "Traditional Mid-Autumn festival scene with traditional wooden street stalls, glowing lanterns, golden full moon light beam shining down, wooden floorboards, festive atmosphere, unbranded, zero text"
+      }
+    };
+
+    let currentImages = {
+      poster: null,
+      bg: null,
+      mask: null
+    };
+
+    function loadPreset(key) {
+      const p = PRESETS[key];
+      if (!p) return;
+      document.getElementById('pre_header').value = p.pre_header;
+      document.getElementById('headline').value = p.headline;
+      document.getElementById('slogan').value = p.slogan;
+      document.getElementById('offer_main').value = p.offer_main;
+      document.getElementById('offer_sub').value = p.offer_sub;
+      document.getElementById('brand').value = p.brand;
+      document.getElementById('hotline').value = p.hotline;
+      document.getElementById('prompt_scene').value = p.prompt_scene;
+    }
+
+    function selectIntent(type) {
+      document.getElementById('form-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function handleGenerate(e) {
+      e.preventDefault();
+
+      const btn = document.getElementById('btn-generate');
+      const progressBox = document.getElementById('progress-box');
+      const progressTitle = document.getElementById('progress-title');
+      const progressDesc = document.getElementById('progress-desc');
+      const previewImg = document.getElementById('preview-image');
+      const placeholder = document.getElementById('placeholder-box');
+      const resultActions = document.getElementById('result-actions');
+      const viewTabs = document.getElementById('view-tabs');
+      const timingBadge = document.getElementById('timing-badge');
+
+      btn.disabled = true;
+      progressBox.style.display = 'flex';
+      progressTitle.textContent = "Đang gửi yêu cầu tới server...";
+      progressDesc.textContent = "Khởi tạo luồng inference DiT...";
+
+      const payload = {
+        layout: document.getElementById('layout').value,
+        pre_header: document.getElementById('pre_header').value,
+        headline: document.getElementById('headline').value,
+        slogan: document.getElementById('slogan').value,
+        offer_main: document.getElementById('offer_main').value,
+        offer_sub: document.getElementById('offer_sub').value,
+        brand: document.getElementById('brand').value,
+        hotline: document.getElementById('hotline').value,
+        prompt_scene: document.getElementById('prompt_scene').value
+      };
+
+      const t0 = performance.now();
+
+      try {
+        progressTitle.textContent = "Đang sinh ảnh FLUX.2 Klein DiT (8 steps)...";
+        progressDesc.textContent = "Single-pass Regional Velocity Blending trên 2x NVIDIA A30...";
+
+        const resp = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.detail || "Generation failed");
+        }
+
+        const data = await resp.json();
+        const durationSec = ((performance.now() - t0) / 1000).toFixed(2);
+
+        currentImages.poster = data.final_poster_url;
+        currentImages.bg = data.blended_bg_url;
+        currentImages.mask = data.mask_url;
+
+        previewImg.src = data.final_poster_url;
+        previewImg.style.display = 'block';
+        placeholder.style.display = 'none';
+        document.getElementById('preview-container').classList.add('has-image');
+
+        document.getElementById('btn-download').href = data.final_poster_url;
+        resultActions.style.display = 'flex';
+        viewTabs.style.display = 'flex';
+
+        timingBadge.textContent = `⚡ Hoàn thành trong ${data.latency_s || durationSec}s`;
+        timingBadge.style.display = 'inline-block';
+
+      } catch (err) {
+        alert("Lỗi khi sinh ảnh: " + err.message);
+      } finally {
+        btn.disabled = false;
+        progressBox.style.display = 'none';
+      }
+    }
+
+    function switchTab(type) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const img = document.getElementById('preview-image');
+      if (type === 'poster') img.src = currentImages.poster;
+      else if (type === 'bg') img.src = currentImages.bg;
+      else if (type === 'mask') img.src = currentImages.mask;
+    }
+
+    function copyImageLink() {
+      if (!currentImages.poster) return;
+      const fullUrl = window.location.origin + currentImages.poster;
+      navigator.clipboard.writeText(fullUrl);
+      alert("Đã copy link ảnh vào clipboard: " + fullUrl);
+    }
+
+    // Auto-load default preset on startup
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPreset('beverage');
+    });
+  </script>
+</body>
+</html>

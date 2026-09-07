@@ -58,6 +58,8 @@ __pycache__/
 .Python
 build/
 develop-eggs/
+output_*/
+output/
 dist/
 downloads/
 eggs/

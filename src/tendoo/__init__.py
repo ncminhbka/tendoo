@@ -19,6 +19,16 @@ from tendoo.typography_engine import (
     PosterTemplateEngine,
     PosterRenderer,
 )
+from tendoo.layouts import (
+    BaseLayout,
+    ColorPalette,
+    PosterContent,
+    get_layout,
+    list_layouts,
+    analyze_color_harmony,
+    balance_vietnamese_headline,
+    normalize_text,
+)
 
 __all__ = [
     "GlyphEngine",
@@ -33,4 +43,12 @@ __all__ = [
     "TypographyPromptBuilder",
     "PosterTemplateEngine",
     "PosterRenderer",
+    "BaseLayout",
+    "ColorPalette",
+    "PosterContent",
+    "get_layout",
+    "list_layouts",
+    "analyze_color_harmony",
+    "balance_vietnamese_headline",
+    "normalize_text",
 ]

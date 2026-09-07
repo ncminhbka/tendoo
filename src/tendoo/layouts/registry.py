@@ -1,0 +1,44 @@
+"""
+Layout Registry and Factory.
+
+Centralizes discovery, registration, and dispatch of all poster layout topologies.
+"""
+
+from __future__ import annotations
+
+from typing import Dict, List, Optional
+
+from tendoo.layouts.base import BaseLayout
+from tendoo.layouts.top_dome.layout import TopDomeLayout
+
+
+_REGISTRY: Dict[str, BaseLayout] = {}
+
+
+def register_layout(layout: BaseLayout) -> None:
+    """Registers a layout instance by its unique name."""
+    _REGISTRY[layout.name] = layout
+
+
+def get_layout(name: str) -> BaseLayout:
+    """Retrieves a registered layout by name. Raises KeyError if not found."""
+    if name not in _REGISTRY:
+        available = list(_REGISTRY.keys())
+        raise KeyError(f"Unknown layout '{name}'. Available layouts: {available}")
+    return _REGISTRY[name]
+
+
+def list_layouts() -> List[Dict[str, str]]:
+    """Returns metadata list of all available layouts for UI display."""
+    return [
+        {
+            "name": layout.name,
+            "display_name": layout.display_name,
+            "description": layout.description,
+        }
+        for layout in _REGISTRY.values()
+    ]
+
+
+# Auto-register canonical layouts
+register_layout(TopDomeLayout())
