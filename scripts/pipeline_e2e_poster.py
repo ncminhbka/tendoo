@@ -446,6 +446,63 @@ PRESETS: Dict[str, Dict[str, Any]] = {
             "address": "Showroom: Tendoo Craft Studio",
         },
     },
+    "french_perfume": {
+        "title_id": "Luxury French Perfume & Rose Petals (Cosmetics Rose Palette)",
+        "layout": "dome",
+        "prompt_scene": (
+            "Commercial luxury perfume product photography of an elegant crystal glass perfume bottle "
+            "standing on polished white Carrara marble, gentle water ripples with floating pink rose petals, "
+            "soft diffused morning studio lighting, high-end Parisian cosmetic aesthetic, "
+            "plain unbranded bottle, zero text, no labels, no words, no letters, no logos"
+        ),
+        "prompt_corridor": (
+            "Ethereal soft pastel blush pink and warm ivory gradient background, diffused morning sunbeams, "
+            "delicate bokeh light dust, airy and clean negative space, completely empty backdrop, "
+            "zero text, no words, no letters, no typography, no signs"
+        ),
+        "theme": "cosmetics_rose",
+        "content": {
+            "pre_header": "BỘ SƯU TẬP NƯỚC HOA PHÁP 2026",
+            "headline": "HƯƠNG SẮC NỒNG NÀN\nQUYẾN RŨ ĐẮM SAY",
+            "slogan": "Tinh hoa hoa hồng Damask & Gỗ đàn hương lưu hương 24h",
+            "offer_main": "ƯU ĐÃI 25% RA MẮT SẢN PHẨM MỚI",
+            "offer_sub": "TẶNG MINI TESTER 10ML CHO MỌI ĐƠN HÀNG",
+            "applicable": "Áp dụng khi mua trực tiếp tại showroom và website chính hãng",
+            "dates": "Thời gian: 05/10 - 20/10/2026",
+            "brand": "PARFUM DE TENDOO",
+            "hotline": "Hotline: 0334842155",
+            "web": "Web: parfum.tendoo.click",
+            "address": "Flagship Store: Quận 1, TP. Hồ Chí Minh",
+        },
+    },
+    "cyber_headphones": {
+        "title_id": "Hi-Tech Wireless ANC Headphones (Cyber Neon Palette)",
+        "layout": "hero_top",
+        "prompt_scene": (
+            "Commercial tech product photography of premium matte black over-ear wireless headphones "
+            "resting on dark brushed titanium surface, subtle neon cyan and electric violet rim lighting "
+            "tracing the sleek aerodynamic curves, futuristic audio engineering aesthetic, "
+            "unbranded audio gear, zero text, no logos, no typography, no words"
+        ),
+        "prompt_corridor": (
+            "Dark moody graphite studio background with subtle vertical neon light beam fading softly, "
+            "sleek modern negative space, completely empty copy space, zero text, no letters, no typography, no words"
+        ),
+        "theme": "cyber_tech",
+        "content": {
+            "pre_header": "CÔNG NGHỆ ÂM THANH KHÔNG DÂY THẾ HỆ MỚI",
+            "headline": "ÂM THANH ĐỈNH CAO\nCHỐNG ỒN CHỦ ĐỘNG",
+            "slogan": "Driver Titan 40mm - Pin 60 giờ - Khử ồn ANC 45dB",
+            "offer_main": "MỞ BÁN ĐỢT 1 - GIẢM NGAY 1.500.000Đ",
+            "offer_sub": "TẶNG HỘP ĐỰNG CHỐNG SỐC & DÂY BALANCED CAO CẤP",
+            "applicable": "Bảo hành chính hãng 24 tháng 1 đổi 1",
+            "dates": "Số lượng giới hạn: 200 chiếc đầu tiên",
+            "brand": "TENDOO AUDIO LAB",
+            "hotline": "Hotline: 0334842155",
+            "web": "Web: audio.tendoo.click",
+            "address": "Trung tâm trải nghiệm âm thanh toàn quốc",
+        },
+    },
 }
 
 
@@ -851,6 +908,150 @@ def build_html_template(
 </body>
 </html>"""
 
+    elif theme == "cosmetics_rose":
+        return f"""<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&family=Montserrat:wght@400;500;600;700;800&display=swap');
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{
+    width: {width}px; height: {height}px; overflow: hidden;
+    background: url('{bg_data_uri}') no-repeat center center / cover;
+    font-family: 'Montserrat', sans-serif;
+    position: relative;
+  }}
+  .cosmetics-header {{
+    position: absolute; top: 4.0%; left: 7%; right: 7%;
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center;
+  }}
+  .cosmetics-kicker {{
+    font-size: 11px; font-weight: 700; letter-spacing: 2.5px;
+    color: #8C4855; text-transform: uppercase; margin-bottom: 6px;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+  }}
+  .cosmetics-headline {{
+    font-family: 'Playfair Display', serif;
+    font-size: 34px; font-weight: 900; line-height: 1.12;
+    letter-spacing: 1px; text-transform: uppercase;
+    background: linear-gradient(180deg, #FFFFFF 0%, #F5D3CD 30%, #C77D75 70%, #7E3832 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 3px 8px rgba(0,0,0,0.35));
+  }}
+  .cosmetics-slogan {{
+    margin-top: 8px; font-size: 12.5px; font-weight: 600;
+    color: #5C222E; text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+  }}
+  .cosmetics-pill {{
+    display: inline-block; margin-top: 10px;
+    background: linear-gradient(135deg, #D45D79 0%, #B03A58 100%);
+    color: #FFF; padding: 6px 20px; border-radius: 20px;
+    font-size: 12.5px; font-weight: 800; letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(176,58,88,0.3);
+  }}
+  .cosmetics-highlight {{
+    margin-top: 6px; font-size: 11.5px; font-weight: 700;
+    color: #8C2D43; letter-spacing: 0.3px;
+  }}
+  .cosmetics-footer {{
+    position: absolute; bottom: 2.8%; left: 6%; right: 6%;
+    display: flex; justify-content: space-between; align-items: flex-end;
+    font-size: 11px; font-weight: 700; color: #4A1A22;
+    background: rgba(255,255,255,0.75); backdrop-filter: blur(8px);
+    padding: 7px 16px; border-radius: 12px; border: 1px solid rgba(212,93,121,0.2);
+  }}
+</style>
+</head>
+<body>
+  <div class="cosmetics-header">
+    <div class="cosmetics-kicker">{c.get("pre_header", "")}</div>
+    <div class="cosmetics-headline">{hl_html}</div>
+    <div class="cosmetics-slogan">{c.get("slogan", "")}</div>
+    <div><span class="cosmetics-pill">{offer_html}</span></div>
+    <div class="cosmetics-highlight">{c.get("offer_sub", "")}</div>
+  </div>
+  <div class="cosmetics-footer">
+    <div>{c.get("brand", "")}</div>
+    <div>{c.get("hotline", "")} | {c.get("web", "")}</div>
+  </div>
+</body>
+</html>"""
+
+    elif theme == "cyber_tech":
+        return f"""<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Montserrat:wght@500;700;800&display=swap');
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{
+    width: {width}px; height: {height}px; overflow: hidden;
+    background: url('{bg_data_uri}') no-repeat center center / cover;
+    font-family: 'Montserrat', sans-serif;
+    position: relative;
+  }}
+  .cyber-header {{
+    position: absolute; top: 4.5%; left: 6%; right: 6%;
+    text-align: center;
+  }}
+  .cyber-kicker {{
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    color: #00F2FE; text-transform: uppercase; margin-bottom: 6px;
+    text-shadow: 0 0 8px rgba(0,242,254,0.6);
+  }}
+  .cyber-headline {{
+    font-family: 'Orbitron', sans-serif;
+    font-size: 32px; font-weight: 900; line-height: 1.1;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    background: linear-gradient(180deg, #FFFFFF 0%, #00F2FE 50%, #4FACFE 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 16px rgba(0,242,254,0.45));
+  }}
+  .cyber-slogan {{
+    margin-top: 8px; font-size: 12px; font-weight: 600;
+    color: #D1D5DB; text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+  }}
+  .cyber-tag {{
+    display: inline-block; margin-top: 10px;
+    border: 1px solid #00F2FE; background: rgba(0, 242, 254, 0.12);
+    color: #00F2FE; font-size: 11.5px; font-weight: 800;
+    letter-spacing: 1px; padding: 5px 18px; border-radius: 20px;
+    text-transform: uppercase; box-shadow: 0 0 10px rgba(0,242,254,0.25);
+  }}
+  .cyber-highlight {{
+    margin-top: 6px; font-size: 11px; font-weight: 700;
+    color: #9CA3AF; letter-spacing: 0.5px;
+  }}
+  .cyber-footer {{
+    position: absolute; bottom: 3%; left: 6%; right: 6%;
+    display: flex; justify-content: space-between; align-items: flex-end;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 1px;
+    color: rgba(255,255,255,0.85);
+    background: rgba(10, 15, 25, 0.75); backdrop-filter: blur(8px);
+    border: 1px solid rgba(0,242,254,0.3);
+    padding: 6px 14px; border-radius: 10px;
+  }}
+</style>
+</head>
+<body>
+  <div class="cyber-header">
+    <div class="cyber-kicker">{c.get("pre_header", "")}</div>
+    <div class="cyber-headline">{hl_html}</div>
+    <div class="cyber-slogan">{c.get("slogan", "")}</div>
+    <div><span class="cyber-tag">{offer_html}</span></div>
+    <div class="cyber-highlight">{c.get("offer_sub", "")}</div>
+  </div>
+  <div class="cyber-footer">
+    <div>{c.get("brand", "")}</div>
+    <div>{c.get("hotline", "")} | {c.get("web", "")}</div>
+  </div>
+</body>
+</html>"""
+
     else:  # luxury_gold
         return f"""<!DOCTYPE html>
 <html lang="vi">
@@ -1175,18 +1376,42 @@ def run_e2e_case(
     }
 
 
+def resolve_theme(theme_arg: str, layout: str, prompt_scene: str, prompt_corridor: str) -> str:
+    """Automatically maps prompt and layout semantics to the most harmonious visual archetype."""
+    if theme_arg != "auto":
+        return theme_arg
+    combined = (prompt_scene + " " + prompt_corridor).lower()
+    if any(k in combined for k in ["perfume", "cosmetics", "skincare", "serum", "lipstick", "rose", "beauty", "nước hoa", "mỹ phẩm"]):
+        return "cosmetics_rose"
+    if any(k in combined for k in ["cyber", "tech", "headphones", "headset", "audio", "phone", "gaming", "laptop", "tai nghe", "công nghệ"]):
+        return "cyber_tech"
+    if any(k in combined for k in ["tea", "juice", "beverage", "drink", "coffee", "fruit", "lemon", "nước ép", "trà"]):
+        return "fresh_mint"
+    if any(k in combined for k in ["autumn", "moon", "lantern", "festival", "trung thu"]):
+        return "mid_autumn"
+    if any(k in combined for k in ["wallet", "leather", "watch", "gold", "luxury", "ví da", "đồng hồ"]):
+        return "luxury_gold"
+    if layout == "dome":
+        return "fresh_mint"
+    return "luxury_gold"
+
+
 def main():
     parser = argparse.ArgumentParser(description="Tendoo AI - E2E Production Commercial Poster Generator")
     parser.add_argument("--preset", type=str, default="all",
-                        choices=["all", "mid_autumn", "fresh_beverage", "luxury_wallet", "custom"],
+                        choices=["all", "mid_autumn", "fresh_beverage", "luxury_wallet", "french_perfume", "cyber_headphones", "custom"],
                         help="Which preset campaign to run.")
+    parser.add_argument("--theme", type=str, default="auto",
+                        choices=["auto", "mid_autumn", "fresh_mint", "luxury_gold", "cosmetics_rose", "cyber_tech"],
+                        help="Visual palette and typography archetype (default auto).")
     parser.add_argument("--config", type=str, default=None, help="Path to custom JSON campaign config file.")
     parser.add_argument("--ref-image", type=str, default=None, help="Optional user product image for In-Context RoPE conditioning.")
 
     # Custom campaign parameters
     parser.add_argument("--prompt-scene", type=str, default=None, help="Scene framing prompt.")
     parser.add_argument("--prompt-corridor", type=str, default=None, help="Corridor light prompt.")
-    parser.add_argument("--layout", type=str, default="hourglass", choices=["hourglass", "dome", "hero_top"], help="Mask geometry.")
+    parser.add_argument("--layout", type=str, default="hourglass", choices=["hourglass", "dome", "hero_top", "adaptive"], help="Mask geometry.")
+    parser.add_argument("--pre-header", type=str, default="", help="Pre-header kicker text.")
     parser.add_argument("--headline", type=str, default="ƯU ĐÃI ĐẶC BIỆT\\nCHÀO MỪNG QUÝ KHÁCH", help="Headline.")
     parser.add_argument("--slogan", type=str, default="Sản phẩm chính hãng chất lượng cao", help="Slogan.")
     parser.add_argument("--offer-main", type=str, default="GIẢM 20% TOÀN BỘ SẢN PHẨM", help="Primary offer.")
@@ -1266,13 +1491,15 @@ def main():
         if not args.prompt_scene or not args.prompt_corridor:
             print("[Error] Custom mode requires --prompt-scene and --prompt-corridor!")
             sys.exit(1)
+        theme_chosen = resolve_theme(args.theme, args.layout, args.prompt_scene, args.prompt_corridor)
         campaigns_to_run["custom_cli_campaign"] = {
             "title_id": "Custom Campaign",
             "layout": args.layout,
             "prompt_scene": args.prompt_scene,
             "prompt_corridor": args.prompt_corridor,
-            "theme": "mid_autumn" if args.layout == "hourglass" else ("fresh_mint" if args.layout == "dome" else "luxury_gold"),
+            "theme": theme_chosen,
             "content": {
+                "pre_header": args.pre_header,
                 "headline": normalize_text_newlines(args.headline),
                 "slogan": args.slogan,
                 "offer_main": normalize_text_newlines(args.offer_main),
