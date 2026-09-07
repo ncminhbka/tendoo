@@ -72,36 +72,124 @@ from tendoo.typography_engine import PosterRenderer
 
 
 # ==================================================================================================
-# 1. PARAMETRIC CORRIDOR MASKS (NO RECTANGULAR CUTS, PRECISION TEXT-FITTED)
+# 1. TEXT-DRIVEN PARAMETRIC CORRIDOR MASKS (DYNAMIC TEXT-ENVELOPE CO-EVOLUTION)
 # ==================================================================================================
 
-def build_hourglass_corridor_mask(h: int, w: int, delta: float = 0.04) -> np.ndarray:
+def normalize_text_newlines(text: str) -> str:
+    """Cleans up literal backslash-n ('\\n', '\\N') and standardizes on single newline character."""
+    if not text:
+        return ""
+    return text.replace("\\n", "\n").replace("\\N", "\n").replace("\r\n", "\n").strip()
+
+
+def compute_text_envelope(
+    content: Dict[str, Any],
+    width: int,
+    height: int,
+    layout_type: str = "hourglass",
+) -> Dict[str, Any]:
     """
-    Mid-Autumn Gemini-parity Hourglass Corridor:
-    - Top (y < 0.30): Wide moonlit sky (w_half 0.485 -> 0.44), core covers x in [0.055, 0.945]
-      guaranteeing clean negative space behind headline & slogan with a 15-20% buffer.
-    - Waist (0.30 <= y < 0.64): Tapers smoothly to 0.32 at center (y=0.47), allowing traditional
-      stalls and glowing lanterns to frame the sides while mooncakes sit illuminated in the center.
-    - Bottom (y >= 0.64): Expands back to 0.485, core covers x in [0.055, 0.945] for the promo footer card.
+    Analyzes text strings to dynamically compute the exact vertical & horizontal bounding envelopes.
+    Returns:
+      - y_top_max: Normalized vertical cutoff where text negative space finishes.
+      - w_half_req: Required half-width of core mask to provide 15-20% breathing space around longest string.
+      - text_zones: List of normalized bounding boxes for adaptive masking.
+    """
+    clean_hl = normalize_text_newlines(content.get("headline", ""))
+    hl_lines = [l.strip() for l in clean_hl.split("\n") if l.strip()]
+
+    if layout_type == "hourglass":
+        y_start = 0.035
+        y_span = 0.0
+        if content.get("pre_header"):
+            y_span += 22.0 / height
+        y_span += len(hl_lines) * (42.0 / height)
+        if content.get("slogan"):
+            y_span += 24.0 / height
+        if content.get("offer_main"):
+            clean_off = normalize_text_newlines(content.get("offer_main", ""))
+            off_lines = [l.strip() for l in clean_off.split("\n") if l.strip()]
+            y_span += len(off_lines) * (24.0 / height)
+        if content.get("offer_sub"):
+            y_span += 22.0 / height
+        if content.get("dates"):
+            y_span += 26.0 / height
+        if content.get("applicable"):
+            y_span += 32.0 / height
+        y_top_max = min(0.55, max(0.35, y_start + y_span + 0.04))
+    else:
+        y_start = 0.04
+        y_span = len(hl_lines) * (42.0 / height)
+        if content.get("slogan"):
+            y_span += 24.0 / height
+        if content.get("offer_main"):
+            y_span += 32.0 / height
+        if content.get("offer_sub"):
+            y_span += 24.0 / height
+        y_top_max = min(0.48, max(0.30, y_start + y_span + 0.04))
+
+    all_strings = hl_lines.copy()
+    for k in ["pre_header", "slogan", "offer_main", "offer_sub", "applicable"]:
+        val = content.get(k, "")
+        if val:
+            clean_val = normalize_text_newlines(val)
+            all_strings.extend([l.strip() for l in clean_val.split("\n") if l.strip()])
+
+    max_hl_len = max([len(s) for s in hl_lines]) if hl_lines else 15
+    hl_w_ratio = min(0.88, (max_hl_len * 24.0) / width)
+
+    promo_strings = [s for s in all_strings if s not in hl_lines]
+    max_promo_len = max([len(s) for s in promo_strings]) if promo_strings else 25
+    promo_w_ratio = min(0.88, (max_promo_len * 9.5) / width)
+
+    est_w_ratio = max(hl_w_ratio, promo_w_ratio)
+    w_half_req = min(0.485, max(0.34, (est_w_ratio / 2.0) + 0.06))
+
+    text_zones = [
+        {"y_min": 0.02, "y_max": y_top_max, "x_min": 0.5 - w_half_req, "x_max": 0.5 + w_half_req},
+    ]
+
+    return {
+        "y_top_max": round(y_top_max, 3),
+        "w_half_req": round(w_half_req, 3),
+        "text_zones": text_zones,
+    }
+
+
+def build_hourglass_corridor_mask(
+    h: int,
+    w: int,
+    y_top_max: float = 0.44,
+    w_half_top: float = 0.485,
+    delta: float = 0.04,
+) -> np.ndarray:
+    """
+    Mid-Autumn Gemini-parity Flowing Hourglass Corridor:
+    - Upper light beam (y < y_top_max): Moonlit sky (w_half = w_half_top -> 0.36), core covers text
+      stream (headline, slogan, offer badges, dates) with 15-20% buffer.
+    - Waist (y_top_max <= y < 0.75): Tapers to 0.28, framing the central golden clouds/product
+      while wooden stalls & glowing lanterns emerge naturally on the left & right eaves.
+    - Bottom floor (y >= 0.75): Perspective walkway expands back to 0.485, providing clean
+      wooden floorboards for minimalist floating footer typography (zero opaque cards).
     """
     mask = np.zeros((h, w), dtype=np.float32)
     for i in range(h):
         y = i / float(h - 1)
-        if y < 0.30:
-            t = y / 0.30
+        if y < y_top_max:
+            t = y / y_top_max
             s = t * t * (3.0 - 2.0 * t)
-            w_half = 0.485 * (1.0 - s) + 0.44 * s
-            intensity = 1.0 * (1.0 - s) + 0.95 * s
-        elif y < 0.64:
-            t = (y - 0.30) / 0.34
-            dip = 4.0 * t * (1.0 - t)  # 0 at t=0, 1.0 at midpoint (y=0.47), 0 at t=1.0
-            w_half = 0.44 * (1.0 - dip) + 0.32 * dip
-            intensity = 0.95 * (1.0 - dip) + 0.85 * dip
+            w_half = w_half_top * (1.0 - s) + 0.36 * s
+            intensity = 1.0 * (1.0 - s) + 0.92 * s
+        elif y < 0.75:
+            t = (y - y_top_max) / (0.75 - y_top_max)
+            dip = 4.0 * t * (1.0 - t)  # quadratic smooth dip
+            w_half = 0.36 * (1.0 - dip) + 0.28 * dip
+            intensity = 0.90 * (1.0 - dip) + 0.75 * dip
         else:
-            t = (y - 0.64) / 0.36
+            t = (y - 0.75) / 0.25
             s = t * t * (3.0 - 2.0 * t)
-            w_half = 0.44 * (1.0 - s) + 0.485 * s
-            intensity = 0.95 * (1.0 - s) + 1.0 * s
+            w_half = 0.36 * (1.0 - s) + 0.485 * s
+            intensity = 0.85 * (1.0 - s) + 0.98 * s
 
         for j in range(w):
             x = j / float(w - 1)
@@ -117,26 +205,33 @@ def build_hourglass_corridor_mask(h: int, w: int, delta: float = 0.04) -> np.nda
     return mask
 
 
-def build_beverage_dome_mask(h: int, w: int, delta: float = 0.04) -> np.ndarray:
+def build_beverage_dome_mask(
+    h: int,
+    w: int,
+    y_max: float = 0.42,
+    w_half_top: float = 0.49,
+    delta: float = 0.04,
+) -> np.ndarray:
     """
     Fresh Beverage Upper Daylight Dome:
-    - Top (y < 0.36): Wide sunny studio wall (w_half 0.49 -> 0.46), core covers x in [0.05, 0.95]
+    - Top (y < y_max - 0.10): Wide sunny studio wall (w_half = w_half_top -> 0.46), core covers text
       providing 100% clean background behind all headline, slogan, and offer pills.
-    - Transition (0.36 <= y < 0.46): Drops smoothly to 0.0 without any hard borders.
-    - Bottom (y >= 0.46): Strictly 0.0 -> tea glass, ice cubes, and dynamic splash spray 100% unconstrained!
+    - Transition (y_core <= y < y_max): Drops smoothly to 0.0 without any hard borders.
+    - Bottom (y >= y_max): Strictly 0.0 -> tea glass, ice cubes, and dynamic splash spray 100% unconstrained!
     """
     mask = np.zeros((h, w), dtype=np.float32)
+    y_core = max(0.20, y_max - 0.10)
     for i in range(h):
         y = i / float(h - 1)
-        if y >= 0.46:
+        if y >= y_max:
             continue
-        if y < 0.36:
-            t = y / 0.36
+        if y < y_core:
+            t = y / y_core
             s = t * t * (3.0 - 2.0 * t)
-            w_half = 0.49 * (1.0 - s) + 0.46 * s
+            w_half = w_half_top * (1.0 - s) + 0.46 * s
             intensity = 1.0
         else:
-            t = (y - 0.36) / 0.10
+            t = (y - y_core) / (y_max - y_core)
             s = t * t * (3.0 - 2.0 * t)
             w_half = 0.46 * (1.0 - s) + 0.20 * s
             intensity = 1.0 * (1.0 - s)
@@ -155,26 +250,32 @@ def build_beverage_dome_mask(h: int, w: int, delta: float = 0.04) -> np.ndarray:
     return mask
 
 
-def build_hero_top_corridor_mask(h: int, w: int, delta: float = 0.04) -> np.ndarray:
+def build_hero_top_corridor_mask(
+    h: int,
+    w: int,
+    y_max: float = 0.45,
+    w_half_top: float = 0.49,
+    delta: float = 0.04,
+) -> np.ndarray:
     """
     Luxury Hero Top Spotlight Corridor:
-    - Top (y < 0.35): Solid charcoal studio spotlight (w_half 0.49 -> 0.46), core covers x in [0.05, 0.95]
-      for metallic typography with drop shadows.
-    - Transition (0.35 <= y < 0.48): Drops smoothly to 0.0.
-    - Bottom (y >= 0.48): Strictly 0.0 -> black slate pedestal & luxury wallet 100% unconstrained.
+    - Top (y < y_max - 0.12): Solid charcoal studio spotlight (w_half = w_half_top -> 0.46), core covers text.
+    - Transition (y_core <= y < y_max): Drops smoothly to 0.0.
+    - Bottom (y >= y_max): Strictly 0.0 -> black slate pedestal & luxury product 100% unconstrained.
     """
     mask = np.zeros((h, w), dtype=np.float32)
+    y_core = max(0.20, y_max - 0.12)
     for i in range(h):
         y = i / float(h - 1)
-        if y >= 0.48:
+        if y >= y_max:
             continue
-        if y < 0.35:
-            t = y / 0.35
+        if y < y_core:
+            t = y / y_core
             s = t * t * (3.0 - 2.0 * t)
-            w_half = 0.49 * (1.0 - s) + 0.46 * s
+            w_half = w_half_top * (1.0 - s) + 0.46 * s
             intensity = 1.0
         else:
-            t = (y - 0.35) / 0.13
+            t = (y - y_core) / (y_max - y_core)
             s = t * t * (3.0 - 2.0 * t)
             w_half = 0.46 * (1.0 - s) + 0.20 * s
             intensity = 1.0 * (1.0 - s)
@@ -210,7 +311,6 @@ def build_adaptive_text_corridor_mask(
     mask = np.zeros((h, w), dtype=np.float32)
     for i in range(h):
         y = i / float(h - 1)
-        # Find if y is inside or near any text zone
         in_zone = False
         target_w_half = 0.28
         target_intensity = 0.80
@@ -227,7 +327,6 @@ def build_adaptive_text_corridor_mask(
                 break
 
         if not in_zone:
-            # Scenic breathing space
             target_w_half = 0.30
             target_intensity = 0.82
 
@@ -277,7 +376,8 @@ PRESETS: Dict[str, Dict[str, Any]] = {
         ),
         "theme": "mid_autumn",
         "content": {
-            "headline": "CHƯƠNG TRÌNH KHUYẾN MẠI\\nĐẶC BIỆT MỪNG TẾT TRUNG THU",
+            "pre_header": "CHƯƠNG TRÌNH KHUYẾN MẠI ĐẶC BIỆT",
+            "headline": "MỪNG TẾT\nTRUNG THU",
             "slogan": "ĐÓN ĐÊM RẰM ĐOÀN VIÊN, ẤM ÁP VÀ TRỌN VẸN",
             "offer_main": "GIẢM 15% CHO CÁC SẢN PHẨM QUÀ TẶNG TRUNG THU",
             "offer_sub": "FREESHIP ĐƠN TỪ 200K",
@@ -306,7 +406,7 @@ PRESETS: Dict[str, Dict[str, Any]] = {
         ),
         "theme": "fresh_mint",
         "content": {
-            "headline": "THANH MÁT TỰ NHIÊN\\nBỪNG TỈNH NĂNG LƯỢNG",
+            "headline": "THANH MÁT TỰ NHIÊN\nBỪNG TỈNH NĂNG LƯỢNG",
             "slogan": "Trà đào cam sả 100% trái cây nhiệt đới tươi sạch",
             "offer_main": "MUA 2 TẶNG 1 TOÀN MENU",
             "offer_sub": "TẶNG 01 BÌNH GIỮ NHIỆT CAO CẤP",
@@ -334,7 +434,7 @@ PRESETS: Dict[str, Dict[str, Any]] = {
         ),
         "theme": "luxury_gold",
         "content": {
-            "headline": "GỌN GÀNG LỊCH LÃM\\nĐẲNG CẤP PHÁI MẠNH",
+            "headline": "GỌN GÀNG LỊCH LÃM\nĐẲNG CẤP PHÁI MẠNH",
             "slogan": "Thiết kế gập đôi mỏng nhẹ - Da bò thật 100%",
             "offer_main": "GIẢM 30% BỘ SƯU TẬP MỚI",
             "offer_sub": "BẢO HÀNH CHÍNH HÃNG TRỌN ĐỜI",
@@ -350,28 +450,31 @@ PRESETS: Dict[str, Dict[str, Any]] = {
 
 
 # ==================================================================================================
-# 3. SINGLE-PASS REGIONAL VELOCITY BLENDING ODE LOOP
+# 3. SINGLE-PASS REGIONAL VELOCITY BLENDING ODE LOOP (WITH REFERENCE PRODUCT SUPPORT)
 # ==================================================================================================
 
 def denoise_regional_velocity_blended(
     model: Any,
-    img: torch.Tensor,             # (1, L_img, C) initial Gaussian noise at t=1.0
-    img_ids: torch.Tensor,         # (1, L_img, 4) position coordinate ids
+    img: torch.Tensor,             # (1, L_total, C) initial noise + optional ref tokens
+    img_ids: torch.Tensor,         # (1, L_total, 4) position coordinate ids
     txt_scene: torch.Tensor,       # scene prompt embeddings
     txt_scene_ids: torch.Tensor,
     txt_corridor: torch.Tensor,    # corridor prompt embeddings
     txt_corridor_ids: torch.Tensor,
-    spatial_mask: torch.Tensor,    # (1, L_img, 1) float tensor in [0, 1]
+    spatial_mask: torch.Tensor,    # (1, L_canvas, 1) float tensor in [0, 1]
     timesteps: List[float],        # ODE schedule (e.g. 8 steps)
     guidance: float = 1.5,
+    num_canvas_tokens: Optional[int] = None,
 ) -> torch.Tensor:
     """
     Co-evolves scene framing and physical negative space simultaneously from noise:
       v_blend = (1.0 - M) * v_scene + M * v_corridor
+    Supports optional In-Context Reference Product Conditioning (RoPE t=10.0).
     """
     orig_dtype = img.dtype
     device = img.device
     mask = spatial_mask.to(device=device, dtype=orig_dtype)
+    L_canvas = num_canvas_tokens if num_canvas_tokens is not None else mask.shape[1]
 
     for step_idx in range(len(timesteps) - 1):
         t_curr = timesteps[step_idx]
@@ -400,13 +503,46 @@ def denoise_regional_velocity_blended(
             guidance=guidance_vec,
         )
 
-        # Regional Flow Matching velocity blending
-        v_blend = (1.0 - mask) * pred_scene + mask * pred_corridor
+        # Regional Flow Matching velocity blending applied strictly to Canvas tokens
+        v_scene_canvas = pred_scene[:, :L_canvas, :]
+        v_corridor_canvas = pred_corridor[:, :L_canvas, :]
+        v_blend_canvas = (1.0 - mask) * v_scene_canvas + mask * v_corridor_canvas
 
-        # Euler ODE step
-        img = (img + (t_prev - t_curr) * v_blend).to(orig_dtype)
+        # Euler ODE step on canvas tokens
+        canvas_tokens = img[:, :L_canvas, :] + (t_prev - t_curr) * v_blend_canvas
+        if img.shape[1] > L_canvas:
+            img = torch.cat([canvas_tokens, img[:, L_canvas:, :]], dim=1).to(orig_dtype)
+        else:
+            img = canvas_tokens.to(orig_dtype)
 
-    return img
+    return img[:, :L_canvas, :]
+
+
+def load_and_encode_ref_image(
+    ref_image_path: Path,
+    ae: Any,
+    device: str,
+    target_dim: int = 512,
+    time_offset: float = 10.0,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Encodes user product image into VAE latent with canonical In-Context RoPE offset."""
+    pil_img = Image.open(ref_image_path).convert("RGB")
+    pil_img.thumbnail((target_dim, target_dim), Image.Resampling.LANCZOS)
+    w = max(16, (pil_img.width // 16) * 16)
+    h = max(16, (pil_img.height // 16) * 16)
+    pil_img = pil_img.resize((w, h), Image.Resampling.LANCZOS)
+
+    arr = (np.array(pil_img).astype(np.float32) / 127.5 - 1.0)
+    tensor = torch.from_numpy(arr).permute(2, 0, 1).unsqueeze(0).to(device=device, dtype=torch.bfloat16)
+
+    with torch.no_grad():
+        z_ref = ae.encode(tensor)
+
+    ref_toks, ref_ids = prc_img(z_ref[0])
+    ref_toks = ref_toks.unsqueeze(0).to(device)
+    ref_ids = ref_ids.unsqueeze(0).to(device)
+    ref_ids[:, :, 0] = time_offset  # Pretrained discrete RoPE offset (t=10.0)
+    return ref_toks, ref_ids
 
 
 # ==================================================================================================
@@ -428,9 +564,17 @@ def build_html_template(
     height: int = 1024,
 ) -> str:
     """Constructs a responsive, sub-pixel accurate HTML5/CSS3 template matching the domain aesthetic."""
-    c = case_info["content"]
+    raw_c = case_info.get("content", {})
+    c = {k: normalize_text_newlines(v) if isinstance(v, str) else v for k, v in raw_c.items()}
     theme = case_info.get("theme", "mid_autumn")
-    hl_html = "<br>".join(c["headline"].split("\n"))
+
+    clean_hl = c.get("headline", "")
+    hl_lines = [l.strip() for l in clean_hl.split("\n") if l.strip()]
+    hl_html = "<br>".join(hl_lines)
+
+    clean_offer = c.get("offer_main", "")
+    offer_lines = [l.strip() for l in clean_offer.split("\n") if l.strip()]
+    offer_html = "<br>".join(offer_lines)
 
     if theme == "mid_autumn":
         return f"""<!DOCTYPE html>
@@ -438,7 +582,7 @@ def build_html_template(
 <head>
 <meta charset="UTF-8">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Montserrat:wght@500;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Montserrat:wght@500;600;700;800;900&display=swap');
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
     width: {width}px; height: {height}px; overflow: hidden;
@@ -446,84 +590,193 @@ def build_html_template(
     font-family: 'Montserrat', sans-serif;
     position: relative;
   }}
-  /* --- TOP HEADER BAND --- */
-  .header-band {{
-    position: absolute; top: 3.5%; left: 6%; right: 6%;
-    text-align: center; color: #4A1A02;
+
+  /* Flowing Moonbeam Corridor Container */
+  .corridor-stream {{
+    position: absolute;
+    top: 3.5%;
+    left: 7%;
+    right: 7%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }}
-  .headline {{
+
+  .pre-header {{
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #4A1A02;
+    text-shadow: 0 1px 3px rgba(255, 235, 175, 0.85);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }}
+
+  .title-wrap {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+  }}
+
+  .cloud-svg {{
+    width: 44px;
+    height: 28px;
+    opacity: 0.9;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }}
+
+  .grand-title {{
     font-family: 'Playfair Display', serif;
-    font-size: 32px; font-weight: 900;
-    line-height: 1.15; letter-spacing: 0.5px;
-    background: linear-gradient(180deg, #FFF6D1 0%, #E6B84A 35%, #B37D14 70%, #6E4504 100%);
+    font-size: 38px;
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFF2B2 25%, #E5B446 55%, #A87110 80%, #683E02 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 3px 10px rgba(0,0,0,0.85));
-    text-transform: uppercase;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.65));
   }}
-  .slogan {{
+
+  .slogan-text {{
     margin-top: 8px;
-    font-size: 13px; font-weight: 700; letter-spacing: 0.8px;
-    color: #FFF2D6;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    color: #2E1002;
+    text-shadow: 0 1px 3px rgba(255, 235, 175, 0.8);
     text-transform: uppercase;
   }}
-  /* --- FOOTER & PROMO BAND --- */
-  .footer-band {{
-    position: absolute; bottom: 3.0%; left: 6%; right: 6%;
-    background: rgba(255, 248, 235, 0.94);
-    border: 1.5px solid rgba(215, 145, 45, 0.85);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border-radius: 16px;
-    padding: 11px 16px;
-    text-align: center;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+
+  /* Promotional details flowing naturally along the light corridor */
+  .promo-block {{
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
   }}
-  .offer-main {{
+
+  .offer-headline {{
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.25;
+    color: #240C01;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px rgba(255, 240, 200, 0.8);
+  }}
+
+  .freeship-badge {{
+    font-size: 15px;
+    font-weight: 900;
+    color: #1A0700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 0 1px 4px rgba(255, 240, 200, 0.85);
+  }}
+
+  .dates-pill {{
     display: inline-block;
-    background: linear-gradient(135deg, #E64A19 0%, #C2185B 100%);
-    color: #FFF;
-    font-size: 13px; font-weight: 900; letter-spacing: 0.5px;
-    padding: 6px 18px; border-radius: 20px;
-    box-shadow: 0 3px 10px rgba(194,24,91,0.35);
-    text-transform: uppercase;
+    margin-top: 2px;
+    background: rgba(168, 62, 12, 0.78);
+    border: 1px solid rgba(245, 205, 110, 0.65);
+    color: #FFF8E8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 3px 18px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   }}
-  .offer-sub {{
-    margin-top: 6px;
-    font-size: 13px; font-weight: 800;
-    color: #A32800; letter-spacing: 0.3px;
-  }}
-  .applicable {{
+
+  .applicable-note {{
     margin-top: 4px;
-    font-size: 11px; font-weight: 600;
-    color: #4A1A02; line-height: 1.35;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #2E1002;
+    line-height: 1.35;
+    text-shadow: 0 1px 2px rgba(255, 240, 200, 0.75);
+    max-width: 90%;
   }}
-  .dates {{
-    margin-top: 4px;
-    font-size: 11.5px; font-weight: 700;
-    color: #B23B00;
+
+  /* Minimalist Floor Footer (Directly on wooden boards, zero opaque cards) */
+  .floor-footer {{
+    position: absolute;
+    bottom: 3.0%;
+    left: 6%;
+    right: 6%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
   }}
-  .shop-footer {{
-    margin-top: 8px; padding-top: 8px;
-    border-top: 1px solid rgba(215, 145, 45, 0.35);
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 11px; font-weight: 700; color: #381203;
+
+  .floor-brand {{
+    font-size: 18px;
+    font-weight: 900;
+    color: #FFFFFF;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.95);
+  }}
+
+  .floor-contact {{
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #FFF6E0;
+    text-align: right;
+    line-height: 1.45;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.95);
   }}
 </style>
 </head>
 <body>
-  <div class="header-band">
-    <div class="headline">{hl_html}</div>
-    <div class="slogan">{c["slogan"]}</div>
+  <div class="corridor-stream">
+    <div class="pre-header">{c.get("pre_header", "")}</div>
+
+    <div class="title-wrap">
+      <svg class="cloud-svg" viewBox="0 0 100 60" fill="none">
+        <path d="M10 45 C 5 45, 0 40, 5 30 C 8 20, 20 18, 30 22 C 38 10, 60 10, 70 22 C 80 18, 92 24, 95 35 C 98 45, 88 50, 80 48 C 75 52, 60 55, 50 48 Z" fill="url(#goldGradL)" opacity="0.9"/>
+        <defs>
+          <linearGradient id="goldGradL" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#FFF5D6"/>
+            <stop offset="60%" stop-color="#E5B446"/>
+            <stop offset="100%" stop-color="#9E6808"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="grand-title">{hl_html}</div>
+      <svg class="cloud-svg" viewBox="0 0 100 60" fill="none" style="transform: scaleX(-1);">
+        <path d="M10 45 C 5 45, 0 40, 5 30 C 8 20, 20 18, 30 22 C 38 10, 60 10, 70 22 C 80 18, 92 24, 95 35 C 98 45, 88 50, 80 48 C 75 52, 60 55, 50 48 Z" fill="url(#goldGradR)" opacity="0.9"/>
+        <defs>
+          <linearGradient id="goldGradR" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#FFF5D6"/>
+            <stop offset="60%" stop-color="#E5B446"/>
+            <stop offset="100%" stop-color="#9E6808"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <div class="slogan-text">{c.get("slogan", "")}</div>
+
+    <div class="promo-block">
+      <div class="offer-headline">{offer_html}</div>
+      <div class="freeship-badge">{c.get("offer_sub", "")}</div>
+      <div class="dates-pill">{c.get("dates", "")}</div>
+      <div class="applicable-note">{c.get("applicable", "")}</div>
+    </div>
   </div>
-  <div class="footer-band">
-    <div><span class="offer-main">{c["offer_main"]}</span></div>
-    <div class="offer-sub">{c["offer_sub"]}</div>
-    <div class="applicable">{c["applicable"]}</div>
-    <div class="dates">{c["dates"]}</div>
-    <div class="shop-footer">
-      <div>{c["brand"]}</div>
-      <div>{c["hotline"]} | {c["web"]}</div>
+
+  <div class="floor-footer">
+    <div class="floor-brand">{c.get("brand", "")}</div>
+    <div class="floor-contact">
+      <div>{c.get("hotline", "")}</div>
+      <div>{c.get("web", "")}</div>
+      <div>{c.get("address", "")}</div>
     </div>
   </div>
 </body>
@@ -587,13 +840,13 @@ def build_html_template(
 <body>
   <div class="fresh-header">
     <div class="fresh-headline">{hl_html}</div>
-    <div class="fresh-sub">{c["slogan"]}</div>
-    <div><span class="offer-pill">{c["offer_main"]}</span></div>
-    <div class="offer-highlight">{c["offer_sub"]}</div>
+    <div class="fresh-sub">{c.get("slogan", "")}</div>
+    <div><span class="offer-pill">{offer_html}</span></div>
+    <div class="offer-highlight">{c.get("offer_sub", "")}</div>
   </div>
   <div class="beverage-footer">
-    <div>{c["brand"]}</div>
-    <div>{c["hotline"]} | {c["web"]}</div>
+    <div>{c.get("brand", "")}</div>
+    <div>{c.get("hotline", "")} | {c.get("web", "")}</div>
   </div>
 </body>
 </html>"""
@@ -658,12 +911,12 @@ def build_html_template(
 <body>
   <div class="hero-container">
     <div class="metallic-headline">{hl_html}</div>
-    <div class="subtitle-box">{c["slogan"]}</div>
-    <div><span class="badge-tag">{c["offer_main"]}</span></div>
+    <div class="subtitle-box">{c.get("slogan", "")}</div>
+    <div><span class="badge-tag">{offer_html}</span></div>
   </div>
   <div class="brand-mark">
-    <div>{c["brand"]}</div>
-    <div>{c["hotline"]} | {c["web"]}</div>
+    <div>{c.get("brand", "")}</div>
+    <div>{c.get("hotline", "")} | {c.get("web", "")}</div>
   </div>
 </body>
 </html>"""
@@ -721,6 +974,7 @@ def run_e2e_case(
     seed: int = 42,
     width: int = 576,
     height: int = 1024,
+    ref_image_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     case_dir = out_dir / case_key
     case_dir.mkdir(parents=True, exist_ok=True)
@@ -733,13 +987,28 @@ def run_e2e_case(
     w_lat = width // 16
     C = 128
 
-    # 1. Build Smooth Parametric Corridor Mask (Text-Fitted, delta=0.04)
+    # 1. Build Smooth Parametric Corridor Mask (Dynamically Text-Fitted)
     mask_type = case_info.get("layout", "hourglass")
+    envelope = compute_text_envelope(
+        content=case_info.get("content", {}),
+        width=width,
+        height=height,
+        layout_type=mask_type,
+    )
+    y_top_max = envelope["y_top_max"]
+    w_half_req = envelope["w_half_req"]
+    print(f"  [Text Envelope] Dynamic calculation: y_top_max={y_top_max:.3f}, w_half_req={w_half_req:.3f}")
+
     if mask_type == "adaptive" or "text_zones" in case_info:
-        mask_np = build_adaptive_text_corridor_mask(h_lat, w_lat, text_zones=case_info.get("text_zones"), delta=0.04)
+        mask_np = build_adaptive_text_corridor_mask(h_lat, w_lat, text_zones=envelope.get("text_zones"), delta=0.04)
+    elif mask_type == "hourglass":
+        mask_np = build_hourglass_corridor_mask(h_lat, w_lat, y_top_max=y_top_max, w_half_top=w_half_req, delta=0.04)
+    elif mask_type == "dome":
+        mask_np = build_beverage_dome_mask(h_lat, w_lat, y_max=y_top_max, w_half_top=w_half_req, delta=0.04)
+    elif mask_type == "hero_top":
+        mask_np = build_hero_top_corridor_mask(h_lat, w_lat, y_max=y_top_max, w_half_top=w_half_req, delta=0.04)
     else:
-        mask_fn = MASK_DISPATCH.get(mask_type, build_hourglass_corridor_mask)
-        mask_np = mask_fn(h_lat, w_lat, delta=0.04)
+        mask_np = build_hourglass_corridor_mask(h_lat, w_lat, y_top_max=y_top_max, w_half_top=w_half_req, delta=0.04)
     mask_tensor = torch.from_numpy(mask_np).view(1, -1, 1).to(device=device)
 
     mask_vis = Image.fromarray((mask_np * 255).astype(np.uint8)).resize((width, height), Image.Resampling.BILINEAR)
@@ -760,18 +1029,51 @@ def run_e2e_case(
         ctx_corridor = ctx_corridor.unsqueeze(0).to(device)
         ctx_corridor_ids = ctx_corridor_ids.unsqueeze(0).to(device)
 
-    # 3. Generate Raw Baseline (for direct visual comparison)
-    print(f"  ▶ Step 1: Generating Raw Baseline ({steps} steps Distill)...")
+    # 3. Handle Canvas Noise & Optional In-Context Reference Product Image (RoPE t=10.0)
     torch.manual_seed(seed)
     z_init = torch.randn(1, C, h_lat, w_lat, device=device, dtype=torch.bfloat16)
     img_tokens, img_ids = prc_img(z_init[0])
     img_tokens = img_tokens.unsqueeze(0).to(device)
     img_ids = img_ids.unsqueeze(0).to(device)
+    L_canvas = img_tokens.shape[1]
 
-    timesteps = get_schedule(num_steps=steps, image_seq_len=img_tokens.shape[1])
+    ref_target = ref_image_path or case_info.get("ref_image")
+    ref_pil = None
+    if ref_target and Path(ref_target).exists():
+        print(f"  ▶ In-Context Reference Product Image provided: {ref_target}")
+        ref_toks, ref_ids = load_and_encode_ref_image(
+            ref_image_path=Path(ref_target),
+            ae=ae,
+            device=device,
+            target_dim=512,
+            time_offset=10.0,
+        )
+        print(f"    [✓] Ref product encoded: {ref_toks.shape[1]} tokens at discrete RoPE t=10.0")
+        img_total = torch.cat([img_tokens, ref_toks], dim=1)
+        img_ids_total = torch.cat([img_ids, ref_ids], dim=1)
+        try:
+            ref_pil = Image.open(ref_target).convert("RGB")
+        except Exception:
+            pass
+    else:
+        img_total = img_tokens
+        img_ids_total = img_ids
+
+    timesteps = get_schedule(num_steps=steps, image_seq_len=img_total.shape[1])
+
+    # 4. Generate Raw Baseline (for direct visual comparison)
+    print(f"  ▶ Step 1: Generating Raw Baseline ({steps} steps Distill)...")
     with torch.no_grad():
-        out_raw = denoise_baseline(model, img_tokens.clone(), img_ids, ctx_scene, ctx_scene_ids, timesteps, guidance=guidance)
-        z_raw_dec = out_raw[0].transpose(0, 1).reshape(1, C, h_lat, w_lat).to(device=aux_device, dtype=ae_dtype)
+        out_raw = denoise_baseline(
+            model,
+            img_total.clone(),
+            img_ids_total,
+            ctx_scene,
+            ctx_scene_ids,
+            timesteps,
+            guidance=guidance,
+        )
+        z_raw_dec = out_raw[:, :L_canvas, :][0].transpose(0, 1).reshape(1, C, h_lat, w_lat).to(device=aux_device, dtype=ae_dtype)
         x_raw = ae.decode(z_raw_dec).float()
         x_raw = ((x_raw[0].clamp(-1, 1) + 1) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
         raw_pil = Image.fromarray(x_raw)
@@ -779,14 +1081,14 @@ def run_e2e_case(
     raw_pil.save(raw_path)
     print(f"    [✓] Raw baseline saved -> {raw_path.name}")
 
-    # 4. Run Single-Pass Regional Velocity Blending
+    # 5. Run Single-Pass Regional Velocity Blending
     print(f"  ▶ Step 2: Running Regional Velocity Blending ({steps} steps Distill)...")
     t0 = time.time()
     with torch.no_grad():
         out_blended = denoise_regional_velocity_blended(
             model=model,
-            img=img_tokens.clone(),
-            img_ids=img_ids,
+            img=img_total.clone(),
+            img_ids=img_ids_total,
             txt_scene=ctx_scene,
             txt_scene_ids=ctx_scene_ids,
             txt_corridor=ctx_corridor,
@@ -794,6 +1096,7 @@ def run_e2e_case(
             spatial_mask=mask_tensor,
             timesteps=timesteps,
             guidance=guidance,
+            num_canvas_tokens=L_canvas,
         )
         z_blend_dec = out_blended[0].transpose(0, 1).reshape(1, C, h_lat, w_lat).to(device=aux_device, dtype=ae_dtype)
         x_blend = ae.decode(z_blend_dec).float()
@@ -804,7 +1107,7 @@ def run_e2e_case(
     blended_pil.save(blended_path)
     print(f"    [✓] Velocity Blending completed in {dur_blend:.2f}s -> {blended_path.name}")
 
-    # 5. Build HTML & Render Final Poster
+    # 6. Build HTML & Render Final Poster
     print("  ▶ Step 3: Generating HTML template & rendering vector typography...")
     bg_data_uri = pil_to_base64_data_uri(blended_pil)
     html_str = build_html_template(bg_data_uri, case_info, width=width, height=height)
@@ -823,7 +1126,7 @@ def run_e2e_case(
         height=height,
     )
 
-    # 6. Build 4-Panel Comparison Strip
+    # 7. Build 4-Panel Comparison Strip
     w, h = raw_pil.size
     final_poster_pil = Image.open(final_poster_path).convert("RGB")
     comp = Image.new("RGB", (w * 4, h), (18, 18, 18))
@@ -878,6 +1181,7 @@ def main():
                         choices=["all", "mid_autumn", "fresh_beverage", "luxury_wallet", "custom"],
                         help="Which preset campaign to run.")
     parser.add_argument("--config", type=str, default=None, help="Path to custom JSON campaign config file.")
+    parser.add_argument("--ref-image", type=str, default=None, help="Optional user product image for In-Context RoPE conditioning.")
 
     # Custom campaign parameters
     parser.add_argument("--prompt-scene", type=str, default=None, help="Scene framing prompt.")
@@ -969,9 +1273,9 @@ def main():
             "prompt_corridor": args.prompt_corridor,
             "theme": "mid_autumn" if args.layout == "hourglass" else ("fresh_mint" if args.layout == "dome" else "luxury_gold"),
             "content": {
-                "headline": args.headline.replace("\\n", "\n"),
+                "headline": normalize_text_newlines(args.headline),
                 "slogan": args.slogan,
-                "offer_main": args.offer_main,
+                "offer_main": normalize_text_newlines(args.offer_main),
                 "offer_sub": args.offer_sub,
                 "applicable": args.applicable,
                 "dates": args.dates,
@@ -1001,6 +1305,7 @@ def main():
             seed=args.seed,
             width=args.width,
             height=args.height,
+            ref_image_path=args.ref_image,
         )
         results.append(res)
 

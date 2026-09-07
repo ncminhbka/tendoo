@@ -386,36 +386,52 @@ def render_native_poster(
     font_meta = load_bundled_font("bevietnam", size=int(width * 0.022))
 
     if theme == "mid_autumn":
-        # 1. Top Glassmorphic Card for Title & Slogan
-        card_top = [(int(width * 0.06), int(height * 0.035)), (int(width * 0.94), int(height * 0.26))]
-        draw.rounded_rectangle(card_top, radius=18, fill=(255, 248, 235, 210), outline=(215, 145, 45, 255), width=2)
+        # Flowing typography along golden moonbeam (zero bottom card)
+        clean_hl = c.get("headline", "").replace("\\n", "\n").replace("\\N", "\n").strip()
+        hl_lines = [l.strip() for l in clean_hl.split("\n") if l.strip()]
 
-        hl = c.get("headline", "")
-        # Drop shadow behind title
-        draw.text((width // 2 + 1, int(height * 0.09) + 1), hl, font=font_title, fill=(100, 40, 10, 110), anchor="mm", align="center")
-        draw.text((width // 2, int(height * 0.09)), hl, font=font_title, fill=(56, 18, 3, 255), anchor="mm", align="center")
-        draw.text((width // 2, int(height * 0.19)), c.get("slogan", ""), font=font_sub, fill=(120, 50, 15, 255), anchor="mm", align="center")
+        # Pre-header
+        draw.text((width // 2, int(height * 0.05)), "CHƯƠNG TRÌNH KHUYẾN MẠI ĐẶC BIỆT", font=font_meta, fill=(74, 26, 2, 240), anchor="mm")
 
-        # 2. Bottom Glassmorphic Card for Offer & Footer
-        card_bot = [(int(width * 0.06), int(height * 0.65)), (int(width * 0.94), int(height * 0.965))]
-        draw.rounded_rectangle(card_bot, radius=18, fill=(255, 250, 240, 225), outline=(215, 145, 45, 255), width=2)
+        # Grand Title with drop shadow
+        y_hl = int(height * 0.09)
+        for line in hl_lines:
+            draw.text((width // 2 + 1, y_hl + 2), line, font=font_title, fill=(30, 10, 2, 180), anchor="mm")
+            draw.text((width // 2, y_hl), line, font=font_title, fill=(230, 180, 70, 255), anchor="mm")
+            y_hl += int(height * 0.045)
 
-        # Pill Badge
-        badge_text = c.get("offer_main", "")
-        bbox = draw.textbbox((0, 0), badge_text, font=font_badge)
-        bw = (bbox[2] - bbox[0]) + 32
-        pill = [(width // 2 - bw // 2, int(height * 0.70) - 16), (width // 2 + bw // 2, int(height * 0.70) + 16)]
-        draw.rounded_rectangle(pill, radius=16, fill=(230, 75, 25, 255))
-        draw.text((width // 2, int(height * 0.70)), badge_text, font=font_badge, fill=(255, 255, 255), anchor="mm")
+        # Slogan
+        draw.text((width // 2, y_hl + int(height * 0.01)), c.get("slogan", "").replace("\\n", " ").strip(), font=font_sub, fill=(60, 25, 5, 240), anchor="mm")
 
-        draw.text((width // 2, int(height * 0.76)), c.get("offer_sub", ""), font=font_sub, fill=(180, 40, 10), anchor="mm")
-        draw.text((width // 2, int(height * 0.82)), c.get("applicable", ""), font=font_meta, fill=(60, 30, 10), anchor="mm")
-        draw.text((width // 2, int(height * 0.87)), c.get("dates", ""), font=font_meta, fill=(100, 50, 20), anchor="mm")
+        # Promo stream
+        y_promo = y_hl + int(height * 0.055)
+        clean_offer = c.get("offer_main", "").replace("\\n", "\n").replace("\\N", "\n").strip()
+        for off_l in [l.strip() for l in clean_offer.split("\n") if l.strip()]:
+            draw.text((width // 2, y_promo), off_l, font=font_badge, fill=(40, 15, 2, 240), anchor="mm")
+            y_promo += int(height * 0.028)
 
-        # Divider line
-        draw.line([(int(width * 0.09), int(height * 0.91)), (int(width * 0.91), int(height * 0.91))], fill=(210, 160, 100, 150), width=1)
-        draw.text((int(width * 0.09), int(height * 0.94)), f"{c.get('brand', '')} | {c.get('hotline', '')}", font=font_meta, fill=(50, 25, 10), anchor="lm")
-        draw.text((int(width * 0.91), int(height * 0.94)), c.get("web", ""), font=font_meta, fill=(50, 25, 10), anchor="rm")
+        draw.text((width // 2, y_promo), c.get("offer_sub", ""), font=font_sub, fill=(25, 10, 2, 255), anchor="mm")
+        y_promo += int(height * 0.032)
+
+        # Dates pill
+        dates_txt = c.get("dates", "")
+        bbox = draw.textbbox((0, 0), dates_txt, font=font_meta)
+        bw = (bbox[2] - bbox[0]) + 28
+        pill = [(width // 2 - bw // 2, y_promo - 12), (width // 2 + bw // 2, y_promo + 12)]
+        draw.rounded_rectangle(pill, radius=12, fill=(168, 62, 12, 200), outline=(245, 205, 110, 180), width=1)
+        draw.text((width // 2, y_promo), dates_txt, font=font_meta, fill=(255, 248, 235), anchor="mm")
+        y_promo += int(height * 0.032)
+
+        draw.text((width // 2, y_promo), c.get("applicable", ""), font=font_meta, fill=(50, 20, 5, 230), anchor="mm")
+
+        # Minimalist floating footer directly on wooden boards
+        y_foot = int(height * 0.95)
+        draw.text((int(width * 0.08) + 1, y_foot + 1), c.get("brand", "Tendoo Shop"), font=font_sub, fill=(0, 0, 0, 220), anchor="lm")
+        draw.text((int(width * 0.08), y_foot), c.get("brand", "Tendoo Shop"), font=font_sub, fill=(255, 255, 255, 255), anchor="lm")
+
+        contact_txt = f"{c.get('hotline', '')} | {c.get('web', '')}"
+        draw.text((int(width * 0.92) + 1, y_foot + 1), contact_txt, font=font_meta, fill=(0, 0, 0, 220), anchor="rm")
+        draw.text((int(width * 0.92), y_foot), contact_txt, font=font_meta, fill=(255, 248, 235, 240), anchor="rm")
 
     elif theme == "fresh_mint":
         # Fresh Beverage: Upper clean card, leaving whole lower canvas open for glass & splash!
