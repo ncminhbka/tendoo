@@ -2154,15 +2154,30 @@ class PosterRenderer:
         out_file.parent.mkdir(parents=True, exist_ok=True)
 
         async with async_playwright() as p:
-            browser = await p.chromium.launch(
-                headless=True,
-                args=[
-                    "--no-sandbox",
-                    "--disable-setuid-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-gpu",
-                ],
+            launch_args = [
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+            ]
+            launch_kwargs: Dict[str, Any] = {
+                "headless": True,
+                "args": launch_args,
+            }
+
+            import shutil
+            sys_chrome = (
+                os.environ.get("PLAYWRIGHT_CHROME_PATH")
+                or shutil.which("chromium-browser")
+                or shutil.which("chromium")
+                or shutil.which("google-chrome")
+                or shutil.which("google-chrome-stable")
             )
+            if sys_chrome:
+                logger.info(f"[PosterRenderer] Found system browser at: {sys_chrome}")
+                launch_kwargs["executable_path"] = sys_chrome
+
+            browser = await p.chromium.launch(**launch_kwargs)
             context = await browser.new_context(
                 viewport={"width": width, "height": height},
                 device_scale_factor=device_scale_factor,
