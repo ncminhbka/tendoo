@@ -37,7 +37,7 @@ from PIL import Image
 import torch
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -206,6 +206,12 @@ async def serve_ui():
     if not UI_HTML_PATH.exists():
         raise HTTPException(status_code=404, detail="demo_ui.html not found")
     return HTMLResponse(content=UI_HTML_PATH.read_text(encoding="utf-8"))
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Silences browser favicon 404 probes."""
+    return Response(content=b"", media_type="image/x-icon")
 
 
 @app.get("/api/health")
