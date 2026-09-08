@@ -44,23 +44,6 @@
       z-index: 1;
     }
 
-    /* Ambient Dark Base Gradient Overlay (Enhances contrast over lower 38%) */
-    .platform-gradient-shim {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 44%;
-      background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0) 0%,
-        rgba(0, 0, 0, 0.40) 30%,
-        rgba(0, 0, 0, 0.78) 75%,
-        rgba(0, 0, 0, 0.94) 100%
-      );
-      pointer-events: none;
-      z-index: 2;
-    }
 
     /* Top Floating Category Tag / Mini Header */
     .top-floating-bar {
@@ -100,8 +83,8 @@
       font-weight: 900;
       letter-spacing: 2.2px;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.95);
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+      color: var(--headline-color);
+      text-shadow: var(--text-shadow);
     }
 
     /* Bottom Platform Typography Deck (Safe Zone: y in [0.60, 0.97]) */
@@ -171,8 +154,8 @@
       align-items: center;
       padding: 14px 24px;
       border-radius: 16px;
-      background: rgba(13, 17, 26, 0.80);
-      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: var(--footer-bg);
+      border: 1px solid var(--glass-border);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
@@ -232,7 +215,7 @@
     .offer-sub {
       font-size: 17px;
       font-weight: 700;
-      color: #fff;
+      color: var(--sub-color);
       letter-spacing: 0.5px;
       text-shadow: var(--text-shadow);
       display: {{offer_sub_display}};
@@ -280,26 +263,29 @@
     .address-text {
       font-size: 14.5px;
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.78);
+      color: var(--footer-text);
       max-width: 320px;
       line-height: 1.35;
+      text-shadow: var(--text-shadow);
       display: {{address_display}};
     }
 
     .website-text {
       font-size: 13.5px;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.80);
+      color: var(--sub-color);
       letter-spacing: 0.5px;
+      text-shadow: var(--text-shadow);
       display: {{website_display}};
     }
 
     .applicable-text {
       font-size: 13px;
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.65);
+      color: var(--footer-text);
       max-width: 340px;
       line-height: 1.35;
+      text-shadow: var(--text-shadow);
       display: {{applicable_display}};
     }
 
@@ -361,7 +347,7 @@
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        border-top: 1px solid rgba(255, 255, 255, 0.10);
+        border-top: 1px solid var(--glass-border);
         padding-top: 8px;
       }
       .contact-block {
@@ -392,7 +378,6 @@
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
-    <div class="platform-gradient-shim"></div>
 
     <!-- Top Floating Ambient Bar -->
     <div class="top-floating-bar">

@@ -202,9 +202,11 @@ class BaseLayout(ABC):
         self,
         content: PosterContent,
         palette: ColorPalette,
-        bg_data_uri: str,
-        width: int,
-        height: int,
+        bg_data_uri: str = "",
+        width: int = 1024,
+        height: int = 1024,
+        headline_effect: Optional[str] = None,
+        **kwargs,
     ) -> str:
         """Renders complete HTML5/CSS3 document for Playwright rendering."""
         pass

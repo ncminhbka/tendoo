@@ -449,9 +449,9 @@ def get_component_css() -> str:
       align-items: center;
       padding: 6px 18px;
       border-radius: 9999px;
-      background: rgba(16, 185, 129, 0.22);
-      border: 1px solid rgba(16, 185, 129, 0.45);
-      color: #34D399;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--accent-color);
       font-size: 14.5px;
       font-weight: 800;
       letter-spacing: 0.6px;
@@ -511,7 +511,7 @@ def get_component_css() -> str:
     .feedback-target-tag {
       font-size: 13px;
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.75);
+      color: var(--sub-color);
       letter-spacing: 0.4px;
       text-shadow: var(--text-shadow);
     }

@@ -105,11 +105,19 @@ class SplitColumnLayout(BaseLayout):
         self,
         content: PosterContent,
         palette: ColorPalette,
-        bg_data_uri: str,
-        width: int,
-        height: int,
+        bg_data_uri: str = "",
+        width: int = 1024,
+        height: int = 1024,
+        headline_effect: Optional[str] = None,
+        **kwargs,
     ) -> str:
         """Assembles and returns the full HTML document for Playwright rendering."""
+        if isinstance(bg_data_uri, int):
+            actual_width = bg_data_uri
+            actual_height = width
+            actual_bg_data_uri = height if isinstance(height, str) else kwargs.get("bg_data_uri", "")
+            width, height, bg_data_uri = actual_width, actual_height, actual_bg_data_uri
+
         # 1. Headline balancing & font sizing ladder (tuned for narrower column width: max_one_line_chars=14)
         raw_hl = content.headline
         hl_lines, metrics = balance_vietnamese_headline(raw_hl, max_one_line_chars=14)
@@ -125,8 +133,9 @@ class SplitColumnLayout(BaseLayout):
             headline_plain = "Poster"
 
         # Headline visual styling & effects (Embossed, Shadow, LED, Neon, Auto)
+        effect_to_use = headline_effect or content.text_effect or "auto"
         _, headline_fill_css, wrap_filter_css = resolve_headline_effect(
-            effect=content.text_effect,
+            effect=effect_to_use,
             headline_text=raw_hl,
             category=content.category,
             layout_name=self.name,

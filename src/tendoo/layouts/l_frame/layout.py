@@ -117,14 +117,20 @@ class LFrameLayout(BaseLayout):
         self,
         content: PosterContent,
         palette: ColorPalette,
-        width: int,
-        height: int,
-        bg_data_uri: str,
-        headline_effect: str = "3d_gold",
+        bg_data_uri: str = "",
+        width: int = 1024,
+        height: int = 1024,
+        headline_effect: Optional[str] = None,
+        **kwargs,
     ) -> str:
         """
         Renders HTML for the L-Frame Corner layout.
         """
+        if isinstance(bg_data_uri, int):
+            actual_width = bg_data_uri
+            actual_height = width
+            actual_bg_data_uri = height if isinstance(height, str) else kwargs.get("bg_data_uri", "")
+            width, height, bg_data_uri = actual_width, actual_height, actual_bg_data_uri
         headline_plain = normalize_text(content.headline or "")
         lines, metrics = balance_vietnamese_headline(headline_plain, max_one_line_chars=18)
 

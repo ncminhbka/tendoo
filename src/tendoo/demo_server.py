@@ -759,6 +759,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                     bg_data_uri=bg_data_uri,
                     width=w,
                     height=h,
+                    headline_effect=req.text_effect,
                 )
                 html_file = case_dir / f"03_poster_{img_idx}.html"
                 html_file.write_text(html_str, encoding="utf-8")

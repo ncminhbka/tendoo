@@ -346,20 +346,35 @@ def resolve_headline_effect(
 
     elif clean_effect == "led":
         # 2. Đèn LED Backlit (Reverse Channel Letters): Mặt chữ sáng rõ nét, ánh sáng hắt lưng (halo-lit) và bóng đổ tách biệt
-        fill_css = (
-            f"color: #FFFFFF; "
-            f"text-shadow: 0 0 1px #FFFFFF, 0 0 8px {accent_color}, 0 0 20px {accent_color}, 0 4px 14px rgba(0, 0, 0, 0.95);"
-        )
-        filter_css = "filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.75));"
+        if palette_is_dark:
+            fill_css = (
+                f"color: #FFFFFF; "
+                f"text-shadow: 0 0 1px #FFFFFF, 0 0 8px {accent_color}, 0 0 20px {accent_color}, 0 4px 14px rgba(0, 0, 0, 0.95);"
+            )
+            filter_css = "filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.75));"
+        else:
+            fill_css = (
+                f"color: {headline_color or '#0F172A'}; "
+                f"text-shadow: 0 0 8px {accent_color}, 0 0 18px {accent_color}, 0 2px 4px rgba(0, 0, 0, 0.15);"
+            )
+            filter_css = "filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.20));"
 
     elif clean_effect == "neon":
-        # 3. Phát quang Neon ống thủy tinh: Lõi trắng sáng, viền neon rực rỡ và khoảng cách chữ thoáng (không bị dính nét)
-        fill_css = (
-            f"color: #FFFFFF; "
-            f"letter-spacing: 0.03em; "
-            f"text-shadow: 0 0 2px #FFFFFF, 0 0 7px {accent_color}, 0 0 18px {accent_color}, 0 0 36px {accent_color}, 0 2px 10px rgba(0, 0, 0, 0.90);"
-        )
-        filter_css = "filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.50));"
+        # 3. Phát quang Neon ống thủy tinh: Lõi sáng, viền neon rực rỡ và khoảng cách chữ thoáng
+        if palette_is_dark:
+            fill_css = (
+                f"color: #FFFFFF; "
+                f"letter-spacing: 0.03em; "
+                f"text-shadow: 0 0 2px #FFFFFF, 0 0 7px {accent_color}, 0 0 18px {accent_color}, 0 0 36px {accent_color}, 0 2px 10px rgba(0, 0, 0, 0.90);"
+            )
+            filter_css = "filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.50));"
+        else:
+            fill_css = (
+                f"color: {accent_color}; "
+                f"letter-spacing: 0.03em; "
+                f"text-shadow: 0 0 2px {accent_color}, 0 0 8px {accent_color}, 0 2px 6px rgba(0, 0, 0, 0.18);"
+            )
+            filter_css = "filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));"
 
     elif clean_effect == "chrome":
         # 4. Chrome Bạch Kim Tráng Gương (Liquid Chrome / Cyber Horizon)

@@ -44,23 +44,6 @@
       z-index: 1;
     }
 
-    /* Ambient Perspective Floor Shim (Enhances contrast over lower funnel) */
-    .floor-ambient-shim {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 38%;
-      background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0) 0%,
-        rgba(0, 0, 0, 0.45) 35%,
-        rgba(0, 0, 0, 0.82) 75%,
-        rgba(0, 0, 0, 0.94) 100%
-      );
-      pointer-events: none;
-      z-index: 2;
-    }
 
     /* ==========================================================================
        1. UPPER FUNNEL STREAM (Safe Zone: y in [0.03, 0.38])
@@ -199,7 +182,7 @@
     .offer-sub {
       font-size: 17.5px;
       font-weight: 700;
-      color: #fff;
+      color: var(--sub-color);
       letter-spacing: 0.5px;
       text-shadow: var(--text-shadow);
       display: {{offer_sub_display}};
@@ -232,8 +215,8 @@
       width: 100%;
       padding: 12px 18px;
       border-radius: 12px;
-      background: rgba(10, 10, 16, 0.40);
-      border-top: 1px solid rgba(255, 255, 255, 0.14);
+      background: var(--footer-bg);
+      border-top: 1px solid var(--glass-border);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.40);
@@ -261,7 +244,7 @@
     .floor-address {
       font-size: 14.5px;
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.78);
+      color: var(--footer-text);
       line-height: 1.35;
       text-shadow: var(--text-shadow);
       display: {{address_display}};
@@ -270,8 +253,9 @@
     .floor-applicable {
       font-size: 13px;
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.65);
+      color: var(--footer-text);
       line-height: 1.35;
+      text-shadow: var(--text-shadow);
       display: {{applicable_display}};
     }
 
@@ -309,8 +293,9 @@
     .floor-website {
       font-size: 13.5px;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.80);
+      color: var(--sub-color);
       letter-spacing: 0.5px;
+      text-shadow: var(--text-shadow);
       display: {{website_display}};
     }
 
@@ -403,7 +388,6 @@
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
-    <div class="floor-ambient-shim"></div>
 
     <!-- 1. Upper Funnel Stream (Headline & Hook) -->
     <div class="top-stream">

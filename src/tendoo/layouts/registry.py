@@ -25,8 +25,10 @@ def register_layout(layout: BaseLayout) -> None:
     _REGISTRY[layout.name] = layout
 
 
-def get_layout(name: str) -> BaseLayout:
-    """Retrieves a registered layout by name. Raises KeyError if not found."""
+def get_layout(name: str | dict) -> BaseLayout:
+    """Retrieves a registered layout by name (or metadata dict). Raises KeyError if not found."""
+    if isinstance(name, dict) and "name" in name:
+        name = name["name"]
     if name not in _REGISTRY:
         available = list(_REGISTRY.keys())
         raise KeyError(f"Unknown layout '{name}'. Available layouts: {available}")
