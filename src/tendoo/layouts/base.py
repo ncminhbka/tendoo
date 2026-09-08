@@ -113,6 +113,7 @@ class PosterContent:
     qr_data_uri: str = ""
     category: str = "promo"
     text_effect: str = "auto"
+    font_family: str = "auto"
     custom_css: str = ""
 
     # Category: Product Intro (Giới thiệu sản phẩm)
@@ -160,6 +161,7 @@ class PosterContent:
             "qr_data_uri": self.qr_data_uri,
             "category": self.category,
             "text_effect": self.text_effect,
+            "font_family": self.font_family,
             "custom_css": self.custom_css,
             "price": self.price,
             "product_name": self.product_name,

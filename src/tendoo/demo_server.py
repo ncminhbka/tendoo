@@ -223,6 +223,7 @@ class GenerateRequest(BaseModel):
     layout: str = "top_dome"
     style_hint: str = "daylight"
     text_effect: str = "auto"
+    font_family: str = "auto"
     aspect_ratio: str = "1:1"
     num_images: int = 1
     seed: int = 42
@@ -244,6 +245,16 @@ async def serve_ui():
 async def favicon():
     """Silences browser favicon 404 probes."""
     return Response(content=b"", media_type="image/x-icon")
+
+
+@app.get("/api/fonts")
+async def get_fonts():
+    """Returns all 19 curated Vietnamese typography fonts grouped by aesthetic archetype."""
+    from tendoo.layouts.font_engine import list_font_options
+    return {
+        "status": "success",
+        "groups": list_font_options(),
+    }
 
 
 @app.get("/api/health")
@@ -535,6 +546,7 @@ def build_poster_content(
         applicable=req.applied_product or req.applicable or "",
         category=cat,
         text_effect=req.text_effect,
+        font_family=req.font_family,
         # Product intro
         price=req.price,
         product_name=req.product_name,
@@ -706,6 +718,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                 bg_data_uri=bg_data_uri,
                 width=w,
                 height=h,
+                style_hint=style_hint,
             )
             html_file = case_dir / f"03_poster_{img_idx}.html"
             html_file.write_text(html_str, encoding="utf-8")
@@ -840,6 +853,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                     width=w,
                     height=h,
                     headline_effect=req.text_effect,
+                    style_hint=style_hint,
                 )
                 html_file = case_dir / f"03_poster_{img_idx}.html"
                 html_file.write_text(html_str, encoding="utf-8")

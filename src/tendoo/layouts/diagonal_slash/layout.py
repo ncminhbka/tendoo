@@ -19,6 +19,7 @@ import numpy as np
 from tendoo.layouts.base import BaseLayout, ColorPalette, PosterContent
 from tendoo.layouts.component_engine import get_component_css, render_category_body
 from tendoo.layouts.diagonal_slash.mask import generate_diagonal_slash_mask
+from tendoo.layouts.font_engine import resolve_font
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
 
 
@@ -166,6 +167,15 @@ class DiagonalSlashLayout(BaseLayout):
             headline_color=palette.headline_color,
         )
 
+        # Font resolution
+        font_key = getattr(content, "font_family", "auto")
+        _, font_face_css, headline_font_css = resolve_font(
+            font_key=font_key,
+            category=content.category,
+            style_hint=kwargs.get("style_hint", ""),
+            text_content=headline_plain,
+        )
+
         # Normalization
         pre_header = normalize_text(content.pre_header)
         slogan = normalize_text(content.slogan)
@@ -196,6 +206,8 @@ class DiagonalSlashLayout(BaseLayout):
             "{{height}}": str(height),
             "{{headline_plain}}": html.escape(headline_plain),
             "{{bg_data_uri}}": bg_data_uri,
+            "{{font_face_css}}": font_face_css,
+            "{{headline_font_css}}": headline_font_css,
             "{{css_vars}}": palette.to_css_vars(),
             "{{component_css}}": component_css,
             "{{headline_font_size}}": str(headline_font_size),

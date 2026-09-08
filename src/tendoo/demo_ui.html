@@ -1268,8 +1268,52 @@
               </div>
             </div>
 
-            <!-- Row: Text Effect & Aspect Ratio -->
+            <!-- Row 2: Headline Font & Text Effect -->
             <div class="form-row-2">
+              <!-- Headline Font Family -->
+              <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <label class="form-label" style="margin-bottom: 0;">Phông chữ tiêu đề (Headline Font):</label>
+                  <span id="font-smart-hint" style="display: none; font-size: 11px; color: #38BDF8; cursor: pointer; background: rgba(56, 189, 248, 0.12); padding: 2px 8px; border-radius: 9999px; border: 1px solid rgba(56, 189, 248, 0.35); transition: all 0.2s ease;" title="Bấm để áp dụng gợi ý này">
+                    <span id="font-hint-text">Gợi ý: Be Vietnam Pro</span>
+                  </span>
+                </div>
+                <select id="sel-font-family" class="form-select">
+                  <option value="auto" selected>⚡ Tự động tối ưu theo ngành hàng (Smart Auto)</option>
+                  <optgroup label="Hiện đại & Chuẩn mực (Modern Clean)">
+                    <option value="bevietnam">Be Vietnam Pro (Hiện đại / Siêu nét)</option>
+                    <option value="gotham">SVN-Gotham Ultra (Quyền lực / Doanh nghiệp)</option>
+                    <option value="harabaras">SVN-Harabaras (Geometric / Thân thiện)</option>
+                  </optgroup>
+                  <optgroup label="Mạnh mẽ & Flash Sale (Impact & Sport)">
+                    <option value="anton">Anton (Cô đọng / Giảm giá sốc)</option>
+                    <option value="days">SVN-Days (Tương lai / Thể thao / Tech)</option>
+                    <option value="hemihead">SVN-Hemi Head (Tốc độ / Đua xe / Đậm nét)</option>
+                    <option value="lolapeluza">SVN-Lolapeluza (Siêu dày / Đại tiệc Sale)</option>
+                    <option value="oswald">Oswald (Thanh mảnh / Gothic / Specs)</option>
+                  </optgroup>
+                  <optgroup label="Sang trọng & Thẩm mỹ (Luxury & Serif)">
+                    <option value="playfair">Playfair Display (Quý phái / Editorial Serif)</option>
+                    <option value="dancing">Dancing Script (Cursive / Spa & Beauty)</option>
+                    <option value="clementine">SVN-Clementine (Calligraphy / Tiệc cưới)</option>
+                  </optgroup>
+                  <optgroup label="F&B, Cafe & Bánh kẹo (Playful & Food)">
+                    <option value="pacifico">Pacifico (Cọ vẽ Retro / Cafe & Đồ uống)</option>
+                    <option value="cookies">SVN-Cookies (Bánh ngọt / Trà sữa / Kem)</option>
+                    <option value="gretoon">SVN-Gretoon (Pop-Art 3D / Đồ ăn vặt)</option>
+                    <option value="grocery">SVN-Grocery (Bảng phấn Vintage / Thực phẩm sạch)</option>
+                  </optgroup>
+                  <optgroup label="Đường phố & Thể thao (Street Art & Action)">
+                    <option value="blowbrush">SVN-Blow Brush (Marker cọ khô / Streetwear)</option>
+                    <option value="sedgwick">Sedgwick Ave (Graffiti / Văn hóa đường phố)</option>
+                    <option value="guerrilla">SVN-Guerrilla (Stencil / Quân đội / Underground)</option>
+                  </optgroup>
+                  <optgroup label="Lễ hội & Tết (Festive & Celebration)">
+                    <option value="holidays">SVN-Holidays (Lễ hội / Tết / Party)</option>
+                  </optgroup>
+                </select>
+              </div>
+
               <!-- Text Effect -->
               <div class="form-group">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -1290,6 +1334,10 @@
                   <option value="outline">Viền rỗng thể thao hiện đại (Ghost Outline)</option>
                 </select>
               </div>
+            </div>
+
+            <!-- Row 3: Aspect Ratio & Number of Images -->
+            <div class="form-row-2">
               <!-- Aspect Ratio -->
               <div class="form-group">
                 <label class="form-label">Tỷ lệ ảnh đầu ra:</label>
@@ -1995,6 +2043,93 @@
       }
 
       updateTextEffectSuggestion();
+      updateFontSuggestion();
+    }
+
+    // Font display names, mirrors FONT_CATALOG['display_name'] in src/tendoo/layouts/font_engine.py
+    const FONT_NAMES = {
+      bevietnam: 'Be Vietnam Pro',
+      gotham: 'SVN-Gotham Ultra',
+      harabaras: 'SVN-Harabaras',
+      anton: 'Anton',
+      days: 'SVN-Days',
+      hemihead: 'SVN-Hemi Head',
+      lolapeluza: 'SVN-Lolapeluza',
+      oswald: 'Oswald',
+      playfair: 'Playfair Display',
+      dancing: 'Dancing Script',
+      clementine: 'SVN-Clementine',
+      pacifico: 'Pacifico',
+      cookies: 'SVN-Cookies',
+      gretoon: 'SVN-Gretoon',
+      grocery: 'SVN-Grocery Rounded',
+      blowbrush: 'SVN-Blow Brush',
+      sedgwick: 'Sedgwick Ave Display',
+      guerrilla: 'SVN-Guerrilla',
+      holidays: 'SVN-Holidays',
+    };
+
+    // Mirrors the recommendation heuristic in src/tendoo/layouts/font_engine.py::recommend_font()
+    // Client-side preview only — the backend re-resolves "auto" independently and is the source of truth.
+    function suggestFontKey(category, styleHint, text) {
+      const hint = (styleHint || '').toLowerCase();
+      const txt = (text || '').toLowerCase();
+
+      if (/sport|speed|cyber|racing|gaming/.test(hint)) return 'days';
+      if (/luxury|gold|champagne|silk/.test(hint)) return 'playfair';
+      if (/festive|moon|tet|xuan|party/.test(hint)) return 'holidays';
+      if (/asphalt|rock|stone|dark/.test(hint)) return 'anton';
+
+      if (/cafe|cà phê|trà sữa|nước ép|sinh tố|bistro|ẩm thực|summer|mùa hè/.test(txt)) return 'pacifico';
+      if (/bánh|kem|bakery|sweet|ngọt|trẻ em|đồ chơi/.test(txt)) return 'cookies';
+      if (/spa|thẩm mỹ|massage|nước hoa|son|mỹ phẩm/.test(txt)) return (/spa|organic/.test(txt)) ? 'dancing' : 'playfair';
+      if (/tết|giáng sinh|chúc mừng|tri ân|gala/.test(txt)) return 'holidays';
+      if (/streetwear|sneaker|hiphop|skateboard|giày/.test(txt)) return 'blowbrush';
+
+      switch (category) {
+        case 'promo': return 'anton';
+        case 'opening': return 'pacifico';
+        case 'feedback': return 'playfair';
+        case 'recruitment': return 'gotham';
+        case 'product_intro': return (/sport|tech/.test(hint)) ? 'days' : 'bevietnam';
+        case 'guide': return 'bevietnam';
+        default: return 'bevietnam';
+      }
+    }
+
+    function updateFontSuggestion() {
+      const title = document.getElementById('inp-title')?.value || '';
+      const hintElem = document.getElementById('font-smart-hint');
+      const hintText = document.getElementById('font-hint-text');
+      const selFont = document.getElementById('sel-font-family');
+      if (!hintElem || !hintText || !selFont) return;
+
+      // Only surface a hint while the user is on "auto" — an explicit manual choice is never overridden.
+      if (selFont.value !== 'auto') {
+        hintElem.style.display = 'none';
+        return;
+      }
+
+      const styleHint = document.getElementById('sel-style-hint')?.value || '';
+      const matched = suggestFontKey(currentCategory, styleHint, title);
+      if (!matched || !FONT_NAMES[matched]) {
+        hintElem.style.display = 'none';
+        return;
+      }
+
+      hintElem.style.display = 'inline-block';
+      hintText.innerHTML = `✨ Gợi ý: <b>${FONT_NAMES[matched]}</b> (Bấm để chọn)`;
+      hintElem.onclick = () => {
+        selFont.value = matched;
+        hintText.innerHTML = `✓ Đã chọn: <b>${FONT_NAMES[matched]}</b>`;
+        hintElem.style.borderColor = '#10B981';
+        hintElem.style.color = '#34D399';
+        setTimeout(() => {
+          hintElem.style.display = 'none';
+          hintElem.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+          hintElem.style.color = '#38BDF8';
+        }, 1800);
+      };
     }
 
     const EFFECT_NAMES = {
@@ -2199,6 +2334,7 @@
         layout: document.getElementById('sel-layout').value,
         style_hint: document.getElementById('sel-style-hint').value,
         text_effect: document.getElementById('sel-text-effect').value,
+        font_family: document.getElementById('sel-font-family')?.value || 'auto',
         aspect_ratio: document.getElementById('sel-aspect-ratio').value,
         num_images: parseInt(document.getElementById('sel-num-images').value) || 1,
         seed: parseInt(document.getElementById('inp-seed').value) || 42,
@@ -2376,6 +2512,10 @@
       document.getElementById('inp-title')?.addEventListener('input', updateTextEffectSuggestion);
       document.getElementById('sel-layout')?.addEventListener('change', updateTextEffectSuggestion);
       document.getElementById('sel-text-effect')?.addEventListener('change', updateTextEffectSuggestion);
+
+      document.getElementById('inp-title')?.addEventListener('input', updateFontSuggestion);
+      document.getElementById('sel-style-hint')?.addEventListener('change', updateFontSuggestion);
+      document.getElementById('sel-font-family')?.addEventListener('change', updateFontSuggestion);
     });
   </script>
 </body>

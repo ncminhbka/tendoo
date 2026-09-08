@@ -12,6 +12,7 @@ import numpy as np
 
 from tendoo.layouts.base import BaseLayout, CALENDAR_ICON_SVG, ColorPalette, PosterContent
 from tendoo.layouts.component_engine import get_component_css, render_category_body
+from tendoo.layouts.font_engine import resolve_font
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
 from tendoo.layouts.top_dome.mask import generate_top_dome_mask
 
@@ -142,6 +143,15 @@ class TopDomeLayout(BaseLayout):
         else:
             badge_border = "rgba(255, 255, 255, 0.38)"
 
+        # Font resolution
+        font_key = getattr(content, "font_family", "auto")
+        _, font_face_css, headline_font_css = resolve_font(
+            font_key=font_key,
+            category=content.category,
+            style_hint=kwargs.get("style_hint", ""),
+            text_content=raw_hl,
+        )
+
         # 2. Field presence toggles
         pre_header = normalize_text(content.pre_header)
         slogan = normalize_text(content.slogan)
@@ -171,6 +181,8 @@ class TopDomeLayout(BaseLayout):
             "{{height}}": str(height),
             "{{headline_plain}}": html.escape(headline_plain),
             "{{bg_data_uri}}": bg_data_uri,
+            "{{font_face_css}}": font_face_css,
+            "{{headline_font_css}}": headline_font_css,
             "{{css_vars}}": palette.to_css_vars(),
             "{{component_css}}": component_css,
             "{{font_size}}": str(metrics["font_size"]),

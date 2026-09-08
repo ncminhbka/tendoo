@@ -33,6 +33,25 @@ def client():
         yield test_client
 
 
+def test_fonts_endpoint(client):
+    response = client.get("/api/fonts")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert isinstance(data["groups"], list) and len(data["groups"]) > 0
+
+    all_keys = []
+    for group in data["groups"]:
+        assert "group_name" in group and "fonts" in group
+        for font in group["fonts"]:
+            assert {"key", "display_name", "css_family", "description"} <= font.keys()
+            all_keys.append(font["key"])
+
+    assert len(all_keys) == 19
+    assert "bevietnam" in all_keys
+    assert "anton" in all_keys
+
+
 def test_health_endpoint(client):
     response = client.get("/api/health")
     assert response.status_code == 200
@@ -196,6 +215,53 @@ def test_generate_multi_images(client):
     assert (poster_dir / "04_final_poster.png").exists()
     assert (poster_dir / "02_blended_background_0.png").exists()
     assert (poster_dir / "02_blended_background_1.png").exists()
+
+
+def test_generate_with_explicit_font_family(client):
+    """Verifies an explicit font_family request is threaded through and embedded as @font-face in the rendered HTML."""
+    payload = {
+        "category": "opening",
+        "title": "TENDOO BAKERY\nTƯNG BỪNG KHAI TRƯƠNG",
+        "opening_date": "01/10/2026",
+        "store_name": "Tendoo Bakery",
+        "layout": "top_dome",
+        "aspect_ratio": "1:1",
+        "font_family": "cookies",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "@font-face" in html
+    assert "SVN-Cookies" in html
+    assert "--headline-font:" in html
+
+
+def test_generate_with_auto_font_family_and_style_hint(client):
+    """Verifies font_family='auto' (the default) resolves through style_hint without crashing,
+    and that a resolved font is actually embedded (regression guard for style_hint not reaching
+    the layout's font resolution)."""
+    payload = {
+        "category": "promo",
+        "title": "SIÊU SALE MÙA HÈ\nGIẢM SỐC 50%",
+        "discount": "GIẢM 50%",
+        "layout": "diagonal_slash",
+        "style_hint": "sport_speed",
+        "aspect_ratio": "1:1",
+        "font_family": "auto",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "@font-face" in html
+    assert "--headline-font:" in html
 
 
 def test_sanitize_and_inject_zero_text():
