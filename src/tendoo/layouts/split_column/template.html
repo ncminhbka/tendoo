@@ -317,6 +317,47 @@
       display: {{applicable_display}};
     }
 
+    @media (max-width: 680px) {
+      .column-gradient-shim {
+        width: 44%;
+      }
+      .editorial-column {
+        width: 36%;
+        left: 4%;
+        top: 3.5%;
+        bottom: 3.5%;
+      }
+      .headline-line {
+        font-size: calc({{font_size}}px * 0.88);
+      }
+      .slogan {
+        font-size: 12px;
+        margin-bottom: 12px;
+      }
+      .badge-pill {
+        font-size: 12px;
+        padding: 6px 14px;
+      }
+      .column-footer {
+        padding-top: 10px;
+        gap: 4px;
+      }
+    }
+
+    @media (max-height: 600px) {
+      .editorial-column {
+        top: 3%;
+        bottom: 3%;
+      }
+      .slogan {
+        margin-bottom: 8px;
+      }
+      .column-footer {
+        padding-top: 8px;
+        gap: 4px;
+      }
+    }
+
     {{custom_css}}
   </style>
 </head>

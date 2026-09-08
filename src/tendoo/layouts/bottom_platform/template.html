@@ -328,6 +328,55 @@
       line-height: 1;
     }
 
+    @media (max-width: 680px) {
+      .bottom-platform-deck {
+        left: 4%;
+        right: 4%;
+        bottom: 2.5%;
+      }
+      .action-specs-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px 14px;
+      }
+      .promo-block {
+        justify-content: space-between;
+        width: 100%;
+      }
+      .badge-pill {
+        padding: 6px 16px;
+        font-size: 13px;
+        letter-spacing: 0.8px;
+      }
+      .contact-qr-deck {
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        border-top: 1px solid rgba(255, 255, 255, 0.10);
+        padding-top: 8px;
+      }
+      .contact-block {
+        align-items: flex-start;
+        text-align: left;
+      }
+      .address-text, .applicable-text {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-height: 600px) {
+      .bottom-platform-deck {
+        bottom: 2%;
+      }
+      .slogan {
+        margin-bottom: 8px;
+      }
+      .action-specs-bar {
+        padding: 8px 16px;
+      }
+    }
+
     {{custom_css}}
   </style>
 </head>
