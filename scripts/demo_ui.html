@@ -1001,13 +1001,22 @@
             <div class="form-row-2">
               <!-- Text Effect -->
               <div class="form-group">
-                <label class="form-label">Hiệu ứng chữ tiêu đề (Hero Text Effect):</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <label class="form-label" style="margin-bottom: 0;">Hiệu ứng chữ tiêu đề (Hero Text Effect):</label>
+                  <span id="effect-smart-hint" style="display: none; font-size: 11px; color: #38BDF8; cursor: pointer; background: rgba(56, 189, 248, 0.12); padding: 2px 8px; border-radius: 9999px; border: 1px solid rgba(56, 189, 248, 0.35); transition: all 0.2s ease;" title="Bấm để áp dụng gợi ý này">
+                    <span id="effect-hint-text">✨ Gợi ý: In nổi 3D mạ vàng</span>
+                  </span>
+                </div>
                 <select id="sel-text-effect" class="form-select">
                   <option value="auto" selected>✨ Tự động theo ngữ cảnh (Auto Harmonize)</option>
-                  <option value="embossed">👑 In nổi 3D mạ kim (3D Embossed)</option>
-                  <option value="shadow">🎬 Bóng đổ chiều sâu điện ảnh (Studio Drop Shadow)</option>
-                  <option value="led">💡 Đèn LED Backlit phát sáng viền (Backlit LED)</option>
+                  <option value="embossed">👑 In nổi 3D mạ vàng hoàng gia (3D Gold Relief)</option>
+                  <option value="shadow">🎬 Bóng đổ chiều sâu điện ảnh (Deep Studio Shadow)</option>
+                  <option value="led">💡 Đèn LED Backlit viền công nghệ (Backlit LED Halo)</option>
                   <option value="neon">⚡ Phát quang Neon rực rỡ (Vibrant Neon Glow)</option>
+                  <option value="chrome">🏎️ Chrome bạch kim tráng gương (Liquid Chrome)</option>
+                  <option value="engraved">🏛️ Khắc chìm sa thạch cổ điển (Deep Engraved)</option>
+                  <option value="holographic">🦄 Hologram ánh kim xà cừ (Iridescent Foil)</option>
+                  <option value="outline">🏃 Viền rỗng thể thao hiện đại (Ghost Outline)</option>
                 </select>
               </div>
               <!-- Aspect Ratio -->
@@ -1378,6 +1387,67 @@
       document.getElementById('inp-address').value = p.address || '';
       document.getElementById('inp-website').value = p.website_link || '';
       document.getElementById('inp-enable-qr').checked = (p.enable_qr !== false);
+      updateTextEffectSuggestion();
+    }
+
+    const EFFECT_NAMES = {
+      embossed: 'In nổi 3D Mạ Vàng',
+      shadow: 'Bóng Đổ Studio',
+      led: 'Đèn LED Backlit',
+      neon: 'Phát Quang Neon',
+      chrome: 'Chrome Bạch Kim',
+      engraved: 'Khắc Chìm Sa Thạch',
+      holographic: 'Hologram Xà Cừ',
+      outline: 'Viền Rỗng Thể Thao',
+    };
+
+    function updateTextEffectSuggestion() {
+      const title = (document.getElementById('inp-title')?.value || '').toLowerCase();
+      const hintElem = document.getElementById('effect-smart-hint');
+      const hintText = document.getElementById('effect-hint-text');
+      const selEffect = document.getElementById('sel-text-effect');
+      const layout = document.getElementById('sel-layout')?.value || '';
+
+      if (!hintElem || !hintText || !selEffect) return;
+
+      let matched = null;
+      if (/neon|phát quang|quán bar|đêm|night|cyber|glow|edm|club/i.test(title)) {
+        matched = 'neon';
+      } else if (/chrome|kim loại|siêu xe|sport|racing|tốc độ|bạch kim|flagship/i.test(title)) {
+        matched = 'chrome';
+      } else if (/hologram|xà cừ|lấp lánh|glitter|kpop|gen z|trang sức|mỹ phẩm|skincare|son môi/i.test(title)) {
+        matched = 'holographic';
+      } else if (/khắc chìm|sa thạch|đá cổ|sử thi|cổ kính|rượu vang|da thật|vintage/i.test(title)) {
+        matched = 'engraved';
+      } else if (/streetwear|thể thao|fitness|sneaker|chạy bộ|marathon|gym|rỗng/i.test(title)) {
+        matched = 'outline';
+      } else if (/led|hi-res|công nghệ|hybrid|tai nghe|audio|digital|suv/i.test(title)) {
+        matched = 'led';
+      } else if (/hoàng gia|thượng hạng|vàng|gold|trung thu|tết|quà tặng|xa xỉ|dạ lông cừu|atelier|luxury/i.test(title)) {
+        matched = 'embossed';
+      } else if (layout === 'center_hourglass') {
+        matched = 'embossed';
+      } else if (layout === 'bottom_platform' && (/hybrid|công nghệ/i.test(title))) {
+        matched = 'led';
+      }
+
+      if (matched && selEffect.value !== matched) {
+        hintElem.style.display = 'inline-block';
+        hintText.innerHTML = `✨ Gợi ý: <b>${EFFECT_NAMES[matched]}</b> (Bấm để chọn)`;
+        hintElem.onclick = () => {
+          selEffect.value = matched;
+          hintText.innerHTML = `✓ Đã chọn: <b>${EFFECT_NAMES[matched]}</b>`;
+          hintElem.style.borderColor = '#10B981';
+          hintElem.style.color = '#34D399';
+          setTimeout(() => {
+            hintElem.style.display = 'none';
+            hintElem.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+            hintElem.style.color = '#38BDF8';
+          }, 1800);
+        };
+      } else {
+        hintElem.style.display = 'none';
+      }
     }
 
     // Toggle Advanced Technical Settings Box
@@ -1598,6 +1668,10 @@
     window.addEventListener('DOMContentLoaded', () => {
       loadPreset('beverage');
       checkHealth();
+
+      document.getElementById('inp-title')?.addEventListener('input', updateTextEffectSuggestion);
+      document.getElementById('sel-layout')?.addEventListener('change', updateTextEffectSuggestion);
+      document.getElementById('sel-text-effect')?.addEventListener('change', updateTextEffectSuggestion);
     });
   </script>
 </body>

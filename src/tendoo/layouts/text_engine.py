@@ -230,11 +230,15 @@ def resolve_headline_effect(
 ) -> Tuple[str, str, str]:
     """
     Renders rich CSS typography effects for hero titles:
-    1. 'embossed' (In nổi 3D / Chiseled 3D Bevel): 24K gold or platinum 3D relief with specular highlight and extrusion shadow.
+    1. 'embossed' (In nổi 3D / Chiseled 3D Gold): 24K gold or platinum 3D relief with specular highlight.
     2. 'shadow' (Bóng đổ chiều sâu / Deep Studio Shadow): Multi-layer ambient occlusion + directional drop shadows.
-    3. 'led' (Đèn LED Backlit / Tech Halo): Illuminated channel letters with high-intensity core and ambient glow.
-    4. 'neon' (Phát quang Neon / Vibrant Neon Tube): Multi-radius glowing gas-discharge tube light.
-    5. 'auto': Intelligently selects the optimal effect based on text semantics, category, and layout.
+    3. 'led' (Đèn LED Backlit / Tech Halo): Illuminated reverse channel letters with crisp face and ambient halo.
+    4. 'neon' (Phát quang Neon / Vibrant Neon Tube): Multi-radius gas-discharge tube light with white core.
+    5. 'chrome' (Chrome Bạch Kim Tráng Gương / Liquid Chrome): High-specular horizon reflection metallic finish.
+    6. 'engraved' (Khắc Chìm Sa Thạch / Deep Engraved): Inverted light relief debossed into rock or leather.
+    7. 'holographic' (Hologram Ánh Kim Xà Cừ / Iridescent Foil): Multi-spectrum diagonal rainbow iridescent luster.
+    8. 'outline' (Viền Rỗng Thể Thao Hiện Đại / Ghost Stroke): Bold modern athletic wireframe stroke.
+    9. 'auto': Intelligently selects the optimal effect based on text semantics, category, and layout.
 
     Returns:
         (resolved_effect_name, headline_fill_css, wrap_filter_css)
@@ -243,8 +247,16 @@ def resolve_headline_effect(
 
     if clean_effect == "auto":
         text_lower = (headline_text or "").lower()
-        if any(k in text_lower for k in ["neon", "phát quang", "quán bar", "đêm", "night", "cyber", "glow"]):
+        if any(k in text_lower for k in ["neon", "phát quang", "quán bar", "đêm", "night", "cyber", "glow", "edm", "club"]):
             clean_effect = "neon"
+        elif any(k in text_lower for k in ["chrome", "kim loại", "siêu xe", "sport", "racing", "tốc độ", "bạch kim", "flagship"]):
+            clean_effect = "chrome"
+        elif any(k in text_lower for k in ["hologram", "xà cừ", "lấp lánh", "glitter", "kpop", "gen z", "trang sức", "mỹ phẩm", "skincare", "son môi"]):
+            clean_effect = "holographic"
+        elif any(k in text_lower for k in ["khắc chìm", "sa thạch", "đá cổ", "sử thi", "cổ kính", "rượu vang", "da thật", "vintage"]):
+            clean_effect = "engraved"
+        elif any(k in text_lower for k in ["streetwear", "thể thao", "fitness", "sneaker", "chạy bộ", "marathon", "gym", "rỗng"]):
+            clean_effect = "outline"
         elif any(k in text_lower for k in ["led", "hi-res", "công nghệ", "hybrid", "tai nghe", "audio", "digital", "suv"]):
             clean_effect = "led"
         elif any(k in text_lower for k in ["hoàng gia", "thượng hạng", "vàng", "gold", "trung thu", "tết", "quà tặng", "xa xỉ", "dạ lông cừu", "atelier", "luxury"]):
@@ -259,7 +271,7 @@ def resolve_headline_effect(
             clean_effect = "shadow"
 
     if clean_effect == "embossed":
-        # 3D In nổi kim loại mạ vàng / bạch kim chiseled relief
+        # 1. 3D In nổi kim loại mạ vàng / bạch kim chiseled relief
         if palette_is_dark:
             fill_css = (
                 "background: linear-gradient(180deg, #FFFFFF 0%, #FEE599 28%, #E5B842 62%, #A87612 92%, #7A5308 100%); "
@@ -281,7 +293,7 @@ def resolve_headline_effect(
             filter_css = "filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.22));"
 
     elif clean_effect == "led":
-        # Đèn LED Backlit (Reverse Channel Letters): Mặt chữ sáng rõ nét, ánh sáng hắt lưng (halo-lit) và bóng đổ tách biệt
+        # 2. Đèn LED Backlit (Reverse Channel Letters): Mặt chữ sáng rõ nét, ánh sáng hắt lưng (halo-lit) và bóng đổ tách biệt
         fill_css = (
             f"color: #FFFFFF; "
             f"text-shadow: 0 0 1px #FFFFFF, 0 0 8px {accent_color}, 0 0 20px {accent_color}, 0 4px 14px rgba(0, 0, 0, 0.95);"
@@ -289,7 +301,7 @@ def resolve_headline_effect(
         filter_css = "filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.75));"
 
     elif clean_effect == "neon":
-        # Phát quang Neon ống thủy tinh: Lõi trắng sáng, viền neon rực rỡ và khoảng cách chữ thoáng (không bị dính nét)
+        # 3. Phát quang Neon ống thủy tinh: Lõi trắng sáng, viền neon rực rỡ và khoảng cách chữ thoáng (không bị dính nét)
         fill_css = (
             f"color: #FFFFFF; "
             f"letter-spacing: 0.03em; "
@@ -297,8 +309,87 @@ def resolve_headline_effect(
         )
         filter_css = "filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.50));"
 
+    elif clean_effect == "chrome":
+        # 4. Chrome Bạch Kim Tráng Gương (Liquid Chrome / Cyber Horizon)
+        if palette_is_dark:
+            fill_css = (
+                "background: linear-gradient(180deg, #FFFFFF 0%, #DCE5ED 25%, #7D8E9E 48%, #141C24 51%, #3E4F61 55%, #B8C7D6 80%, #FFFFFF 100%); "
+                "-webkit-background-clip: text; "
+                "-webkit-text-fill-color: transparent; "
+                "text-shadow: none;"
+            )
+            filter_css = (
+                "filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.95)) "
+                "drop-shadow(0 2.5px 0 #2E3842) "
+                "drop-shadow(0 8px 20px rgba(0, 0, 0, 0.92));"
+            )
+        else:
+            fill_css = (
+                "background: linear-gradient(180deg, #475569 0%, #1E293B 48%, #0F172A 51%, #334155 70%, #64748B 100%); "
+                "-webkit-background-clip: text; "
+                "-webkit-text-fill-color: transparent; "
+                "text-shadow: none;"
+            )
+            filter_css = "filter: drop-shadow(0 2px 8px rgba(15, 23, 42, 0.25));"
+
+    elif clean_effect == "engraved":
+        # 5. Khắc Chìm Sa Thạch / Da Thật (Deep Engraved / Letterpress)
+        if palette_is_dark:
+            fill_css = (
+                "color: #D4CEBF; "
+                "text-shadow: 0 -2.5px 3px rgba(0, 0, 0, 0.95), 0 1.5px 1px rgba(255, 255, 255, 0.40), 0 0 1px rgba(0, 0, 0, 0.90);"
+            )
+            filter_css = "filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.60));"
+        else:
+            fill_css = (
+                "color: #6B5B4E; "
+                "text-shadow: 0 -1.5px 2px rgba(0, 0, 0, 0.50), 0 1.5px 1px rgba(255, 255, 255, 0.90);"
+            )
+            filter_css = "filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));"
+
+    elif clean_effect == "holographic":
+        # 6. Hologram Ánh Kim Xà Cừ (Iridescent Holographic Foil)
+        if palette_is_dark:
+            fill_css = (
+                "background: linear-gradient(135deg, #FFFFFF 0%, #E0C3FC 22%, #8EC5FC 45%, #F5D0FE 68%, #BAE6FD 85%, #FED7AA 100%); "
+                "-webkit-background-clip: text; "
+                "-webkit-text-fill-color: transparent; "
+                "text-shadow: none;"
+            )
+            filter_css = (
+                "filter: drop-shadow(0 0 10px rgba(186, 230, 253, 0.65)) "
+                "drop-shadow(0 4px 16px rgba(0, 0, 0, 0.88));"
+            )
+        else:
+            fill_css = (
+                "background: linear-gradient(135deg, #7C3AED 0%, #2563EB 30%, #DB2777 60%, #EA580C 100%); "
+                "-webkit-background-clip: text; "
+                "-webkit-text-fill-color: transparent; "
+                "text-shadow: none;"
+            )
+            filter_css = "filter: drop-shadow(0 2px 8px rgba(124, 58, 237, 0.25));"
+
+    elif clean_effect == "outline":
+        # 7. Viền Rỗng Thể Thao Hiện Đại (Ghost Wireframe Stroke)
+        if palette_is_dark:
+            fill_css = (
+                "color: transparent; "
+                "-webkit-text-stroke: 2.2px #FFFFFF; "
+                "letter-spacing: 0.04em; "
+                "text-shadow: 0 4px 14px rgba(0, 0, 0, 0.85);"
+            )
+            filter_css = "filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.60));"
+        else:
+            fill_css = (
+                f"color: transparent; "
+                f"-webkit-text-stroke: 2.2px {headline_color or '#0F172A'}; "
+                "letter-spacing: 0.04em; "
+                "text-shadow: 0 2px 6px rgba(15, 23, 42, 0.20);"
+            )
+            filter_css = "filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.15));"
+
     else:
-        # 'shadow' (Mặc định): Bóng đổ chiều sâu studio cao cấp
+        # 8. 'shadow' (Mặc định): Bóng đổ chiều sâu studio cao cấp
         if palette_is_dark:
             fill_css = (
                 f"color: {headline_color or '#FFFFFF'}; "
