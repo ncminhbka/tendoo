@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from tendoo.layouts.base import BaseLayout, ColorPalette, PosterContent
-from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text
+from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
 from tendoo.layouts.top_dome.mask import generate_top_dome_mask
 
 
@@ -111,21 +111,16 @@ class TopDomeLayout(BaseLayout):
             headline_html = ""
             headline_plain = "Poster"
 
-        # Headline fill CSS & drop shadow handling
-        if palette.headline_is_gradient:
-            headline_fill_css = (
-                f"background: {palette.headline_color}; "
-                "-webkit-background-clip: text; "
-                "-webkit-text-fill-color: transparent; "
-                "text-shadow: none;"
-            )
-            wrap_filter_css = (
-                "filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.90)) "
-                "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.70));"
-            )
-        else:
-            headline_fill_css = f"color: {palette.headline_color}; text-shadow: var(--text-shadow);"
-            wrap_filter_css = ""
+        # Headline visual styling & effects (Embossed, Shadow, LED, Neon, Auto)
+        _, headline_fill_css, wrap_filter_css = resolve_headline_effect(
+            effect=content.text_effect,
+            headline_text=raw_hl,
+            category=content.category,
+            layout_name=self.name,
+            palette_is_dark=palette.is_dark,
+            accent_color=palette.accent_color,
+            headline_color=palette.headline_color,
+        )
 
         # Badge border contrast
         if palette.badge_text == "#0D0D14":

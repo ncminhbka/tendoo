@@ -27,6 +27,7 @@ class PosterContent:
     website_link: str = ""
     qr_data_uri: str = ""
     category: str = "promo"
+    text_effect: str = "auto"
     custom_css: str = ""
 
     def to_dict(self) -> Dict[str, str]:
@@ -44,6 +45,7 @@ class PosterContent:
             "website_link": self.website_link,
             "qr_data_uri": self.qr_data_uri,
             "category": self.category,
+            "text_effect": self.text_effect,
             "custom_css": self.custom_css,
         }
 

@@ -191,6 +191,7 @@ class GenerateRequest(BaseModel):
     # 4. Display / Design & Inference Controls (Common to all categories)
     layout: str = "top_dome"
     style_hint: str = "daylight"
+    text_effect: str = "auto"
     aspect_ratio: str = "1:1"
     num_images: int = 1
     seed: int = 42
@@ -386,6 +387,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         qr_data_uri=qr_data_uri,
         applicable=req.applied_product,
         category=req.category,
+        text_effect=req.text_effect,
     )
     html_str = layout.render_html(
         content=content,

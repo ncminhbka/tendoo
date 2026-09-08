@@ -997,7 +997,19 @@
               </div>
             </div>
 
+            <!-- Row: Text Effect & Aspect Ratio -->
             <div class="form-row-2">
+              <!-- Text Effect -->
+              <div class="form-group">
+                <label class="form-label">Hiệu ứng chữ tiêu đề (Hero Text Effect):</label>
+                <select id="sel-text-effect" class="form-select">
+                  <option value="auto" selected>✨ Tự động theo ngữ cảnh (Auto Harmonize)</option>
+                  <option value="embossed">👑 In nổi 3D mạ kim (3D Embossed)</option>
+                  <option value="shadow">🎬 Bóng đổ chiều sâu điện ảnh (Studio Drop Shadow)</option>
+                  <option value="led">💡 Đèn LED Backlit phát sáng viền (Backlit LED)</option>
+                  <option value="neon">⚡ Phát quang Neon rực rỡ (Vibrant Neon Glow)</option>
+                </select>
+              </div>
               <!-- Aspect Ratio -->
               <div class="form-group">
                 <label class="form-label">Tỷ lệ ảnh đầu ra:</label>
@@ -1483,6 +1495,7 @@
         // Visual / Design Controls
         layout: document.getElementById('sel-layout').value,
         style_hint: document.getElementById('sel-style-hint').value,
+        text_effect: document.getElementById('sel-text-effect').value,
         aspect_ratio: document.getElementById('sel-aspect-ratio').value,
         num_images: parseInt(document.getElementById('sel-num-images').value) || 1,
         seed: parseInt(document.getElementById('inp-seed').value) || 42,
