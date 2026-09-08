@@ -69,6 +69,8 @@
       top: 4.5%;
       left: 5.2%;
       max-width: 65%;
+      max-height: {{top_bar_max_height_px}}px;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -144,7 +146,7 @@
     /* Left Vertical Column: Category Body & Bullet Specs */
     .lframe-left-column {
       position: absolute;
-      top: 24%;
+      top: {{left_col_top_px}}px;
       left: 5.2%;
       width: 29%;
       max-width: 31%;
@@ -253,7 +255,6 @@
         width: 90%;
       }
       .lframe-left-column {
-        top: 24.5%;
         width: 42%;
         bottom: 4.8%;
       }
@@ -272,7 +273,6 @@
         width: 88%;
       }
       .lframe-left-column {
-        top: 30%;
         width: 32%;
         bottom: 5.5%;
       }

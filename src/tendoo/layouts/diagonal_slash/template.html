@@ -56,6 +56,8 @@
       left: 4.8%;
       width: 38%;
       max-width: 40%;
+      max-height: {{content_stack_max_height_px}}px;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -248,13 +250,17 @@
     }
 
     @media (min-aspect-ratio: 16/10) {
-      /* Horizontal Web Banner (16:9) */
+      /* Horizontal Web Banner (16:9) -- short absolute canvas height (576px @1024 width),
+         so the headline needs a much bigger real cut than portrait/square ratios get. */
       .diagonal-content-stack {
         width: 42%;
         top: 6.5%;
       }
       .headline-line {
-        font-size: calc({{headline_font_size}}px * 0.88);
+        font-size: calc({{headline_font_size}}px * 0.72);
+      }
+      .slogan-text {
+        margin-bottom: 8px;
       }
       .qr-img {
         width: 60px;

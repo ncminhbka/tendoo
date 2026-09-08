@@ -11,6 +11,7 @@ Energetic diagonal slash topology (~35°-45°):
 from __future__ import annotations
 
 import html
+import math
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -140,13 +141,41 @@ class DiagonalSlashLayout(BaseLayout):
         headline_plain = normalize_text(content.headline or "")
         lines, metrics = balance_vietnamese_headline(headline_plain, max_one_line_chars=13)
 
-        # Dynamic font size scaling based on length and canvas
+        # NOTE: balance_vietnamese_headline() deliberately does NOT re-wrap a line that came
+        # from an explicit user "\n" ("respects user intent" verbatim, however long) -- so
+        # `len(lines)` is a LOGICAL line count, not what the browser actually renders.
+        # `.headline-line`'s `word-break: break-word` prevents horizontal overflow for an
+        # overlong logical line by wrapping it into extra *visual* lines this function has no
+        # way to know about from `len(lines)` alone. Estimate the real visual line count from
+        # character width so the size/collision decisions below aren't silently wrong for
+        # exactly this kind of long single-\n-segment headline.
+        content_width_px = width * 0.40  # .diagonal-content-stack's effective max-width: 40%
+
+        def _visual_line_count(font_px: float) -> int:
+            if not lines:
+                return 1
+            avg_char_w = font_px * 0.60  # uppercase italic, slightly narrower average glyph
+            total = 0
+            for ln in lines:
+                total += max(1, math.ceil((len(ln) * avg_char_w) / max(1.0, content_width_px)))
+            return total
+
+        # Dynamic font size scaling based on length, visual-line-count, and canvas (line count
+        # matters independently of longest-line length: a headline that wraps into 4 visual
+        # lines needs a real size cut too, or the content stack overflows into the
+        # bottom-anchored footer -- see the max-height safety net computed below, which reacts
+        # to whatever height this still produces).
         longest_line = max(len(l) for l in lines) if lines else 10
         base_size = int(width * 0.072)
         if longest_line > 14:
             base_size = int(base_size * 0.85)
         elif longest_line > 10:
             base_size = int(base_size * 0.92)
+        visual_lines_estimate = _visual_line_count(base_size)
+        if visual_lines_estimate >= 4:
+            base_size = int(base_size * 0.80)
+        elif visual_lines_estimate == 3:
+            base_size = int(base_size * 0.90)
         headline_font_size = max(28, min(base_size, 88))
 
         # Headline HTML
@@ -201,6 +230,27 @@ class DiagonalSlashLayout(BaseLayout):
         has_qr = bool(qr_data_uri)
         has_footer = has_contacts or has_qr
 
+        # --- Content-stack / footer collision guard ---
+        # .diagonal-content-stack (kicker + headline + slogan + category body) grows top-down
+        # unbounded, while .diagonal-footer is independently anchored to the bottom. At short
+        # canvases (16:9 = 576px tall) a rich category body (e.g. product_intro spec chips)
+        # easily overflows into the footer -- give the stack a real max-height budget computed
+        # from the actual footer size, with overflow:hidden as a safety net so content clips
+        # instead of visually overlapping the brand/QR footer.
+        ratio = width / max(1, height)
+        content_top_pct = 0.065 if ratio >= 1.6 else 0.055
+        content_top_px = height * content_top_pct
+
+        qr_img_px = 60 if ratio >= 1.6 else 72
+        qr_card_h_px = (qr_img_px + 16 + 18) if has_qr else 0.0  # padding + hint label
+        brand_card_h_px = 84.0 if has_contacts else 0.0  # padding + brand-name + wrapped contacts
+        footer_content_h_px = max(qr_card_h_px, brand_card_h_px) if has_footer else 0.0
+        footer_bottom_px = height * 0.038
+        footer_reserved_px = (footer_content_h_px + footer_bottom_px) if has_footer else 0.0
+
+        safety_gap_px = 16
+        content_stack_max_height_px = max(80.0, height - content_top_px - footer_reserved_px - safety_gap_px)
+
         replacements = {
             "{{width}}": str(width),
             "{{height}}": str(height),
@@ -214,6 +264,7 @@ class DiagonalSlashLayout(BaseLayout):
             "{{wrap_filter_css}}": wrap_filter_css,
             "{{headline_fill_css}}": headline_fill_css,
             "{{headline_html}}": headline_html,
+            "{{content_stack_max_height_px}}": f"{content_stack_max_height_px:.0f}",
             "{{pre_header}}": html.escape(pre_header),
             "{{pre_header_display}}": "flex" if pre_header else "none",
             "{{slogan}}": html.escape(slogan),

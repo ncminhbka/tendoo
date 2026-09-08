@@ -18,7 +18,7 @@ import numpy as np
 def generate_l_frame_mask(
     height: int,
     width: int,
-    y_bar: float = 0.24,
+    y_bar: float = 0.28,
     x_col: float = 0.34,
     delta: float = 0.16,
     side: str = "top_left",
@@ -28,8 +28,11 @@ def generate_l_frame_mask(
     """
     Constructs an organic, soft L-shaped corridor mask with smooth cosine feathering:
     - height, width: Canvas dimensions in pixels.
-    - y_bar: Normalized height of the top horizontal bar (default 0.30).
-    - x_col: Normalized width of the left vertical column (default 0.38).
+    - y_bar: Normalized height of the top horizontal bar (default 0.28 -- bumped from an
+      earlier 0.24 baseline, which left too little room for multi-line headlines + slogan
+      before overlapping the left-column content; see LFrameLayout.render_html for the
+      additional per-request dynamic sizing on top of this static baseline).
+    - x_col: Normalized width of the left vertical column (default 0.34).
     - delta: Cosine feathering transition width (default 0.16 for soft organic blending).
     - side: 'top_left' (default) or 'top_right'.
     - int_max: Maximum mask intensity (default 1.0).
