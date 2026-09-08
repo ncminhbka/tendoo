@@ -59,28 +59,32 @@ class TopDomeLayout(BaseLayout):
     def get_corridor_prompt(self, style_hint: str = "daylight") -> str:
         if style_hint == "studio_dark":
             return (
-                "A clean smooth charcoal dark studio ceiling with soft focused spotlight glow, "
-                "elegant pristine empty space, flat gradient vignette, zero clutter, "
-                "zero text, no words, no letters"
+                "Soft diffuse downward studio spotlight illumination, ethereal ambient atmospheric haze, "
+                "clean smooth dark gradient falloff, luminous negative space for text, "
+                "pure diffuse lighting with no ceiling, no walls, no architecture, zero clutter, "
+                "clean photographic background, unbranded, zero text, no words, no letters, no typography, no logos"
             )
         elif style_hint == "ribbon":
             return (
-                "A luxurious flowing 3D silk ribbon fluttering gracefully across the upper dome, "
-                "smooth satin fabric texture, soft studio rim lighting, clean flat ribbon surface "
-                "with no pattern, elegant festive banner, zero text, no words, no letters"
+                "A gentle, ethereal sweep of translucent luminous ambient light across the upper area, "
+                "soft golden atmospheric particles, radiant festive glow, smooth luminous gradient, "
+                "pure atmospheric lighting with no heavy physical structures, zero clutter, "
+                "clean photographic background, unbranded, zero text, no words, no letters, no typography, no logos"
             )
         elif style_hint == "gold_bevel":
             return (
-                "An elegant arched architectural alcove with soft golden atmospheric rim light, "
-                "pristine empty surface, smooth gradient, zero clutter, zero text, no words, no letters"
+                "Warm golden hour atmospheric light descending from above, soft ethereal sunbeams, "
+                "luminous golden haze, smooth radiant gradient negative space, "
+                "pure light and atmospheric glow with no architectural arches, no alcove, no walls, zero clutter, "
+                "clean photographic background, unbranded, zero text, no words, no letters, no typography, no logos"
             )
         else:
-            # Default daylight arch
+            # Default daylight: Pure luminous sky light (no architecture)
             return (
-                "A clean smooth elegant architectural arch dome in the upper sky, "
-                "soft glowing daylight ambiance, flat pristine negative space with no clutter, "
-                "subtle soft atmospheric gradient, perfectly smooth surface for typography, "
-                "zero text, no words, no letters"
+                "Soft glowing natural daylight radiating from above, bright airy ambient sky illumination, "
+                "clean ethereal atmospheric gradient, luminous pristine copy space, "
+                "pure diffuse lighting with no buildings, no arches, no ceiling, no architecture, zero clutter, "
+                "clean photographic background, unbranded, zero text, no words, no letters, no typography, no logos"
             )
 
     def get_safe_zone(self) -> Tuple[float, float, float, float]:

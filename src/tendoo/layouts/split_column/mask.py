@@ -18,18 +18,18 @@ def generate_split_column_mask(
     height: int,
     width: int,
     side: str = "left",
-    col_width: float = 0.38,
-    delta: float = 0.040,
+    col_width: float = 0.40,
+    delta: float = 0.12,
     wave_amp: float = 0.0,
     wave_freq: float = 1.0,
     int_max: float = 1.0,
     **kwargs,
 ) -> np.ndarray:
     """
-    Constructs a straight vertical column mask for a flat, unwrinkled silk ribbon:
-    - col_width: Base width ratio of the column (default 0.38).
-    - delta: Cosine feathering width (default 0.040).
-    - wave_amp: Wave amplitude (default 0.0 for perfectly straight, flat silk).
+    Constructs a straight vertical column mask with soft, organic feathering:
+    - col_width: Base width ratio of the column (default 0.40).
+    - delta: Cosine feathering width (default 0.12 for gentle, soft blending into background).
+    - wave_amp: Wave amplitude (default 0.0 for straight boundary).
     - side: 'left' (default) or 'right'.
     - Fully vectorized numpy execution.
 

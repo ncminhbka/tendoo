@@ -46,8 +46,8 @@ class SplitColumnLayout(BaseLayout):
         width: int,
         height: int,
         side: str = "left",
-        col_width: float = 0.38,
-        delta: float = 0.040,
+        col_width: float = 0.40,
+        delta: float = 0.12,
         wave_amp: float = 0.0,
         wave_freq: float = 1.0,
         int_max: float = 1.0,
@@ -68,30 +68,32 @@ class SplitColumnLayout(BaseLayout):
     def get_corridor_prompt(self, style_hint: str = "silk_sash") -> str:
         if style_hint == "velvet_drape":
             return (
-                "A clean, straight, perfectly flat dark velvet panel running straight down the left side, "
-                "smooth unwrinkled fabric, zero folds, zero curls, zero twist, zero ripples, "
-                "soft ambient lighting, pristine copy space, zero clutter, zero text, no words, no letters"
+                "A soft, gentle ambient studio shadow wash subtly cascading down the left side, "
+                "diffuse semi-translucent gradient gradation harmonizing with scene tones, seamless transition, "
+                "smooth unwrinkled surface, pristine copy space for text, zero clutter, "
+                "clean photographic background, unbranded, zero text, no words, no letters, no typography, no logos"
             )
         elif style_hint == "minimal_wall":
             return (
-                "A sleek, perfectly flat vertical architectural panel running straight down the left side, "
-                "smooth uniform matte texture, soft ambient studio side lighting, pristine flat copy space, "
-                "zero clutter, zero text, no words, no letters"
+                "A gentle, soft diffused vertical studio ambient light column running down the left side, "
+                "subtle airy gradient softly blending into the scene atmosphere, luminous clean copy space, "
+                "zero clutter, clean photographic background, unbranded, zero text, no words, no letters, no typography, no logos"
             )
         elif style_hint == "champagne_silk":
             return (
-                "A luxurious, perfectly flat champagne golden silk ribbon panel running straight down the left side, "
-                "smooth unwrinkled satin texture, completely flat surface for typography, "
-                "zero folds, zero twist, zero curls, zero ripples, soft studio glow, "
-                "pristine copy space, zero clutter, zero text, no words, no letters"
+                "A soft radiant sheer silk wash with warm champagne ambient studio glow down the left side, "
+                "harmonious pastel environmental tones, smooth airy gradient, pristine clean space for typography, "
+                "subtle edge feathering blending into the background, zero clutter, "
+                "clean photographic background, unbranded, zero text, no words, no letters, no typography, no logos"
             )
         else:
-            # Default luxurious flat dark silk sash
+            # Default: Soft translucent ambient light veil & sheer silk wash
             return (
-                "A perfectly flat, smooth, unwrinkled dark silk satin ribbon panel running straight down the left side, "
-                "completely flat pristine fabric surface, zero folds, zero curls, zero twist, zero ripples, "
-                "elegant subtle vertical sheen, soft clean studio rim light, flat copy space for text, "
-                "unbranded, zero text, no words, no letters"
+                "A soft, translucent vertical ambient light veil and sheer silk wash gently flowing down the left side, "
+                "naturally catching and blending with the environmental colors and warm lighting of the scene, "
+                "smooth gradient falloff, clean uncluttered space for typography, "
+                "subtle edge feathering seamlessly merging into the scene, "
+                "clean photographic background, unbranded, zero text, no words, no letters, no typography, no logos"
             )
 
     def get_safe_zone(self) -> Tuple[float, float, float, float]:
