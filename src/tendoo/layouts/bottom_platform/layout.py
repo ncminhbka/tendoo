@@ -12,6 +12,7 @@ import numpy as np
 
 from tendoo.layouts.base import BaseLayout, CALENDAR_ICON_SVG, ColorPalette, PosterContent
 from tendoo.layouts.bottom_platform.mask import generate_bottom_platform_mask
+from tendoo.layouts.component_engine import get_component_css, render_category_body
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
 
 
@@ -69,23 +70,23 @@ class BottomPlatformLayout(BaseLayout):
         if style_hint == "luxury_marble":
             return (
                 "A grand dark polished obsidian marble platform terrace, dramatic subtle ambient rim light, "
-                "pristine copy space, zero clutter, zero text, no words, no letters"
+                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
             )
-        elif style_hint == "cyberpunk_grid":
+        elif style_hint in ("warm_wood", "nature_stone"):
             return (
-                "A sleek dark metallic stage floor with subtle neon edge glow, minimal futuristic studio reflection, "
-                "pristine copy space, zero clutter, zero text, no words, no letters"
+                "A warm natural dark oak wood table platform surface, gentle soft studio reflection, atmospheric rim light, "
+                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
             )
-        elif style_hint == "nature_stone":
+        elif style_hint in ("water_mirror", "cyberpunk_grid"):
             return (
-                "A natural dark slate stone terrace ground, subtle mist, atmospheric rim light, "
-                "pristine copy space, zero clutter, zero text, no words, no letters"
+                "A sleek reflective dark water platform mirror surface with subtle ripple reflections, minimal futuristic ambient glow, "
+                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
             )
         else:
             # Default cinematic asphalt / wet polished floor
             return (
                 "A clean sleek dark wet asphalt road surface reflecting atmospheric lights, cinematic mist, "
-                "pristine copy space, zero clutter, zero text, no words, no letters"
+                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
             )
 
     def get_safe_zone(self) -> Tuple[float, float, float, float]:
@@ -145,6 +146,14 @@ class BottomPlatformLayout(BaseLayout):
         website_link = normalize_text(content.website_link)
         qr_data_uri = content.qr_data_uri or ""
 
+        # Adaptive Category Body Component
+        category_body_html = render_category_body(
+            content=content,
+            palette=palette,
+            layout_name=self.name,
+        )
+        component_css = get_component_css()
+
         # 3. Read template
         template_text = TEMPLATE_PATH.read_text(encoding="utf-8")
 
@@ -155,6 +164,7 @@ class BottomPlatformLayout(BaseLayout):
             "{{headline_plain}}": html.escape(headline_plain),
             "{{bg_data_uri}}": bg_data_uri,
             "{{css_vars}}": palette.to_css_vars(),
+            "{{component_css}}": component_css,
             "{{font_size}}": str(metrics["font_size"]),
             "{{line_height}}": f"{metrics['line_height']:.2f}",
             "{{letter_spacing}}": f"{metrics['letter_spacing']:.1f}",
@@ -165,6 +175,7 @@ class BottomPlatformLayout(BaseLayout):
             "{{pre_header_display}}": "inline-flex" if pre_header else "none",
             "{{slogan}}": html.escape(slogan),
             "{{slogan_display}}": "block" if slogan else "none",
+            "{{category_body_html}}": category_body_html,
             "{{offer_main}}": html.escape(offer_main),
             "{{badge_display}}": "inline-flex" if offer_main else "none",
             "{{badge_border}}": badge_border,

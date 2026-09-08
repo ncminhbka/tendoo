@@ -42,7 +42,36 @@ class PosterContent:
     text_effect: str = "auto"
     custom_css: str = ""
 
-    def to_dict(self) -> Dict[str, str]:
+    # Category: Product Intro (Giới thiệu sản phẩm)
+    price: str = ""
+    product_name: str = ""
+    product_desc: str = ""
+    highlights: str = ""
+
+    # Category: Opening Banner (Khai trương)
+    opening_date: str = ""
+    opening_promo: str = ""
+    booking_contact: str = ""
+
+    # Category: Customer Feedback (Feedback & Đánh giá)
+    feedback_target: str = ""
+    feedback_quote: str = ""
+    feedback_rating: str = ""
+    special_offer: str = ""
+
+    # Category: Recruitment (Tuyển dụng)
+    job_position: str = ""
+    job_desc: str = ""
+    apply_deadline: str = ""
+    apply_method: str = ""
+
+    # Category: Guide (Quy trình / Hướng dẫn)
+    steps: List[str] = field(default_factory=list)
+
+    # Optional pre-rendered or custom category body HTML
+    category_body_html: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "headline": self.headline,
             "pre_header": self.pre_header,
@@ -59,6 +88,23 @@ class PosterContent:
             "category": self.category,
             "text_effect": self.text_effect,
             "custom_css": self.custom_css,
+            "price": self.price,
+            "product_name": self.product_name,
+            "product_desc": self.product_desc,
+            "highlights": self.highlights,
+            "opening_date": self.opening_date,
+            "opening_promo": self.opening_promo,
+            "booking_contact": self.booking_contact,
+            "feedback_target": self.feedback_target,
+            "feedback_quote": self.feedback_quote,
+            "feedback_rating": self.feedback_rating,
+            "special_offer": self.special_offer,
+            "job_position": self.job_position,
+            "job_desc": self.job_desc,
+            "apply_deadline": self.apply_deadline,
+            "apply_method": self.apply_method,
+            "steps": list(self.steps),
+            "category_body_html": self.category_body_html,
         }
 
 

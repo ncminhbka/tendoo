@@ -27,7 +27,7 @@ import sys
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 for p in [PROJECT_ROOT, PROJECT_ROOT / "src", PROJECT_ROOT / "scripts"]:
@@ -179,12 +179,39 @@ class GenerateRequest(BaseModel):
     date_end: str = ""
     image_description: str = ""
 
+    # Category: Product Intro (Giới thiệu sản phẩm)
+    price: str = ""
+    product_name: str = ""
+    product_desc: str = ""
+    highlights: str = ""
+
+    # Category: Opening Banner (Khai trương)
+    opening_date: str = ""
+    opening_promo: str = ""
+    booking_contact: str = ""
+
+    # Category: Customer Feedback (Feedback & Đánh giá)
+    feedback_target: str = ""
+    feedback_quote: str = ""
+    feedback_rating: str = ""
+    special_offer: str = ""
+
+    # Category: Recruitment (Tuyển dụng)
+    job_position: str = ""
+    job_desc: str = ""
+    apply_deadline: str = ""
+    apply_method: str = ""
+
+    # Category: Guide (Quy trình / Hướng dẫn)
+    guide_steps: List[str] = []
+
     # Legacy / alias parameters for backwards compatibility
     headline: Optional[str] = None
     pre_header: str = ""
     slogan: str = ""
     offer_main: Optional[str] = None
     offer_sub: Optional[str] = None
+    applicable: Optional[str] = None
     brand: Optional[str] = None
     hotline: Optional[str] = None
     prompt_scene: Optional[str] = None
@@ -225,8 +252,6 @@ async def health_check():
         "mock_mode": IS_MOCK_MODE,
         "gpus_available": torch.cuda.device_count() if torch.cuda.is_available() else 0,
     }
-
-
 def pil_to_base64_data_uri(img: Image.Image) -> str:
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -234,17 +259,49 @@ def pil_to_base64_data_uri(img: Image.Image) -> str:
     return f"data:image/png;base64,{b64}"
 
 
-def sanitize_and_inject_zero_text(user_prompt: str) -> str:
+LAYOUT_COMPATIBLE_STYLES = {
+    "top_dome": {
+        "styles": ["daylight", "studio_dark", "golden_hour", "gold_bevel", "festive_moon", "ribbon"],
+        "default": "daylight",
+    },
+    "bottom_platform": {
+        "styles": ["cinematic_asphalt", "luxury_marble", "warm_wood", "nature_stone", "water_mirror", "cyberpunk_grid"],
+        "default": "cinematic_asphalt",
+    },
+    "split_column": {
+        "styles": ["champagne_silk", "silk_sash", "minimal_wall", "studio_light_pillar", "velvet_drape"],
+        "default": "champagne_silk",
+    },
+    "center_hourglass": {
+        "styles": ["moonbeam", "studio_spotlight", "festive_light"],
+        "default": "moonbeam",
+    },
+    "diagonal_slash": {
+        "styles": ["sport_speed", "cyber_neon", "carbon_mesh", "daylight_motion"],
+        "default": "sport_speed",
+    },
+    "l_frame": {
+        "styles": ["tech_minimal", "cyber_tech", "luxury_gold", "daylight_clean"],
+        "default": "tech_minimal",
+    },
+}
+
+
+def sanitize_and_inject_zero_text(user_prompt: str, has_ref_image: bool = False) -> str:
     """
-    Sanitizes user scene prompt and injects mandatory ZERO-TEXT negative constraints.
-    Prevents DiT from hallucinating broken/deformed characters and text artifacts.
+    Sanitizes user scene prompt and injects targeted background ZERO-TEXT negative constraints.
+    Protects product packaging and authentic brand labels (e.g. Hảo Hảo noodles, logo badges)
+    while preventing DiT from hallucinating broken advertising slogans onto the background copy space.
     """
     if not user_prompt or not user_prompt.strip():
-        return (
+        base = (
             "Commercial advertising photography, professional studio lighting, "
-            "clean photographic background, unbranded, zero text, no words, no letters, "
-            "no typography, no logos, no watermarks, no labels, no signs"
+            "clean photographic background, text-free background area, "
+            "no floating graphic text, no headline or poster typography on background"
         )
+        if has_ref_image:
+            base = f"{base}, preserve authentic product packaging, original brand details and label typography on the product"
+        return base
 
     prompt = user_prompt.strip()
 
@@ -256,7 +313,7 @@ def sanitize_and_inject_zero_text(user_prompt: str) -> str:
         flags=re.IGNORECASE
     )
 
-    # 2. Filter out explicit user directives trying to draw text onto the image
+    # 2. Filter out explicit user directives trying to draw text onto the background image
     # (Representation Clash prevention - Rule 3)
     text_intent_patterns = [
         r'\b(?:có|với|kèm|ghi|viết|in|thêu)\s+(?:dòng\s+)?(?:chữ|text|tiêu\s+đề|slogan|thông\s+tin|chữ\s+viết)\b[^\,\.]*',
@@ -270,27 +327,155 @@ def sanitize_and_inject_zero_text(user_prompt: str) -> str:
     # Clean redundant punctuation and whitespaces
     prompt = re.sub(r'[\,\;\s]+', ' ', prompt).strip(' ,;')
 
-    # 3. Canonical Zero-Text negative constraint clause
+    # 3. Targeted background negative constraints (DO NOT use unbranded, no logos, no labels!)
     zero_text_clause = (
-        "clean photographic background, unbranded, zero text, "
-        "no words, no letters, no typography, no logos, no watermarks, no labels, no signs"
+        "clean photographic background, text-free background area, "
+        "no floating graphic text, no headline or poster typography on background"
     )
 
     lower_prompt = prompt.lower()
-    if "zero text" not in lower_prompt and "no words" not in lower_prompt:
+    if "text-free background" not in lower_prompt and "zero text" not in lower_prompt:
         if prompt:
             prompt = f"{prompt}, {zero_text_clause}"
         else:
             prompt = f"Commercial advertising photography, {zero_text_clause}"
-    else:
-        missing_parts = []
-        for term in ["unbranded", "zero text", "no words", "no letters", "no typography", "no logos"]:
-            if term not in lower_prompt:
-                missing_parts.append(term)
-        if missing_parts:
-            prompt = f"{prompt}, {', '.join(missing_parts)}"
+
+    # 4. If an uploaded reference product is present, protect its authentic packaging & logo
+    if has_ref_image and "preserve authentic product packaging" not in prompt.lower():
+        prompt = f"{prompt}, preserve authentic product packaging, original brand details and label typography on the product"
 
     return prompt
+
+
+def detect_scene_lighting_tone(
+    scene_prompt: str,
+    user_hint: str = "auto",
+    layout_name: str = "top_dome",
+) -> str:
+    """
+    Prevents Spatial Semantic Clash between Layout geometry, corridor lighting, and scene atmosphere.
+    Validates compatibility against LAYOUT_COMPATIBLE_STYLES:
+      - If user specifies an explicit valid style for this layout, respects user's choice.
+      - If user chooses 'auto' or specifies an incompatible style (e.g. top_dome + cinematic_asphalt),
+        intelligently analyzes scene keywords to select the most harmonious optical corridor style.
+    """
+    layout_cfg = LAYOUT_COMPATIBLE_STYLES.get(layout_name, LAYOUT_COMPATIBLE_STYLES["top_dome"])
+    valid_styles = layout_cfg["styles"]
+    default_style = layout_cfg["default"]
+
+    # If user explicitly chose a compatible style, respect it
+    if user_hint and user_hint.lower() not in ("auto", "", "none"):
+        clean_hint = user_hint.lower().strip()
+        if clean_hint in valid_styles:
+            return clean_hint
+        print(f"  [Notice] Incompatible style_hint '{user_hint}' for layout '{layout_name}'. Auto-harmonizing...")
+
+    # Auto-detection based on scene keywords and layout geometry
+    lower_p = (scene_prompt or "").lower()
+    is_dark = any(k in lower_p for k in ["neon", "cyber", "night", "dark", "tối", "bóng đêm", "đen", "slate", "black", "moody", "asphalt"])
+    is_warm_gold = any(k in lower_p for k in ["gold", "vàng", "hoàng gia", "luxury", "sunset", "golden hour", "warm", "trung thu", "lễ hội", "nến", "candle"])
+    is_stone_marble = any(k in lower_p for k in ["marble", "đá cẩm thạch", "bục đá", "sa thạch", "stone", "pedestal"])
+    is_wood = any(k in lower_p for k in ["wood", "gỗ", "mặt bàn", "quán cafe", "tea table"])
+    is_water = any(k in lower_p for k in ["water", "nước", "hồ", "lake", "ocean", "river", "biển", "phản chiếu", "reflection"])
+
+    if layout_name == "bottom_platform":
+        if is_stone_marble:
+            return "luxury_marble"
+        if is_wood:
+            return "warm_wood"
+        if is_water:
+            return "water_mirror"
+        return "cinematic_asphalt"
+
+    elif layout_name == "split_column":
+        if any(k in lower_p for k in ["tường", "bê tông", "wall", "minimal", "phòng"]):
+            return "minimal_wall"
+        if any(k in lower_p for k in ["khói", "pillar", "beam", "smoke", "haze"]):
+            return "studio_light_pillar"
+        return "champagne_silk"
+
+    elif layout_name == "center_hourglass":
+        if is_warm_gold:
+            return "festive_light"
+        if is_dark:
+            return "studio_spotlight"
+        return "moonbeam"
+
+    elif layout_name == "diagonal_slash":
+        if is_dark or any(k in lower_p for k in ["cyber", "neon", "gaming", "tech"]):
+            return "cyber_neon"
+        if any(k in lower_p for k in ["carbon", "black", "matte", "stealth", "kim loại"]):
+            return "carbon_mesh"
+        if any(k in lower_p for k in ["daylight", "sun", "outdoor", "sáng", "nắng"]):
+            return "daylight_motion"
+        return "sport_speed"
+
+    elif layout_name == "l_frame":
+        if any(k in lower_p for k in ["cyber", "neon", "tech", "điện tử", "gaming"]):
+            return "cyber_tech"
+        if is_warm_gold:
+            return "luxury_gold"
+        if any(k in lower_p for k in ["daylight", "sun", "outdoor", "sáng", "nắng", "văn phòng", "office"]):
+            return "daylight_clean"
+        return "tech_minimal"
+
+    else:  # top_dome
+        if is_dark:
+            return "studio_dark"
+        if is_warm_gold:
+            return "golden_hour"
+        if any(k in lower_p for k in ["moon", "trăng", "lễ hội", "festival"]):
+            return "festive_moon"
+        return default_style
+
+
+def build_poster_content(
+    req: GenerateRequest,
+    final_headline: str,
+    final_offer_main: str,
+    final_offer_sub: str,
+    final_dates: str,
+    qr_data_uri: str,
+) -> PosterContent:
+    """Instantiates a complete, well-typed PosterContent from GenerateRequest."""
+    cat = (req.category or "promo").lower().strip()
+    return PosterContent(
+        headline=final_headline,
+        pre_header=req.pre_header,
+        slogan=req.slogan,
+        offer_main=final_offer_main,
+        offer_sub=final_offer_sub,
+        dates=final_dates,
+        brand=req.store_name or req.brand or "",
+        hotline=req.phone or req.hotline or "",
+        address=req.address,
+        website_link=req.website_link,
+        qr_data_uri=qr_data_uri,
+        applicable=req.applied_product or req.applicable or "",
+        category=cat,
+        text_effect=req.text_effect,
+        # Product intro
+        price=req.price,
+        product_name=req.product_name,
+        product_desc=req.product_desc,
+        highlights=req.highlights,
+        # Opening
+        opening_date=req.opening_date or (final_dates if cat == "opening" else ""),
+        opening_promo=req.opening_promo or (final_offer_main if cat == "opening" else ""),
+        booking_contact=req.booking_contact or (req.phone or req.hotline if cat == "opening" else ""),
+        # Feedback
+        feedback_target=req.feedback_target,
+        feedback_quote=req.feedback_quote,
+        feedback_rating=req.feedback_rating,
+        special_offer=req.special_offer,
+        # Recruitment
+        job_position=req.job_position,
+        job_desc=req.job_desc,
+        apply_deadline=req.apply_deadline or (final_dates if cat == "recruitment" else ""),
+        apply_method=req.apply_method or (req.applied_product if cat == "recruitment" else ""),
+        # Guide
+        steps=req.guide_steps if req.guide_steps else [],
+    )
 
 
 def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
@@ -324,16 +509,47 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     mask_vis.save(mask_file)
 
     # 4. Harmonize Field Values (Unified schema mapping)
-    final_headline = req.title or req.headline or "ƯU ĐÃI ĐẶC BIỆT"
-    final_offer_main = req.discount or req.offer_main or ""
-    final_offer_sub = req.applied_product or req.offer_sub or ""
+    cat = (req.category or "promo").lower().strip()
+    if cat == "product_intro":
+        default_hl = "GIỚI THIỆU SẢN PHẨM"
+    elif cat == "opening":
+        default_hl = "TƯNG BỪNG KHAI TRƯƠNG"
+    elif cat == "feedback":
+        default_hl = "KHÁCH HÀNG NÓI GÌ VỀ TENDOO"
+    elif cat == "recruitment":
+        default_hl = "TENDOO TÌM ĐỒNG ĐỘI"
+    elif cat == "guide":
+        default_hl = "QUY TRÌNH HƯỚNG DẪN"
+    else:
+        default_hl = "ƯU ĐÃI ĐẶC BIỆT"
+
+    final_headline = req.title or req.headline or default_hl
+    final_offer_main = (
+        req.discount
+        or req.offer_main
+        or req.price
+        or req.opening_promo
+        or req.job_position
+        or ""
+    )
+    final_offer_sub = (
+        req.applied_product
+        or req.offer_sub
+        or req.product_desc
+        or req.booking_contact
+        or req.job_desc
+        or req.feedback_quote
+        or ""
+    )
     final_brand = req.store_name or req.brand or ""
     final_hotline = req.phone or req.hotline or ""
     raw_scene_prompt = req.image_description or req.prompt_scene or ""
-    final_scene_prompt = sanitize_and_inject_zero_text(raw_scene_prompt)
+    has_ref_image = bool(req.image_base64)
+    final_scene_prompt = sanitize_and_inject_zero_text(raw_scene_prompt, has_ref_image=has_ref_image)
     if raw_scene_prompt != final_scene_prompt:
         print(f"  [Prompt Engine] Injected ZERO-TEXT negative constraints:\n    Raw: '{raw_scene_prompt}'\n    Injected: '{final_scene_prompt}'")
-    style_hint = req.style_hint or "daylight"
+    
+    style_hint = detect_scene_lighting_tone(final_scene_prompt, req.style_hint or "auto", layout_name=layout.name)
 
     dates_parts = []
     if req.date_start:
@@ -394,21 +610,13 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
             palette = analyze_color_harmony(np.array(blended_pil), safe_zone, color_mode="auto")
 
             bg_data_uri = pil_to_base64_data_uri(blended_pil)
-            content = PosterContent(
-                headline=final_headline,
-                pre_header=req.pre_header,
-                slogan=req.slogan,
-                offer_main=final_offer_main,
-                offer_sub=final_offer_sub,
-                dates=final_dates,
-                brand=final_brand,
-                hotline=final_hotline,
-                address=req.address,
-                website_link=req.website_link,
+            content = build_poster_content(
+                req=req,
+                final_headline=final_headline,
+                final_offer_main=final_offer_main,
+                final_offer_sub=final_offer_sub,
+                final_dates=final_dates,
                 qr_data_uri=qr_data_uri,
-                applicable=req.applied_product,
-                category=req.category,
-                text_effect=req.text_effect,
             )
             html_str = layout.render_html(
                 content=content,
@@ -535,21 +743,13 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                 palette = analyze_color_harmony(np.array(blended_pil), safe_zone, color_mode="auto")
 
                 bg_data_uri = pil_to_base64_data_uri(blended_pil)
-                content = PosterContent(
-                    headline=final_headline,
-                    pre_header=req.pre_header,
-                    slogan=req.slogan,
-                    offer_main=final_offer_main,
-                    offer_sub=final_offer_sub,
-                    dates=final_dates,
-                    brand=final_brand,
-                    hotline=final_hotline,
-                    address=req.address,
-                    website_link=req.website_link,
+                content = build_poster_content(
+                    req=req,
+                    final_headline=final_headline,
+                    final_offer_main=final_offer_main,
+                    final_offer_sub=final_offer_sub,
+                    final_dates=final_dates,
                     qr_data_uri=qr_data_uri,
-                    applicable=req.applied_product,
-                    category=req.category,
-                    text_effect=req.text_effect,
                 )
                 html_str = layout.render_html(
                     content=content,

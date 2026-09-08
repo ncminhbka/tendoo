@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width={{width}}, height={{height}}, initial-scale=1.0">
+  <title>{{headline_plain}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Be+Vietnam+Pro:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800&family=Montserrat:ital,wght@0,700;0,800;0,900;1,700;1,800&display=swap" rel="stylesheet">
+  <style>
+    {{css_vars}}
+    {{component_css}}
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: 'Inter', 'Be Vietnam Pro', 'Montserrat', sans-serif;
+      background-color: #000;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+    }
+
+    /* Background image layer */
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    /* Diagonal Gradient Shim for text legibility (Angled ~135deg across upper-left) */
+    .diagonal-gradient-shim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(8, 12, 22, 0.78) 0%,
+        rgba(8, 12, 22, 0.55) 38%,
+        rgba(8, 12, 22, 0.20) 56%,
+        rgba(8, 12, 22, 0.0) 72%
+      );
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Dynamic Decorative Speed Line Accent along slash angle */
+    .diagonal-accent-slash {
+      position: absolute;
+      top: -10%;
+      left: 48%;
+      width: 3px;
+      height: 120%;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.0) 0%,
+        var(--accent-color) 25%,
+        rgba(255, 255, 255, 0.6) 50%,
+        var(--accent-color) 75%,
+        rgba(255, 255, 255, 0.0) 100%
+      );
+      transform: rotate(26deg);
+      transform-origin: top left;
+      opacity: 0.45;
+      pointer-events: none;
+      z-index: 3;
+      filter: drop-shadow(0 0 8px var(--accent-color));
+    }
+
+    /* Main Typography Stack in Upper-Left Corridor */
+    .diagonal-content-stack {
+      position: absolute;
+      top: 4.8%;
+      left: 4.8%;
+      width: 48%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Kicker Badge with athletic angled styling */
+    .kicker-tag {
+      display: {{pre_header_display}};
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--accent-color);
+      margin-bottom: 12px;
+      text-shadow: var(--text-shadow);
+    }
+
+    .kicker-flash {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      fill: var(--accent-color);
+    }
+
+    .kicker-line {
+      width: 24px;
+      height: 2.5px;
+      background: var(--accent-color);
+      transform: skewX(-20deg);
+    }
+
+    /* Title Wrap & Headline Lines */
+    .title-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+      margin-bottom: 14px;
+      {{wrap_filter_css}}
+    }
+
+    .headline-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .headline-line {
+      font-family: 'Inter', 'Be Vietnam Pro', sans-serif;
+      font-size: {{headline_font_size}}px;
+      font-weight: 900;
+      font-style: italic;
+      line-height: 1.14;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+      {{headline_fill_css}}
+      filter: drop-shadow(0 3px 14px rgba(0, 0, 0, 0.85));
+      word-break: break-word;
+      white-space: normal;
+    }
+
+    /* Slogan / Secondary Subtitle */
+    .slogan-text {
+      display: {{slogan_display}};
+      font-family: 'Inter', 'Be Vietnam Pro', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-color);
+      line-height: 1.45;
+      margin-top: 4px;
+      margin-bottom: 16px;
+      opacity: 0.92;
+      max-width: 90%;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
+    }
+
+    /* Injected Adaptive Category Component Container */
+    .category-body-wrapper {
+      width: 100%;
+      margin-top: 4px;
+      margin-bottom: 14px;
+    }
+
+    /* Sleek Floating Brand Footer (Bottom Left / Bottom Margin) */
+    .diagonal-footer {
+      position: absolute;
+      bottom: 3.8%;
+      left: 4.8%;
+      width: 90.4%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .brand-contact-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: rgba(10, 14, 24, 0.72);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      max-width: 65%;
+    }
+
+    .brand-name {
+      font-size: 15px;
+      font-weight: 800;
+      font-style: italic;
+      letter-spacing: 1.2px;
+      color: #FFFFFF;
+      text-transform: uppercase;
+    }
+
+    .contact-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .contact-item svg {
+      flex-shrink: 0;
+      opacity: 0.85;
+    }
+
+    /* QR Code Card (Floating in Bottom Right) */
+    .qr-card {
+      display: {{qr_display}};
+      flex-direction: column;
+      align-items: center;
+      background: rgba(10, 14, 24, 0.82);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+      text-align: center;
+    }
+
+    .qr-img {
+      width: 72px;
+      height: 72px;
+      border-radius: 6px;
+      background: #FFFFFF;
+      padding: 3px;
+      display: block;
+    }
+
+    .qr-hint {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--accent-color);
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Aspect Ratio Responsive Adjustments */
+    @media (max-aspect-ratio: 1/1) {
+      /* Vertical Story / Reel (9:16) */
+      .diagonal-content-stack {
+        width: 58%;
+        top: 5.5%;
+      }
+      .diagonal-accent-slash {
+        left: 60%;
+        transform: rotate(24deg);
+      }
+      .headline-line {
+        font-size: calc({{headline_font_size}}px * 0.95);
+      }
+    }
+
+    @media (min-aspect-ratio: 16/10) {
+      /* Horizontal Web Banner (16:9) */
+      .diagonal-content-stack {
+        width: 42%;
+        top: 6.5%;
+      }
+      .diagonal-accent-slash {
+        left: 44%;
+        transform: rotate(32deg);
+      }
+      .headline-line {
+        font-size: calc({{headline_font_size}}px * 0.88);
+      }
+      .qr-img {
+        width: 60px;
+        height: 60px;
+      }
+    }
+
+    {{custom_css}}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <!-- 1. Background image generated by FLUX.2 DiT -->
+    <div class="bg-layer"></div>
+
+    <!-- 2. Diagonal Gradient Shim for text legibility -->
+    <div class="diagonal-gradient-shim"></div>
+
+    <!-- 3. Dynamic Decorative Speed Line Slash -->
+    <div class="diagonal-accent-slash"></div>
+
+    <!-- 4. Upper-Left Diagonal Typography Stack -->
+    <div class="diagonal-content-stack">
+      <!-- Pre-header / Kicker -->
+      <div class="kicker-tag">
+        <svg class="kicker-flash" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <span>{{pre_header}}</span>
+        <div class="kicker-line"></div>
+      </div>
+
+      <!-- Hero Headline with athletic dynamic styling -->
+      <div class="title-wrap">
+        <div class="headline-wrap">
+{{headline_html}}
+        </div>
+      </div>
+
+      <!-- Slogan / Subtitle -->
+      <div class="slogan-text">{{slogan}}</div>
+
+      <!-- Injected Adaptive Category Body Component -->
+      <div class="category-body-wrapper">
+{{category_body_html}}
+      </div>
+    </div>
+
+    <!-- 5. Floating Bottom Brand & Contact Footer -->
+    <div class="diagonal-footer" style="display: {{footer_display}};">
+      <div class="brand-contact-wrap" style="display: {{brand_wrap_display}};">
+        <div class="brand-name" style="display: {{brand_display}};">{{brand}}</div>
+        <div class="contact-details">
+          <div class="contact-item" style="display: {{hotline_display}};">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            <span>{{hotline}}</span>
+          </div>
+          <div class="contact-item" style="display: {{address_display}};">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <span>{{address}}</span>
+          </div>
+          <div class="contact-item" style="display: {{website_display}};">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            <span>{{website_link}}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Code Floating Card -->
+      <div class="qr-card" style="display: {{qr_display}};">
+        <img class="qr-img" src="{{qr_data_uri}}" alt="QR Code">
+        <div class="qr-hint">QUÉT MÃ QR</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

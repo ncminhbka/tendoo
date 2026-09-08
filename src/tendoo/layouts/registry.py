@@ -11,6 +11,8 @@ from typing import Dict, List, Optional
 from tendoo.layouts.base import BaseLayout
 from tendoo.layouts.bottom_platform.layout import BottomPlatformLayout
 from tendoo.layouts.center_hourglass.layout import CenterHourglassLayout
+from tendoo.layouts.diagonal_slash.layout import DiagonalSlashLayout
+from tendoo.layouts.l_frame.layout import LFrameLayout
 from tendoo.layouts.split_column.layout import SplitColumnLayout
 from tendoo.layouts.top_dome.layout import TopDomeLayout
 
@@ -48,5 +50,7 @@ register_layout(TopDomeLayout())
 register_layout(CenterHourglassLayout())
 register_layout(BottomPlatformLayout())
 register_layout(SplitColumnLayout())
+register_layout(DiagonalSlashLayout())
+register_layout(LFrameLayout())
 
 

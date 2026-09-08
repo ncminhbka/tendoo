@@ -389,6 +389,71 @@
       .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
     }
 
+    /* Dynamic Category Specific Form Blocks */
+    .cat-fields-block {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step-input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .step-row-num {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      border-radius: 50%;
+      background: #38BDF8;
+      color: #0F172A;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-remove-step {
+      background: rgba(244, 63, 94, 0.15);
+      color: #FB7185;
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-remove-step:hover {
+      background: #F43F5E;
+      color: #fff;
+    }
+
+    .btn-add-step {
+      background: rgba(56, 189, 248, 0.12);
+      color: #38BDF8;
+      border: 1px dashed #38BDF8;
+      border-radius: 8px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .btn-add-step:hover {
+      background: rgba(56, 189, 248, 0.22);
+    }
+
     /* Drag and Drop File Upload Area */
     .upload-zone {
       border: 2px dashed var(--input-border);
@@ -970,28 +1035,136 @@
               </div>
             </div>
 
-            <!-- 3. Mức ưu đãi & Sản phẩm áp dụng -->
-            <div class="form-row-2">
-              <div class="form-group">
-                <label class="form-label" id="lbl-discount">Mức ưu đãi nổi bật:<span class="hint">Nút Badge chính</span></label>
-                <input type="text" id="inp-discount" class="form-input" placeholder="MUA 2 TẶNG 1 hoặc GIẢM 50%">
+            <!-- 3. Dynamic Category Specific Fields -->
+            <!-- 3A. Promo Category Fields -->
+            <div id="cat-fields-promo" class="cat-fields-block">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Mức ưu đãi nổi bật:<span class="hint">Nút Badge chính</span></label>
+                  <input type="text" id="inp-discount" class="form-input" placeholder="MUA 2 TẶNG 1 hoặc GIẢM 50%">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Sản phẩm áp dụng:<span class="hint">Điều kiện</span></label>
+                  <input type="text" id="inp-applied" class="form-input" placeholder="Áp dụng cho toàn bộ trà trái cây">
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label" id="lbl-applied">Sản phẩm áp dụng:<span class="hint">Điều kiện</span></label>
-                <input type="text" id="inp-applied" class="form-input" placeholder="Áp dụng cho toàn bộ trà trái cây">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Từ ngày:</label>
+                  <input type="date" id="inp-date-start" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Đến ngày:</label>
+                  <input type="date" id="inp-date-end" class="form-input">
+                </div>
               </div>
             </div>
 
-            <!-- 4. Từ ngày đến ngày (Date Range) -->
-            <div class="form-row-2">
-              <div class="form-group">
-                <label class="form-label" id="lbl-date-start">Từ ngày:</label>
-                <input type="date" id="inp-date-start" class="form-input">
+            <!-- 3B. Product Intro Category Fields -->
+            <div id="cat-fields-product_intro" class="cat-fields-block" style="display: none;">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Tên sản phẩm / Dòng máy:<span class="req">*</span></label>
+                  <input type="text" id="inp-product-name" class="form-input" placeholder="Tai Nghe Wireless Sonic Pro">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Giá bán niêm yết:<span class="hint">Badge nổi bật</span></label>
+                  <input type="text" id="inp-price" class="form-input" placeholder="1.290.000đ hoặc 199k">
+                </div>
               </div>
               <div class="form-group">
-                <label class="form-label" id="lbl-date-end">Đến ngày:</label>
-                <input type="date" id="inp-date-end" class="form-input">
+                <label class="form-label">Mô tả ngắn về sản phẩm:</label>
+                <input type="text" id="inp-product-desc" class="form-input" placeholder="Chất âm Hi-Res chuẩn phòng thu, công nghệ khử ồn tân tiến">
               </div>
+              <div class="form-group">
+                <label class="form-label">Điểm nổi bật / Thông số chính:<span class="hint">Cách nhau bằng dấu phẩy</span></label>
+                <input type="text" id="inp-highlights" class="form-input" placeholder="Chống ồn ANC, Pin 40 giờ, Bluetooth 5.3, Trọng lượng 180g">
+              </div>
+            </div>
+
+            <!-- 3C. Grand Opening Category Fields -->
+            <div id="cat-fields-opening" class="cat-fields-block" style="display: none;">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Ngày khai trương:<span class="req">*</span></label>
+                  <input type="text" id="inp-opening-date" class="form-input" placeholder="15/10/2026 hoặc Thứ Bảy, 15.10">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Ưu đãi ngày mở bán:<span class="hint">Quà tặng / Voucher</span></label>
+                  <input type="text" id="inp-opening-promo" class="form-input" placeholder="TẶNG 100 PHẦN QUÀ ĐẦU TIÊN">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Liên hệ đặt bàn / Đặt chỗ trước:</label>
+                <input type="text" id="inp-booking-contact" class="form-input" placeholder="Hotline đặt bàn: 0988 123 456">
+              </div>
+            </div>
+
+            <!-- 3D. Customer Feedback Category Fields -->
+            <div id="cat-fields-feedback" class="cat-fields-block" style="display: none;">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Sản phẩm / Dịch vụ nhận feedback:<span class="req">*</span></label>
+                  <input type="text" id="inp-feedback-target" class="form-input" placeholder="Liệu trình Spa trẻ hóa da chuyên sâu">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Điểm đánh giá / Xếp hạng:<span class="hint">Số sao</span></label>
+                  <input type="text" id="inp-feedback-rating" class="form-input" placeholder="⭐⭐⭐⭐⭐ 5.0 / 5.0">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mô tả feedback / Trích dẫn cảm nhận:<span class="req">*</span></label>
+                <textarea id="inp-feedback-quote" class="form-textarea" rows="2" placeholder="“Không gian cực kỳ thư thái, nhân viên chu đáo, da mình căng bóng sau buổi đầu tiên!”"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ưu đãi tri ân đặc biệt:</label>
+                <input type="text" id="inp-special-offer" class="form-input" placeholder="TẶNG VOUCHER 20% CHO KHÁCH HÀNG MỚI">
+              </div>
+            </div>
+
+            <!-- 3E. Recruitment Category Fields -->
+            <div id="cat-fields-recruitment" class="cat-fields-block" style="display: none;">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Vị trí tuyển dụng:<span class="req">*</span></label>
+                  <input type="text" id="inp-job-position" class="form-input" placeholder="SENIOR AI ENGINEER (COMPUTER VISION)">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Thời hạn ứng tuyển:</label>
+                  <input type="text" id="inp-apply-deadline" class="form-input" placeholder="Hạn nộp: 30/10/2026">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mô tả ngắn công việc & Quyền lợi / Thu nhập:<span class="req">*</span></label>
+                <textarea id="inp-job-desc" class="form-textarea" rows="2" placeholder="Thu nhập up to $3,000 / Chế độ bảo hiểm quốc tế, làm việc Hybrid linh hoạt..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cách thức ứng tuyển:</label>
+                <input type="text" id="inp-apply-method" class="form-input" placeholder="Gửi CV về hr@tendoo.ai hoặc quét mã QR bên dưới">
+              </div>
+            </div>
+
+            <!-- 3F. Usage Guide Category Fields -->
+            <div id="cat-fields-guide" class="cat-fields-block" style="display: none;">
+              <label class="form-label">Các bước thực hiện quy trình:<span class="hint">Tối đa 5 bước</span></label>
+              <div id="steps-container">
+                <div class="step-input-row" data-step-idx="1">
+                  <span class="step-row-num">1</span>
+                  <input type="text" class="form-input inp-step-val" placeholder="Bước 1..." value="Chọn sản phẩm yêu thích hoặc quét mã QR">
+                  <button type="button" class="btn-remove-step" onclick="removeStepInput(this)">✕ Xóa</button>
+                </div>
+                <div class="step-input-row" data-step-idx="2">
+                  <span class="step-row-num">2</span>
+                  <input type="text" class="form-input inp-step-val" placeholder="Bước 2..." value="Xác nhận thông tin giao hàng & thanh toán">
+                  <button type="button" class="btn-remove-step" onclick="removeStepInput(this)">✕ Xóa</button>
+                </div>
+                <div class="step-input-row" data-step-idx="3">
+                  <span class="step-row-num">3</span>
+                  <input type="text" class="form-input inp-step-val" placeholder="Bước 3..." value="Nhận hàng nhanh chóng tận nhà trong 2 giờ">
+                  <button type="button" class="btn-remove-step" onclick="removeStepInput(this)">✕ Xóa</button>
+                </div>
+              </div>
+              <button type="button" class="btn-add-step" onclick="addStepInput()">➕ Thêm bước tiếp theo</button>
             </div>
 
             <!-- 5. Mô tả bối cảnh ảnh (AI Scene Prompt) -->
@@ -1056,6 +1229,8 @@
                   <option value="center_hourglass">⏳ Đồng Hồ Cát (Center Hourglass)</option>
                   <option value="bottom_platform">🚘 Bệ Đáy Điện Ảnh (Bottom Platform)</option>
                   <option value="split_column">👗 Dải Lụa Phân Cột (Split Column)</option>
+                  <option value="diagonal_slash">⚡ Vát Chéo Năng Động (Diagonal Slash)</option>
+                  <option value="l_frame">📐 Khung Góc L (L-Frame Anchor)</option>
                 </select>
               </div>
 
@@ -1063,12 +1238,11 @@
               <div class="form-group">
                 <label class="form-label">Phong cách chất liệu & ánh sáng:</label>
                 <select id="sel-style-hint" class="form-select">
-                  <option value="daylight" selected>☀️ Ban ngày trong trẻo (Daylight)</option>
-                  <option value="studio_dark">🌙 Studio tối sang trọng (Studio Dark)</option>
-                  <option value="gold_bevel">👑 Mạ vàng 3D Bevel (Gold Bevel)</option>
-                  <option value="festive_light">🏮 Ánh trăng lễ hội rực rỡ (Festive Light)</option>
-                  <option value="cinematic_asphalt">🏎️ Bệ đường đua điện ảnh (Cinematic Asphalt)</option>
-                  <option value="silk_sash">🎀 Dải lụa champagne mềm mại (Silk Sash)</option>
+                  <option value="auto" selected>✨ Tự động theo bối cảnh (Smart Auto Harmonize)</option>
+                  <option value="daylight">☀️ Bầu trời ban ngày trong trẻo (Daylight Sky)</option>
+                  <option value="studio_dark">🌙 Studio tối dốc êm (Dark Studio Falloff)</option>
+                  <option value="golden_hour">👑 Ánh hoàng hôn vàng ấm (Warm Golden Hour)</option>
+                  <option value="festive_moon">🏮 Ánh trăng lễ hội lung linh (Festive Moonlight Glow)</option>
                 </select>
               </div>
             </div>
@@ -1229,6 +1403,7 @@
     // Category Configuration Metadata
     const CATEGORIES = {
       promo: {
+        recommendedLayout: "top_dome",
         title: "PHẦN 1: THÔNG TIN KHUYẾN MẠI / ƯU ĐÃI",
         panelTitle: "📝 Thông tin Poster Khuyến Mại",
         lblTitle: "Tiêu đề ảnh (Headline):",
@@ -1243,6 +1418,7 @@
         scenePlaceholder: "Ly trà đào cam sả mát lạnh trên bàn gỗ sồi, lát cam tươi mọng nước, tép sả thơm, studio lighting..."
       },
       product_intro: {
+        recommendedLayout: "top_dome",
         title: "PHẦN 1: THÔNG TIN GIỚI THIỆU SẢN PHẨM",
         panelTitle: "📦 Giới Thiệu Sản Phẩm / Dịch Vụ",
         lblTitle: "Tên sản phẩm & Định vị:",
@@ -1257,6 +1433,7 @@
         scenePlaceholder: "Sleek wireless headphones on dark slate pedestal, cinematic blue rim lighting, premium reflection..."
       },
       opening: {
+        recommendedLayout: "center_hourglass",
         title: "PHẦN 1: THÔNG TIN KHAI TRƯƠNG CHI NHÁNH",
         panelTitle: "🎊 Banner Khai Trương Chi Nhánh",
         lblTitle: "Tiêu đề sự kiện khai trương:",
@@ -1271,6 +1448,7 @@
         scenePlaceholder: "Grand opening modern storefront, golden confetti celebration, ribbon cutting ceremony atmosphere..."
       },
       feedback: {
+        recommendedLayout: "split_column",
         title: "PHẦN 1: THÔNG TIN FEEDBACK & ĐÁNH GIÁ",
         panelTitle: "💬 Feedback & Đánh Giá Khách Hàng",
         lblTitle: "Tiêu đề phản hồi (Headline):",
@@ -1285,6 +1463,7 @@
         scenePlaceholder: "Warm cozy cafe ambiance, happy customer testimonial portrait setup, soft depth of field..."
       },
       recruitment: {
+        recommendedLayout: "split_column",
         title: "PHẦN 1: THÔNG TIN TUYỂN DỤNG NHÂN TÀI",
         panelTitle: "👥 Poster Tuyển Dụng Nhân Tài",
         lblTitle: "Vị trí tuyển dụng chính:",
@@ -1299,6 +1478,7 @@
         scenePlaceholder: "High-tech innovative workspace, glass meeting room, modern collaborative work environment..."
       },
       guide: {
+        recommendedLayout: "split_column",
         title: "PHẦN 1: THÔNG TIN QUY TRÌNH & HƯỚNG DẪN",
         panelTitle: "📖 Quy Trình & Hướng Dẫn Sử Dụng",
         lblTitle: "Tên quy trình / Hướng dẫn:",
@@ -1314,8 +1494,62 @@
       }
     };
 
-    // 1-Click Preset Catalog
+    // Compatible optical style hints for each layout topology (Cross-Semantic Clash Prevention)
+    const LAYOUT_STYLE_OPTIONS = {
+      top_dome: [
+        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "daylight", label: "☀️ Bầu trời ban ngày trong trẻo (Daylight Sky)" },
+        { value: "studio_dark", label: "🌙 Studio tối dốc êm (Dark Studio Falloff)" },
+        { value: "golden_hour", label: "👑 Ánh hoàng hôn vàng ấm (Warm Golden Hour)" },
+        { value: "festive_moon", label: "🏮 Ánh trăng lễ hội lung linh (Festive Moonlight Glow)" }
+      ],
+      bottom_platform: [
+        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "cinematic_asphalt", label: "🏎️ Bệ đường đua điện ảnh (Cinematic Asphalt Track)" },
+        { value: "luxury_marble", label: "🏛️ Bục đá cẩm thạch sang trọng (Luxury Obsidian Marble)" },
+        { value: "warm_wood", label: "🪵 Mặt sàn gỗ tự nhiên ấm áp (Warm Wood Surface)" },
+        { value: "water_mirror", label: "✨ Mặt nước phẳng phản chiếu (Reflective Water Platform)" }
+      ],
+      split_column: [
+        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "champagne_silk", label: "🎀 Dải voan lụa champagne bán trong suốt (Champagne Silk)" },
+        { value: "minimal_wall", label: "🏛️ Cột vách kiến trúc tối giản tiệp màu (Minimal Studio Wall)" },
+        { value: "studio_light_pillar", label: "🌫️ Cột khói sáng studio mờ ảo (Soft Studio Light Pillar)" }
+      ],
+      center_hourglass: [
+        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "moonbeam", label: "✨ Luồng sáng đối xứng sân khấu (Volumetric Moonbeam)" },
+        { value: "studio_spotlight", label: "🎬 Đèn rọi studio trần và sàn (Studio Spotlight)" },
+        { value: "festive_light", label: "🏮 Luồng sáng vàng lễ hội (Festive Golden Rays)" }
+      ],
+      diagonal_slash: [
+        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "sport_speed", label: "⚡ Vệt sáng tốc độ thể thao (Sport Dynamic Velocity)" },
+        { value: "cyber_neon", label: "🎮 Dải neon công nghệ viễn tưởng (Cyber Neon Edge)" },
+        { value: "carbon_mesh", label: "🏎️ Dốc bóng đen carbon mờ (Dark Carbon Mesh)" },
+        { value: "daylight_motion", label: "☀️ Vệt nắng chéo ban ngày rực rỡ (Daylight Motion)" }
+      ],
+      l_frame: [
+        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "tech_minimal", label: "💡 Studio tối giản thanh lịch (Tech Minimal Studio)" },
+        { value: "cyber_tech", label: "⚡ Viền xanh neon công nghệ cao (Cyber Cyan Edge)" },
+        { value: "luxury_gold", label: "👑 Hào quang vàng ấm cao cấp (Warm Luxury Glow)" },
+        { value: "daylight_clean", label: "☀️ Ánh sáng ban ngày trong trẻo (Daylight Clean)" }
+      ]
+    };
+
+    function updateStyleHintsForLayout(layoutKey, selectedVal = "auto") {
+      const sel = document.getElementById('sel-style-hint');
+      if (!sel) return;
+      const opts = LAYOUT_STYLE_OPTIONS[layoutKey] || LAYOUT_STYLE_OPTIONS.top_dome;
+      sel.innerHTML = opts.map(o => 
+        `<option value="${o.value}" ${o.value === selectedVal ? 'selected' : ''}>${o.label}</option>`
+      ).join('');
+    }
+
+    // 1-Click Preset Catalog for all 6 Categories
     const PRESETS = {
+      // 1. Promo Presets
       beverage: {
         category: "promo",
         layout: "top_dome",
@@ -1331,22 +1565,6 @@
         website_link: "https://tendoo.ai/summer-sale",
         enable_qr: true,
         image_description: "Commercial beverage advertisement photo of a tall elegant glass of iced peach tea with fresh sliced oranges, lemongrass stalks, floating mint leaves, crystalline water splash, sunlight studio lighting, unbranded, zero text"
-      },
-      headphones: {
-        category: "product_intro",
-        layout: "top_dome",
-        style_hint: "studio_dark",
-        title: "TAI NGHE KHÔNG DÂY\nHI-RES AUDIO CHỐNG ỒN",
-        discount: "GIẢM NGAY 30%",
-        applied_product: "Tặng kèm bao da cao cấp trị giá 500.000đ",
-        date_start: "2026-09-10",
-        date_end: "2026-09-30",
-        store_name: "Tendoo Audio Lab",
-        phone: "0334 842 155",
-        address: "Tầng 5, Tòa nhà Công Nghệ, Cầu Giấy, Hà Nội",
-        website_link: "https://tendoo.ai/headphones",
-        enable_qr: true,
-        image_description: "Commercial product photography of sleek matte black premium wireless over-ear headphones on a dark polished slate pedestal, dramatic studio rim light, moody neon blue atmospheric glow, hyper-detailed, clean backdrop, unbranded, zero text"
       },
       perfume: {
         category: "promo",
@@ -1411,8 +1629,207 @@
         website_link: "https://tendoo.ai/lookbook-2026",
         enable_qr: true,
         image_description: "Editorial high fashion photography of an elegant Asian female model wearing a tailored luxury wool coat, studio portrait, soft warm rim lighting, dramatic pose, high-end lookbook magazine, unbranded, zero text"
+      },
+
+      // 2. Product Intro Presets
+      headphones: {
+        category: "product_intro",
+        layout: "top_dome",
+        style_hint: "studio_dark",
+        title: "TAI NGHE KHÔNG DÂY\nHI-RES AUDIO CHỐNG ỒN",
+        product_name: "Tendoo Sonic Pro Wireless",
+        price: "1.290.000đ",
+        product_desc: "Chất âm phòng thu đỉnh cao, màng loa Beryllium 40mm cao cấp",
+        highlights: "Chống ồn ANC, Pin 40 giờ, Bluetooth 5.3, Trọng lượng 180g",
+        store_name: "Tendoo Audio Lab",
+        phone: "0334 842 155",
+        address: "Tầng 5, Tòa nhà Công Nghệ, Cầu Giấy, Hà Nội",
+        website_link: "https://tendoo.ai/headphones",
+        enable_qr: true,
+        image_description: "Commercial product photography of sleek matte black premium wireless over-ear headphones on a dark polished slate pedestal, dramatic studio rim light, moody neon blue atmospheric glow, hyper-detailed, clean backdrop, unbranded, zero text"
+      },
+      watch: {
+        category: "product_intro",
+        layout: "center_hourglass",
+        style_hint: "gold_bevel",
+        title: "ĐỒNG HỒ THỤY SĨ\nCHRONOGRAPH TOURBILLON",
+        product_name: "Tendoo Chrono Master",
+        price: "18.500.000đ",
+        product_desc: "Bộ chuyển động cơ khí tự động chế tác thủ công tinh xảo",
+        highlights: "Mặt kính Sapphire nguyên khối, Chống nước 10ATM, Thép không gỉ 316L",
+        store_name: "Tendoo Horology",
+        phone: "1800 8899",
+        address: "Tràng Tiền Plaza, Hoàn Kiếm, Hà Nội",
+        website_link: "https://tendoo.ai/chrono",
+        enable_qr: true,
+        image_description: "Luxury Swiss automatic wristwatch on a dark polished obsidian stone pedestal, dramatic golden rim light, floating dust motes, studio advertising macro photography, unbranded, zero text"
+      },
+
+      // 3. Opening Banner Presets
+      grand_opening: {
+        category: "opening",
+        layout: "top_dome",
+        style_hint: "festive_light",
+        title: "TƯNG BỪNG KHAI TRƯƠNG\nCHI NHÁNH THỨ 10",
+        opening_date: "15/10/2026",
+        opening_promo: "TẶNG 100 PHẦN QUÀ ĐẦU TIÊN",
+        booking_contact: "0988 123 456",
+        store_name: "Tendoo Flagship Store",
+        phone: "0988 123 456",
+        address: "45 Phố Huế, Hai Bà Trưng, Hà Nội",
+        website_link: "https://tendoo.ai/opening",
+        enable_qr: true,
+        image_description: "Grand opening modern glass storefront decorated with festive golden balloons, elegant ribbon cutting ceremony atmosphere, soft warm morning daylight, luxury commercial photography, unbranded, zero text"
+      },
+
+      // 4. Feedback Presets
+      spa_review: {
+        category: "feedback",
+        layout: "top_dome",
+        style_hint: "daylight",
+        title: "KHÁCH HÀNG NÓI GÌ\nVỀ DỊCH VỤ TENDOO?",
+        feedback_target: "Liệu trình trẻ hóa da chuyên sâu Collagen",
+        feedback_rating: "⭐⭐⭐⭐⭐ 5.0 / 5.0",
+        feedback_quote: "Không gian cực kỳ thư thái, nhân viên chu đáo, da mình căng bóng mịn màng sau buổi đầu tiên!",
+        special_offer: "TẶNG VOUCHER 20% CHO KHÁCH HÀNG MỚI",
+        store_name: "Tendoo Beauty & Spa",
+        phone: "1900 6868",
+        address: "22 Nguyễn Du, Hai Bà Trưng, Hà Nội",
+        website_link: "https://tendoo.ai/spa-feedback",
+        enable_qr: true,
+        image_description: "Serene luxury spa aesthetic environment, smooth river stones, delicate white lotus flower floating in water, soft natural morning sunlight, clean ethereal atmosphere, unbranded, zero text"
+      },
+
+      // 5. Recruitment Presets
+      ai_engineer: {
+        category: "recruitment",
+        layout: "split_column",
+        style_hint: "studio_dark",
+        title: "TENDOO TÌM ĐỒNG ĐỘI\nWE ARE HIRING",
+        job_position: "SENIOR AI RESEARCH ENGINEER",
+        job_desc: "Thu nhập up to $3,500 / Thưởng cổ phần ESOP, chế độ bảo hiểm quốc tế, làm việc Hybrid linh hoạt",
+        apply_deadline: "30/10/2026",
+        apply_method: "Gửi CV về careers@tendoo.ai hoặc quét mã QR",
+        store_name: "Tendoo AI Labs",
+        phone: "024 7300 8888",
+        address: "Keangnam Landmark 72, Nam Từ Liêm, Hà Nội",
+        website_link: "https://tendoo.ai/careers",
+        enable_qr: true,
+        image_description: "Futuristic high-tech research laboratory workspace, glowing holographic data interfaces, sleek modern dark aesthetics, professional commercial studio atmosphere, unbranded, zero text"
+      },
+
+      // 6. Guide Presets
+      order_guide: {
+        category: "guide",
+        layout: "split_column",
+        style_hint: "daylight",
+        title: "3 BƯỚC ĐẶT HÀNG NHANH\nNHẬN TRONG 2 GIỜ",
+        guide_steps: [
+          "Chọn món đồ uống yêu thích trên menu",
+          "Điền địa chỉ giao hàng và xác nhận",
+          "Nhận đồ uống mát lạnh tận tay sau 2 giờ"
+        ],
+        store_name: "Tendoo Delivery",
+        phone: "1900 8888",
+        address: "Hệ thống 20 chi nhánh toàn quốc",
+        website_link: "https://tendoo.ai/order",
+        enable_qr: true,
+        image_description: "Minimalist modern product packaging and iced beverages on a clean light oak wooden counter, bright morning daylight, clean aesthetic studio setup, unbranded, zero text"
       }
     };
+
+    const CATEGORY_PRESETS_MAP = {
+      promo: [
+        { key: 'beverage', icon: '🍵', label: 'Trà Đào Cam Sả' },
+        { key: 'perfume', icon: '🧴', label: 'Nước Hoa Pháp' },
+        { key: 'midautumn', icon: '🥮', label: 'Bánh Trung Thu' },
+        { key: 'suv', icon: '🏎️', label: 'SUV Điện Ảnh' },
+        { key: 'lookbook', icon: '👗', label: 'Lookbook Thời Trang' }
+      ],
+      product_intro: [
+        { key: 'headphones', icon: '🎧', label: 'Tai Nghe Hi-Res' },
+        { key: 'watch', icon: '⌚', label: 'Đồng Hồ Thụy Sĩ' }
+      ],
+      opening: [
+        { key: 'grand_opening', icon: '🎊', label: 'Khai Trương Flagship' }
+      ],
+      feedback: [
+        { key: 'spa_review', icon: '💆', label: 'Feedback Spa & Da' }
+      ],
+      recruitment: [
+        { key: 'ai_engineer', icon: '👥', label: 'Senior AI Engineer' }
+      ],
+      guide: [
+        { key: 'order_guide', icon: '📖', label: '3 Bước Đặt Hàng' }
+      ]
+    };
+
+    function renderCategoryPresets(catKey) {
+      const container = document.getElementById('presets-container');
+      if (!container) return;
+      const list = CATEGORY_PRESETS_MAP[catKey] || CATEGORY_PRESETS_MAP.promo;
+      container.innerHTML = list.map(p => 
+        `<div class="preset-chip" onclick="loadPreset('${p.key}')">${p.icon} ${p.label}</div>`
+      ).join('');
+    }
+
+    // Dynamic Step Inputs Handler for Guide Category
+    function addStepInput(val = "") {
+      const container = document.getElementById('steps-container');
+      if (!container) return;
+      const curRows = container.querySelectorAll('.step-input-row');
+      if (curRows.length >= 5) {
+        alert("Quy trình hỗ trợ tối đa 5 bước để đảm bảo bố cục trực quan!");
+        return;
+      }
+      const nextIdx = curRows.length + 1;
+      const row = document.createElement('div');
+      row.className = 'step-input-row';
+      row.setAttribute('data-step-idx', nextIdx);
+      row.innerHTML = `
+        <span class="step-row-num">${nextIdx}</span>
+        <input type="text" class="form-input inp-step-val" placeholder="Bước ${nextIdx}..." value="${val}">
+        <button type="button" class="btn-remove-step" onclick="removeStepInput(this)">✕ Xóa</button>
+      `;
+      container.appendChild(row);
+      updateStepNumbers();
+    }
+
+    function removeStepInput(btn) {
+      const container = document.getElementById('steps-container');
+      if (!container) return;
+      const curRows = container.querySelectorAll('.step-input-row');
+      if (curRows.length <= 1) {
+        alert("Cần có tối thiểu 1 bước trong quy trình!");
+        return;
+      }
+      const row = btn.closest('.step-input-row');
+      if (row) row.remove();
+      updateStepNumbers();
+    }
+
+    function updateStepNumbers() {
+      const container = document.getElementById('steps-container');
+      if (!container) return;
+      const rows = container.querySelectorAll('.step-input-row');
+      rows.forEach((r, idx) => {
+        const num = idx + 1;
+        r.setAttribute('data-step-idx', num);
+        const numNode = r.querySelector('.step-row-num');
+        if (numNode) numNode.textContent = num;
+      });
+    }
+
+    function getGuideSteps() {
+      const container = document.getElementById('steps-container');
+      if (!container) return [];
+      const inputs = container.querySelectorAll('.inp-step-val');
+      const steps = [];
+      inputs.forEach(inp => {
+        if (inp.value && inp.value.trim()) steps.push(inp.value.trim());
+      });
+      return steps;
+    }
 
     // Category Switching Handler
     function switchCategory(catKey) {
@@ -1421,36 +1838,68 @@
       const activeBtn = document.getElementById(`btn-cat-${catKey}`);
       if (activeBtn) activeBtn.classList.add('active');
 
+      // Toggle dynamic category form blocks
+      document.querySelectorAll('.cat-fields-block').forEach(b => b.style.display = 'none');
+      const activeBlock = document.getElementById(`cat-fields-${catKey}`);
+      if (activeBlock) {
+        activeBlock.style.display = 'flex';
+      } else {
+        const promoBlock = document.getElementById('cat-fields-promo');
+        if (promoBlock) promoBlock.style.display = 'flex';
+      }
+
       const meta = CATEGORIES[catKey] || CATEGORIES.promo;
       document.getElementById('section-general-title').textContent = meta.title;
       document.getElementById('panel-category-title').textContent = meta.panelTitle;
       document.getElementById('lbl-title').innerHTML = `${meta.lblTitle}<span class="req">*</span>`;
       document.getElementById('inp-title').placeholder = meta.titlePlaceholder;
-      document.getElementById('lbl-discount').innerHTML = `${meta.lblDiscount}<span class="hint">Điểm nhấn chính</span>`;
-      document.getElementById('inp-discount').placeholder = meta.discountPlaceholder;
-      document.getElementById('lbl-applied').innerHTML = `${meta.lblApplied}:<span class="hint">Chi tiết</span>`;
-      document.getElementById('inp-applied').placeholder = meta.appliedPlaceholder;
-      document.getElementById('lbl-date-start').textContent = meta.lblDateStart;
-      document.getElementById('lbl-date-end').textContent = meta.lblDateEnd;
       document.getElementById('lbl-scene-desc').innerHTML = `${meta.lblSceneDesc}<span class="req">*</span>`;
       document.getElementById('inp-scene-desc').placeholder = meta.scenePlaceholder;
+
+      // Auto-switch to Recommended Layout for this business intent
+      const recLayout = meta.recommendedLayout || 'top_dome';
+      const selLayout = document.getElementById('sel-layout');
+      if (selLayout) {
+        selLayout.value = recLayout;
+        onLayoutSelect(recLayout, 'auto');
+
+        // Dynamically highlight "(Khuyên dùng)" in layout select dropdown
+        Array.from(selLayout.options).forEach(opt => {
+          const rawText = opt.textContent.replace(/\s*\(Khuyên dùng\)/g, '');
+          if (opt.value === recLayout) {
+            opt.textContent = `${rawText} (Khuyên dùng)`;
+          } else {
+            opt.textContent = rawText;
+          }
+        });
+      }
+
+      // Update preset chips to match this category
+      renderCategoryPresets(catKey);
 
       // Scroll form into view nicely
       document.getElementById('form-workspace').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Layout Indicator update
-    function onLayoutSelect(val) {
+    // Layout Indicator update & Dynamic Style Hints filter
+    function onLayoutSelect(val, preferredStyle = 'auto') {
       const ind = document.getElementById('layout-indicator');
-      if (val === 'split_column') {
-        ind.textContent = "Bố cục: Dải Lụa Phân Cột";
-      } else if (val === 'bottom_platform') {
-        ind.textContent = "Bố cục: Bệ Đáy Điện Ảnh";
-      } else if (val === 'center_hourglass') {
-        ind.textContent = "Bố cục: Đồng Hồ Cát";
-      } else {
-        ind.textContent = "Bố cục: Vòm Đỉnh";
+      if (ind) {
+        if (val === 'split_column') {
+          ind.textContent = "Bố cục: Dải Lụa Phân Cột";
+        } else if (val === 'bottom_platform') {
+          ind.textContent = "Bố cục: Bệ Đáy Điện Ảnh";
+        } else if (val === 'center_hourglass') {
+          ind.textContent = "Bố cục: Đồng Hồ Cát";
+        } else if (val === 'diagonal_slash') {
+          ind.textContent = "Bố cục: Vát Chéo Năng Động";
+        } else if (val === 'l_frame') {
+          ind.textContent = "Bố cục: Khung Góc L";
+        } else {
+          ind.textContent = "Bố cục: Vòm Đỉnh";
+        }
       }
+      updateStyleHintsForLayout(val, preferredStyle);
     }
 
     // 1-Click Preset Loader
@@ -1460,15 +1909,12 @@
       if (p.category && p.category !== currentCategory) {
         switchCategory(p.category);
       }
-      document.getElementById('sel-layout').value = p.layout || 'top_dome';
-      onLayoutSelect(p.layout || 'top_dome');
+      const layoutVal = p.layout || 'top_dome';
+      const selLayout = document.getElementById('sel-layout');
+      if (selLayout) selLayout.value = layoutVal;
+      onLayoutSelect(layoutVal, p.style_hint || 'auto');
 
-      document.getElementById('sel-style-hint').value = p.style_hint || 'daylight';
       document.getElementById('inp-title').value = p.title || '';
-      document.getElementById('inp-discount').value = p.discount || '';
-      document.getElementById('inp-applied').value = p.applied_product || '';
-      document.getElementById('inp-date-start').value = p.date_start || '';
-      document.getElementById('inp-date-end').value = p.date_end || '';
       document.getElementById('inp-scene-desc').value = p.image_description || '';
       
       document.getElementById('inp-store-name').value = p.store_name || '';
@@ -1476,6 +1922,47 @@
       document.getElementById('inp-address').value = p.address || '';
       document.getElementById('inp-website').value = p.website_link || '';
       document.getElementById('inp-enable-qr').checked = (p.enable_qr !== false);
+
+      // Populate Promo fields
+      if (document.getElementById('inp-discount')) document.getElementById('inp-discount').value = p.discount || '';
+      if (document.getElementById('inp-applied')) document.getElementById('inp-applied').value = p.applied_product || '';
+      if (document.getElementById('inp-date-start')) document.getElementById('inp-date-start').value = p.date_start || '';
+      if (document.getElementById('inp-date-end')) document.getElementById('inp-date-end').value = p.date_end || '';
+
+      // Populate Product Intro fields
+      if (document.getElementById('inp-product-name')) document.getElementById('inp-product-name').value = p.product_name || '';
+      if (document.getElementById('inp-price')) document.getElementById('inp-price').value = p.price || '';
+      if (document.getElementById('inp-product-desc')) document.getElementById('inp-product-desc').value = p.product_desc || '';
+      if (document.getElementById('inp-highlights')) document.getElementById('inp-highlights').value = p.highlights || '';
+
+      // Populate Opening fields
+      if (document.getElementById('inp-opening-date')) document.getElementById('inp-opening-date').value = p.opening_date || '';
+      if (document.getElementById('inp-opening-promo')) document.getElementById('inp-opening-promo').value = p.opening_promo || '';
+      if (document.getElementById('inp-booking-contact')) document.getElementById('inp-booking-contact').value = p.booking_contact || '';
+
+      // Populate Feedback fields
+      if (document.getElementById('inp-feedback-target')) document.getElementById('inp-feedback-target').value = p.feedback_target || '';
+      if (document.getElementById('inp-feedback-rating')) document.getElementById('inp-feedback-rating').value = p.feedback_rating || '';
+      if (document.getElementById('inp-feedback-quote')) document.getElementById('inp-feedback-quote').value = p.feedback_quote || '';
+      if (document.getElementById('inp-special-offer')) document.getElementById('inp-special-offer').value = p.special_offer || '';
+
+      // Populate Recruitment fields
+      if (document.getElementById('inp-job-position')) document.getElementById('inp-job-position').value = p.job_position || '';
+      if (document.getElementById('inp-apply-deadline')) document.getElementById('inp-apply-deadline').value = p.apply_deadline || '';
+      if (document.getElementById('inp-job-desc')) document.getElementById('inp-job-desc').value = p.job_desc || '';
+      if (document.getElementById('inp-apply-method')) document.getElementById('inp-apply-method').value = p.apply_method || '';
+
+      // Populate Guide fields
+      if (p.guide_steps && Array.isArray(p.guide_steps)) {
+        const container = document.getElementById('steps-container');
+        if (container) {
+          container.innerHTML = "";
+          p.guide_steps.forEach((st) => {
+            addStepInput(st);
+          });
+        }
+      }
+
       updateTextEffectSuggestion();
     }
 
@@ -1642,14 +2129,40 @@
         website_link: document.getElementById('inp-website').value,
         enable_qr: document.getElementById('inp-enable-qr').checked,
         
-        // Category Fields
-        title: document.getElementById('inp-title').value,
+        // Category Fields (Promo)
+        title: document.getElementById('inp-title')?.value || '',
         image_base64: uploadedImageBase64,
-        discount: document.getElementById('inp-discount').value,
-        applied_product: document.getElementById('inp-applied').value,
-        date_start: document.getElementById('inp-date-start').value,
-        date_end: document.getElementById('inp-date-end').value,
-        image_description: document.getElementById('inp-scene-desc').value,
+        discount: document.getElementById('inp-discount')?.value || '',
+        applied_product: document.getElementById('inp-applied')?.value || '',
+        date_start: document.getElementById('inp-date-start')?.value || '',
+        date_end: document.getElementById('inp-date-end')?.value || '',
+        image_description: document.getElementById('inp-scene-desc')?.value || '',
+
+        // Product Intro
+        product_name: document.getElementById('inp-product-name')?.value || '',
+        price: document.getElementById('inp-price')?.value || '',
+        product_desc: document.getElementById('inp-product-desc')?.value || '',
+        highlights: document.getElementById('inp-highlights')?.value || '',
+
+        // Grand Opening
+        opening_date: document.getElementById('inp-opening-date')?.value || '',
+        opening_promo: document.getElementById('inp-opening-promo')?.value || '',
+        booking_contact: document.getElementById('inp-booking-contact')?.value || '',
+
+        // Customer Feedback
+        feedback_target: document.getElementById('inp-feedback-target')?.value || '',
+        feedback_quote: document.getElementById('inp-feedback-quote')?.value || '',
+        feedback_rating: document.getElementById('inp-feedback-rating')?.value || '',
+        special_offer: document.getElementById('inp-special-offer')?.value || '',
+
+        // Recruitment
+        job_position: document.getElementById('inp-job-position')?.value || '',
+        job_desc: document.getElementById('inp-job-desc')?.value || '',
+        apply_deadline: document.getElementById('inp-apply-deadline')?.value || '',
+        apply_method: document.getElementById('inp-apply-method')?.value || '',
+
+        // Usage Guide
+        guide_steps: getGuideSteps(),
 
         // Visual / Design Controls
         layout: document.getElementById('sel-layout').value,

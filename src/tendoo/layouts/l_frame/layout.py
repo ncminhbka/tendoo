@@ -1,0 +1,213 @@
+"""
+LFrameLayout implementation.
+============================
+L-Frame Corner Anchor topology:
+- Top horizontal bar: bold headline & kicker across the upper canvas (y in [0.0, 0.30]).
+- Left vertical column: spec badges, feature pills, steps, or requirements (x in [0.0, 0.38]).
+- Preserves 45-55% lower-right open quadrant for hero tech gadgets, appliances, or keynote subjects.
+"""
+
+from __future__ import annotations
+
+import html
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+
+from tendoo.layouts.base import BaseLayout, ColorPalette, PosterContent
+from tendoo.layouts.component_engine import get_component_css, render_category_body
+from tendoo.layouts.l_frame.mask import generate_l_frame_mask
+from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
+
+
+TEMPLATE_PATH = Path(__file__).resolve().parent / "template.html"
+
+
+class LFrameLayout(BaseLayout):
+    """
+    L-Frame Corner Anchor Layout:
+      - Framing along top edge and left column.
+      - Lower-right open quadrant reserved for hero subjects.
+      - Ideal for technology devices, smart home appliances, workshops, and courses.
+    """
+
+    @property
+    def name(self) -> str:
+        return "l_frame"
+
+    @property
+    def display_name(self) -> str:
+        return "Khung Góc L (L-Frame Anchor)"
+
+    @property
+    def description(self) -> str:
+        return (
+            "Bố cục khung góc chữ L bám cạnh trên và cột trái, dành 55% góc dưới-phải "
+            "cho sản phẩm công nghệ, thiết bị gia dụng, hội thảo, khóa học."
+        )
+
+    def generate_mask(
+        self,
+        width: int,
+        height: int,
+        y_bar: float = 0.30,
+        x_col: float = 0.38,
+        delta: float = 0.10,
+        side: str = "top_left",
+        int_max: float = 1.0,
+        **kwargs,
+    ) -> np.ndarray:
+        return generate_l_frame_mask(
+            height=height,
+            width=width,
+            y_bar=y_bar,
+            x_col=x_col,
+            delta=delta,
+            side=side,
+            int_max=int_max,
+            **kwargs,
+        )
+
+    def get_corridor_prompt(self, style_hint: str = "tech_minimal") -> str:
+        if style_hint in ("tech_minimal", "minimal_studio"):
+            return (
+                "A clean minimalist studio ambient lighting framing the top and left side, "
+                "subtle soft shadow gradation down the left edge, expansive luminous copy space for typography, "
+                "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
+            )
+        elif style_hint in ("cyber_tech", "cyan_circuit"):
+            return (
+                "A sleek futuristic dark tech studio atmosphere with subtle electric cyan edge lighting framing the upper-left corner, "
+                "clean uncluttered space for typography, high-tech minimalist environment, "
+                "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
+            )
+        elif style_hint in ("luxury_gold", "warm_editorial"):
+            return (
+                "A sophisticated warm studio ambient illumination washing across the top and cascading down the left column, "
+                "soft golden rim accent, pristine clean space for typography, "
+                "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
+            )
+        elif style_hint in ("daylight_clean", "sunlight_airy"):
+            return (
+                "A bright crisp natural daylight studio background with soft ambient light washing across the top and left margin, "
+                "airy pristine copy space, smooth subtle edge feathering, "
+                "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
+            )
+        else:
+            return (
+                "A soft balanced studio ambient light wash framing the top margin and left column, "
+                "smooth gradient falloff, clean pristine space for typography, "
+                "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
+            )
+
+    def get_safe_zone(self) -> Tuple[float, float, float, float]:
+        """
+        Safe zone in normalized coordinates (y0, x0, y1, x1):
+        Upper-left corner safe zone for color sampling & typography framing.
+        """
+        return (0.04, 0.04, 0.30, 0.45)
+
+    def render_html(
+        self,
+        content: PosterContent,
+        palette: ColorPalette,
+        width: int,
+        height: int,
+        bg_data_uri: str,
+        headline_effect: str = "3d_gold",
+    ) -> str:
+        """
+        Renders HTML for the L-Frame Corner layout.
+        """
+        headline_plain = normalize_text(content.headline or "")
+        lines, metrics = balance_vietnamese_headline(headline_plain, max_one_line_chars=18)
+
+        # Dynamic font sizing ladder
+        longest_line = max(len(l) for l in lines) if lines else 10
+        base_size = int(width * 0.068)
+        if longest_line > 16:
+            base_size = int(base_size * 0.85)
+        elif longest_line > 12:
+            base_size = int(base_size * 0.92)
+        headline_font_size = max(26, min(base_size, 84))
+
+        # Headline HTML
+        headline_line_divs = []
+        for line in lines:
+            headline_line_divs.append(f'          <div class="headline-line">{html.escape(line)}</div>')
+        headline_html = "\n".join(headline_line_divs)
+
+        # Headline effect styling
+        effect_name = headline_effect or content.text_effect or "auto"
+        _, headline_fill_css, wrap_filter_css = resolve_headline_effect(
+            effect=effect_name,
+            headline_text=headline_plain,
+            category=content.category,
+            layout_name=self.name,
+            palette_is_dark=palette.is_dark,
+            accent_color=palette.accent_color,
+            headline_color=palette.headline_color,
+        )
+
+        # Normalization
+        pre_header = normalize_text(content.pre_header)
+        slogan = normalize_text(content.slogan)
+        brand = normalize_text(content.brand)
+        hotline = normalize_text(content.hotline)
+        address = normalize_text(content.address)
+        website_link = normalize_text(content.website_link)
+        qr_data_uri = content.qr_data_uri or ""
+
+        # Category Body Component
+        category_body_html = render_category_body(
+            content=content,
+            palette=palette,
+            layout_name=self.name,
+        )
+        component_css = get_component_css()
+
+        # Read template
+        template_text = TEMPLATE_PATH.read_text(encoding="utf-8")
+
+        # Footer item visibility
+        has_contacts = bool(brand or hotline or address or website_link)
+        has_qr = bool(qr_data_uri)
+        has_footer = has_contacts or has_qr
+
+        replacements = {
+            "{{width}}": str(width),
+            "{{height}}": str(height),
+            "{{headline_plain}}": html.escape(headline_plain),
+            "{{bg_data_uri}}": bg_data_uri,
+            "{{css_vars}}": palette.to_css_vars(),
+            "{{component_css}}": component_css,
+            "{{headline_font_size}}": str(headline_font_size),
+            "{{wrap_filter_css}}": wrap_filter_css,
+            "{{headline_fill_css}}": headline_fill_css,
+            "{{headline_html}}": headline_html,
+            "{{pre_header}}": html.escape(pre_header),
+            "{{pre_header_display}}": "flex" if pre_header else "none",
+            "{{slogan}}": html.escape(slogan),
+            "{{slogan_display}}": "block" if slogan else "none",
+            "{{category_body_html}}": category_body_html,
+            "{{footer_display}}": "flex" if has_footer else "none",
+            "{{brand_wrap_display}}": "flex" if has_contacts else "none",
+            "{{brand}}": html.escape(brand),
+            "{{brand_display}}": "block" if brand else "none",
+            "{{hotline}}": f"HOTLINE: {html.escape(hotline)}" if hotline else "",
+            "{{hotline_display}}": "inline-flex" if hotline else "none",
+            "{{address}}": html.escape(address),
+            "{{address_display}}": "inline-flex" if address else "none",
+            "{{website_link}}": html.escape(website_link),
+            "{{website_display}}": "inline-flex" if website_link else "none",
+            "{{qr_data_uri}}": qr_data_uri,
+            "{{qr_display}}": "flex" if has_qr else "none",
+            "{{custom_css}}": content.custom_css or "",
+        }
+
+        rendered = template_text
+        for placeholder, value in replacements.items():
+            rendered = rendered.replace(placeholder, value)
+
+        return rendered

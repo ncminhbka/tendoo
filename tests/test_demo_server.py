@@ -201,22 +201,54 @@ def test_generate_multi_images(client):
 def test_sanitize_and_inject_zero_text():
     from demo_server import sanitize_and_inject_zero_text
 
-    # Case 1: Empty prompt gets full canonical advertising negative constraints
+    # Case 1: Empty prompt gets background copy space negative constraints (WITHOUT erasing brand/logos)
     p1 = sanitize_and_inject_zero_text("")
-    assert "zero text" in p1
-    assert "unbranded" in p1
+    assert "text-free background" in p1
+    assert "no floating graphic text" in p1
+    # Must NOT suppress brand logos or labels on authentic products
+    assert "unbranded" not in p1
+    assert "no logos" not in p1
+    assert "no labels" not in p1
 
     # Case 2: Dimensions / resolution pollution stripped
-    p2 = sanitize_and_inject_zero_text("Ly trà đào cam sả 8k 16:9 4k")
+    p2 = sanitize_and_inject_zero_text("Gói mỳ tôm Hảo Hảo 8k 16:9 4k")
     assert "8k" not in p2
     assert "16:9" not in p2
-    assert "zero text" in p2
+    assert "Hảo Hảo" in p2
+    assert "text-free background" in p2
 
-    # Case 3: Text intent directives stripped
+    # Case 3: Text intent directives stripped from background
     p3 = sanitize_and_inject_zero_text("Ảnh quảng cáo trà đào có chữ MUA 1 TẶNG 1 trên ly")
     assert "có chữ MUA 1 TẶNG 1" not in p3
-    assert "zero text" in p3
-    assert "no words" in p3
+    assert "text-free background" in p3
+
+    # Case 4: Uploaded product reference protects authentic branding and packaging
+    p4 = sanitize_and_inject_zero_text("Gói mỳ tôm chua cay", has_ref_image=True)
+    assert "preserve authentic product packaging" in p4
+    assert "original brand details" in p4
+    assert "unbranded" not in p4
+
+
+def test_cross_layout_style_defense():
+    """Verifies backend defense prevents spatial semantic clash between layout and incompatible styles."""
+    from demo_server import detect_scene_lighting_tone
+
+    # 1. Incompatible style for top_dome (e.g. cinematic_asphalt) falls back to daylight
+    style_top = detect_scene_lighting_tone("Ly trà đào cam sả ban ngày", user_hint="cinematic_asphalt", layout_name="top_dome")
+    assert style_top == "daylight"
+
+    # 2. Incompatible style for bottom_platform (e.g. daylight sky) falls back to asphalt/scene
+    style_bottom = detect_scene_lighting_tone("Chiếc xe SUV sang trọng", user_hint="daylight", layout_name="bottom_platform")
+    assert style_bottom == "cinematic_asphalt"
+
+    # 3. Compatible style is preserved
+    style_valid = detect_scene_lighting_tone("Chiếc xe SUV", user_hint="luxury_marble", layout_name="bottom_platform")
+    assert style_valid == "luxury_marble"
+
+    # 4. Smart auto detects night/neon mood
+    style_auto_dark = detect_scene_lighting_tone("Quán bar đêm ánh neon rực rỡ", user_hint="auto", layout_name="top_dome")
+    assert style_auto_dark == "studio_dark"
+
 
 
 def test_zero_emoji_calendar_svg_in_html(client):
@@ -241,5 +273,211 @@ def test_zero_emoji_calendar_svg_in_html(client):
     # Cross-platform SVG calendar icon MUST be present
     assert "icon-calendar" in html_content
     assert "<svg" in html_content
+
+
+def test_generate_product_intro_adaptive_components(client):
+    """Verifies product_intro category renders price badge, spec chips, and product name across layouts."""
+    payload = {
+        "category": "product_intro",
+        "title": "TAI NGHE WIRELESS SONIC PRO\nCHỐNG ỒN CHỦ ĐỘNG HYBRID",
+        "product_name": "Sonic Pro Wireless",
+        "price": "1.290.000đ",
+        "product_desc": "Chất âm Hi-Res chuẩn phòng thu âm thanh vòm 360",
+        "highlights": "ANC 45dB, Pin 40 Giờ, Bluetooth 5.3",
+        "store_name": "Tendoo Audio Store",
+        "phone": "1900 8888",
+        "layout": "top_dome",
+        "aspect_ratio": "1:1",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+    assert data["category"] == "product_intro"
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "category-product-container" in html
+    assert "Sonic Pro Wireless" in html
+    assert "1.290.000đ" in html
+    assert "cat-comp-price-pill" in html
+    assert "ANC 45dB" in html
+    assert "spec-chip" in html
+
+
+def test_generate_grand_opening_adaptive_components(client):
+    """Verifies opening category renders opening date chip, promo ribbon, and reservation hotline."""
+    payload = {
+        "category": "opening",
+        "title": "TENDOO COFFEE ROASTERY\nTƯNG BỪNG KHAI TRƯƠNG",
+        "opening_date": "15/10/2026",
+        "opening_promo": "TẶNG 100 LY CÀ PHÊ MIỄN PHÍ",
+        "booking_contact": "0988 123 456",
+        "store_name": "Tendoo Coffee",
+        "address": "45 Lê Lợi, Quận 1, TP. HCM",
+        "layout": "split_column",
+        "aspect_ratio": "4:5",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+    assert data["category"] == "opening"
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "category-opening-container" in html
+    assert "15/10/2026" in html
+    assert "TẶNG 100 LY CÀ PHÊ MIỄN PHÍ" in html
+    assert "cat-comp-opening-promo" in html
+    assert "0988 123 456" in html
+    assert "cat-comp-booking-chip" in html
+
+
+def test_generate_customer_feedback_adaptive_components(client):
+    """Verifies feedback category renders liquid glass quote card, 5-star rating, and loyalty offer."""
+    payload = {
+        "category": "feedback",
+        "title": "TRẢI NGHIỆM THƯ GIÃN ĐẲNG CẤP\nLIỆU TRÌNH SPA TRẺ HÓA",
+        "feedback_target": "Liệu trình Trẻ hóa da Chuyên sâu",
+        "feedback_rating": "5.0 / 5.0",
+        "feedback_quote": "Không gian cực kỳ thư thái, nhân viên tận tâm, da mình sáng mịn rõ rệt!",
+        "special_offer": "VOUCHER 20% CHO KHÁCH HÀNG MỚI",
+        "store_name": "Tendoo Spa & Wellness",
+        "layout": "center_hourglass",
+        "aspect_ratio": "1:1",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+    assert data["category"] == "feedback"
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "category-feedback-container" in html
+    assert "cat-comp-feedback-card" in html
+    assert "icon-star" in html
+    assert "5.0 / 5.0" in html
+    assert "Không gian cực kỳ thư thái" in html
+    assert "Liệu trình Trẻ hóa" in html
+    assert "VOUCHER 20%" in html
+    assert "cat-comp-special-offer" in html
+
+
+def test_generate_recruitment_adaptive_components(client):
+    """Verifies recruitment category renders role badge, benefits box, deadline, and apply method."""
+    payload = {
+        "category": "recruitment",
+        "title": "GIA NHẬP ĐỘI NGŨ CÔNG NGHỆ\nCÙNG TENDOO AI CHINH PHỤC ĐỈNH CAO",
+        "job_position": "SENIOR AI RESEARCH ENGINEER",
+        "job_desc": "Thu nhập up to $4,000 / Thưởng hiệu suất / Làm việc Hybrid linh hoạt",
+        "apply_deadline": "31/10/2026",
+        "apply_method": "hr@tendoo.ai",
+        "store_name": "Tendoo AI Labs",
+        "layout": "bottom_platform",
+        "aspect_ratio": "9:16",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+    assert data["category"] == "recruitment"
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "category-recruitment-container" in html
+    assert "cat-comp-job-role" in html
+    assert "SENIOR AI RESEARCH ENGINEER" in html
+    assert "up to $4,000" in html
+    assert "31/10/2026" in html
+    assert "hr@tendoo.ai" in html
+
+
+def test_generate_usage_guide_adaptive_components(client):
+    """Verifies guide category renders vertical stepper timeline with step numbers and descriptions."""
+    payload = {
+        "category": "guide",
+        "title": "QUY TRÌNH MUA HÀNG TIỆN LỢI\nCHỈ VỚI 3 BƯỚC ĐƠN GIẢN",
+        "guide_steps": [
+            "Quét mã QR hoặc truy cập website",
+            "Chọn sản phẩm và nhập mã ưu đãi",
+            "Nhận hàng hỏa tốc trong 2 giờ"
+        ],
+        "store_name": "Tendoo Express",
+        "layout": "split_column",
+        "aspect_ratio": "16:9",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+    assert data["category"] == "guide"
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "category-guide-container" in html
+    assert "cat-comp-stepper-timeline" in html
+    assert "timeline-step" in html
+    assert "step-num-node" in html
+    assert "Quét mã QR" in html
+    assert "Nhận hàng hỏa tốc" in html
+
+
+def test_generate_diagonal_slash_mock(client):
+    """Verifies end-to-end FastAPI poster generation with diagonal_slash layout."""
+    payload = {
+        "category": "product_intro",
+        "title": "GIÀY CHẠY BỘ CARBON\nSIÊU TỐC ĐỘ 2026",
+        "product_name": "Tendoo Speed Elite",
+        "price": "3.290.000đ",
+        "highlights": "Đế Carbon, Siêu Nhẹ 150g, Bật Nảy 90%",
+        "store_name": "Tendoo Athletics",
+        "layout": "diagonal_slash",
+        "style_hint": "sport_speed",
+        "aspect_ratio": "1:1",
+        "image_description": "A pair of high-performance running sneakers floating in dynamic athletic studio",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+    assert data["category"] == "product_intro"
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "diagonal-content-stack" in html
+    assert "diagonal-gradient-shim" in html
+    assert "3.290.000đ" in html
+
+
+def test_generate_l_frame_mock(client):
+    """Verifies end-to-end FastAPI poster generation with l_frame layout."""
+    payload = {
+        "category": "product_intro",
+        "title": "ROBOT HÚT BỤI LAU NHÀ\nECOVACS X1 OMNI PRO",
+        "product_name": "Ecovacs Deebot X1",
+        "price": "18.990.000đ",
+        "highlights": "Lực hút 8000Pa, Giặt sấy giẻ khí nóng, Camera AI",
+        "store_name": "Tendoo Smart Home",
+        "layout": "l_frame",
+        "style_hint": "tech_minimal",
+        "aspect_ratio": "1:1",
+        "image_description": "A luxury robot vacuum cleaner on polished hardwood living room floor",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+    assert data["category"] == "product_intro"
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "lframe-top-bar" in html
+    assert "lframe-left-column" in html
+    assert "18.990.000đ" in html
+
+
+
 
 

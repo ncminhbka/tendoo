@@ -270,14 +270,19 @@ logs/
 ~$*
 * - Copy.*
 .agents/
+.claude/
+*.zip
 scratch/
 
 # Heavy generated output directories (HTML/PNG probe artifacts, not source)
 output_diverse_cases/
 output_typography_tests/
+output_layouts_test/
+layout_renders/
 
 # Docs & planning/scratch text artifacts -- not core code, kept local only
 docs/
 prompt.txt
 prompt_test.txt
 project_roadmap.txt
+debug_diagonal.html
