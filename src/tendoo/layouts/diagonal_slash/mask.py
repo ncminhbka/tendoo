@@ -17,9 +17,9 @@ import numpy as np
 def generate_diagonal_slash_mask(
     height: int,
     width: int,
-    x_top: float = 0.65,
-    x_bottom: float = 0.20,
-    delta: float = 0.10,
+    x_top: float = 0.54,
+    x_bottom: float = 0.12,
+    delta: float = 0.18,
     side: str = "top_left",
     wave_amp: float = 0.0,
     wave_freq: float = 1.0,
@@ -27,11 +27,11 @@ def generate_diagonal_slash_mask(
     **kwargs,
 ) -> np.ndarray:
     """
-    Constructs an energetic diagonal slash corridor mask:
+    Constructs an energetic, soft diagonal slash corridor mask:
     - height, width: Canvas dimensions in pixels.
-    - x_top: Normalized x-coordinate at top edge y=0 (default 0.65).
-    - x_bottom: Normalized x-coordinate at bottom edge y=1 (default 0.20).
-    - delta: Perpendicular cosine feathering transition width (default 0.10).
+    - x_top: Normalized x-coordinate at top edge y=0 (default 0.54, spacious headline corridor).
+    - x_bottom: Normalized x-coordinate at bottom edge y=1 (default 0.12, open subject canvas).
+    - delta: Perpendicular cosine feathering transition width (default 0.18 for smooth organic gradient).
     - side: 'top_left' (default) or 'top_right'.
     - wave_amp: Optional subtle organic wave modulation (default 0.0 for straight crisp line).
     - int_max: Maximum mask intensity (default 1.0).

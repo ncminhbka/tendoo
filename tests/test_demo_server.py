@@ -447,7 +447,7 @@ def test_generate_diagonal_slash_mock(client):
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
     assert "diagonal-content-stack" in html
-    assert "diagonal-gradient-shim" in html
+    assert "headline-wrap" in html
     assert "3.290.000đ" in html
 
 

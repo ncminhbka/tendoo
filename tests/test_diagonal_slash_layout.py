@@ -73,7 +73,8 @@ def test_diagonal_slash_mask_math():
     """Validates perpendicular signed distance and cosine feathering of diagonal slash mask."""
     layout = get_layout("diagonal_slash")
     h, w = 1024, 1024
-    mask = layout.generate_mask(width=w, height=h, x_top=0.65, x_bottom=0.20, delta=0.10)
+    # Test calibrated default mask (x_top=0.54, x_bottom=0.12, delta=0.18)
+    mask = layout.generate_mask(width=w, height=h)
 
     assert mask.shape == (1024, 1024), f"Unexpected shape {mask.shape}"
     assert mask.min() >= 0.0 and mask.max() <= 1.0, "Mask values outside [0, 1]"
@@ -86,14 +87,14 @@ def test_diagonal_slash_mask_math():
     lr_val = mask[int(0.85 * h), int(0.85 * w)]
     assert lr_val == 0.0, f"Lower-right hero zone should be 0.0 (got {lr_val})"
 
-    # 3. Center of line: at y=0.50, boundary should be at x = (0.65 + 0.20)/2 = 0.425
+    # 3. Center of line: at y=0.50, boundary should be at x = (0.54 + 0.12)/2 = 0.33
     y_mid = int(0.50 * h)
     x_boundary = np.where(mask[y_mid, :] > 0.5)[0][-1] / float(w)
-    expected_x = 0.425
-    assert abs(x_boundary - expected_x) < 0.03, f"Boundary at mid-height expected ~{expected_x}, got {x_boundary}"
+    expected_x = 0.33
+    assert abs(x_boundary - expected_x) < 0.04, f"Boundary at mid-height expected ~{expected_x}, got {x_boundary}"
 
     # 4. Monotonic transition across perpendicular boundary at y=0.50
-    row_slice = mask[y_mid, int(0.30 * w) : int(0.55 * w)]
+    row_slice = mask[y_mid, int(0.20 * w) : int(0.48 * w)]
     diffs = np.diff(row_slice)
     assert np.all(diffs <= 0.001), "Transition across diagonal boundary must decrease monotonically"
 

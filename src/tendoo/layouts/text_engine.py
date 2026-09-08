@@ -243,7 +243,57 @@ def resolve_headline_effect(
     Returns:
         (resolved_effect_name, headline_fill_css, wrap_filter_css)
     """
+    EFFECT_ALIASES = {
+        # Embossed / 3D Gold
+        "embossed": "embossed",
+        "in_noi_3d_gold": "embossed",
+        "in_noi_3d": "embossed",
+        "3d_gold": "embossed",
+        "gold": "embossed",
+        "relief": "embossed",
+        # LED Backlit
+        "led": "led",
+        "den_led_backlit": "led",
+        "den_led": "led",
+        "backlit": "led",
+        "halo": "led",
+        # Neon
+        "neon": "neon",
+        "phat_quang_neon": "neon",
+        "phat_quang": "neon",
+        "glow": "neon",
+        # Chrome
+        "chrome": "chrome",
+        "chrome_bach_kim": "chrome",
+        "bach_kim": "chrome",
+        "liquid_chrome": "chrome",
+        "silver": "chrome",
+        # Engraved
+        "engraved": "engraved",
+        "khac_chim_sa_thach": "engraved",
+        "khac_chim": "engraved",
+        "debossed": "engraved",
+        # Holographic
+        "holographic": "holographic",
+        "hologram": "holographic",
+        "hologram_xa_cu": "holographic",
+        "xa_cu": "holographic",
+        "iridescent": "holographic",
+        # Outline / Wireframe
+        "outline": "outline",
+        "vien_rong_the_thao": "outline",
+        "vien_rong": "outline",
+        "wireframe": "outline",
+        "stroke": "outline",
+        # Studio Shadow
+        "shadow": "shadow",
+        "bong_do_studio_shadow": "shadow",
+        "bong_do": "shadow",
+        "deep_shadow": "shadow",
+    }
+
     clean_effect = (effect or "auto").strip().lower()
+    clean_effect = EFFECT_ALIASES.get(clean_effect, clean_effect)
 
     if clean_effect == "auto":
         text_lower = (headline_text or "").lower()
@@ -267,6 +317,8 @@ def resolve_headline_effect(
             clean_effect = "led" if ("hybrid" in text_lower or "công nghệ" in text_lower) else "shadow"
         elif layout_name == "split_column":
             clean_effect = "embossed"
+        elif layout_name == "diagonal_slash":
+            clean_effect = "outline" if ("sport" in text_lower or "thể thao" in text_lower) else "chrome"
         else:
             clean_effect = "shadow"
 

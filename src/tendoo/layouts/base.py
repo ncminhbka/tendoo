@@ -135,6 +135,7 @@ class ColorPalette:
             --is-dark: {'1' if self.is_dark else '0'};
             --headline-color: {self.headline_color};
             --sub-color: {self.sub_color};
+            --text-color: {self.sub_color};
             --text-shadow: {self.text_shadow};
             --badge-bg: {self.badge_bg};
             --badge-text: {self.badge_text};

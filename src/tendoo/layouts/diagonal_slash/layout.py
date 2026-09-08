@@ -52,9 +52,9 @@ class DiagonalSlashLayout(BaseLayout):
         self,
         width: int,
         height: int,
-        x_top: float = 0.65,
-        x_bottom: float = 0.20,
-        delta: float = 0.14,
+        x_top: float = 0.54,
+        x_bottom: float = 0.12,
+        delta: float = 0.18,
         side: str = "top_left",
         wave_amp: float = 0.0,
         wave_freq: float = 1.0,
@@ -114,9 +114,9 @@ class DiagonalSlashLayout(BaseLayout):
     def get_safe_zone(self) -> Tuple[float, float, float, float]:
         """
         Safe zone in normalized coordinates (y0, x0, y1, x1):
-        Upper-left diagonal corridor occupies (y: 0.04 -> 0.50, x: 0.04 -> 0.52).
+        Upper-left diagonal corridor occupies (y: 0.04 -> 0.45, x: 0.04 -> 0.48).
         """
-        return (0.04, 0.04, 0.50, 0.52)
+        return (0.04, 0.04, 0.45, 0.48)
 
     def render_html(
         self,
@@ -125,7 +125,7 @@ class DiagonalSlashLayout(BaseLayout):
         width: int,
         height: int,
         bg_data_uri: str,
-        headline_effect: str = "3d_gold",
+        headline_effect: str = "auto",
     ) -> str:
         """
         Renders HTML for the Diagonal Slash layout.
