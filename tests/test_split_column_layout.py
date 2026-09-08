@@ -50,14 +50,14 @@ def test_split_column_mask_math():
     right_max = mask[:, int(0.50 * w) :].max()
     assert right_max == 0.0, f"Right subject zone should be strictly 0.0 (got max={right_max})"
 
-    # Verify organic wave: edge x position varies along y
+    # Verify straight vertical boundary: edge x position is consistent along y
     edges = []
     for y_sample in [0.20, 0.45, 0.70, 0.90]:
         row = mask[int(y_sample * h), :]
         edge_x = np.where(row > 0.5)[0][-1] / float(w)
         edges.append(edge_x)
 
-    assert max(edges) - min(edges) > 0.015, "Boundary should undulate organically like silk fabric"
+    assert max(edges) - min(edges) <= 0.005, "Boundary should be straight vertical to create a flat unwrinkled silk banner"
 
     # Save visual mask
     mask_img = Image.fromarray((mask * 255).astype(np.uint8), mode="L")

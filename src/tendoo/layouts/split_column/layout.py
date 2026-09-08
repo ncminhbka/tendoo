@@ -37,7 +37,7 @@ class SplitColumnLayout(BaseLayout):
     @property
     def description(self) -> str:
         return (
-            "Bố cục phân cột dọc dạng dải lụa satin uốn lượn chiếm ~38% bên sườn, "
+            "Bố cục dải lụa phẳng phân cột dọc bên trái (x < 0.38), phẳng mịn hoàn toàn không cuộn xoắn, "
             "dành 62% cho người mẫu toàn thân, ảnh lookbook thời trang hoặc mỹ phẩm cao cấp."
         )
 
@@ -47,9 +47,9 @@ class SplitColumnLayout(BaseLayout):
         height: int,
         side: str = "left",
         col_width: float = 0.38,
-        delta: float = 0.045,
-        wave_amp: float = 0.022,
-        wave_freq: float = 1.6,
+        delta: float = 0.040,
+        wave_amp: float = 0.0,
+        wave_freq: float = 1.0,
         int_max: float = 1.0,
         **kwargs,
     ) -> np.ndarray:
@@ -68,32 +68,35 @@ class SplitColumnLayout(BaseLayout):
     def get_corridor_prompt(self, style_hint: str = "silk_sash") -> str:
         if style_hint == "velvet_drape":
             return (
-                "A regal dark velvet drapery curtain panel cascading down the left side, "
-                "soft deep shadows, smooth clean fabric space for text, pristine copy space, "
-                "zero clutter, zero text, no words, no letters"
+                "A clean, straight, perfectly flat dark velvet panel running straight down the left side, "
+                "smooth unwrinkled fabric, zero folds, zero curls, zero twist, zero ripples, "
+                "soft ambient lighting, pristine copy space, zero clutter, zero text, no words, no letters"
             )
         elif style_hint == "minimal_wall":
             return (
-                "A sleek vertical architectural wall panel with soft ambient studio side shadow "
-                "on the left side, pristine copy space, zero clutter, zero text, no words, no letters"
+                "A sleek, perfectly flat vertical architectural panel running straight down the left side, "
+                "smooth uniform matte texture, soft ambient studio side lighting, pristine flat copy space, "
+                "zero clutter, zero text, no words, no letters"
             )
         elif style_hint == "champagne_silk":
             return (
-                "An ethereal shimmering champagne golden silk ribbon sash cascading down the left, "
-                "gentle organic satin folds, clean smooth flat surface for text, studio lighting, "
+                "A luxurious, perfectly flat champagne golden silk ribbon panel running straight down the left side, "
+                "smooth unwrinkled satin texture, completely flat surface for typography, "
+                "zero folds, zero twist, zero curls, zero ripples, soft studio glow, "
                 "pristine copy space, zero clutter, zero text, no words, no letters"
             )
         else:
-            # Default luxurious dark silk sash
+            # Default luxurious flat dark silk sash
             return (
-                "An elegant luxurious vertical cascading dark silk ribbon sash flowing from top to bottom "
-                "on the left side, soft organic satin folds, delicate fabric ripples, clean smooth flat surface for text, "
-                "studio lighting, pristine copy space, zero clutter, zero text, no words, no letters"
+                "A perfectly flat, smooth, unwrinkled dark silk satin ribbon panel running straight down the left side, "
+                "completely flat pristine fabric surface, zero folds, zero curls, zero twist, zero ripples, "
+                "elegant subtle vertical sheen, soft clean studio rim light, flat copy space for text, "
+                "unbranded, zero text, no words, no letters"
             )
 
     def get_safe_zone(self) -> Tuple[float, float, float, float]:
         """Left silk column safe zone: (y1, x1, y2, x2)."""
-        return (0.04, 0.045, 0.96, 0.35)
+        return (0.04, 0.04, 0.96, 0.34)
 
     def render_html(
         self,
