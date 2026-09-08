@@ -21,10 +21,10 @@ for p in [PROJECT_ROOT, PROJECT_ROOT / "src", PROJECT_ROOT / "scripts"]:
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-import demo_server
+from tendoo import demo_server
 demo_server.IS_MOCK_MODE = True
 
-from demo_server import app
+from tendoo.demo_server import app
 
 
 @pytest.fixture
@@ -199,7 +199,7 @@ def test_generate_multi_images(client):
 
 
 def test_sanitize_and_inject_zero_text():
-    from demo_server import sanitize_and_inject_zero_text
+    from tendoo.demo_server import sanitize_and_inject_zero_text
 
     # Case 1: Empty prompt gets background copy space negative constraints (WITHOUT erasing brand/logos)
     p1 = sanitize_and_inject_zero_text("")
@@ -231,7 +231,7 @@ def test_sanitize_and_inject_zero_text():
 
 def test_cross_layout_style_defense():
     """Verifies backend defense prevents spatial semantic clash between layout and incompatible styles."""
-    from demo_server import detect_scene_lighting_tone
+    from tendoo.demo_server import detect_scene_lighting_tone
 
     # 1. Incompatible style for top_dome (e.g. cinematic_asphalt) falls back to daylight
     style_top = detect_scene_lighting_tone("Ly trà đào cam sả ban ngày", user_hint="cinematic_asphalt", layout_name="top_dome")
