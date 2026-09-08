@@ -138,8 +138,12 @@ class TopDomeLayout(BaseLayout):
         slogan = normalize_text(content.slogan)
         offer_main = normalize_text(content.offer_main)
         offer_sub = normalize_text(content.offer_sub)
+        dates = normalize_text(content.dates)
         brand = normalize_text(content.brand)
         hotline = normalize_text(content.hotline)
+        address = normalize_text(content.address)
+        website_link = normalize_text(content.website_link)
+        qr_data_uri = content.qr_data_uri or ""
 
         # 3. Read template
         template_text = TEMPLATE_PATH.read_text(encoding="utf-8")
@@ -166,10 +170,18 @@ class TopDomeLayout(BaseLayout):
             "{{badge_border}}": badge_border,
             "{{offer_sub}}": html.escape(offer_sub),
             "{{offer_sub_display}}": "block" if offer_sub else "none",
+            "{{dates}}": html.escape(dates),
+            "{{dates_display}}": "inline-flex" if dates else "none",
             "{{brand}}": html.escape(brand),
             "{{brand_display}}": "block" if brand else "none",
+            "{{address}}": html.escape(address),
+            "{{address_display}}": "block" if address else "none",
             "{{hotline}}": f"HOTLINE: {html.escape(hotline)}" if hotline else "",
             "{{hotline_display}}": "inline-flex" if hotline else "none",
+            "{{website_link}}": html.escape(website_link),
+            "{{website_display}}": "block" if website_link else "none",
+            "{{qr_data_uri}}": qr_data_uri,
+            "{{qr_display}}": "flex" if qr_data_uri else "none",
             "{{custom_css}}": content.custom_css or "",
         }
 

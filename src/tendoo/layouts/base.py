@@ -23,6 +23,10 @@ class PosterContent:
     brand: str = ""
     hotline: str = ""
     applicable: str = ""
+    address: str = ""
+    website_link: str = ""
+    qr_data_uri: str = ""
+    category: str = "promo"
     custom_css: str = ""
 
     def to_dict(self) -> Dict[str, str]:
@@ -36,6 +40,10 @@ class PosterContent:
             "brand": self.brand,
             "hotline": self.hotline,
             "applicable": self.applicable,
+            "address": self.address,
+            "website_link": self.website_link,
+            "qr_data_uri": self.qr_data_uri,
+            "category": self.category,
             "custom_css": self.custom_css,
         }
 

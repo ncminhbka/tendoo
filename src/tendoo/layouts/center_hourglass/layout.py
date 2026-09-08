@@ -149,6 +149,9 @@ class CenterHourglassLayout(BaseLayout):
         applicable = normalize_text(content.applicable)
         brand = normalize_text(content.brand)
         hotline = normalize_text(content.hotline)
+        address = normalize_text(content.address)
+        website_link = normalize_text(content.website_link)
+        qr_data_uri = content.qr_data_uri or ""
 
         # 3. Read template
         template_text = TEMPLATE_PATH.read_text(encoding="utf-8")
@@ -179,10 +182,16 @@ class CenterHourglassLayout(BaseLayout):
             "{{dates_display}}": "inline-flex" if dates else "none",
             "{{applicable}}": html.escape(applicable),
             "{{applicable_display}}": "block" if applicable else "none",
+            "{{address}}": html.escape(address),
+            "{{address_display}}": "block" if address else "none",
             "{{brand}}": html.escape(brand),
             "{{brand_display}}": "block" if brand else "none",
             "{{hotline}}": f"HOTLINE: {html.escape(hotline)}" if hotline else "",
             "{{hotline_display}}": "inline-flex" if hotline else "none",
+            "{{website_link}}": html.escape(website_link),
+            "{{website_display}}": "block" if website_link else "none",
+            "{{qr_data_uri}}": qr_data_uri,
+            "{{qr_display}}": "flex" if qr_data_uri else "none",
             "{{custom_css}}": content.custom_css or "",
         }
 

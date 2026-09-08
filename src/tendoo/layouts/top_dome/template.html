@@ -168,6 +168,24 @@
       display: {{offer_sub_display}};
     }
 
+    .dates-chip {
+      display: {{dates_display}};
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 9999px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--sub-color);
+      letter-spacing: 0.5px;
+      text-shadow: var(--text-shadow);
+      margin-top: 4px;
+    }
+
     /* Floating Minimalist Footer (Anchored unobtrusively at canvas bottom) */
     .floating-footer {
       position: absolute;
@@ -176,24 +194,54 @@
       right: 36px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-end;
       z-index: 10;
       pointer-events: none;
     }
 
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      text-align: left;
+      max-width: 55%;
+    }
+
     .footer-brand {
       font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 800;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
       color: var(--footer-text);
       text-shadow: var(--text-shadow);
       display: {{brand_display}};
     }
 
+    .footer-address {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.65);
+      line-height: 1.3;
+      text-shadow: var(--text-shadow);
+      display: {{address_display}};
+    }
+
+    .footer-right {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
+    .footer-contact-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
     .footer-hotline {
-      display: inline-flex;
+      display: {{hotline_display}};
       align-items: center;
       gap: 6px;
       padding: 5px 14px;
@@ -207,7 +255,43 @@
       letter-spacing: 1px;
       color: var(--footer-text);
       text-shadow: var(--text-shadow);
-      display: {{hotline_display}};
+    }
+
+    .footer-website {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.70);
+      letter-spacing: 0.5px;
+      display: {{website_display}};
+    }
+
+    .footer-qr {
+      display: {{qr_display}};
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 5px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.40);
+      width: 58px;
+      box-sizing: border-box;
+    }
+
+    .qr-img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .qr-label {
+      font-size: 8px;
+      font-weight: 800;
+      color: #000;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1;
     }
 
     {{custom_css}}
@@ -227,11 +311,24 @@
         <div class="badge-pill">{{offer_main}}</div>
       </div>
       <div class="offer-sub">{{offer_sub}}</div>
+      <div class="dates-chip">{{dates}}</div>
     </div>
 
     <div class="floating-footer">
-      <div class="footer-brand">{{brand}}</div>
-      <div class="footer-hotline">{{hotline}}</div>
+      <div class="footer-left">
+        <div class="footer-brand">{{brand}}</div>
+        <div class="footer-address">{{address}}</div>
+      </div>
+      <div class="footer-right">
+        <div class="footer-contact-col">
+          <div class="footer-hotline">{{hotline}}</div>
+          <div class="footer-website">{{website_link}}</div>
+        </div>
+        <div class="footer-qr">
+          <img src="{{qr_data_uri}}" alt="QR" class="qr-img">
+          <div class="qr-label">QUÉT MÃ</div>
+        </div>
+      </div>
     </div>
   </div>
 </body>

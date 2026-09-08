@@ -243,11 +243,17 @@
     }
 
     /* Right Contact & Showroom Block */
+    .contact-qr-deck {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
     .contact-block {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 4px;
+      gap: 3px;
       text-align: right;
     }
 
@@ -267,6 +273,23 @@
       white-space: nowrap;
     }
 
+    .address-text {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.70);
+      max-width: 300px;
+      line-height: 1.25;
+      display: {{address_display}};
+    }
+
+    .website-text {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.75);
+      letter-spacing: 0.5px;
+      display: {{website_display}};
+    }
+
     .applicable-text {
       font-size: 10.5px;
       font-weight: 500;
@@ -274,6 +297,35 @@
       max-width: 320px;
       line-height: 1.3;
       display: {{applicable_display}};
+    }
+
+    .platform-qr {
+      display: {{qr_display}};
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 5px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.40);
+      width: 58px;
+      box-sizing: border-box;
+    }
+
+    .platform-qr img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .platform-qr-label {
+      font-size: 8px;
+      font-weight: 800;
+      color: #000;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1;
     }
 
     {{custom_css}}
@@ -309,9 +361,17 @@
           </div>
         </div>
 
-        <div class="contact-block">
-          <div class="hotline-chip">{{hotline}}</div>
-          <div class="applicable-text">{{applicable}}</div>
+        <div class="contact-qr-deck">
+          <div class="contact-block">
+            <div class="hotline-chip">{{hotline}}</div>
+            <div class="address-text">{{address}}</div>
+            <div class="website-text">{{website_link}}</div>
+            <div class="applicable-text">{{applicable}}</div>
+          </div>
+          <div class="platform-qr">
+            <img src="{{qr_data_uri}}" alt="QR">
+            <div class="platform-qr-label">QUÉT MÃ</div>
+          </div>
         </div>
       </div>
     </div>

@@ -158,21 +158,46 @@ app.mount("/outputs", StaticFiles(directory=str(OUTPUT_DIR)), name="outputs")
 
 
 class GenerateRequest(BaseModel):
-    layout: str = "top_dome"
-    headline: str
+    # 1. Category selector
+    category: str = "promo"
+
+    # 2. General Store / Brand Information (Common to all categories)
+    store_name: str = ""
+    address: str = ""
+    phone: str = ""
+    website_link: str = ""
+    enable_qr: bool = False
+
+    # 3. Category: Promo Poster specific
+    title: str = ""
+    image_base64: Optional[str] = None
+    discount: str = ""
+    applied_product: str = ""
+    date_start: str = ""
+    date_end: str = ""
+    image_description: str = ""
+
+    # Legacy / alias parameters for backwards compatibility
+    headline: Optional[str] = None
     pre_header: str = ""
     slogan: str = ""
-    offer_main: str = ""
-    offer_sub: str = ""
-    brand: str = ""
-    hotline: str = ""
-    prompt_scene: str
+    offer_main: Optional[str] = None
+    offer_sub: Optional[str] = None
+    brand: Optional[str] = None
+    hotline: Optional[str] = None
+    prompt_scene: Optional[str] = None
     prompt_corridor: Optional[str] = None
+
+    # 4. Display / Design & Inference Controls (Common to all categories)
+    layout: str = "top_dome"
+    style_hint: str = "daylight"
+    aspect_ratio: str = "1:1"
+    num_images: int = 1
     seed: int = 42
     steps: int = 8
     guidance: float = 1.5
-    width: int = 1024
-    height: int = 1024
+    width: Optional[int] = None
+    height: Optional[int] = None
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -207,21 +232,75 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     case_dir = OUTPUT_DIR / f"run_{timestamp_str}"
     case_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Retrieve Layout
-    layout = get_layout(req.layout)
-    w, h = req.width, req.height
+    # 1. Resolve Dimensions from Aspect Ratio
+    if req.width is not None and req.height is not None:
+        w, h = req.width, req.height
+    else:
+        ar = req.aspect_ratio or "1:1"
+        if ar == "9:16":
+            w, h = 576, 1024
+        elif ar == "16:9":
+            w, h = 1024, 576
+        elif ar == "4:5":
+            w, h = 816, 1024
+        else:
+            w, h = 1024, 1024
 
-    # 2. Generate Parametric Mask
+    # 2. Retrieve Layout
+    layout = get_layout(req.layout)
+
+    # 3. Generate Parametric Mask
     mask_np = layout.generate_mask(width=w, height=h)
     mask_vis = Image.fromarray((mask_np * 255).astype(np.uint8), mode="L")
     mask_file = case_dir / "01_corridor_mask.png"
     mask_vis.save(mask_file)
 
-    # 3. Generate Blended Background
+    # 4. Harmonize Field Values (Unified schema mapping)
+    final_headline = req.title or req.headline or "ƯU ĐÃI ĐẶC BIỆT"
+    final_offer_main = req.discount or req.offer_main or ""
+    final_offer_sub = req.applied_product or req.offer_sub or ""
+    final_brand = req.store_name or req.brand or ""
+    final_hotline = req.phone or req.hotline or ""
+    final_scene_prompt = req.image_description or req.prompt_scene or ""
+    style_hint = req.style_hint or "daylight"
+
+    dates_parts = []
+    if req.date_start:
+        dates_parts.append(f"Từ {req.date_start}")
+    if req.date_end:
+        dates_parts.append(f"Đến {req.date_end}")
+    final_dates = " - ".join(dates_parts) if dates_parts else ""
+
+    # 5. Optional QR Code Generation (Backend QR Engine)
+    qr_data_uri = ""
+    qr_url = None
+    if req.enable_qr and req.website_link and req.website_link.strip():
+        from tendoo.qr import generate_qr_base64
+        qr_data_uri = generate_qr_base64(req.website_link.strip()) or ""
+        if qr_data_uri:
+            try:
+                qr_raw = base64.b64decode(qr_data_uri.split(",")[1])
+                qr_file = case_dir / "00_qr_code.png"
+                qr_file.write_bytes(qr_raw)
+                qr_url = f"outputs/{case_dir.name}/00_qr_code.png"
+            except Exception as e:
+                print(f"Notice: Failed to save QR code image: {e}")
+
+    # 6. Save Uploaded Product Image if provided
+    if req.image_base64:
+        try:
+            b64_clean = req.image_base64
+            if "," in b64_clean:
+                b64_clean = b64_clean.split(",")[1]
+            ref_raw = base64.b64decode(b64_clean)
+            ref_file = case_dir / "00_uploaded_product.png"
+            ref_file.write_bytes(ref_raw)
+        except Exception as e:
+            print(f"Notice: Failed to save uploaded product image: {e}")
+
+    # 7. Generate Blended Background (Regional Velocity Blending)
     if IS_MOCK_MODE or DIT_MODEL is None:
         # Mock mode for testing without GPU
-        blended_pil = Image.new("RGB", (w, h), (18, 24, 38))
-        draw = Image.new("RGB", (w, h))
         blended_pil = Image.fromarray((np.random.rand(h, w, 3) * 30 + 15).astype(np.uint8))
         dur_dit = 0.5
     else:
@@ -229,11 +308,11 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         from flux2.sampling import get_schedule, prc_img, prc_txt
         from pipeline_e2e_poster import denoise_regional_velocity_blended
 
-        prompt_corr = req.prompt_corridor or layout.get_corridor_prompt("daylight")
+        prompt_corr = req.prompt_corridor or layout.get_corridor_prompt(style_hint)
 
         # Encode prompts with Qwen3
         with torch.no_grad():
-            ctx_scene = TEXT_ENCODER([req.prompt_scene]).to(torch.bfloat16)
+            ctx_scene = TEXT_ENCODER([final_scene_prompt]).to(torch.bfloat16)
             ctx_scene, ctx_scene_ids = prc_txt(ctx_scene[0])
             ctx_scene = ctx_scene.unsqueeze(0).to(DEVICE_DIT)
             ctx_scene_ids = ctx_scene_ids.unsqueeze(0).to(DEVICE_DIT)
@@ -281,20 +360,26 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     blended_file = case_dir / "02_blended_background.png"
     blended_pil.save(blended_file)
 
-    # 4. Color Wheel Extraction
+    # 8. Color Wheel Extraction
     safe_zone = layout.get_safe_zone()
     palette = analyze_color_harmony(np.array(blended_pil), safe_zone, color_mode="auto")
 
-    # 5. Render Responsive HTML & Vector Typography
+    # 9. Render Responsive HTML & Vector Typography
     bg_data_uri = pil_to_base64_data_uri(blended_pil)
     content = PosterContent(
-        headline=req.headline,
+        headline=final_headline,
         pre_header=req.pre_header,
         slogan=req.slogan,
-        offer_main=req.offer_main,
-        offer_sub=req.offer_sub,
-        brand=req.brand,
-        hotline=req.hotline,
+        offer_main=final_offer_main,
+        offer_sub=final_offer_sub,
+        dates=final_dates,
+        brand=final_brand,
+        hotline=final_hotline,
+        address=req.address,
+        website_link=req.website_link,
+        qr_data_uri=qr_data_uri,
+        applicable=req.applied_product,
+        category=req.category,
     )
     html_str = layout.render_html(
         content=content,
@@ -306,6 +391,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     html_file = case_dir / "03_poster.html"
     html_file.write_text(html_str, encoding="utf-8")
 
+    # 10. Playwright Rasterization
     final_poster_file = case_dir / "04_final_poster.png"
     PosterRenderer.render(
         html_content=html_str,
@@ -315,7 +401,6 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     )
 
     total_latency = round(time.time() - t_start, 2)
-
     rel_case = f"outputs/{case_dir.name}"
     return {
         "success": True,
@@ -325,6 +410,8 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         "blended_bg_url": f"{rel_case}/02_blended_background.png",
         "mask_url": f"{rel_case}/01_corridor_mask.png",
         "html_url": f"{rel_case}/03_poster.html",
+        "qr_url": qr_url,
+        "category": req.category,
     }
 
 

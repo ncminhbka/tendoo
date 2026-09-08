@@ -214,11 +214,26 @@
       display: {{applicable_display}};
     }
 
+    .floor-address {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.65);
+      line-height: 1.3;
+      text-shadow: var(--text-shadow);
+      display: {{address_display}};
+    }
+
     .floor-right {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
+    .floor-right-col {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 5px;
+      gap: 4px;
     }
 
     .floor-brand {
@@ -249,6 +264,43 @@
       text-shadow: var(--text-shadow);
     }
 
+    .floor-website {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.70);
+      letter-spacing: 0.5px;
+      display: {{website_display}};
+    }
+
+    .floor-qr {
+      display: {{qr_display}};
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 5px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.40);
+      width: 58px;
+      box-sizing: border-box;
+    }
+
+    .floor-qr img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .floor-qr-label {
+      font-size: 8px;
+      font-weight: 800;
+      color: #000;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
     {{custom_css}}
   </style>
 </head>
@@ -276,10 +328,18 @@
     <div class="floor-footer">
       <div class="floor-left">
         <div class="floor-applicable">{{applicable}}</div>
+        <div class="floor-address">{{address}}</div>
       </div>
       <div class="floor-right">
-        <div class="floor-brand">{{brand}}</div>
-        <div class="floor-hotline">{{hotline}}</div>
+        <div class="floor-right-col">
+          <div class="floor-brand">{{brand}}</div>
+          <div class="floor-hotline">{{hotline}}</div>
+          <div class="floor-website">{{website_link}}</div>
+        </div>
+        <div class="floor-qr">
+          <img src="{{qr_data_uri}}" alt="QR">
+          <div class="floor-qr-label">QUÉT MÃ</div>
+        </div>
       </div>
     </div>
   </div>
