@@ -58,8 +58,36 @@ VIETNAMESE_COMPOUND_WORDS: Set[str] = {
 }
 
 
+# Unicode Emoji, Pictograph, and Miscellaneous Symbols that lack glyphs in standard typography fonts
+EMOJI_PATTERN = re.compile(
+    r"["
+    r"\U0001F000-\U0001FAFF"  # Emojis & Pictographs (1F300-1F9FF, 1FA00-1FAFF, symbols, etc.)
+    r"\u2600-\u27BF"          # Misc symbols & Dingbats (weather, stars, checkmarks, arrows)
+    r"\u2300-\u23FF"          # Misc Technical
+    r"\u2B50-\u2B55"          # Stars, circles
+    r"\uFE00-\uFE0F"          # Variation Selectors
+    r"\u200D"                  # Zero-width joiner
+    r"]+",
+    flags=re.UNICODE,
+)
+
+
+def strip_emojis(text: str) -> str:
+    """
+    Strips raw Unicode emojis and unrenderable pictographic symbols to prevent
+    them from displaying as square missing-glyph tofu boxes (□) in headless Chromium / Playwright.
+    Preserves 100% of Vietnamese diacritics, currency marks, dashes, quotes, and punctuation.
+    """
+    if not text:
+        return ""
+    cleaned = EMOJI_PATTERN.sub("", text)
+    cleaned = re.sub(r"[ \t]+", " ", cleaned)
+    cleaned = re.sub(r" ?\n ?", "\n", cleaned)
+    return cleaned.strip()
+
+
 def normalize_text(text: str) -> str:
-    """Cleans up literal escapes ('\\n', '\\N', '\\r\\n') and strips trailing whitespace."""
+    """Cleans up literal escapes, strips unrenderable emojis (tofu prevention), and normalizes whitespace."""
     if not text:
         return ""
     cleaned = (
@@ -69,6 +97,7 @@ def normalize_text(text: str) -> str:
         .replace("\r\n", "\n")
         .strip()
     )
+    cleaned = strip_emojis(cleaned)
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned
 

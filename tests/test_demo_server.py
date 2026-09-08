@@ -512,6 +512,84 @@ def test_generate_l_frame_mock(client):
     assert "18.990.000đ" in html
 
 
+def test_all_categories_no_raw_emojis_and_valid_svg_icons(client):
+    """
+    Verifies that generated HTML templates across all commercial categories
+    contain ZERO raw unicode emojis (which cause tofu square boxes □ on Linux)
+    and use inline vector SVGs instead.
+    """
+    from tendoo.layouts.text_engine import EMOJI_PATTERN
+
+    categories_payloads = [
+        {
+            "category": "promo",
+            "title": "🔥 SIÊU SALE 50% 🔥\nĐẶT NGAY ➔",
+            "discount": "GIẢM 50%",
+            "date_start": "01/09/2026",
+            "date_end": "15/09/2026",
+            "store_name": "Tendoo Fashion",
+            "phone": "📞 0988 123 456",
+            "address": "📍 128 Trần Duy Hưng",
+            "layout": "top_dome",
+            "aspect_ratio": "1:1",
+            "image_description": "Fashion clothing on display",
+        },
+        {
+            "category": "opening",
+            "title": "🎉 TƯNG BỪNG KHAI TRƯƠNG\nCƠ SỞ MỚI",
+            "discount": "GIẢM 20% TOÀN BỘ MENU",
+            "date_start": "15/09/2026",
+            "store_name": "Tendoo Coffee",
+            "phone": "0912 345 678",
+            "layout": "split_column",
+            "aspect_ratio": "1:1",
+            "image_description": "Modern aesthetic cafe interior",
+        },
+        {
+            "category": "feedback",
+            "title": "CẢM NHẬN KHÁCH HÀNG\nTRẢI NGHIỆM ĐỈNH CAO",
+            "customer_name": "Nguyễn Văn A",
+            "feedback_quote": "Dịch vụ tuyệt vời, sản phẩm rất tốt!",
+            "rating": 5,
+            "store_name": "Tendoo Spa",
+            "layout": "center_hourglass",
+            "aspect_ratio": "1:1",
+            "image_description": "Spa wellness relaxing atmosphere",
+        },
+        {
+            "category": "recruitment",
+            "title": "TUYỂN DỤNG NHÂN TÀI\nCHUYÊN VIÊN AI",
+            "salary": "25 - 40 Triệu",
+            "date_end": "30/09/2026",
+            "store_name": "Tendoo Tech",
+            "phone": "0988 999 888",
+            "layout": "bottom_platform",
+            "aspect_ratio": "1:1",
+            "image_description": "Modern tech office team working",
+        },
+    ]
+
+    for payload in categories_payloads:
+        response = client.post("/api/generate", json=payload)
+        assert response.status_code == 200, f"Failed for {payload['category']}: {response.text}"
+        data = response.json()
+        assert data["success"] is True
+
+        run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+        html_path = run_folder / "03_poster.html"
+        assert html_path.exists()
+        html_content = html_path.read_text(encoding="utf-8")
+
+        # Must not contain raw emojis that trigger square boxes
+        found_emojis = EMOJI_PATTERN.findall(html_content)
+        assert not found_emojis, f"Found raw emojis {found_emojis} in category {payload['category']}"
+
+        # Must contain vector SVGs
+        assert "<svg" in html_content
+        assert "</svg>" in html_content
+
+
+
 
 
 

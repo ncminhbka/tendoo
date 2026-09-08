@@ -16,32 +16,17 @@ from __future__ import annotations
 import html
 from typing import List, Optional
 
-from tendoo.layouts.base import CALENDAR_ICON_SVG, ColorPalette, PosterContent
+from tendoo.layouts.base import (
+    CALENDAR_ICON_SVG,
+    CHECK_ICON_SVG,
+    CLOCK_ICON_SVG,
+    GIFT_ICON_SVG,
+    PHONE_ICON_SVG,
+    STAR_ICON_SVG,
+    ColorPalette,
+    PosterContent,
+)
 from tendoo.layouts.text_engine import normalize_text
-
-
-# Clean inline vector stars for rating
-STAR_ICON_SVG = (
-    '<svg class="icon-star" width="16" height="16" viewBox="0 0 24 24" fill="#FFB300" stroke="#FFB300" stroke-width="1" '
-    'style="display:inline-block; vertical-align:-2px; margin-right:2px;">'
-    '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>'
-    '</svg>'
-)
-
-CLOCK_ICON_SVG = (
-    '<svg class="icon-clock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
-    'stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px; margin-right:5px; opacity:0.9;">'
-    '<circle cx="12" cy="12" r="10"></circle>'
-    '<polyline points="12 6 12 12 16 14"></polyline>'
-    '</svg>'
-)
-
-CHECK_ICON_SVG = (
-    '<svg class="icon-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" '
-    'stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px; margin-right:5px; color:#10B981;">'
-    '<polyline points="20 6 9 17 4 12"></polyline>'
-    '</svg>'
-)
 
 
 def render_category_body(
@@ -194,7 +179,7 @@ def _render_opening(
     if booking_contact:
         parts.append(
             f'<div class="cat-comp-booking-chip">'
-            f'  <span>📞 LIÊN HỆ ĐẶT CHỖ: {html.escape(booking_contact)}</span>'
+            f'  {PHONE_ICON_SVG}<span>LIÊN HỆ ĐẶT CHỖ: {html.escape(booking_contact)}</span>'
             f'</div>'
         )
 
@@ -243,7 +228,7 @@ def _render_feedback(
     if special_offer:
         parts.append(
             f'<div class="cat-comp-special-offer badge-pill">'
-            f'  <span>🎁 {html.escape(special_offer)}</span>'
+            f'  {GIFT_ICON_SVG}<span>{html.escape(special_offer)}</span>'
             f'</div>'
         )
 

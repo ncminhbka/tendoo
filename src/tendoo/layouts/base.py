@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 
-# Cross-platform vector icon (zero-font-dependency, renders crisp on all OS/headless Chromium)
+# Cross-platform vector icons (zero-font-dependency, render crisp on all OS/headless Chromium)
 CALENDAR_ICON_SVG = (
     '<svg class="icon-calendar" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
     'stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px; margin-right:6px; opacity:0.9;">'
@@ -19,6 +19,79 @@ CALENDAR_ICON_SVG = (
     '<line x1="16" y1="2" x2="16" y2="6"></line>'
     '<line x1="8" y1="2" x2="8" y2="6"></line>'
     '<line x1="3" y1="10" x2="21" y2="10"></line>'
+    '</svg>'
+)
+
+PHONE_ICON_SVG = (
+    '<svg class="icon-phone" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+    'stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px; margin-right:6px; opacity:0.9;">'
+    '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>'
+    '</svg>'
+)
+
+LOCATION_ICON_SVG = (
+    '<svg class="icon-location" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+    'stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px; margin-right:6px; opacity:0.9;">'
+    '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>'
+    '<circle cx="12" cy="10" r="3"></circle>'
+    '</svg>'
+)
+
+GLOBE_ICON_SVG = (
+    '<svg class="icon-globe" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+    'stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px; margin-right:6px; opacity:0.9;">'
+    '<circle cx="12" cy="12" r="10"></circle>'
+    '<line x1="2" y1="12" x2="22" y2="12"></line>'
+    '<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>'
+    '</svg>'
+)
+
+GIFT_ICON_SVG = (
+    '<svg class="icon-gift" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+    'stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px; margin-right:6px; opacity:0.9;">'
+    '<polyline points="20 12 20 22 4 22 4 12"></polyline>'
+    '<rect x="2" y="7" width="20" height="5"></rect>'
+    '<line x1="12" y1="22" x2="12" y2="7"></line>'
+    '<path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>'
+    '<path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>'
+    '</svg>'
+)
+
+TAG_ICON_SVG = (
+    '<svg class="icon-tag" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+    'stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px; margin-right:6px; opacity:0.9;">'
+    '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>'
+    '<line x1="7" y1="7" x2="7.01" y2="7"></line>'
+    '</svg>'
+)
+
+STAR_ICON_SVG = (
+    '<svg class="icon-star" width="16" height="16" viewBox="0 0 24 24" fill="#FFB300" stroke="#FFB300" stroke-width="1" '
+    'style="display:inline-block; vertical-align:-2px; margin-right:2px;">'
+    '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>'
+    '</svg>'
+)
+
+CLOCK_ICON_SVG = (
+    '<svg class="icon-clock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+    'stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px; margin-right:5px; opacity:0.9;">'
+    '<circle cx="12" cy="12" r="10"></circle>'
+    '<polyline points="12 6 12 12 16 14"></polyline>'
+    '</svg>'
+)
+
+CHECK_ICON_SVG = (
+    '<svg class="icon-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" '
+    'stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px; margin-right:5px; color:#10B981;">'
+    '<polyline points="20 6 9 17 4 12"></polyline>'
+    '</svg>'
+)
+
+ARROW_RIGHT_ICON_SVG = (
+    '<svg class="icon-arrow-right" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" '
+    'stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px; margin-left:4px;">'
+    '<line x1="5" y1="12" x2="19" y2="12"></line>'
+    '<polyline points="12 5 19 12 12 19"></polyline>'
     '</svg>'
 )
 

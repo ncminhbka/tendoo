@@ -645,14 +645,14 @@ class PosterTemplateEngine:
         <span class="eyebrow-tag">{eyebrow}</span>
       </div>
       <div class="promo-badge">
-        <span>🔥 {badge}</span>
+        <span>{badge}</span>
       </div>
     </div>
 
     <!-- BOTTOM FOOTER & SOCIAL PROOF ZONE -->
     <div class="bottom-section">
       <div class="social-proof-bar">
-        <span class="stars">★★★★★</span>
+        <span class="stars"><svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB300"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB300"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB300"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB300"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB300"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span>
         <span class="rating-text">{rating_val}/5</span>
         <span class="rating-count">({rating_count})</span>
       </div>
@@ -666,15 +666,15 @@ class PosterTemplateEngine:
       <div class="action-bar">
         <a href="#" class="cta-button">
           <span>{cta_text}</span>
-          <span>➔</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block; vertical-align:-2px; margin-left:4px;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
         </a>
         <div class="contact-info">
           <div class="contact-item">
-            <span>📞</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:-2px; margin-right:4px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
             <span>Hotline: {hotline}</span>
           </div>
           <div class="contact-item">
-            <span>🌐</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:-2px; margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
             <span>{website}</span>
           </div>
         </div>
@@ -1005,14 +1005,14 @@ class PosterTemplateEngine:
         palette = cls._derive_theme_palette(brief.get("brand_color"), cls._GRAND_OPENING_DEFAULT_PALETTE)
         return cls._GRAND_OPENING_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
-            brand=brief.get("brand", "🍔 THE BURGER CRAFT"),
+            brand=brief.get("brand", "THE BURGER CRAFT"),
             date_range=brief.get("date_range", "DUY NHẤT 05.09 - 15.09.2026"),
             badge_label=brief.get("badge_label", "GIẢM"),
             badge_percent=brief.get("badge_percent", "50%"),
             badge_sub=brief.get("badge_sub", "TOÀN MENU"),
-            address=brief.get("address", "📍 128 Nguyễn Trãi, Phường Bến Thành, Quận 1"),
+            address=brief.get("address", "128 Nguyễn Trãi, Phường Bến Thành, Quận 1"),
             offer_desc=brief.get("offer_desc", "Tặng 01 Coca-Cola mát lạnh cho hóa đơn từ 99K • Hotline: 1900 8899"),
-            cta_text=brief.get("cta_text", "NHẬN VOUCHER ➔"),
+            cta_text=brief.get("cta_text", "NHẬN VOUCHER"),
             safe_rect_style=cls._safe_rect_style_attr(brief),
             **palette,
         )
@@ -1163,63 +1163,36 @@ class PosterTemplateEngine:
     @classmethod
     def _build_feedback_conditional_html(
         cls, brief: Dict[str, Any],
-        top_badge_default: str = "✨ CHUẨN FORM HÀN QUỐC", stars_default: str = "★★★★★",
+        top_badge_default: str = "CHUẨN FORM HÀN QUỐC", stars_default: str = "5",
     ) -> Dict[str, str]:
-        """
-        Builds the 4 optionally-hidden fragments (badge/stars/features/offer) + the features list
-        + the offer_title/offer_desc combo, shared by BOTH orientations (landscape/portrait use
-        identical class names, only sizing units differ).
-
-        `hidden_elements` -- closed enum (`_FEEDBACK_HIDEABLE_ELEMENTS`), added after finding no
-        existing mechanism let a tester's explicit "không cần hiện rating sao"-style request be
-        honored at all. Unknown values are ignored (not raised) -- an LLM emitting a slightly-off
-        string here shouldn't hard-fail the whole render, same tolerant-degrade spirit as
-        `_zone_css`'s fallback for an unrecognized position.
-
-        `offer_desc` -- REAL BUG fix: this field is required by `TEMPLATE_BRIEF_SCHEMAS` (Stage 1
-        is told to always fill it) but was never read by either `_generate_feedback_card`/
-        `_portrait` at all -- 11/11 real prompt_test.txt lines supply a detailed offer description
-        that was silently discarded. Appended as a 2nd line under `offer_title` inside the EXISTING
-        `.offer-mini` (`-webkit-line-clamp:2`) -- reuses the already-designed compact clamp instead
-        of adding a new element that would grow the card, consistent with this template's whole
-        "stay compact" redesign intent.
-        """
         hidden = {h for h in (brief.get("hidden_elements") or []) if h in cls._FEEDBACK_HIDEABLE_ELEMENTS}
 
         badge_html = "" if "badge" in hidden else f'<div class="spa-badge">{brief.get("top_badge", top_badge_default)}</div>'
-        # REAL BUG found testing this against a live Stage 1 call (not hypothetical): gpt-4o-mini
-        # sometimes emits `stars` as a bare int (5) instead of a "★★★★★" string, even though no
-        # schema/prompt guidance said either way -- rendered literally, a poster would show the
-        # digit "5" instead of star glyphs. Normalize defensively: an int/numeric value becomes
-        # that many filled stars (clamped 0-5); any other truthy value (the intended string case)
-        # passes through unchanged.
-        stars_value = brief.get("stars", stars_default)
-        if isinstance(stars_value, (int, float)) or (isinstance(stars_value, str) and stars_value.strip().lstrip("-").isdigit()):
-            stars_value = "★" * max(0, min(5, int(stars_value)))
-        stars_html = "" if "stars" in hidden else f'<span class="stars-mini">{stars_value}</span>'
+        stars_val = brief.get("stars", stars_default)
+        if isinstance(stars_val, str) and stars_val.strip().lstrip("-").isdigit():
+            star_count = max(0, min(5, int(stars_val)))
+        elif isinstance(stars_val, (int, float)):
+            star_count = max(0, min(5, int(stars_val)))
+        else:
+            star_count = 5
+        star_svg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="#FFB300" style="display:inline-block; vertical-align:-1px; margin-right:1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>'
+        stars_html = "" if "stars" in hidden else f'<span class="stars-mini">{star_svg * star_count}</span>'
 
         features = brief.get("features", [
-            {"icon": "🌿", "text": "Chất Lượng Hữu Cơ 100% Nhập Khẩu"},
-            {"icon": "✂️", "text": "Chuyên Nghiệp Theo Yêu Cầu Riêng"},
-            {"icon": "🕊️", "text": "Không Gian Mở, Trải Nghiệm Thoải Mái"},
+            {"text": "Chất Lượng Hữu Cơ 100% Nhập Khẩu"},
+            {"text": "Chuyên Nghiệp Theo Yêu Cầu Riêng"},
+            {"text": "Không Gian Mở, Trải Nghiệm Thoải Mái"},
         ])
-        # Capped to 3 -- a deliberate design choice, not an accidental truncation: a compact corner
-        # card showing every highlight a verbose brief supplies is exactly the "che hết ảnh" clutter
-        # this whole redesign was meant to fix (real ads don't list 5+ bullet points in a small
-        # corner card). NOTE: HERO_SELECTOR_SYSTEM_PROMPT is updated alongside this fix to actually
-        # tell Stage 1 about this 3-item cap (previously promised "unlimited", a real prompt/code
-        # mismatch found auditing prompt_test.txt) so content isn't generated only to be dropped.
+        check_icon = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display:inline-block; vertical-align:-1px; margin-right:3px; color:#10B981;"><polyline points="20 6 9 17 4 12"></polyline></svg>'
         features_inner = "".join(
-            f'<span class="tag-mini">{f.get("icon","✨")} {f.get("text","")}</span>'
+            f'<span class="tag-mini">{check_icon}{f.get("text","")}</span>'
             for f in features[:3]
         )
         features_block_html = "" if "features" in hidden else f'<div class="tags-mini">{features_inner}</div>'
 
-        offer_title = brief.get("offer_title", "🎁 ƯU ĐÃI ĐẶC BIỆT CHO KHÁCH MỚI")
+        offer_title = brief.get("offer_title", "ƯU ĐÃI ĐẶC BIỆT CHO KHÁCH MỚI")
         offer_desc = brief.get("offer_desc", "")
         offer_desc_suffix = f"<br/>{offer_desc}" if offer_desc else ""
-        # Empty (not omitted) span when hidden -- keeps `.cta-row-mini`'s flex alignment steady
-        # (CTA button stays right-aligned) rather than collapsing the row's layout.
         offer_html = '<span class="offer-mini"></span>' if "offer" in hidden else f'<span class="offer-mini">{offer_title}{offer_desc_suffix}</span>'
 
         return {
@@ -1236,13 +1209,13 @@ class PosterTemplateEngine:
         font_mood = cls._resolve_font_mood(brief.get("font_mood"))
         return cls._FEEDBACK_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
-            brand=brief.get("brand", "🐾 PAWPARADISE SPA"),
-            verified_label=brief.get("verified_label", "✔ ĐÃ TRẢI NGHIỆM DỊCH VỤ"),
+            brand=brief.get("brand", "PAWPARADISE SPA"),
+            verified_label=brief.get("verified_label", "ĐÃ TRẢI NGHIỆM DỊCH VỤ"),
             quote_text=brief.get("quote_text", "Dịch vụ tuyệt vời, nhân viên chuyên nghiệp và tận tâm, chắc chắn sẽ quay lại!"),
-            avatar_emoji=brief.get("avatar_emoji", "🐩"),
+            avatar_emoji=brief.get("avatar_emoji", "P"),
             customer_name=brief.get("customer_name", "Khách hàng thân thiết"),
             customer_sub=brief.get("customer_sub", "Đã trải nghiệm dịch vụ Premium"),
-            cta_text=brief.get("cta_text", "ĐẶT LỊCH NGAY ➔"),
+            cta_text=brief.get("cta_text", "ĐẶT LỊCH NGAY"),
             safe_rect_style=cls._corner_card_top_override(brief),
             mood_quote_font=font_mood["quote_font"], mood_name_font=font_mood["name_font"],
             **conditional,
@@ -1300,11 +1273,11 @@ class PosterTemplateEngine:
       </div>
       <div class="two-col-grid">
         <div>
-          <div class="col-title">📋 YÊU CẦU ỨNG VIÊN</div>
+          <div class="col-title">YÊU CẦU ỨNG VIÊN</div>
           <ul class="checklist">$requirements_html</ul>
         </div>
         <div>
-          <div class="col-title">🎁 QUYỀN LỢI ĐẶC QUYỀN</div>
+          <div class="col-title">QUYỀN LỢI ĐẶC QUYỀN</div>
           <ul class="checklist">$benefits_html</ul>
         </div>
       </div>
@@ -1336,10 +1309,10 @@ class PosterTemplateEngine:
             "Thưởng dự án theo quý, đãi ngộ cạnh tranh.",
             "Môi trường làm việc hiện đại, đồng nghiệp thân thiện.",
         ])
-        req_html = "".join(f'<li class="check-item"><span class="check-icon">✔</span><span>{r}</span></li>' for r in requirements)
-        ben_html = "".join(f'<li class="check-item"><span class="check-icon">★</span><span>{b}</span></li>' for b in benefits)
+        req_html = "".join(f'<li class="check-item"><span class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display:inline-block; vertical-align:-1px; color:#10B981;"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>{r}</span></li>' for r in requirements)
+        ben_html = "".join(f'<li class="check-item"><span class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="#FFB300"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span><span>{b}</span></li>' for b in benefits)
         palette = cls._derive_theme_palette(brief.get("brand_color"), cls._RECRUITMENT_DEFAULT_PALETTE)
-        company = brief.get("company", "⚡ TENDOO AI RESEARCH LAB")
+        company = brief.get("company", "TENDOO AI RESEARCH LAB")
         giant_title_html = cls._giant_title_block(
             analysis, background_image_path, company,
             left_px=round(analysis.width * 0.04), top_px=0,
@@ -1356,7 +1329,7 @@ class PosterTemplateEngine:
             benefits_html=ben_html,
             contact_line1=brief.get("contact_line1", "Gửi CV & Portfolio trực tiếp về hòm thư:"),
             contact_email=brief.get("contact_email", "careers@tendoo.ai"),
-            cta_text=brief.get("cta_text", "ỨNG TUYỂN NGAY ➔"),
+            cta_text=brief.get("cta_text", "ỨNG TUYỂN NGAY"),
             safe_rect_style=cls._safe_rect_style_attr(brief),
             giant_title_html=giant_title_html,
             **palette,
@@ -1415,11 +1388,11 @@ class PosterTemplateEngine:
     @classmethod
     def _generate_menu(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
         categories = brief.get("categories", [
-            {"title": "🍔 MÓN CHÍNH", "items": [
+            {"title": "MÓN CHÍNH", "items": [
                 {"name": "Món Đặc Trưng", "price": "89.000đ", "badge": "BEST SELLER"},
                 {"name": "Món Signature", "price": "149.000đ"},
             ]},
-            {"title": "🍹 ĐỒ UỐNG", "items": [
+            {"title": "ĐỒ UỐNG", "items": [
                 {"name": "Thức Uống Đặc Biệt", "price": "49.000đ", "badge": "HOT"},
                 {"name": "Thức Uống Nhẹ", "price": "45.000đ"},
             ]},
@@ -1451,8 +1424,8 @@ class PosterTemplateEngine:
             sub_brand=sub_brand,
             tagline=brief.get("tagline", "Thưởng thức tinh hoa ẩm thực thủ công từ nguyên liệu cao cấp"),
             categories_html="".join(cat_html_parts),
-            footer_note=brief.get("footer_note", "✨ Giảm 10% tổng hóa đơn khi check-in tại quán"),
-            hotline=brief.get("hotline", "📞 Hotline: 1800 8198"),
+            footer_note=brief.get("footer_note", "Giảm 10% tổng hóa đơn khi check-in tại quán"),
+            hotline=brief.get("hotline", "Hotline: 1800 8198"),
             giant_title_html=giant_title_html,
             **palette,
         )
@@ -1517,14 +1490,14 @@ class PosterTemplateEngine:
         palette = cls._derive_theme_palette(brief.get("brand_color"), cls._GRAND_OPENING_DEFAULT_PALETTE)
         return cls._GRAND_OPENING_PORTRAIT_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
-            brand=brief.get("brand", "🍔 THE BURGER CRAFT"),
+            brand=brief.get("brand", "THE BURGER CRAFT"),
             date_range=brief.get("date_range", "05.09 - 15.09"),
             badge_label=brief.get("badge_label", "GIẢM"),
             badge_percent=brief.get("badge_percent", "50%"),
             badge_sub=brief.get("badge_sub", "TOÀN MENU"),
-            address=brief.get("address", "📍 128 Nguyễn Trãi, Q1"),
+            address=brief.get("address", "128 Nguyễn Trãi, Q1"),
             offer_desc=brief.get("offer_desc", "Tặng 01 Coca-Cola cho hóa đơn từ 99K • Hotline: 1900 8899"),
-            cta_text=brief.get("cta_text", "NHẬN VOUCHER ➔"),
+            cta_text=brief.get("cta_text", "NHẬN VOUCHER"),
             safe_rect_style=cls._safe_rect_style_attr(brief),
             **palette,
         )
@@ -1608,7 +1581,7 @@ class PosterTemplateEngine:
 
     @classmethod
     def _generate_feedback_card_portrait(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
-        conditional = cls._build_feedback_conditional_html(brief, top_badge_default="✨ CHUẨN HÀN QUỐC")
+        conditional = cls._build_feedback_conditional_html(brief, top_badge_default="CHUẨN HÀN QUỐC")
         palette = cls._derive_theme_palette(
             brief.get("brand_color"), cls._FEEDBACK_DEFAULT_PALETTE, secondary_hex=brief.get("secondary_color"),
         )
@@ -1617,13 +1590,13 @@ class PosterTemplateEngine:
         return cls._FEEDBACK_PORTRAIT_TPL.substitute(
             w=analysis.width, h=analysis.height, bg_css=_bg_image_css(background_image_path),
             compact_class=compact_class,
-            brand=brief.get("brand", "🐾 PAWPARADISE SPA"),
-            verified_label=brief.get("verified_label", "✔ ĐÃ TRẢI NGHIỆM"),
+            brand=brief.get("brand", "PAWPARADISE SPA"),
+            verified_label=brief.get("verified_label", "ĐÃ TRẢI NGHIỆM"),
             quote_text=brief.get("quote_text", "Dịch vụ tuyệt vời, nhân viên chuyên nghiệp và tận tâm, chắc chắn sẽ quay lại!"),
-            avatar_emoji=brief.get("avatar_emoji", "🐩"),
+            avatar_emoji=brief.get("avatar_emoji", "P"),
             customer_name=brief.get("customer_name", "Khách hàng thân thiết"),
             customer_sub=brief.get("customer_sub", "Đã trải nghiệm dịch vụ Premium"),
-            cta_text=brief.get("cta_text", "ĐẶT LỊCH NGAY ➔"),
+            cta_text=brief.get("cta_text", "ĐẶT LỊCH NGAY"),
             safe_rect_style=cls._corner_card_top_override(brief),
             mood_quote_font=font_mood["quote_font"], mood_name_font=font_mood["name_font"],
             **conditional,
@@ -1663,11 +1636,11 @@ class PosterTemplateEngine:
   <div class="frosted-box"$safe_rect_style>
     <div class="salary-tag">$salary</div>
     <div>
-      <div class="col-title">📋 $pos_label</div>
+      <div class="col-title">$pos_label</div>
       <ul class="checklist">$requirements_html</ul>
     </div>
     <div>
-      <div class="col-title">🎁 QUYỀN LỢI</div>
+      <div class="col-title">QUYỀN LỢI</div>
       <ul class="checklist">$benefits_html</ul>
     </div>
     <div class="rec-footer">
@@ -1688,10 +1661,10 @@ class PosterTemplateEngine:
             "Thưởng dự án theo quý, đãi ngộ cạnh tranh.",
             "Môi trường làm việc hiện đại, đồng nghiệp thân thiện.",
         ])
-        req_html = "".join(f'<li class="check-item"><span class="check-icon">✔</span><span>{r}</span></li>' for r in requirements)
-        ben_html = "".join(f'<li class="check-item"><span class="check-icon">★</span><span>{b}</span></li>' for b in benefits)
+        req_html = "".join(f'<li class="check-item"><span class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display:inline-block; vertical-align:-1px; color:#10B981;"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>{r}</span></li>' for r in requirements)
+        ben_html = "".join(f'<li class="check-item"><span class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="#FFB300"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span><span>{b}</span></li>' for b in benefits)
         palette = cls._derive_theme_palette(brief.get("brand_color"), cls._RECRUITMENT_DEFAULT_PALETTE)
-        company = brief.get("company", "⚡ TENDOO AI LAB")
+        company = brief.get("company", "TENDOO AI LAB")
         giant_title_html = cls._giant_title_block(
             analysis, background_image_path, company,
             left_px=round(analysis.width * 0.04), top_px=round(analysis.height * 0.11),
@@ -1708,7 +1681,7 @@ class PosterTemplateEngine:
             benefits_html=ben_html,
             contact_line1=brief.get("contact_line1", "Gửi CV & Portfolio:"),
             contact_email=brief.get("contact_email", "careers@tendoo.ai"),
-            cta_text=brief.get("cta_text", "ỨNG TUYỂN NGAY ➔"),
+            cta_text=brief.get("cta_text", "ỨNG TUYỂN NGAY"),
             safe_rect_style=cls._safe_rect_style_attr(brief),
             giant_title_html=giant_title_html,
             **palette,
@@ -1739,26 +1712,30 @@ class PosterTemplateEngine:
   .item-price { font-family:'Playfair Display',serif; font-size:1.6vw; font-weight:700; color:var(--accent); white-space:nowrap; }
   .badge-star { font-size:0.9vw; font-weight:800; background:rgba(239,68,68,0.45); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); color:#FFF; padding:0.4vw 1.2vw; border-radius:4px; margin-left:1.5vw; }
   .menu-footer { background:rgba(var(--accent-rgb),0.1); border:1px solid rgba(var(--accent-rgb),0.25); border-radius:14px; padding:3vw 4vw; display:flex; flex-direction:column; gap:1.5vw; }
-  .foot-note { font-size:1.2vw; color:#FFFFFF; }
-  .foot-hotline { font-weight:700; color:var(--accent); font-size:1.3vw; }
+  .foot-note { font-size:1.2vw; color:#FFFFFF; display:flex; align-items:center; gap:1vw; }
+  .foot-hotline { font-weight:700; color:var(--accent); font-size:1.3vw; display:flex; align-items:center; gap:1vw; }
 </style></head>
 <body><div class="poster">
   $giant_title_html
   <div class="sub-brand">$sub_brand</div>
   <div class="menu-desc">$tagline</div>
   <div class="menu-stack">$categories_html</div>
-  <div class="menu-footer"><div class="foot-note">$footer_note</div><div class="foot-hotline">$hotline</div></div>
+  <div class="menu-footer">
+    <div class="foot-note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>$footer_note</div>
+    <div class="foot-hotline"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>$hotline</div>
+  </div>
 </div></body></html>""")
 
     @classmethod
     def _generate_menu_portrait(cls, analysis: BackgroundAnalysis, brief: Dict[str, Any], background_image_path: Optional[str] = None) -> str:
         categories = brief.get("categories", [
-            {"title": "🍔 MÓN CHÍNH", "items": [
+            {"title": "MÓN CHÍNH", "items": [
                 {"name": "Món Đặc Trưng", "price": "89.000đ", "badge": "BEST SELLER"},
                 {"name": "Món Signature", "price": "149.000đ"},
             ]},
-            {"title": "🍹 ĐỒ UỐNG", "items": [
+            {"title": "ĐỒ UỐNG", "items": [
                 {"name": "Thức Uống Đặc Biệt", "price": "49.000đ", "badge": "HOT"},
+                {"name": "Thức Uống Nhẹ", "price": "45.000đ"},
             ]},
         ])
         cat_html_parts = []
@@ -1788,8 +1765,8 @@ class PosterTemplateEngine:
             sub_brand=sub_brand,
             tagline=brief.get("tagline", "Thưởng thức tinh hoa ẩm thực thủ công"),
             categories_html="".join(cat_html_parts),
-            footer_note=brief.get("footer_note", "✨ Giảm 10% khi check-in tại quán"),
-            hotline=brief.get("hotline", "📞 Hotline: 1800 8198"),
+            footer_note=brief.get("footer_note", "Giảm 10% khi check-in tại quán"),
+            hotline=brief.get("hotline", "Hotline: 1800 8198"),
             giant_title_html=giant_title_html,
             **palette,
         )

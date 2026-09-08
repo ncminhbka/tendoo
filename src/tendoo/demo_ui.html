@@ -185,7 +185,11 @@
     }
 
     .card-icon {
-      font-size: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      height: 32px;
+      margin-bottom: 4px;
     }
 
     .card-title {
@@ -924,13 +928,15 @@
   <main class="container">
     
     <!-- Section 1: Intent Selection (6 Category Buttons) -->
-    <h2 class="section-title">✨ Bạn muốn tạo ảnh nội dung gì?</h2>
+    <h2 class="section-title">Bạn muốn tạo ảnh nội dung gì?</h2>
     <p class="section-desc">Chọn đúng mục đích thương mại để hệ thống tự động tối ưu hóa trường thông tin và typography nhận diện.</p>
 
     <div class="intent-grid">
       <!-- 1. Promo Poster -->
       <div class="intent-card active" id="btn-cat-promo" onclick="switchCategory('promo')">
-        <div class="card-icon">🏷️</div>
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+        </div>
         <div class="card-title">Poster Khuyến Mại / Ưu Đãi</div>
         <div class="card-desc">Thiết kế poster bán hàng, flash sale, voucher giảm giá đa tầng.</div>
         <span class="card-badge badge-live">Đang hoạt động</span>
@@ -938,7 +944,9 @@
 
       <!-- 2. Product Intro -->
       <div class="intent-card" id="btn-cat-product_intro" onclick="switchCategory('product_intro')">
-        <div class="card-icon">📦</div>
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        </div>
         <div class="card-title">Giới Thiệu Sản Phẩm / Dịch Vụ</div>
         <div class="card-desc">Làm nổi bật chất liệu, tính năng cao cấp trên bục studio sang trọng.</div>
         <span class="card-badge badge-ready">Sẵn sàng</span>
@@ -946,7 +954,9 @@
 
       <!-- 3. Opening Banner -->
       <div class="intent-card" id="btn-cat-opening" onclick="switchCategory('opening')">
-        <div class="card-icon">🎊</div>
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+        </div>
         <div class="card-title">Khai Trương Chi Nhánh</div>
         <div class="card-desc">Banner khánh thành, ngày giờ khai trương và quà tặng chào mừng.</div>
         <span class="card-badge badge-ready">Sẵn sàng</span>
@@ -954,7 +964,9 @@
 
       <!-- 4. Customer Feedback -->
       <div class="intent-card" id="btn-cat-feedback" onclick="switchCategory('feedback')">
-        <div class="card-icon">💬</div>
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        </div>
         <div class="card-title">Feedback & Đánh Giá</div>
         <div class="card-desc">Trích dẫn phản hồi thực tế, 5 sao chất lượng, tăng độ uy tín.</div>
         <span class="card-badge badge-ready">Sẵn sàng</span>
@@ -962,7 +974,9 @@
 
       <!-- 5. Recruitment -->
       <div class="intent-card" id="btn-cat-recruitment" onclick="switchCategory('recruitment')">
-        <div class="card-icon">👥</div>
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
         <div class="card-title">Tuyển Dụng Nhân Tài</div>
         <div class="card-desc">Thông báo vị trí tuyển dụng, mức thu nhập hấp dẫn, văn hóa team.</div>
         <span class="card-badge badge-ready">Sẵn sàng</span>
@@ -970,7 +984,9 @@
 
       <!-- 6. Usage Guide -->
       <div class="intent-card" id="btn-cat-guide" onclick="switchCategory('guide')">
-        <div class="card-icon">📖</div>
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        </div>
         <div class="card-title">Quy Trình & Hướng Dẫn</div>
         <div class="card-desc">Infographic các bước sử dụng sản phẩm hoặc hướng dẫn đặt mua.</div>
         <span class="card-badge badge-ready">Sẵn sàng</span>
@@ -983,7 +999,7 @@
       <!-- Left Panel: 3 Form Sections -->
       <div class="panel">
         <div class="panel-header">
-          <span id="panel-category-title">📝 Thông tin Poster Khuyến Mại</span>
+          <span id="panel-category-title">Thông tin Poster Khuyến Mại</span>
           <span id="layout-indicator" style="font-size: 13px; color: var(--accent-cyan);">Bố cục: Vòm Đỉnh</span>
         </div>
 
@@ -992,18 +1008,18 @@
           <!-- PHẦN 1: THÔNG TIN CHUNG (Biến đổi theo category) -->
           <div class="form-section-block" id="section-general">
             <div class="section-block-title">
-              <span>📋</span> <span id="section-general-title">PHẦN 1: THÔNG TIN KHUYẾN MẠI / ƯU ĐÃI</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:-2px; margin-right:6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span id="section-general-title">PHẦN 1: THÔNG TIN KHUYẾN MẠI / ƯU ĐÃI</span>
             </div>
 
             <!-- Quick Presets -->
             <label class="form-label">Chọn mẫu nhanh (1-Click Presets):</label>
             <div class="presets-row" id="presets-container">
-              <div class="preset-chip" onclick="loadPreset('beverage')">🍵 Trà Đào Cam Sả</div>
-              <div class="preset-chip" onclick="loadPreset('headphones')">🎧 Tai Nghe Hi-Res</div>
-              <div class="preset-chip" onclick="loadPreset('perfume')">🧴 Nước Hoa Pháp</div>
-              <div class="preset-chip" onclick="loadPreset('midautumn')">🥮 Bánh Trung Thu</div>
-              <div class="preset-chip" onclick="loadPreset('suv')">🏎️ SUV Điện Ảnh</div>
-              <div class="preset-chip" onclick="loadPreset('lookbook')">👗 Lookbook Thời Trang</div>
+              <div class="preset-chip" onclick="loadPreset('beverage')">Trà Đào Cam Sả</div>
+              <div class="preset-chip" onclick="loadPreset('headphones')">Tai Nghe Hi-Res</div>
+              <div class="preset-chip" onclick="loadPreset('perfume')">Nước Hoa Pháp</div>
+              <div class="preset-chip" onclick="loadPreset('midautumn')">Bánh Trung Thu</div>
+              <div class="preset-chip" onclick="loadPreset('suv')">SUV Điện Ảnh</div>
+              <div class="preset-chip" onclick="loadPreset('lookbook')">Lookbook Thời Trang</div>
             </div>
 
             <!-- 1. Tiêu đề ảnh (Title / Headline) -->
@@ -1018,7 +1034,12 @@
               <div class="upload-zone" id="upload-dropzone" onclick="document.getElementById('file-input').click()">
                 <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelected(event)">
                 <div class="upload-zone-content" id="upload-prompt">
-                  <div class="upload-zone-icon">📸</div>
+                  <div class="upload-zone-icon">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                      <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                  </div>
                   <div class="upload-zone-text">Nhấp để chọn ảnh hoặc kéo thả file ảnh vào đây</div>
                   <div class="upload-zone-sub">Hỗ trợ PNG, JPG, WEBP (Tự động nén tối ưu)</div>
                 </div>
@@ -1164,7 +1185,7 @@
                   <button type="button" class="btn-remove-step" onclick="removeStepInput(this)">✕ Xóa</button>
                 </div>
               </div>
-              <button type="button" class="btn-add-step" onclick="addStepInput()">➕ Thêm bước tiếp theo</button>
+              <button type="button" class="btn-add-step" onclick="addStepInput()">+ Thêm bước tiếp theo</button>
             </div>
 
             <!-- 5. Mô tả bối cảnh ảnh (AI Scene Prompt) -->
@@ -1177,7 +1198,7 @@
           <!-- PHẦN 2: THÔNG TIN CỬA HÀNG (Dùng chung & cố định cho mọi category) -->
           <div class="form-section-block">
             <div class="section-block-title store-title">
-              <span>🏪</span> <span>PHẦN 2: THÔNG TIN CỬA HÀNG / THƯƠNG HIỆU</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:-2px; margin-right:6px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg><span>PHẦN 2: THÔNG TIN CỬA HÀNG / THƯƠNG HIỆU</span>
             </div>
 
             <div class="form-row-2">
@@ -1204,7 +1225,7 @@
             <!-- QR Code Toggle -->
             <div class="toggle-wrap">
               <div class="toggle-info">
-                <div class="toggle-title">📱 Chuyển đường link thành mã QR</div>
+                <div class="toggle-title">Chuyển đường link thành mã QR</div>
                 <div class="toggle-desc">Tự động tạo mã QR từ link trên và nhúng vào góc poster để khách quét trực tiếp</div>
               </div>
               <label class="switch">
@@ -1217,7 +1238,7 @@
           <!-- PHẦN 3: HIỂN THỊ & THIẾT KẾ (Dùng chung cho mọi category) -->
           <div class="form-section-block">
             <div class="section-block-title design-title">
-              <span>🎨</span> <span>PHẦN 3: HIỂN THỊ & THIẾT KẾ POSTER</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:-2px; margin-right:6px;"><circle cx="12" cy="12" r="10"></circle><polygon points="12 8 8 12 12 16 16 12 12 8"></polygon></svg><span>PHẦN 3: HIỂN THỊ & THIẾT KẾ POSTER</span>
             </div>
 
             <div class="form-row-2">
@@ -1225,12 +1246,12 @@
               <div class="form-group">
                 <label class="form-label">Bố cục thị giác (Layout):</label>
                 <select id="sel-layout" class="form-select" onchange="onLayoutSelect(this.value)">
-                  <option value="top_dome" selected>🏛️ Vòm Đỉnh (Top Arch Dome)</option>
-                  <option value="center_hourglass">⏳ Đồng Hồ Cát (Center Hourglass)</option>
-                  <option value="bottom_platform">🚘 Bệ Đáy Điện Ảnh (Bottom Platform)</option>
-                  <option value="split_column">👗 Dải Lụa Phân Cột (Split Column)</option>
-                  <option value="diagonal_slash">⚡ Vát Chéo Năng Động (Diagonal Slash)</option>
-                  <option value="l_frame">📐 Khung Góc L (L-Frame Anchor)</option>
+                  <option value="top_dome" selected>Vòm Đỉnh (Top Arch Dome)</option>
+                  <option value="center_hourglass">Đồng Hồ Cát (Center Hourglass)</option>
+                  <option value="bottom_platform">Bệ Đáy Điện Ảnh (Bottom Platform)</option>
+                  <option value="split_column">Dải Lụa Phân Cột (Split Column)</option>
+                  <option value="diagonal_slash">Vát Chéo Năng Động (Diagonal Slash)</option>
+                  <option value="l_frame">Khung Góc L (L-Frame Anchor)</option>
                 </select>
               </div>
 
@@ -1238,11 +1259,11 @@
               <div class="form-group">
                 <label class="form-label">Phong cách chất liệu & ánh sáng:</label>
                 <select id="sel-style-hint" class="form-select">
-                  <option value="auto" selected>✨ Tự động theo bối cảnh (Smart Auto Harmonize)</option>
-                  <option value="daylight">☀️ Bầu trời ban ngày trong trẻo (Daylight Sky)</option>
-                  <option value="studio_dark">🌙 Studio tối dốc êm (Dark Studio Falloff)</option>
-                  <option value="golden_hour">👑 Ánh hoàng hôn vàng ấm (Warm Golden Hour)</option>
-                  <option value="festive_moon">🏮 Ánh trăng lễ hội lung linh (Festive Moonlight Glow)</option>
+                  <option value="auto" selected>Tự động theo bối cảnh (Smart Auto Harmonize)</option>
+                  <option value="daylight">Bầu trời ban ngày trong trẻo (Daylight Sky)</option>
+                  <option value="studio_dark">Studio tối dốc êm (Dark Studio Falloff)</option>
+                  <option value="golden_hour">Ánh hoàng hôn vàng ấm (Warm Golden Hour)</option>
+                  <option value="festive_moon">Ánh trăng lễ hội lung linh (Festive Moonlight Glow)</option>
                 </select>
               </div>
             </div>
@@ -1254,19 +1275,19 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                   <label class="form-label" style="margin-bottom: 0;">Hiệu ứng chữ tiêu đề (Hero Text Effect):</label>
                   <span id="effect-smart-hint" style="display: none; font-size: 11px; color: #38BDF8; cursor: pointer; background: rgba(56, 189, 248, 0.12); padding: 2px 8px; border-radius: 9999px; border: 1px solid rgba(56, 189, 248, 0.35); transition: all 0.2s ease;" title="Bấm để áp dụng gợi ý này">
-                    <span id="effect-hint-text">✨ Gợi ý: In nổi 3D mạ vàng</span>
+                    <span id="effect-hint-text">Gợi ý: In nổi 3D mạ vàng</span>
                   </span>
                 </div>
                 <select id="sel-text-effect" class="form-select">
-                  <option value="auto" selected>✨ Tự động theo ngữ cảnh (Auto Harmonize)</option>
-                  <option value="embossed">👑 In nổi 3D mạ vàng hoàng gia (3D Gold Relief)</option>
-                  <option value="shadow">🎬 Bóng đổ chiều sâu điện ảnh (Deep Studio Shadow)</option>
-                  <option value="led">💡 Đèn LED Backlit viền công nghệ (Backlit LED Halo)</option>
-                  <option value="neon">⚡ Phát quang Neon rực rỡ (Vibrant Neon Glow)</option>
-                  <option value="chrome">🏎️ Chrome bạch kim tráng gương (Liquid Chrome)</option>
-                  <option value="engraved">🏛️ Khắc chìm sa thạch cổ điển (Deep Engraved)</option>
-                  <option value="holographic">🦄 Hologram ánh kim xà cừ (Iridescent Foil)</option>
-                  <option value="outline">🏃 Viền rỗng thể thao hiện đại (Ghost Outline)</option>
+                  <option value="auto" selected>Tự động theo ngữ cảnh (Auto Harmonize)</option>
+                  <option value="embossed">In nổi 3D mạ vàng hoàng gia (3D Gold Relief)</option>
+                  <option value="shadow">Bóng đổ chiều sâu điện ảnh (Deep Studio Shadow)</option>
+                  <option value="led">Đèn LED Backlit viền công nghệ (Backlit LED Halo)</option>
+                  <option value="neon">Phát quang Neon rực rỡ (Vibrant Neon Glow)</option>
+                  <option value="chrome">Chrome bạch kim tráng gương (Liquid Chrome)</option>
+                  <option value="engraved">Khắc chìm sa thạch cổ điển (Deep Engraved)</option>
+                  <option value="holographic">Hologram ánh kim xà cừ (Iridescent Foil)</option>
+                  <option value="outline">Viền rỗng thể thao hiện đại (Ghost Outline)</option>
                 </select>
               </div>
               <!-- Aspect Ratio -->
@@ -1301,7 +1322,9 @@
                   <label class="form-label">Seed ngẫu nhiên:</label>
                   <div style="display: flex; gap: 4px;">
                     <input type="number" id="inp-seed" class="form-input" value="42">
-                    <button type="button" class="btn-action" style="flex:0; padding: 0 10px;" onclick="randomizeSeed()" title="Đổi seed ngẫu nhiên">🎲</button>
+                    <button type="button" class="btn-action" style="flex:0; padding: 0 10px;" onclick="randomizeSeed()" title="Đổi seed ngẫu nhiên">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:-2px;"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"></circle><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"></circle><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"></circle><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor"></circle></svg>
+                    </button>
                   </div>
                 </div>
                 <div class="form-group">
@@ -1319,7 +1342,7 @@
 
           <!-- Main Submit Button -->
           <button type="submit" id="btn-generate" class="btn-submit">
-            <span>🚀 Tạo Poster Thương Mại Ngay (~3.5s)</span>
+            <span style="display:inline-flex; align-items:center; justify-content:center; gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>Tạo Poster Thương Mại Ngay (~3.5s)</span>
           </button>
         </form>
       </div>
@@ -1327,8 +1350,8 @@
       <!-- Right Panel: Live Output & Previews -->
       <div class="panel">
         <div class="panel-header">
-          <span>🖼️ Kết quả Poster Hoàn Thiện</span>
-          <span id="timing-badge" style="font-size: 13px; color: #10B981; display: none;">⚡ 3.48s</span>
+          <span>Kết quả Poster Hoàn Thiện</span>
+          <span id="timing-badge" style="font-size: 13px; color: #10B981; display: none;">3.48s</span>
         </div>
 
         <!-- View Switcher Tabs -->
@@ -1343,7 +1366,15 @@
           <img id="preview-image" class="preview-img" style="display: none;" alt="Rendered Poster">
           
           <div class="preview-placeholder" id="placeholder-box">
-            <div class="icon">🎨</div>
+            <div class="icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
+              </svg>
+            </div>
             <div style="font-weight: 700; margin-bottom: 6px; color: #fff;">Chưa có ảnh nào được tạo</div>
             <div style="font-size: 13px; max-width: 320px; line-height: 1.4;">
               Điền các thông tin ở form bên trái hoặc chọn 1-Click Preset, sau đó nhấn "Tạo Poster Thương Mại".
@@ -1361,7 +1392,7 @@
         <!-- Multi-Image Gallery Strip (when num_images > 1) -->
         <div class="gallery-container" id="gallery-container">
           <div class="gallery-label">
-            <span>✨ Bộ ảnh đã tạo (<span id="gallery-count">1</span> phiên bản):</span>
+            <span>Bộ ảnh đã tạo (<span id="gallery-count">1</span> phiên bản):</span>
             <span style="font-size: 11px; color: var(--text-dim);">Nhấp vào ảnh để xem & tải</span>
           </div>
           <div class="gallery-cards" id="gallery-cards">
@@ -1372,13 +1403,13 @@
         <!-- Result Action Buttons -->
         <div class="result-actions" id="result-actions">
           <a id="btn-download" href="#" download="tendoo_poster.png" class="btn-action btn-download">
-            <span>💾 Tải Poster HD (PNG)</span>
+            <span style="display:inline-flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Tải Poster HD (PNG)</span>
           </a>
           <button class="btn-action" onclick="copyImageLink()">
-            <span>🔗 Copy Link</span>
+            <span style="display:inline-flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Copy Link</span>
           </button>
           <button class="btn-action" onclick="openFullscreen()">
-            <span>👁️ Xem Lớn</span>
+            <span style="display:inline-flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>Xem Lớn</span>
           </button>
         </div>
       </div>
@@ -1405,7 +1436,7 @@
       promo: {
         recommendedLayout: "top_dome",
         title: "PHẦN 1: THÔNG TIN KHUYẾN MẠI / ƯU ĐÃI",
-        panelTitle: "📝 Thông tin Poster Khuyến Mại",
+        panelTitle: "Thông tin Poster Khuyến Mại",
         lblTitle: "Tiêu đề ảnh (Headline):",
         titlePlaceholder: "TRÀ ĐÀO CAM SẢ\nTHANH MÁT TỰ NHIÊN",
         lblDiscount: "Mức ưu đãi nổi bật:",
@@ -1420,7 +1451,7 @@
       product_intro: {
         recommendedLayout: "top_dome",
         title: "PHẦN 1: THÔNG TIN GIỚI THIỆU SẢN PHẨM",
-        panelTitle: "📦 Giới Thiệu Sản Phẩm / Dịch Vụ",
+        panelTitle: "Giới Thiệu Sản Phẩm / Dịch Vụ",
         lblTitle: "Tên sản phẩm & Định vị:",
         titlePlaceholder: "TAI NGHE KHÔNG DÂY\nHI-RES AUDIO CHỐNG ỒN",
         lblDiscount: "Điểm nhấn công nghệ / Giá bán:",
@@ -1435,7 +1466,7 @@
       opening: {
         recommendedLayout: "center_hourglass",
         title: "PHẦN 1: THÔNG TIN KHAI TRƯƠNG CHI NHÁNH",
-        panelTitle: "🎊 Banner Khai Trương Chi Nhánh",
+        panelTitle: "Banner Khai Trương Chi Nhánh",
         lblTitle: "Tiêu đề sự kiện khai trương:",
         titlePlaceholder: "TƯNG BỪNG KHAI TRƯƠNG\nCHI NHÁNH THỨ 10",
         lblDiscount: "Quà tặng / Ưu đãi ngày mở bán:",
@@ -1450,11 +1481,11 @@
       feedback: {
         recommendedLayout: "split_column",
         title: "PHẦN 1: THÔNG TIN FEEDBACK & ĐÁNH GIÁ",
-        panelTitle: "💬 Feedback & Đánh Giá Khách Hàng",
+        panelTitle: "Feedback & Đánh Giá Khách Hàng",
         lblTitle: "Tiêu đề phản hồi (Headline):",
         titlePlaceholder: "KHÁCH HÀNG NÓI GÌ\nVỀ CHẤT LƯỢNG TENDOO?",
         lblDiscount: "Điểm đánh giá / Xếp hạng:",
-        discountPlaceholder: "⭐⭐⭐⭐⭐ 5.0 / 5.0 SAO",
+        discountPlaceholder: "5.0 / 5.0 SAO",
         lblApplied: "Trích dẫn cảm nhận khách hàng:",
         appliedPlaceholder: "\"Hương vị đậm đà thơm ngon, không gian quán cực kỳ thư giãn!\"",
         lblDateStart: "Tên khách hàng:",
@@ -1465,7 +1496,7 @@
       recruitment: {
         recommendedLayout: "split_column",
         title: "PHẦN 1: THÔNG TIN TUYỂN DỤNG NHÂN TÀI",
-        panelTitle: "👥 Poster Tuyển Dụng Nhân Tài",
+        panelTitle: "Poster Tuyển Dụng Nhân Tài",
         lblTitle: "Vị trí tuyển dụng chính:",
         titlePlaceholder: "TENDOO TÌM ĐỒNG ĐỘI\nSENIOR AI ENGINEER",
         lblDiscount: "Mức thu nhập / Quyền lợi nổi bật:",
@@ -1480,7 +1511,7 @@
       guide: {
         recommendedLayout: "split_column",
         title: "PHẦN 1: THÔNG TIN QUY TRÌNH & HƯỚNG DẪN",
-        panelTitle: "📖 Quy Trình & Hướng Dẫn Sử Dụng",
+        panelTitle: "Quy Trình & Hướng Dẫn Sử Dụng",
         lblTitle: "Tên quy trình / Hướng dẫn:",
         titlePlaceholder: "3 BƯỚC ĐẶT HÀNG NHANH\nTIẾT KIỆM TỚI 30%",
         lblDiscount: "Cam kết / Lợi ích đạt được:",
@@ -1497,44 +1528,44 @@
     // Compatible optical style hints for each layout topology (Cross-Semantic Clash Prevention)
     const LAYOUT_STYLE_OPTIONS = {
       top_dome: [
-        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "daylight", label: "☀️ Bầu trời ban ngày trong trẻo (Daylight Sky)" },
-        { value: "studio_dark", label: "🌙 Studio tối dốc êm (Dark Studio Falloff)" },
-        { value: "golden_hour", label: "👑 Ánh hoàng hôn vàng ấm (Warm Golden Hour)" },
-        { value: "festive_moon", label: "🏮 Ánh trăng lễ hội lung linh (Festive Moonlight Glow)" }
+        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "daylight", label: "Bầu trời ban ngày trong trẻo (Daylight Sky)" },
+        { value: "studio_dark", label: "Studio tối dốc êm (Dark Studio Falloff)" },
+        { value: "golden_hour", label: "Ánh hoàng hôn vàng ấm (Warm Golden Hour)" },
+        { value: "festive_moon", label: "Ánh trăng lễ hội lung linh (Festive Moonlight Glow)" }
       ],
       bottom_platform: [
-        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "cinematic_asphalt", label: "🏎️ Bệ đường đua điện ảnh (Cinematic Asphalt Track)" },
-        { value: "luxury_marble", label: "🏛️ Bục đá cẩm thạch sang trọng (Luxury Obsidian Marble)" },
-        { value: "warm_wood", label: "🪵 Mặt sàn gỗ tự nhiên ấm áp (Warm Wood Surface)" },
-        { value: "water_mirror", label: "✨ Mặt nước phẳng phản chiếu (Reflective Water Platform)" }
+        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "cinematic_asphalt", label: "Bệ đường đua điện ảnh (Cinematic Asphalt Track)" },
+        { value: "luxury_marble", label: "Bục đá cẩm thạch sang trọng (Luxury Obsidian Marble)" },
+        { value: "warm_wood", label: "Mặt sàn gỗ tự nhiên ấm áp (Warm Wood Surface)" },
+        { value: "water_mirror", label: "Mặt nước phẳng phản chiếu (Reflective Water Platform)" }
       ],
       split_column: [
-        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "champagne_silk", label: "🎀 Dải voan lụa champagne bán trong suốt (Champagne Silk)" },
-        { value: "minimal_wall", label: "🏛️ Cột vách kiến trúc tối giản tiệp màu (Minimal Studio Wall)" },
-        { value: "studio_light_pillar", label: "🌫️ Cột khói sáng studio mờ ảo (Soft Studio Light Pillar)" }
+        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "champagne_silk", label: "Dải voan lụa champagne bán trong suốt (Champagne Silk)" },
+        { value: "minimal_wall", label: "Cột vách kiến trúc tối giản tiệp màu (Minimal Studio Wall)" },
+        { value: "studio_light_pillar", label: "Cột khói sáng studio mờ ảo (Soft Studio Light Pillar)" }
       ],
       center_hourglass: [
-        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "moonbeam", label: "✨ Luồng sáng đối xứng sân khấu (Volumetric Moonbeam)" },
-        { value: "studio_spotlight", label: "🎬 Đèn rọi studio trần và sàn (Studio Spotlight)" },
-        { value: "festive_light", label: "🏮 Luồng sáng vàng lễ hội (Festive Golden Rays)" }
+        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "moonbeam", label: "Luồng sáng đối xứng sân khấu (Volumetric Moonbeam)" },
+        { value: "studio_spotlight", label: "Đèn rọi studio trần và sàn (Studio Spotlight)" },
+        { value: "festive_light", label: "Luồng sáng vàng lễ hội (Festive Golden Rays)" }
       ],
       diagonal_slash: [
-        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "sport_speed", label: "⚡ Vệt sáng tốc độ thể thao (Sport Dynamic Velocity)" },
-        { value: "cyber_neon", label: "🎮 Dải neon công nghệ viễn tưởng (Cyber Neon Edge)" },
-        { value: "carbon_mesh", label: "🏎️ Dốc bóng đen carbon mờ (Dark Carbon Mesh)" },
-        { value: "daylight_motion", label: "☀️ Vệt nắng chéo ban ngày rực rỡ (Daylight Motion)" }
+        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "sport_speed", label: "Vệt sáng tốc độ thể thao (Sport Dynamic Velocity)" },
+        { value: "cyber_neon", label: "Dải neon công nghệ viễn tưởng (Cyber Neon Edge)" },
+        { value: "carbon_mesh", label: "Dốc bóng đen carbon mờ (Dark Carbon Mesh)" },
+        { value: "daylight_motion", label: "Vệt nắng chéo ban ngày rực rỡ (Daylight Motion)" }
       ],
       l_frame: [
-        { value: "auto", label: "✨ Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "tech_minimal", label: "💡 Studio tối giản thanh lịch (Tech Minimal Studio)" },
-        { value: "cyber_tech", label: "⚡ Viền xanh neon công nghệ cao (Cyber Cyan Edge)" },
-        { value: "luxury_gold", label: "👑 Hào quang vàng ấm cao cấp (Warm Luxury Glow)" },
-        { value: "daylight_clean", label: "☀️ Ánh sáng ban ngày trong trẻo (Daylight Clean)" }
+        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
+        { value: "tech_minimal", label: "Studio tối giản thanh lịch (Tech Minimal Studio)" },
+        { value: "cyber_tech", label: "Viền xanh neon công nghệ cao (Cyber Cyan Edge)" },
+        { value: "luxury_gold", label: "Hào quang vàng ấm cao cấp (Warm Luxury Glow)" },
+        { value: "daylight_clean", label: "Ánh sáng ban ngày trong trẻo (Daylight Clean)" }
       ]
     };
 
@@ -1740,27 +1771,27 @@
 
     const CATEGORY_PRESETS_MAP = {
       promo: [
-        { key: 'beverage', icon: '🍵', label: 'Trà Đào Cam Sả' },
-        { key: 'perfume', icon: '🧴', label: 'Nước Hoa Pháp' },
-        { key: 'midautumn', icon: '🥮', label: 'Bánh Trung Thu' },
-        { key: 'suv', icon: '🏎️', label: 'SUV Điện Ảnh' },
-        { key: 'lookbook', icon: '👗', label: 'Lookbook Thời Trang' }
+        { key: 'beverage', label: 'Trà Đào Cam Sả' },
+        { key: 'perfume', label: 'Nước Hoa Pháp' },
+        { key: 'midautumn', label: 'Bánh Trung Thu' },
+        { key: 'suv', label: 'SUV Điện Ảnh' },
+        { key: 'lookbook', label: 'Lookbook Thời Trang' }
       ],
       product_intro: [
-        { key: 'headphones', icon: '🎧', label: 'Tai Nghe Hi-Res' },
-        { key: 'watch', icon: '⌚', label: 'Đồng Hồ Thụy Sĩ' }
+        { key: 'headphones', label: 'Tai Nghe Hi-Res' },
+        { key: 'watch', label: 'Đồng Hồ Thụy Sĩ' }
       ],
       opening: [
-        { key: 'grand_opening', icon: '🎊', label: 'Khai Trương Flagship' }
+        { key: 'grand_opening', label: 'Khai Trương Flagship' }
       ],
       feedback: [
-        { key: 'spa_review', icon: '💆', label: 'Feedback Spa & Da' }
+        { key: 'spa_review', label: 'Feedback Spa & Da' }
       ],
       recruitment: [
-        { key: 'ai_engineer', icon: '👥', label: 'Senior AI Engineer' }
+        { key: 'ai_engineer', label: 'Senior AI Engineer' }
       ],
       guide: [
-        { key: 'order_guide', icon: '📖', label: '3 Bước Đặt Hàng' }
+        { key: 'order_guide', label: '3 Bước Đặt Hàng' }
       ]
     };
 
@@ -1769,7 +1800,7 @@
       if (!container) return;
       const list = CATEGORY_PRESETS_MAP[catKey] || CATEGORY_PRESETS_MAP.promo;
       container.innerHTML = list.map(p => 
-        `<div class="preset-chip" onclick="loadPreset('${p.key}')">${p.icon} ${p.label}</div>`
+        `<div class="preset-chip" onclick="loadPreset('${p.key}')">${p.label}</div>`
       ).join('');
     }
 
@@ -2225,7 +2256,7 @@
           tabQr.style.display = 'none';
         }
 
-        timingBadge.textContent = `⚡ Hoàn thành trong ${data.latency_s || durationSec}s`;
+        timingBadge.textContent = `Hoàn thành trong ${data.latency_s || durationSec}s`;
         timingBadge.style.display = 'inline-block';
 
       } catch (err) {
