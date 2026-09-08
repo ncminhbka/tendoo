@@ -66,13 +66,13 @@ def test_headline_balancing():
     # Case B: Standard 2-line balanced
     lines_b, metrics_b = balance_vietnamese_headline("HƯƠNG SẮC MÙA HÈ THANH MÁT TỰ NHIÊN")
     assert len(lines_b) == 2
-    assert metrics_b["font_size"] in [42, 48]
+    assert metrics_b["font_size"] in [50, 52, 54, 56]
     print(f"[PASSED] Case B Standard: {lines_b} ({metrics_b['font_size']}px)")
 
     # Case C: Long sentence
     lines_c, metrics_c = balance_vietnamese_headline("BÙNG NỔ CÔNG NGHỆ CHỐNG ỒN CHỦ ĐỘNG THẾ HỆ MỚI")
     assert len(lines_c) == 2
-    assert metrics_c["font_size"] in [29, 35]
+    assert metrics_c["font_size"] in [42, 44, 46, 48]
     print(f"[PASSED] Case C Long: {lines_c} ({metrics_c['font_size']}px)")
 
     # Case D: Explicit user newline

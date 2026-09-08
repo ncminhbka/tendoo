@@ -6,7 +6,7 @@
   <title>{{headline_plain}}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap&subset=vietnamese" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Montserrat:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap&subset=vietnamese" rel="stylesheet">
   <style>
     {{css_vars}}
 
@@ -22,7 +22,7 @@
       width: {{width}}px;
       height: {{height}}px;
       overflow: hidden;
-      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      font-family: 'Montserrat', 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
       background-color: #000;
     }
 
@@ -55,7 +55,7 @@
         rgba(0, 0, 0, 0) 0%,
         rgba(0, 0, 0, 0.40) 30%,
         rgba(0, 0, 0, 0.78) 75%,
-        rgba(0, 0, 0, 0.92) 100%
+        rgba(0, 0, 0, 0.94) 100%
       );
       pointer-events: none;
       z-index: 2;
@@ -65,8 +65,8 @@
     .top-floating-bar {
       position: absolute;
       top: 3.8%;
-      left: 6%;
-      right: 6%;
+      left: 5.5%;
+      right: 5.5%;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -78,15 +78,15 @@
       display: {{pre_header_display}};
       align-items: center;
       gap: 8px;
-      padding: 6px 16px;
+      padding: 7px 18px;
       border-radius: 9999px;
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      font-size: 11.5px;
+      font-size: 13.5px;
       font-weight: 800;
-      letter-spacing: 2.5px;
+      letter-spacing: 2.8px;
       text-transform: uppercase;
       color: var(--accent-color);
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
@@ -94,12 +94,13 @@
 
     .top-right-brand {
       display: {{brand_display}};
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 2px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 2.2px;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.85);
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.80);
+      color: rgba(255, 255, 255, 0.90);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
     }
 
     /* Bottom Platform Typography Deck (Safe Zone: y in [0.60, 0.97]) */
@@ -131,12 +132,12 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
+      gap: 3px;
       max-width: 95%;
     }
 
     .headline-line {
-      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      font-family: 'Montserrat', 'Plus Jakarta Sans', sans-serif;
       font-size: {{font_size}}px;
       line-height: {{line_height}};
       letter-spacing: {{letter_spacing}}px;
@@ -147,10 +148,10 @@
     }
 
     .slogan {
-      font-size: 14.5px;
+      font-size: 18.5px;
       font-weight: 600;
       line-height: 1.4;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.6px;
       color: var(--sub-color);
       text-shadow: var(--text-shadow);
       margin-bottom: 16px;
@@ -165,10 +166,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 22px;
+      padding: 14px 24px;
       border-radius: 16px;
-      background: rgba(13, 17, 26, 0.72);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(13, 17, 26, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
@@ -178,7 +179,7 @@
     .promo-block {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
       text-align: left;
     }
 
@@ -186,15 +187,15 @@
       display: {{badge_display}};
       align-items: center;
       justify-content: center;
-      padding: 7px 22px;
+      padding: 8px 24px;
       border-radius: 9999px;
       background: var(--badge-bg);
       color: var(--badge-text);
       box-shadow: var(--badge-shadow);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 1.2px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 16.5px;
+      font-weight: 900;
+      letter-spacing: 1.3px;
       text-transform: uppercase;
       border: 1px solid {{badge_border}};
       white-space: nowrap;
@@ -212,7 +213,7 @@
       background: linear-gradient(
         90deg,
         rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.28) 50%,
+        rgba(255, 255, 255, 0.3) 50%,
         rgba(255, 255, 255, 0) 100%
       );
       transform: skewX(-20deg);
@@ -222,20 +223,20 @@
     .offer-details {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 3px;
     }
 
     .offer-sub {
-      font-size: 13px;
+      font-size: 14.5px;
       font-weight: 700;
       color: #fff;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.5px;
       text-shadow: var(--text-shadow);
       display: {{offer_sub_display}};
     }
 
     .dates-chip {
-      font-size: 11px;
+      font-size: 12.5px;
       font-weight: 600;
       color: var(--sub-color);
       letter-spacing: 0.5px;
@@ -246,7 +247,7 @@
     .contact-qr-deck {
       display: flex;
       align-items: flex-end;
-      gap: 12px;
+      gap: 14px;
     }
 
     .contact-block {
@@ -261,11 +262,11 @@
       display: {{hotline_display}};
       align-items: center;
       gap: 6px;
-      padding: 5px 14px;
+      padding: 6px 16px;
       border-radius: 9999px;
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
-      font-size: 12px;
+      font-size: 13.5px;
       font-weight: 800;
       letter-spacing: 1px;
       color: var(--footer-text);
@@ -274,16 +275,16 @@
     }
 
     .address-text {
-      font-size: 11px;
+      font-size: 12.5px;
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.70);
-      max-width: 300px;
-      line-height: 1.25;
+      color: rgba(255, 255, 255, 0.72);
+      max-width: 320px;
+      line-height: 1.3;
       display: {{address_display}};
     }
 
     .website-text {
-      font-size: 10.5px;
+      font-size: 11.5px;
       font-weight: 600;
       color: rgba(255, 255, 255, 0.75);
       letter-spacing: 0.5px;
@@ -291,10 +292,10 @@
     }
 
     .applicable-text {
-      font-size: 10.5px;
+      font-size: 11.5px;
       font-weight: 500;
       color: rgba(255, 255, 255, 0.60);
-      max-width: 320px;
+      max-width: 340px;
       line-height: 1.3;
       display: {{applicable_display}};
     }
@@ -308,20 +309,20 @@
       background: rgba(255, 255, 255, 0.95);
       border-radius: 8px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.40);
-      width: 58px;
+      width: 60px;
       box-sizing: border-box;
     }
 
     .platform-qr img {
-      width: 48px;
-      height: 48px;
+      width: 50px;
+      height: 50px;
       object-fit: contain;
       display: block;
     }
 
     .platform-qr-label {
       font-size: 8px;
-      font-weight: 800;
+      font-weight: 900;
       color: #000;
       letter-spacing: 0.5px;
       text-transform: uppercase;
@@ -334,19 +335,23 @@
         right: 4%;
         bottom: 2.5%;
       }
+      .slogan {
+        font-size: 15px;
+        margin-bottom: 12px;
+      }
       .action-specs-bar {
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
-        padding: 10px 14px;
+        padding: 11px 16px;
       }
       .promo-block {
         justify-content: space-between;
         width: 100%;
       }
       .badge-pill {
-        padding: 6px 16px;
-        font-size: 13px;
+        padding: 6px 18px;
+        font-size: 14.5px;
         letter-spacing: 0.8px;
       }
       .contact-qr-deck {
@@ -370,7 +375,8 @@
         bottom: 2%;
       }
       .slogan {
-        margin-bottom: 8px;
+        margin-bottom: 6px;
+        font-size: 14px;
       }
       .action-specs-bar {
         padding: 8px 16px;

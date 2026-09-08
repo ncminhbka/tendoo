@@ -154,53 +154,62 @@ def balance_vietnamese_headline(
 def compute_font_ladder(lines: List[str]) -> Dict[str, Any]:
     """
     Computes responsive font size, line-height, and tracking based on line count and character density.
+    Adheres to golden-ratio typographic scale and extreme scale contrast for commercial posters.
     Designed for 1024x1024 poster canvas coordinates.
     """
     if not lines:
-        return {"font_size": 44, "line_height": 1.15, "letter_spacing": 0.0}
+        return {"font_size": 52, "line_height": 1.10, "letter_spacing": 0.0}
 
     max_len = max(len(l) for l in lines)
     num_lines = len(lines)
 
     if num_lines == 1:
-        if max_len <= 12:
-            font_size = 58
+        if max_len <= 10:
+            font_size = 78
+            line_height = 1.05
+            letter_spacing = -0.8
+        elif max_len <= 15:
+            font_size = 68
             line_height = 1.08
             letter_spacing = -0.5
-        elif max_len <= 18:
-            font_size = 50
+        elif max_len <= 22:
+            font_size = 56
             line_height = 1.10
             letter_spacing = -0.3
         else:
-            font_size = 42
+            font_size = 46
             line_height = 1.12
             letter_spacing = 0.0
     elif num_lines == 2:
         if max_len <= 14:
-            font_size = 48
+            font_size = 64
+            line_height = 1.08
+            letter_spacing = -0.5
+        elif max_len <= 20:
+            font_size = 54
+            line_height = 1.10
+            letter_spacing = -0.3
+        elif max_len <= 28:
+            font_size = 46
             line_height = 1.12
-            letter_spacing = -0.4
-        elif max_len <= 22:
-            font_size = 42
-            line_height = 1.15
-            letter_spacing = -0.2
-        elif max_len <= 30:
-            font_size = 35
-            line_height = 1.18
-            letter_spacing = 0.0
+            letter_spacing = -0.1
         else:
-            font_size = 29
-            line_height = 1.22
+            font_size = 38
+            line_height = 1.15
             letter_spacing = 0.0
     else:
         # 3 or more lines
-        if max_len <= 20:
-            font_size = 34
-            line_height = 1.18
+        if max_len <= 16:
+            font_size = 48
+            line_height = 1.12
+            letter_spacing = -0.2
+        elif max_len <= 24:
+            font_size = 40
+            line_height = 1.15
             letter_spacing = 0.0
         else:
-            font_size = 28
-            line_height = 1.22
+            font_size = 32
+            line_height = 1.18
             letter_spacing = 0.0
 
     return {

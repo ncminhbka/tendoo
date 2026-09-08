@@ -6,7 +6,7 @@
   <title>{{headline_plain}}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap&subset=vietnamese" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Montserrat:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap&subset=vietnamese" rel="stylesheet">
   <style>
     {{css_vars}}
 
@@ -22,7 +22,7 @@
       width: {{width}}px;
       height: {{height}}px;
       overflow: hidden;
-      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      font-family: 'Montserrat', 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
       background-color: #000;
     }
 
@@ -50,7 +50,7 @@
       left: 0;
       width: 100%;
       height: 38%;
-      padding: 34px 40px 0 40px;
+      padding: 36px 40px 0 40px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -62,12 +62,12 @@
 
     /* Pre-header kicker / brand tag */
     .pre-header {
-      font-size: 13px;
-      font-weight: 700;
+      font-size: 14.5px;
+      font-weight: 800;
       letter-spacing: 4px;
       text-transform: uppercase;
       color: var(--accent-color);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       text-shadow: var(--text-shadow);
       display: {{pre_header_display}};
     }
@@ -75,18 +75,18 @@
     /* Headline with adaptive font sizing and balanced wrapping */
     .headline-wrap {
       width: 100%;
-      max-width: 90%;
+      max-width: 92%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
+      gap: 3px;
       margin-bottom: 6px;
       {{wrap_filter_css}}
     }
 
     .headline-line {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Montserrat', 'Plus Jakarta Sans', sans-serif;
       font-size: {{font_size}}px;
       line-height: {{line_height}};
       letter-spacing: {{letter_spacing}}px;
@@ -98,15 +98,15 @@
 
     /* Subtitle / Slogan */
     .slogan {
-      font-size: 15px;
+      font-size: 18.5px;
       font-weight: 600;
-      line-height: 1.35;
-      letter-spacing: 0.8px;
+      line-height: 1.4;
+      letter-spacing: 0.6px;
       color: var(--sub-color);
       text-shadow: var(--text-shadow);
-      margin-top: 2px;
+      margin-top: 4px;
       margin-bottom: 12px;
-      max-width: 82%;
+      max-width: 86%;
       text-wrap: balance;
       display: {{slogan_display}};
     }
@@ -124,14 +124,14 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 7px 24px;
+      padding: 9px 30px;
       border-radius: 9999px;
       background: var(--badge-bg);
       color: var(--badge-text);
       box-shadow: var(--badge-shadow);
-      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
-      font-size: 14px;
-      font-weight: 800;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 17.5px;
+      font-weight: 900;
       letter-spacing: 1.5px;
       text-transform: uppercase;
       border: 1px solid {{badge_border}};
@@ -150,7 +150,7 @@
       background: linear-gradient(
         90deg,
         rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.25) 50%,
+        rgba(255, 255, 255, 0.3) 50%,
         rgba(255, 255, 255, 0) 100%
       );
       transform: skewX(-20deg);
@@ -159,11 +159,11 @@
 
     /* Secondary offer condition */
     .offer-sub {
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 14.5px;
+      font-weight: 700;
       color: var(--sub-color);
       letter-spacing: 0.5px;
-      margin-top: 5px;
+      margin-top: 6px;
       text-shadow: var(--text-shadow);
       display: {{offer_sub_display}};
     }
@@ -172,18 +172,18 @@
       display: {{dates_display}};
       align-items: center;
       gap: 6px;
-      padding: 4px 14px;
+      padding: 5px 16px;
       border-radius: 9999px;
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      font-size: 11.5px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 13px;
       font-weight: 700;
       color: var(--sub-color);
       letter-spacing: 0.5px;
       text-shadow: var(--text-shadow);
-      margin-top: 4px;
+      margin-top: 5px;
     }
 
     /* Floating Minimalist Footer (Anchored unobtrusively at canvas bottom) */
@@ -202,16 +202,16 @@
     .footer-left {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
       text-align: left;
       max-width: 55%;
     }
 
     .footer-brand {
-      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 1.5px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1.8px;
       text-transform: uppercase;
       color: var(--footer-text);
       text-shadow: var(--text-shadow);
@@ -219,10 +219,10 @@
     }
 
     .footer-address {
-      font-size: 11px;
+      font-size: 12.5px;
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.65);
-      line-height: 1.3;
+      color: rgba(255, 255, 255, 0.70);
+      line-height: 1.35;
       text-shadow: var(--text-shadow);
       display: {{address_display}};
     }
@@ -244,23 +244,23 @@
       display: {{hotline_display}};
       align-items: center;
       gap: 6px;
-      padding: 5px 14px;
+      padding: 6px 16px;
       border-radius: 9999px;
       background: var(--glass-bg);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border: 1px solid var(--glass-border);
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 13.5px;
+      font-weight: 800;
       letter-spacing: 1px;
       color: var(--footer-text);
       text-shadow: var(--text-shadow);
     }
 
     .footer-website {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.70);
+      color: rgba(255, 255, 255, 0.75);
       letter-spacing: 0.5px;
       display: {{website_display}};
     }
@@ -274,20 +274,20 @@
       background: rgba(255, 255, 255, 0.95);
       border-radius: 8px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.40);
-      width: 58px;
+      width: 60px;
       box-sizing: border-box;
     }
 
     .qr-img {
-      width: 48px;
-      height: 48px;
+      width: 50px;
+      height: 50px;
       object-fit: contain;
       display: block;
     }
 
     .qr-label {
       font-size: 8px;
-      font-weight: 800;
+      font-weight: 900;
       color: #000;
       letter-spacing: 0.5px;
       text-transform: uppercase;
@@ -296,19 +296,23 @@
 
     @media (max-height: 600px) {
       .dome-container {
-        padding: 16px 24px 0 24px;
+        padding: 14px 24px 0 24px;
         height: 42%;
       }
       .pre-header {
         margin-bottom: 2px;
-        font-size: 11px;
+        font-size: 12px;
       }
       .headline-wrap {
         margin-bottom: 2px;
       }
       .slogan {
         margin-bottom: 6px;
-        font-size: 13px;
+        font-size: 14px;
+      }
+      .badge-pill {
+        font-size: 14px;
+        padding: 6px 18px;
       }
       .floating-footer {
         bottom: 14px;
