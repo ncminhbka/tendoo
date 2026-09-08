@@ -17,9 +17,9 @@ import numpy as np
 def generate_diagonal_slash_mask(
     height: int,
     width: int,
-    x_top: float = 0.54,
-    x_bottom: float = 0.12,
-    delta: float = 0.18,
+    x_top: float = 0.48,
+    x_bottom: float = 0.10,
+    delta: float = 0.14,
     side: str = "top_left",
     wave_amp: float = 0.0,
     wave_freq: float = 1.0,

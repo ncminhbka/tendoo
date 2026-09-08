@@ -47,8 +47,8 @@ class SplitColumnLayout(BaseLayout):
         width: int,
         height: int,
         side: str = "left",
-        col_width: float = 0.40,
-        delta: float = 0.12,
+        col_width: float = 0.36,
+        delta: float = 0.10,
         wave_amp: float = 0.0,
         wave_freq: float = 1.0,
         int_max: float = 1.0,
@@ -69,37 +69,37 @@ class SplitColumnLayout(BaseLayout):
     def get_corridor_prompt(self, style_hint: str = "champagne_silk") -> str:
         if style_hint in ("velvet_drape", "studio_light_pillar"):
             return (
-                "A soft, gentle ambient studio shadow wash and subtle light column cascading down the left side, "
-                "diffuse semi-translucent gradient gradation harmonizing with scene tones, seamless transition, "
+                "A clean, flat, smooth studio ambient shadow wash and soft vertical light column cascading down the left column (x < 0.36), "
+                "uniform flat negative copy space with zero texture, diffuse gradient gradation harmonizing with scene tones, seamless transition into the right product stage, "
                 "smooth unwrinkled surface, pristine copy space for text, zero clutter, "
                 "clean photographic background, text-free column area, no floating graphic text, no poster typography"
             )
         elif style_hint == "minimal_wall":
             return (
-                "A gentle, soft diffused vertical studio ambient light column running down the left side, "
-                "subtle airy gradient softly blending into the scene atmosphere, luminous clean copy space, "
+                "A clean, flat, diffused vertical studio ambient light column running down the left column (x < 0.36), "
+                "uniform flat negative copy space with zero texture, subtle airy gradient softly blending into the scene atmosphere, luminous clean copy space, "
                 "zero clutter, clean photographic background, text-free column area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("champagne_silk", "silk_sash"):
             return (
-                "A soft radiant sheer silk wash with warm champagne ambient studio glow down the left side, "
-                "harmonious pastel environmental tones, smooth airy gradient, pristine clean space for typography, "
-                "subtle edge feathering blending into the background, zero clutter, "
+                "A clean, soft, flat sheer silk wash with warm champagne ambient studio glow down the left column (x < 0.36), "
+                "uniform flat negative copy space with zero texture, harmonious pastel environmental tones, smooth airy gradient, pristine clean space for typography, "
+                "subtle edge feathering blending smoothly into the right-side product stage, zero clutter, "
                 "clean photographic background, text-free column area, no floating graphic text, no poster typography"
             )
         else:
             # Default: Soft translucent ambient light veil & sheer silk wash
             return (
-                "A soft, translucent vertical ambient light veil and sheer silk wash gently flowing down the left side, "
-                "naturally catching and blending with the environmental colors and warm lighting of the scene, "
+                "A clean, soft, flat vertical ambient light veil and sheer silk wash gently flowing down the left column (x < 0.36), "
+                "uniform flat negative copy space with zero texture, naturally catching and blending with the environmental colors and warm lighting of the scene, "
                 "smooth gradient falloff, clean uncluttered space for typography, "
-                "subtle edge feathering seamlessly merging into the scene, "
+                "subtle edge feathering seamlessly merging into the right-side product stage, "
                 "clean photographic background, text-free column area, no floating graphic text, no poster typography"
             )
 
     def get_safe_zone(self) -> Tuple[float, float, float, float]:
         """Left silk column safe zone: (y1, x1, y2, x2)."""
-        return (0.04, 0.04, 0.96, 0.34)
+        return (0.04, 0.04, 0.96, 0.30)
 
     def render_html(
         self,
@@ -118,9 +118,9 @@ class SplitColumnLayout(BaseLayout):
             actual_bg_data_uri = height if isinstance(height, str) else kwargs.get("bg_data_uri", "")
             width, height, bg_data_uri = actual_width, actual_height, actual_bg_data_uri
 
-        # 1. Headline balancing & font sizing ladder (tuned for narrower column width: max_one_line_chars=14)
+        # 1. Headline balancing & font sizing ladder (tuned for narrower column width: max_one_line_chars=12)
         raw_hl = content.headline
-        hl_lines, metrics = balance_vietnamese_headline(raw_hl, max_one_line_chars=14)
+        hl_lines, metrics = balance_vietnamese_headline(raw_hl, max_one_line_chars=12)
 
         if hl_lines:
             headline_html = "\n".join(

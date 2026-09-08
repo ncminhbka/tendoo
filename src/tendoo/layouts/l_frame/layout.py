@@ -51,9 +51,9 @@ class LFrameLayout(BaseLayout):
         self,
         width: int,
         height: int,
-        y_bar: float = 0.30,
-        x_col: float = 0.38,
-        delta: float = 0.16,
+        y_bar: float = 0.24,
+        x_col: float = 0.34,
+        delta: float = 0.12,
         side: str = "top_left",
         int_max: float = 1.0,
         **kwargs,
@@ -72,36 +72,36 @@ class LFrameLayout(BaseLayout):
     def get_corridor_prompt(self, style_hint: str = "tech_minimal") -> str:
         if style_hint in ("tech_minimal", "minimal_studio"):
             return (
-                "A clean, flat, pure solid dark monochrome studio canvas tone framing the top margin and left column, "
-                "completely uniform solid color negative space with zero texture, seamless flat studio backdrop softly matching the scene colors, "
+                "A clean, flat, pure solid dark monochrome studio canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
+                "completely uniform solid color negative copy space with zero texture, seamless flat studio backdrop softly framing the lower-right product stage, "
                 "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("cyber_tech", "cyan_circuit"):
             return (
-                "A sleek, flat, pure solid deep navy monochrome canvas tone framing the top margin and left column, "
-                "completely uniform solid dark negative space with zero texture, seamless flat studio backdrop softly blending into the scene colors, "
+                "A sleek, flat, pure solid deep navy monochrome canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
+                "completely uniform solid dark negative copy space with zero texture, seamless flat studio backdrop softly framing the lower-right product stage, "
                 "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("luxury_gold", "warm_editorial"):
             return (
-                "A warm, flat, pure solid charcoal-toned studio canvas background framing the top margin and left column, "
-                "completely uniform solid color negative space with zero texture, seamless flat studio backdrop softly harmonizing with warm scene ambient tones, "
+                "A warm, flat, pure solid charcoal-toned studio canvas background framing the top margin (y < 0.24) and left column (x < 0.34), "
+                "completely uniform solid color negative copy space with zero texture, seamless flat studio backdrop softly framing the lower-right product stage, "
                 "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("daylight_clean", "sunlight_airy"):
             return (
-                "A bright, crisp, flat, pure solid light studio canvas tone framing the top margin and left column, "
-                "completely uniform solid light negative space with zero texture, seamless flat studio backdrop softly harmonizing with bright daylight scene tones, "
+                "A bright, crisp, flat, pure solid light studio canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
+                "completely uniform solid light negative copy space with zero texture, seamless flat studio backdrop softly framing the lower-right product stage, "
                 "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         else:
             return (
-                "A clean, flat, pure solid monochrome studio canvas tone framing the top margin and left column, "
-                "completely uniform solid color negative space with zero texture, seamless flat studio backdrop softly matching the scene colors, "
+                "A clean, flat, pure solid monochrome studio canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
+                "completely uniform solid color negative copy space with zero texture, seamless flat studio backdrop softly framing the lower-right product stage, "
                 "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
@@ -111,7 +111,7 @@ class LFrameLayout(BaseLayout):
         Safe zone in normalized coordinates (y0, x0, y1, x1):
         Upper-left corner safe zone for color sampling & typography framing.
         """
-        return (0.04, 0.04, 0.30, 0.45)
+        return (0.04, 0.04, 0.24, 0.34)
 
     def render_html(
         self,
@@ -132,7 +132,7 @@ class LFrameLayout(BaseLayout):
             actual_bg_data_uri = height if isinstance(height, str) else kwargs.get("bg_data_uri", "")
             width, height, bg_data_uri = actual_width, actual_height, actual_bg_data_uri
         headline_plain = normalize_text(content.headline or "")
-        lines, metrics = balance_vietnamese_headline(headline_plain, max_one_line_chars=18)
+        lines, metrics = balance_vietnamese_headline(headline_plain, max_one_line_chars=16)
 
         # Dynamic font sizing ladder
         longest_line = max(len(l) for l in lines) if lines else 10

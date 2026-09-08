@@ -229,6 +229,40 @@ def test_sanitize_and_inject_zero_text():
     assert "unbranded" not in p4
 
 
+def test_spatial_layout_guidance():
+    """Verifies that spatial layout steering tokens are injected accurately for asymmetrical & center layouts."""
+    from tendoo.demo_server import inject_spatial_layout_guidance
+
+    # 1. split_column steers product to the right half and clears the left vertical third
+    sc_prompt = inject_spatial_layout_guidance("Người mẫu áo dài lụa tơ tằm", layout_name="split_column")
+    assert "right half of the frame" in sc_prompt
+    assert "left vertical third" in sc_prompt
+
+    # 2. diagonal_slash steers product to lower-right diagonal and clears upper-left
+    ds_prompt = inject_spatial_layout_guidance("Đôi giày sneaker chạy bộ thể thao", layout_name="diagonal_slash")
+    assert "lower-right diagonal half" in ds_prompt
+    assert "upper-left diagonal quadrant" in ds_prompt
+
+    # 3. l_frame steers product to lower-right quadrant and clears top header and left column
+    lf_prompt = inject_spatial_layout_guidance("Laptop gaming bàn phím cơ RGB", layout_name="l_frame")
+    assert "lower-right quadrant" in lf_prompt
+    assert "top horizontal header and left vertical column" in lf_prompt
+
+    # 4. Center layouts reinforce centered composition
+    td_prompt = inject_spatial_layout_guidance("Ly cà phê sữa đá", layout_name="top_dome")
+    assert "centered in the lower two-thirds" in td_prompt
+
+    bp_prompt = inject_spatial_layout_guidance("Chai nước hoa Chanel", layout_name="bottom_platform")
+    assert "standing centered on the bottom platform stage" in bp_prompt
+
+    ch_prompt = inject_spatial_layout_guidance("Hộp bánh trung thu", layout_name="center_hourglass")
+    assert "center aperture" in ch_prompt
+
+    # 5. With uploaded reference image, retains reference guidance
+    sc_ref = inject_spatial_layout_guidance("Chai serum dưỡng da", layout_name="split_column", has_ref_image=True)
+    assert "preserve authentic product placed on the right side" in sc_ref
+
+
 def test_cross_layout_style_defense():
     """Verifies backend defense prevents spatial semantic clash between layout and incompatible styles."""
     from tendoo.demo_server import detect_scene_lighting_tone

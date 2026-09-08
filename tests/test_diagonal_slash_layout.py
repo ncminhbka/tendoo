@@ -87,10 +87,10 @@ def test_diagonal_slash_mask_math():
     lr_val = mask[int(0.85 * h), int(0.85 * w)]
     assert lr_val == 0.0, f"Lower-right hero zone should be 0.0 (got {lr_val})"
 
-    # 3. Center of line: at y=0.50, boundary should be at x = (0.54 + 0.12)/2 = 0.33
+    # 3. Center of line: at y=0.50, boundary should be at x = (0.48 + 0.10)/2 = 0.29
     y_mid = int(0.50 * h)
     x_boundary = np.where(mask[y_mid, :] > 0.5)[0][-1] / float(w)
-    expected_x = 0.33
+    expected_x = 0.29
     assert abs(x_boundary - expected_x) < 0.04, f"Boundary at mid-height expected ~{expected_x}, got {x_boundary}"
 
     # 4. Monotonic transition across perpendicular boundary at y=0.50

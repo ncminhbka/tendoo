@@ -381,14 +381,23 @@ def get_component_css() -> str:
       text-shadow: var(--text-shadow);
     }
 
-    .cat-comp-price-pill {
+    .badge-pill, .cat-comp-price-pill {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      padding: 9px 32px;
-      font-size: 21px;
+      padding: 9px 28px;
+      border-radius: 9999px;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      box-shadow: var(--badge-shadow);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 19px;
       font-weight: 900;
       letter-spacing: 1.2px;
+      text-transform: uppercase;
+      border: 1px solid rgba(255, 255, 255, 0.38);
+      white-space: nowrap;
     }
 
     .price-prefix {
@@ -605,5 +614,56 @@ def get_component_css() -> str:
       color: var(--sub-color);
       line-height: 1.35;
       text-shadow: var(--text-shadow);
+    }
+
+    /* Promo Offer Sub & Dates Chip */
+    .cat-comp-promo-badge {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .cat-comp-promo-sub, .offer-sub {
+      font-size: 15.5px;
+      font-weight: 600;
+      color: var(--sub-color);
+      text-shadow: var(--text-shadow);
+      text-align: center;
+      line-height: 1.4;
+      text-wrap: balance;
+    }
+
+    .cat-comp-promo-dates, .dates-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 16px;
+      border-radius: 9999px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--sub-color);
+      font-size: 13px;
+      font-weight: 700;
+      text-shadow: var(--text-shadow);
+    }
+
+    /* Asymmetrical Layout Alignments (Split Column, Diagonal Slash, L-Frame) */
+    .editorial-column .category-body-container,
+    .diagonal-content-stack .category-body-container,
+    .lframe-left-column .category-body-container {
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .editorial-column .cat-comp-promo-badge,
+    .diagonal-content-stack .cat-comp-promo-badge,
+    .lframe-left-column .cat-comp-promo-badge {
+      justify-content: flex-start;
+    }
+
+    .editorial-column .cat-comp-promo-sub,
+    .diagonal-content-stack .cat-comp-promo-sub,
+    .lframe-left-column .cat-comp-promo-sub {
+      text-align: left;
     }
     """

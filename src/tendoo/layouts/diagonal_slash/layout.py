@@ -52,9 +52,9 @@ class DiagonalSlashLayout(BaseLayout):
         self,
         width: int,
         height: int,
-        x_top: float = 0.54,
-        x_bottom: float = 0.12,
-        delta: float = 0.18,
+        x_top: float = 0.48,
+        x_bottom: float = 0.10,
+        delta: float = 0.14,
         side: str = "top_left",
         wave_amp: float = 0.0,
         wave_freq: float = 1.0,
@@ -77,46 +77,46 @@ class DiagonalSlashLayout(BaseLayout):
     def get_corridor_prompt(self, style_hint: str = "sport_speed") -> str:
         if style_hint in ("sport_speed", "dynamic_velocity"):
             return (
-                "A clean, smooth, pure solid dark carbon studio canvas tone across the upper-left diagonal corridor, "
-                "uniform flat negative space with zero texture, soft seamless diagonal atmospheric transition blending into the active motion scene on the lower-right, "
-                "pristine uncluttered space for typography, "
+                "A clean, flat, smooth solid dark carbon studio canvas tone across the upper-left diagonal corridor, "
+                "completely uniform flat negative space with zero texture, soft seamless diagonal atmospheric transition blending into the active motion scene on the lower-right, "
+                "pristine uncluttered copy space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("cyber_neon", "neon_edge"):
             return (
-                "A sleek, smooth, pure solid deep navy studio canvas tone across the upper-left diagonal corridor, "
-                "uniform flat dark negative space with zero texture, soft seamless diagonal atmospheric transition harmonizing with the vibrant tech scene on the lower-right, "
-                "pristine uncluttered space for typography, "
+                "A sleek, flat, smooth solid deep navy studio canvas tone across the upper-left diagonal corridor, "
+                "completely uniform flat dark negative space with zero texture, soft seamless diagonal atmospheric transition harmonizing with the vibrant tech scene on the lower-right, "
+                "pristine uncluttered copy space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("carbon_mesh", "dark_carbon"):
             return (
-                "A sleek, flat, pure solid dark matte studio canvas tone across the upper-left diagonal corridor, "
-                "uniform flat negative space with zero texture, soft seamless diagonal transition blending into the scene on the lower-right, "
-                "pristine uncluttered space for typography, "
+                "A sleek, flat, smooth solid dark matte studio canvas tone across the upper-left diagonal corridor, "
+                "completely uniform flat negative space with zero texture, soft seamless diagonal transition blending into the scene on the lower-right, "
+                "pristine uncluttered copy space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("daylight_motion", "sunlight_streak"):
             return (
-                "A bright, crisp, flat, pure solid light studio canvas tone across the upper-left diagonal corridor, "
-                "uniform flat negative space with zero texture, soft seamless diagonal atmospheric transition blending into the outdoor motion scene on the lower-right, "
-                "pristine uncluttered space for typography, "
+                "A bright, crisp, flat, smooth solid light studio canvas tone across the upper-left diagonal corridor, "
+                "completely uniform flat negative space with zero texture, soft seamless diagonal atmospheric transition blending into the outdoor motion scene on the lower-right, "
+                "pristine uncluttered copy space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         else:
             return (
-                "A clean, smooth, pure solid studio canvas tone across the upper-left diagonal corridor, "
-                "uniform flat negative space with zero texture, soft seamless diagonal atmospheric transition blending into the scene on the lower-right, "
-                "pristine uncluttered space for typography, "
+                "A clean, flat, smooth solid studio canvas tone across the upper-left diagonal corridor, "
+                "completely uniform flat negative space with zero texture, soft seamless diagonal atmospheric transition blending into the scene on the lower-right, "
+                "pristine uncluttered copy space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
 
     def get_safe_zone(self) -> Tuple[float, float, float, float]:
         """
         Safe zone in normalized coordinates (y0, x0, y1, x1):
-        Upper-left diagonal corridor occupies (y: 0.04 -> 0.45, x: 0.04 -> 0.48).
+        Upper-left diagonal corridor occupies (y: 0.04 -> 0.40, x: 0.04 -> 0.40).
         """
-        return (0.04, 0.04, 0.45, 0.48)
+        return (0.04, 0.04, 0.40, 0.40)
 
     def render_html(
         self,
@@ -137,7 +137,7 @@ class DiagonalSlashLayout(BaseLayout):
             actual_bg_data_uri = height if isinstance(height, str) else kwargs.get("bg_data_uri", "")
             width, height, bg_data_uri = actual_width, actual_height, actual_bg_data_uri
         headline_plain = normalize_text(content.headline or "")
-        lines, metrics = balance_vietnamese_headline(headline_plain, max_one_line_chars=16)
+        lines, metrics = balance_vietnamese_headline(headline_plain, max_one_line_chars=13)
 
         # Dynamic font size scaling based on length and canvas
         longest_line = max(len(l) for l in lines) if lines else 10

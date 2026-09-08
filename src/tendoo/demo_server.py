@@ -349,6 +349,85 @@ def sanitize_and_inject_zero_text(user_prompt: str, has_ref_image: bool = False)
     return prompt
 
 
+def inject_spatial_layout_guidance(
+    scene_prompt: str,
+    layout_name: str = "top_dome",
+    has_ref_image: bool = False,
+) -> str:
+    """
+    Injects layout-aware spatial composition steering tokens into the scene prompt to overcome
+    the diffusion model's inherent center bias and prevent product/typography collision.
+
+    Center layouts (top_dome, bottom_platform, center_hourglass):
+      Reinforce clean copy space around the central aperture.
+
+    Asymmetrical layouts (split_column, diagonal_slash, l_frame):
+      Explicitly steer the hero subject/product away from the typography corridor and into the
+      dedicated product zone (right side, lower-right diagonal, or lower-right quadrant).
+    """
+    prompt = (scene_prompt or "").strip()
+    lower_p = prompt.lower()
+    layout = (layout_name or "top_dome").lower().strip()
+
+    if layout == "split_column":
+        spatial_guidance = (
+            "asymmetrical editorial composition, hero product placed prominently on the right half of the frame (x > 0.48, rule of thirds), "
+            "clean open negative copy space across the left vertical third, no subject or foreground elements on the left side, "
+            "balanced commercial fashion layout"
+        )
+        if has_ref_image:
+            spatial_guidance = f"{spatial_guidance}, preserve authentic product placed on the right side"
+
+    elif layout == "diagonal_slash":
+        spatial_guidance = (
+            "dynamic athletic diagonal composition, hero product positioned dynamically in the lower-right diagonal half of the frame (x > 0.45, y > 0.45), "
+            "angled towards center, wide open clean negative copy space across the upper-left diagonal quadrant, "
+            "no product or clutter in the upper-left area, high energy motion background"
+        )
+        if has_ref_image:
+            spatial_guidance = f"{spatial_guidance}, preserve authentic product placed in the lower-right diagonal area"
+
+    elif layout == "l_frame":
+        spatial_guidance = (
+            "architectural framing composition, hero product positioned strictly in the lower-right quadrant of the frame (x in [0.42, 0.94], y in [0.32, 0.94]), "
+            "wide open clean negative copy space framing the entire top horizontal header and left vertical column, "
+            "no product or foreground elements in upper-left corner or top bar, modern technology commercial setup"
+        )
+        if has_ref_image:
+            spatial_guidance = f"{spatial_guidance}, preserve authentic product placed in the lower-right quadrant"
+
+    elif layout == "bottom_platform":
+        spatial_guidance = (
+            "cinematic commercial composition, hero product standing centered on the bottom platform stage, "
+            "clean negative copy space across the lower pedestal area, stable centered framing"
+        )
+    elif layout == "center_hourglass":
+        spatial_guidance = (
+            "studio commercial composition, hero product positioned in the center aperture of the frame, "
+            "clean open negative copy space across top header and bottom footer, balanced hourglass framing"
+        )
+    else:  # top_dome
+        spatial_guidance = (
+            "commercial advertising composition, hero product centered in the lower two-thirds of the frame, "
+            "clean open negative copy space in the upper dome area, no product in the top header"
+        )
+
+    # Prevent redundant token injection
+    steering_check_keys = {
+        "split_column": ["right half", "right side", "left vertical third"],
+        "diagonal_slash": ["lower-right diagonal", "upper-left diagonal"],
+        "l_frame": ["lower-right quadrant", "architectural framing"],
+        "bottom_platform": ["bottom platform stage", "lower pedestal"],
+        "center_hourglass": ["center aperture", "hourglass framing"],
+        "top_dome": ["lower two-thirds", "upper dome"],
+    }
+    needed = not any(k in lower_p for k in steering_check_keys.get(layout, []))
+    if needed:
+        prompt = f"{prompt}, {spatial_guidance}" if prompt else spatial_guidance
+
+    return prompt
+
+
 def detect_scene_lighting_tone(
     scene_prompt: str,
     user_hint: str = "auto",
@@ -547,9 +626,10 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     final_hotline = req.phone or req.hotline or ""
     raw_scene_prompt = req.image_description or req.prompt_scene or ""
     has_ref_image = bool(req.image_base64)
-    final_scene_prompt = sanitize_and_inject_zero_text(raw_scene_prompt, has_ref_image=has_ref_image)
+    zero_text_prompt = sanitize_and_inject_zero_text(raw_scene_prompt, has_ref_image=has_ref_image)
+    final_scene_prompt = inject_spatial_layout_guidance(zero_text_prompt, layout_name=layout.name, has_ref_image=has_ref_image)
     if raw_scene_prompt != final_scene_prompt:
-        print(f"  [Prompt Engine] Injected ZERO-TEXT negative constraints:\n    Raw: '{raw_scene_prompt}'\n    Injected: '{final_scene_prompt}'")
+        print(f"  [Prompt Engine] Injected ZERO-TEXT & Spatial Guidance:\n    Raw: '{raw_scene_prompt}'\n    Final: '{final_scene_prompt}'")
     
     style_hint = detect_scene_lighting_tone(final_scene_prompt, req.style_hint or "auto", layout_name=layout.name)
 
