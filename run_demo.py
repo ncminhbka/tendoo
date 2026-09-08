@@ -261,6 +261,7 @@ def generate_single_poster(
 
             timesteps = get_schedule(num_steps=steps, image_seq_len=img_tokens.shape[1])
 
+            h_lat, w_lat = height // 16, width // 16
             z_clean = denoise_regional_velocity_blended(
                 model=dit_model,
                 img=img_tokens,
@@ -269,17 +270,17 @@ def generate_single_poster(
                 txt_scene_ids=ctx_scene_ids,
                 txt_corridor=ctx_corridor,
                 txt_corridor_ids=ctx_corridor_ids,
+                spatial_mask=mask_flat,
                 timesteps=timesteps,
                 guidance=guidance,
-                mask_spatial=mask_flat,
+                num_canvas_tokens=img_tokens.shape[1],
             )
 
-            z_clean_aux = z_clean.to(dev_aux, dtype=ae_dtype)
-            with torch.autocast(device_type="cuda", dtype=ae_dtype):
-                decoded = ae_model.decode(z_clean_aux)
-            decoded_clamped = (decoded.clamp(-1.0, 1.0) + 1.0) / 2.0
-            np_img = (decoded_clamped[0].permute(1, 2, 0).cpu().float().numpy() * 255).astype(np.uint8)
-            blended_pil = Image.fromarray(np_img)
+            z_clean_dec = z_clean[0].transpose(0, 1).reshape(1, 128, h_lat, w_lat).to(device=dev_aux, dtype=ae_dtype)
+            x_dec = ae_model.decode(z_clean_dec).float()
+            x_arr = ((x_dec[0].clamp(-1, 1) + 1) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
+            blended_pil = Image.fromarray(x_arr)
+
     else:
         # Mock background for testing without GPU
         blended_pil = Image.new("RGB", (width, height), (16, 22, 34))

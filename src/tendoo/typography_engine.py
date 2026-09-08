@@ -2184,14 +2184,19 @@ class PosterRenderer:
             )
             page = await context.new_page()
 
-            # Set content and wait for network/fonts to settle
-            await page.set_content(html_content, wait_until="networkidle")
-
-            # Guarantee all web fonts are fully rasterized
+            # Set content and wait for fonts to settle (resilient against offline / intranet air-gapped timeouts)
             try:
-                await page.evaluate("document.fonts.ready")
+                await page.set_content(html_content, wait_until="load", timeout=8000)
             except Exception as e:
-                logger.warning(f"Font readiness check skipped: {e}")
+                logger.warning(f"[PosterRenderer] 'load' wait timed out ({e}), falling back to 'domcontentloaded'...")
+                await page.set_content(html_content, wait_until="domcontentloaded", timeout=5000)
+
+            # Guarantee all available fonts are settled
+            try:
+                await asyncio.wait_for(page.evaluate("document.fonts.ready"), timeout=3.0)
+            except Exception as e:
+                logger.warning(f"[PosterRenderer] Font readiness check skipped or timed out: {e}")
+
 
             # Take pixel-accurate screenshot
             await page.screenshot(
