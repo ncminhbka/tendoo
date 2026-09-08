@@ -723,6 +723,82 @@
       border-color: #38BDF8;
     }
 
+    /* Multi-Image Gallery Strip */
+    .gallery-container {
+      display: none;
+      margin-top: 14px;
+      padding: 12px;
+      background: var(--card-inner);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+    }
+
+    .gallery-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .gallery-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+    }
+
+    .gallery-card {
+      position: relative;
+      border: 2px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      cursor: pointer;
+      background: #000;
+      transition: all 0.2s ease;
+      aspect-ratio: 1 / 1;
+    }
+
+    .gallery-card:hover {
+      border-color: #38BDF8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+    }
+
+    .gallery-card.active {
+      border-color: #38BDF8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4), 0 4px 14px rgba(56, 189, 248, 0.35);
+    }
+
+    .gallery-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gallery-card-badge {
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      color: #38BDF8;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      pointer-events: none;
+    }
+
+    .gallery-card.active .gallery-card-badge {
+      background: #2563EB;
+      color: #fff;
+      border-color: #38BDF8;
+    }
+
     /* Result Action Buttons */
     .result-actions {
       display: none;
@@ -1108,6 +1184,17 @@
           </div>
         </div>
 
+        <!-- Multi-Image Gallery Strip (when num_images > 1) -->
+        <div class="gallery-container" id="gallery-container">
+          <div class="gallery-label">
+            <span>✨ Bộ ảnh đã tạo (<span id="gallery-count">1</span> phiên bản):</span>
+            <span style="font-size: 11px; color: var(--text-dim);">Nhấp vào ảnh để xem & tải</span>
+          </div>
+          <div class="gallery-cards" id="gallery-cards">
+            <!-- Dynamically populated thumbnail cards -->
+          </div>
+        </div>
+
         <!-- Result Action Buttons -->
         <div class="result-actions" id="result-actions">
           <a id="btn-download" href="#" download="tendoo_poster.png" class="btn-action btn-download">
@@ -1130,6 +1217,8 @@
     // State management
     let currentCategory = "promo";
     let uploadedImageBase64 = null;
+    let currentPostersList = [];
+    let activePosterIdx = 0;
     let currentImages = {
       poster: null,
       bg: null,
@@ -1594,6 +1683,7 @@
         const data = await resp.json();
         const durationSec = ((performance.now() - t0) / 1000).toFixed(2);
 
+        activePosterIdx = 0;
         currentImages.poster = resolveUrl(data.final_poster_url);
         currentImages.bg = resolveUrl(data.blended_bg_url);
         currentImages.mask = resolveUrl(data.mask_url);
@@ -1607,6 +1697,13 @@
         document.getElementById('btn-download').href = currentImages.poster;
         resultActions.style.display = 'flex';
         viewTabs.style.display = 'flex';
+
+        // Render Multi-Image Gallery Bar
+        if (data.posters && data.posters.length > 1) {
+          renderGallery(data.posters);
+        } else {
+          document.getElementById('gallery-container').style.display = 'none';
+        }
 
         // Toggle QR Tab visibility
         if (currentImages.qr) {
@@ -1647,6 +1744,69 @@
     function openFullscreen() {
       if (!currentImages.poster) return;
       window.open(currentImages.poster, '_blank');
+    }
+
+    // Multi-Image Gallery Handlers
+    function renderGallery(posters) {
+      currentPostersList = posters || [];
+      const container = document.getElementById('gallery-container');
+      const cardsBox = document.getElementById('gallery-cards');
+      const countSpan = document.getElementById('gallery-count');
+
+      if (!currentPostersList || currentPostersList.length <= 1) {
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = 'block';
+      countSpan.textContent = currentPostersList.length;
+      cardsBox.innerHTML = '';
+
+      currentPostersList.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = `gallery-card ${idx === activePosterIdx ? 'active' : ''}`;
+        card.title = `Phiên bản #${idx + 1} (Seed: ${item.seed})`;
+        card.onclick = () => selectPosterByIndex(idx);
+
+        const img = document.createElement('img');
+        img.src = resolveUrl(item.final_poster_url);
+        img.alt = `Poster #${idx + 1}`;
+
+        const badge = document.createElement('div');
+        badge.className = 'gallery-card-badge';
+        badge.textContent = `#${idx + 1}`;
+
+        card.appendChild(img);
+        card.appendChild(badge);
+        cardsBox.appendChild(card);
+      });
+    }
+
+    function selectPosterByIndex(idx) {
+      if (!currentPostersList || !currentPostersList[idx]) return;
+      activePosterIdx = idx;
+
+      // Update card active states
+      const cards = document.querySelectorAll('.gallery-card');
+      cards.forEach((c, i) => {
+        if (i === idx) c.classList.add('active');
+        else c.classList.remove('active');
+      });
+
+      const selected = currentPostersList[idx];
+      currentImages.poster = resolveUrl(selected.final_poster_url);
+      currentImages.bg = resolveUrl(selected.blended_bg_url);
+
+      const previewImg = document.getElementById('preview-image');
+      const activeTab = document.querySelector('.tab-btn.active');
+      if (activeTab && activeTab.textContent.includes('Background')) {
+        previewImg.src = currentImages.bg;
+      } else {
+        previewImg.src = currentImages.poster;
+      }
+
+      document.getElementById('btn-download').href = currentImages.poster;
+      document.getElementById('btn-download').download = `tendoo_poster_var${idx + 1}_seed${selected.seed}.png`;
     }
 
     // Health check poll on page load

@@ -61,6 +61,9 @@ def test_serve_ui_html(client):
     assert "inp-enable-qr" in html
     # Verify file upload
     assert "upload-dropzone" in html
+    # Verify multi-image selector & gallery
+    assert "sel-num-images" in html
+    assert "gallery-container" in html
 
 
 def test_generate_promo_poster_with_qr(client, tmp_path):
@@ -131,3 +134,66 @@ def test_generate_bottom_platform_vertical_ratio(client):
     poster_path = demo_server.OUTPUT_DIR / run_folder_name / "04_final_poster.png"
     assert poster_path.exists()
     assert poster_path.stat().st_size > 0
+
+
+def test_generate_with_uploaded_product_image(client):
+    import base64
+    import io
+    from PIL import Image
+
+    # Create dummy 64x64 PNG image
+    img = Image.new("RGB", (64, 64), color=(255, 100, 50))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+    payload = {
+        "category": "product_intro",
+        "title": "TAI NGHE KHÔNG DÂY",
+        "image_base64": f"data:image/png;base64,{b64}",
+        "discount": "CHỐNG ỒN HYBRID",
+        "applied_product": "Bảo hành 2 năm",
+        "layout": "top_dome",
+        "aspect_ratio": "1:1",
+        "num_images": 1,
+    }
+
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+
+    run_folder_name = Path(data["final_poster_url"]).parent.name
+    uploaded_ref = demo_server.OUTPUT_DIR / run_folder_name / "00_uploaded_product.png"
+    assert uploaded_ref.exists()
+    assert uploaded_ref.stat().st_size > 0
+
+
+def test_generate_multi_images(client):
+    payload = {
+        "category": "promo",
+        "title": "KHUYẾN MẠI MÙA HÈ",
+        "discount": "GIẢM 50%",
+        "layout": "split_column",
+        "aspect_ratio": "1:1",
+        "num_images": 2,
+    }
+
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+    assert data["num_images"] == 2
+    assert "posters" in data
+    assert len(data["posters"]) == 2
+
+    run_folder_name = Path(data["final_poster_url"]).parent.name
+    poster_dir = demo_server.OUTPUT_DIR / run_folder_name
+
+    # Check both indexed posters and default poster exist
+    assert (poster_dir / "04_final_poster_0.png").exists()
+    assert (poster_dir / "04_final_poster_1.png").exists()
+    assert (poster_dir / "04_final_poster.png").exists()
+    assert (poster_dir / "02_blended_background_0.png").exists()
+    assert (poster_dir / "02_blended_background_1.png").exists()
+
