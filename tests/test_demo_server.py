@@ -197,3 +197,49 @@ def test_generate_multi_images(client):
     assert (poster_dir / "02_blended_background_0.png").exists()
     assert (poster_dir / "02_blended_background_1.png").exists()
 
+
+def test_sanitize_and_inject_zero_text():
+    from demo_server import sanitize_and_inject_zero_text
+
+    # Case 1: Empty prompt gets full canonical advertising negative constraints
+    p1 = sanitize_and_inject_zero_text("")
+    assert "zero text" in p1
+    assert "unbranded" in p1
+
+    # Case 2: Dimensions / resolution pollution stripped
+    p2 = sanitize_and_inject_zero_text("Ly trà đào cam sả 8k 16:9 4k")
+    assert "8k" not in p2
+    assert "16:9" not in p2
+    assert "zero text" in p2
+
+    # Case 3: Text intent directives stripped
+    p3 = sanitize_and_inject_zero_text("Ảnh quảng cáo trà đào có chữ MUA 1 TẶNG 1 trên ly")
+    assert "có chữ MUA 1 TẶNG 1" not in p3
+    assert "zero text" in p3
+    assert "no words" in p3
+
+
+def test_zero_emoji_calendar_svg_in_html(client):
+    """Verifies no raw calendar emojis exist in rendered HTML (preventing tofu boxes on headless Linux)."""
+    payload = {
+        "category": "promo",
+        "title": "TRÀ HOA CÚC MẬT ONG",
+        "discount": "MUA 1 TẶNG 1",
+        "date_start": "01/09/2026",
+        "date_end": "15/09/2026",
+        "layout": "split_column",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html_content = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+
+    # Raw emoji calendar 📅 must NOT be present
+    assert "📅" not in html_content
+    # Cross-platform SVG calendar icon MUST be present
+    assert "icon-calendar" in html_content
+    assert "<svg" in html_content
+
+

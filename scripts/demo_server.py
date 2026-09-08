@@ -20,6 +20,7 @@ import gc
 import io
 import json
 import os
+import re
 import shutil
 import signal
 import sys
@@ -233,6 +234,65 @@ def pil_to_base64_data_uri(img: Image.Image) -> str:
     return f"data:image/png;base64,{b64}"
 
 
+def sanitize_and_inject_zero_text(user_prompt: str) -> str:
+    """
+    Sanitizes user scene prompt and injects mandatory ZERO-TEXT negative constraints.
+    Prevents DiT from hallucinating broken/deformed characters and text artifacts.
+    """
+    if not user_prompt or not user_prompt.strip():
+        return (
+            "Commercial advertising photography, professional studio lighting, "
+            "clean photographic background, unbranded, zero text, no words, no letters, "
+            "no typography, no logos, no watermarks, no labels, no signs"
+        )
+
+    prompt = user_prompt.strip()
+
+    # 1. Strip resolution / aspect ratio pollution (Rule 6: 9:16, 16:9, 4:5, 1:1, 8k, 4k, 1080p, etc.)
+    prompt = re.sub(
+        r'\b(?:9:16|16:9|4:5|1:1|8k|4k|2k|1080p|720p|hd|uhd|full\s*hd)\b',
+        '',
+        prompt,
+        flags=re.IGNORECASE
+    )
+
+    # 2. Filter out explicit user directives trying to draw text onto the image
+    # (Representation Clash prevention - Rule 3)
+    text_intent_patterns = [
+        r'\b(?:có|với|kèm|ghi|viết|in|thêu)\s+(?:dòng\s+)?(?:chữ|text|tiêu\s+đề|slogan|thông\s+tin|chữ\s+viết)\b[^\,\.]*',
+        r'\bwith\s+(?:text|words|letters|typography|title|headline|caption|written\s+words)\b[^\,\.]*',
+        r'\b(?:chữ|text)\s*:\s*["\'][^"\']*["\']',
+        r'\b(?:chữ|text)\s*:\s*[^\,\.]*',
+    ]
+    for pat in text_intent_patterns:
+        prompt = re.sub(pat, '', prompt, flags=re.IGNORECASE)
+
+    # Clean redundant punctuation and whitespaces
+    prompt = re.sub(r'[\,\;\s]+', ' ', prompt).strip(' ,;')
+
+    # 3. Canonical Zero-Text negative constraint clause
+    zero_text_clause = (
+        "clean photographic background, unbranded, zero text, "
+        "no words, no letters, no typography, no logos, no watermarks, no labels, no signs"
+    )
+
+    lower_prompt = prompt.lower()
+    if "zero text" not in lower_prompt and "no words" not in lower_prompt:
+        if prompt:
+            prompt = f"{prompt}, {zero_text_clause}"
+        else:
+            prompt = f"Commercial advertising photography, {zero_text_clause}"
+    else:
+        missing_parts = []
+        for term in ["unbranded", "zero text", "no words", "no letters", "no typography", "no logos"]:
+            if term not in lower_prompt:
+                missing_parts.append(term)
+        if missing_parts:
+            prompt = f"{prompt}, {', '.join(missing_parts)}"
+
+    return prompt
+
+
 def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     """Synchronous core inference worker executed under INFER_LOCK."""
     t_start = time.time()
@@ -269,7 +329,10 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     final_offer_sub = req.applied_product or req.offer_sub or ""
     final_brand = req.store_name or req.brand or ""
     final_hotline = req.phone or req.hotline or ""
-    final_scene_prompt = req.image_description or req.prompt_scene or ""
+    raw_scene_prompt = req.image_description or req.prompt_scene or ""
+    final_scene_prompt = sanitize_and_inject_zero_text(raw_scene_prompt)
+    if raw_scene_prompt != final_scene_prompt:
+        print(f"  [Prompt Engine] Injected ZERO-TEXT negative constraints:\n    Raw: '{raw_scene_prompt}'\n    Injected: '{final_scene_prompt}'")
     style_hint = req.style_hint or "daylight"
 
     dates_parts = []

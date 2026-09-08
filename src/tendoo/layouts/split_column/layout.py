@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from tendoo.layouts.base import BaseLayout, ColorPalette, PosterContent
+from tendoo.layouts.base import BaseLayout, CALENDAR_ICON_SVG, ColorPalette, PosterContent
 from tendoo.layouts.split_column.mask import generate_split_column_mask
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
 
@@ -176,7 +176,7 @@ class SplitColumnLayout(BaseLayout):
             "{{badge_border}}": badge_border,
             "{{offer_sub}}": html.escape(offer_sub),
             "{{offer_sub_display}}": "block" if offer_sub else "none",
-            "{{dates}}": f"📅 {html.escape(dates)}" if dates else "",
+            "{{dates}}": f"{CALENDAR_ICON_SVG}{html.escape(dates)}" if dates else "",
             "{{dates_display}}": "block" if dates else "none",
             "{{applicable}}": html.escape(applicable),
             "{{applicable_display}}": "block" if applicable else "none",

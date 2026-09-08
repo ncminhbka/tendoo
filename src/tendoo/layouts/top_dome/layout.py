@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from tendoo.layouts.base import BaseLayout, ColorPalette, PosterContent
+from tendoo.layouts.base import BaseLayout, CALENDAR_ICON_SVG, ColorPalette, PosterContent
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
 from tendoo.layouts.top_dome.mask import generate_top_dome_mask
 
@@ -165,7 +165,7 @@ class TopDomeLayout(BaseLayout):
             "{{badge_border}}": badge_border,
             "{{offer_sub}}": html.escape(offer_sub),
             "{{offer_sub_display}}": "block" if offer_sub else "none",
-            "{{dates}}": html.escape(dates),
+            "{{dates}}": f"{CALENDAR_ICON_SVG}{html.escape(dates)}" if dates else "",
             "{{dates_display}}": "inline-flex" if dates else "none",
             "{{brand}}": html.escape(brand),
             "{{brand_display}}": "block" if brand else "none",
