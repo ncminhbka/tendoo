@@ -54,7 +54,7 @@ class LFrameLayout(BaseLayout):
         height: int,
         y_bar: float = 0.24,
         x_col: float = 0.34,
-        delta: float = 0.12,
+        delta: float = 0.16,
         side: str = "top_left",
         int_max: float = 1.0,
         **kwargs,
@@ -73,36 +73,46 @@ class LFrameLayout(BaseLayout):
     def get_corridor_prompt(self, style_hint: str = "tech_minimal") -> str:
         if style_hint in ("tech_minimal", "minimal_studio"):
             return (
-                "A clean, flat, pure solid dark monochrome studio canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
-                "completely uniform solid color negative copy space with zero texture, seamless flat studio backdrop softly framing the lower-right product stage, "
+                "A soft dark monochrome studio canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
+                "uniform negative copy space with a subtle gentle gradient (never a hard-edged flat block), "
+                "diffuse gradient gradation harmonizing with the scene tones, soft seamless atmospheric transition blending "
+                "naturally into the lower-right product stage with no visible seam or boundary line, "
                 "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("cyber_tech", "cyan_circuit"):
             return (
-                "A sleek, flat, pure solid deep navy monochrome canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
-                "completely uniform solid dark negative copy space with zero texture, seamless flat studio backdrop softly framing the lower-right product stage, "
+                "A sleek deep navy monochrome canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
+                "uniform dark negative space with a subtle gentle gradient (never a hard-edged flat block), "
+                "diffuse gradient gradation harmonizing with the scene tones, soft seamless atmospheric transition blending "
+                "naturally into the lower-right product stage with no visible seam or boundary line, "
                 "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("luxury_gold", "warm_editorial"):
             return (
-                "A warm, flat, pure solid charcoal-toned studio canvas background framing the top margin (y < 0.24) and left column (x < 0.34), "
-                "completely uniform solid color negative copy space with zero texture, seamless flat studio backdrop softly framing the lower-right product stage, "
+                "A warm charcoal-toned studio canvas background framing the top margin (y < 0.24) and left column (x < 0.34), "
+                "uniform negative copy space with a subtle gentle gradient (never a hard-edged flat block), "
+                "diffuse gradient gradation harmonizing with the scene tones, soft seamless atmospheric transition blending "
+                "naturally into the lower-right product stage with no visible seam or boundary line, "
                 "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("daylight_clean", "sunlight_airy"):
             return (
-                "A bright, crisp, flat, pure solid light studio canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
-                "completely uniform solid light negative copy space with zero texture, seamless flat studio backdrop softly framing the lower-right product stage, "
+                "A bright, crisp, light studio canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
+                "uniform light negative space with a subtle gentle gradient (never a hard-edged flat block), "
+                "diffuse gradient gradation harmonizing with the scene tones, soft seamless atmospheric transition blending "
+                "naturally into the lower-right product stage with no visible seam or boundary line, "
                 "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         else:
             return (
-                "A clean, flat, pure solid monochrome studio canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
-                "completely uniform solid color negative copy space with zero texture, seamless flat studio backdrop softly framing the lower-right product stage, "
+                "A clean monochrome studio canvas tone framing the top margin (y < 0.24) and left column (x < 0.34), "
+                "uniform negative copy space with a subtle gentle gradient (never a hard-edged flat block), "
+                "diffuse gradient gradation harmonizing with the scene tones, soft seamless atmospheric transition blending "
+                "naturally into the lower-right product stage with no visible seam or boundary line, "
                 "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )

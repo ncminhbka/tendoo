@@ -340,14 +340,22 @@ def resolve_headline_effect(
             clean_effect = "led"
         elif any(k in text_lower for k in ["hoàng gia", "thượng hạng", "vàng", "gold", "trung thu", "tết", "quà tặng", "xa xỉ", "dạ lông cừu", "atelier", "luxury"]):
             clean_effect = "embossed"
+        elif layout_name == "top_dome":
+            # Broad general-purpose dome: warm halo glow harmonizes with the extracted accent
+            # color on both light daylight skies and dark studio backdrops.
+            clean_effect = "led"
         elif layout_name == "center_hourglass":
-            clean_effect = "embossed"
+            # Theatrical spotlight beam archetype -> halo/backlit glow, not a flat bevel.
+            clean_effect = "led"
         elif layout_name == "bottom_platform":
-            clean_effect = "led" if ("hybrid" in text_lower or "công nghệ" in text_lower) else "shadow"
+            clean_effect = "led" if ("hybrid" in text_lower or "công nghệ" in text_lower) else "chrome"
         elif layout_name == "split_column":
             clean_effect = "embossed"
         elif layout_name == "diagonal_slash":
             clean_effect = "outline" if ("sport" in text_lower or "thể thao" in text_lower) else "chrome"
+        elif layout_name == "l_frame":
+            # tech_minimal corridor archetype -> halo/backlit glow matches the tech aesthetic.
+            clean_effect = "led"
         else:
             clean_effect = "shadow"
 

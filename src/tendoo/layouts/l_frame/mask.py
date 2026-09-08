@@ -20,7 +20,7 @@ def generate_l_frame_mask(
     width: int,
     y_bar: float = 0.24,
     x_col: float = 0.34,
-    delta: float = 0.12,
+    delta: float = 0.16,
     side: str = "top_left",
     int_max: float = 1.0,
     **kwargs,
