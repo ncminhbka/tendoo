@@ -2184,18 +2184,18 @@ class PosterRenderer:
             )
             page = await context.new_page()
 
-            # Set content and wait for fonts to settle (resilient against offline / intranet air-gapped timeouts)
+            # Set content directly using 'domcontentloaded' (avoids 8s freeze in air-gapped/internal networks when external Google Fonts are unreachable)
             try:
-                await page.set_content(html_content, wait_until="load", timeout=8000)
-            except Exception as e:
-                logger.warning(f"[PosterRenderer] 'load' wait timed out ({e}), falling back to 'domcontentloaded'...")
                 await page.set_content(html_content, wait_until="domcontentloaded", timeout=5000)
-
-            # Guarantee all available fonts are settled
-            try:
-                await asyncio.wait_for(page.evaluate("document.fonts.ready"), timeout=3.0)
             except Exception as e:
-                logger.warning(f"[PosterRenderer] Font readiness check skipped or timed out: {e}")
+                logger.warning(f"[PosterRenderer] 'domcontentloaded' wait failed ({e}), falling back to 'commit'...")
+                await page.set_content(html_content, wait_until="commit", timeout=3000)
+
+            # Settle fonts if available, otherwise continue smoothly without blocking
+            try:
+                await asyncio.wait_for(page.evaluate("document.fonts.ready"), timeout=1.0)
+            except Exception as e:
+                logger.debug(f"[PosterRenderer] Font readiness check skipped or timed out: {e}")
 
 
             # Take pixel-accurate screenshot
