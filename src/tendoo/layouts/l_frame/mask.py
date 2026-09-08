@@ -20,17 +20,17 @@ def generate_l_frame_mask(
     width: int,
     y_bar: float = 0.30,
     x_col: float = 0.38,
-    delta: float = 0.10,
+    delta: float = 0.16,
     side: str = "top_left",
     int_max: float = 1.0,
     **kwargs,
 ) -> np.ndarray:
     """
-    Constructs an L-shaped corridor mask:
+    Constructs an organic, soft L-shaped corridor mask with smooth cosine feathering:
     - height, width: Canvas dimensions in pixels.
     - y_bar: Normalized height of the top horizontal bar (default 0.30).
     - x_col: Normalized width of the left vertical column (default 0.38).
-    - delta: Cosine feathering transition width (default 0.10).
+    - delta: Cosine feathering transition width (default 0.16 for soft organic blending).
     - side: 'top_left' (default) or 'top_right'.
     - int_max: Maximum mask intensity (default 1.0).
 
@@ -43,31 +43,34 @@ def generate_l_frame_mask(
     if side == "top_right":
         x = 1.0 - x
 
-    # Relative coordinates from the inner corner (x_col, y_bar)
-    u = x - x_col  # >0 outside left column, <=0 inside
-    v = y - y_bar  # >0 outside top bar, <=0 inside
-
-    # Exact Signed Distance Function to the L-shape boundary:
-    # d <= 0 inside corridor (top bar or left column)
-    # d > 0 outside corridor (lower-right subject area)
-    d_outside = np.sqrt(np.maximum(u, 0.0) ** 2 + np.maximum(v, 0.0) ** 2)
-    d_inside = np.where(
-        u > 0.0,
-        v,
-        np.where(v > 0.0, u, np.maximum(u, v)),
-    )
-    d = np.where((u > 0.0) & (v > 0.0), d_outside, d_inside)
-
     half_delta = delta / 2.0
-    d_inner = -half_delta
-    d_outer = half_delta
 
-    ratio = np.clip((d - d_inner) / delta, 0.0, 1.0)
-    val = np.where(
-        d <= d_inner,
+    # 1. Top horizontal bar soft cosine profile
+    y_inner = y_bar - half_delta
+    y_outer = y_bar + half_delta
+    ratio_y = np.clip((y - y_inner) / delta, 0.0, 1.0)
+    m_top = np.where(
+        y <= y_inner,
         1.0,
-        np.where(d >= d_outer, 0.0, 0.5 * (1.0 + np.cos(ratio * np.pi))),
+        np.where(y >= y_outer, 0.0, 0.5 * (1.0 + np.cos(ratio_y * np.pi)))
     )
 
-    mask = (val * int_max).astype(np.float32)
+    # 2. Left vertical column soft cosine profile
+    x_inner = x_col - half_delta
+    x_outer = x_col + half_delta
+    ratio_x = np.clip((x - x_inner) / delta, 0.0, 1.0)
+    m_col = np.where(
+        x <= x_inner,
+        1.0,
+        np.where(x >= x_outer, 0.0, 0.5 * (1.0 + np.cos(ratio_x * np.pi)))
+    )
+
+    # 3. Smooth Algebraic Union (Over operator: M_union = 1 - (1 - M_top)(1 - M_col))
+    # Guarantees:
+    # - C^1 continuity everywhere with zero internal creases or cross seams
+    # - 100% solid core (M = 1.0) across the entire top bar and left column
+    # - Smooth, rounded concave transition into the lower-right subject area
+    m_union = 1.0 - (1.0 - m_top) * (1.0 - m_col)
+
+    mask = (m_union * int_max).astype(np.float32)
     return mask

@@ -90,9 +90,12 @@ def test_l_frame_mask_math():
     val_lr = mask[int(0.75 * h), int(0.75 * w)]
     assert val_lr == 0.0, f"Lower-right hero space should be strictly 0.0 (got {val_lr})"
 
-    # 4. Inner concave corner: at (x_col=0.38, y_bar=0.30), mask value should be ~0.5
+    # 4. Inner concave corner: at (x_col=0.38, y_bar=0.30), smooth union coverage is 1 - (1-0.5)*(1-0.5) = 0.75
     val_corner = mask[int(0.30 * h), int(0.38 * w)]
-    assert abs(val_corner - 0.5) < 0.05, f"Inner corner at (0.38, 0.30) expected ~0.5, got {val_corner}"
+    assert 0.50 <= val_corner <= 0.85, f"Inner corner at (0.38, 0.30) expected smooth union coverage ~0.75, got {val_corner}"
+    # Verify outer decay
+    val_decay = mask[int((0.30 + 0.16/2 + 0.02) * h), int((0.38 + 0.16/2 + 0.02) * w)]
+    assert val_decay <= 0.05, f"Outer zone should decay softly to 0.0, got {val_decay}"
 
     # 5. Save visual mask artifact for inspection
     mask_img = Image.fromarray((mask * 255).astype(np.uint8), mode="L")

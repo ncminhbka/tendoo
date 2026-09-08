@@ -54,7 +54,7 @@ class DiagonalSlashLayout(BaseLayout):
         height: int,
         x_top: float = 0.65,
         x_bottom: float = 0.20,
-        delta: float = 0.10,
+        delta: float = 0.14,
         side: str = "top_left",
         wave_amp: float = 0.0,
         wave_freq: float = 1.0,
@@ -77,34 +77,38 @@ class DiagonalSlashLayout(BaseLayout):
     def get_corridor_prompt(self, style_hint: str = "sport_speed") -> str:
         if style_hint in ("sport_speed", "dynamic_velocity"):
             return (
-                "A dynamic diagonal ambient studio light wash cutting across the upper-left, "
-                "energetic diagonal gradient falloff, clean uncluttered space for typography, "
-                "high-velocity motion atmosphere, smooth seamless transition, "
+                "A clean, smooth, pure solid dark carbon studio canvas tone across the upper-left diagonal corridor, "
+                "uniform flat negative space with zero texture, soft seamless diagonal atmospheric transition blending into the active motion scene on the lower-right, "
+                "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("cyber_neon", "neon_edge"):
             return (
-                "A futuristic diagonal cyan and electric orange ambient light streak across the upper-left corner, "
-                "vibrant dark tech atmosphere, clean unobstructed copy space for typography, smooth luminous gradient, "
+                "A sleek, smooth, pure solid deep navy studio canvas tone across the upper-left diagonal corridor, "
+                "uniform flat dark negative space with zero texture, soft seamless diagonal atmospheric transition harmonizing with the vibrant tech scene on the lower-right, "
+                "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("carbon_mesh", "dark_carbon"):
             return (
-                "A sleek dark matte studio shadow gradient angled diagonally across the upper-left, "
-                "subtle minimalist carbon tone gradation, clean unobstructed space for typography, "
-                "smooth seamless edge transition, clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
+                "A sleek, flat, pure solid dark matte studio canvas tone across the upper-left diagonal corridor, "
+                "uniform flat negative space with zero texture, soft seamless diagonal transition blending into the scene on the lower-right, "
+                "pristine uncluttered space for typography, "
+                "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("daylight_motion", "sunlight_streak"):
             return (
-                "A crisp energetic natural sunlight angle slicing softly across the upper-left corner, "
-                "bright airy studio atmosphere, clean pristine copy space for typography, smooth feathered transition, "
+                "A bright, crisp, flat, pure solid light studio canvas tone across the upper-left diagonal corridor, "
+                "uniform flat negative space with zero texture, soft seamless diagonal atmospheric transition blending into the outdoor motion scene on the lower-right, "
+                "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         else:
             return (
-                "A dynamic diagonal ambient light wash angled across the upper-left corner, "
-                "harmonious studio gradient falloff, clean pristine space for typography, "
-                "smooth feathered edge transition, clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
+                "A clean, smooth, pure solid studio canvas tone across the upper-left diagonal corridor, "
+                "uniform flat negative space with zero texture, soft seamless diagonal atmospheric transition blending into the scene on the lower-right, "
+                "pristine uncluttered space for typography, "
+                "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
 
     def get_safe_zone(self) -> Tuple[float, float, float, float]:

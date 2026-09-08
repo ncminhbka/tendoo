@@ -53,7 +53,7 @@ class LFrameLayout(BaseLayout):
         height: int,
         y_bar: float = 0.30,
         x_col: float = 0.38,
-        delta: float = 0.10,
+        delta: float = 0.16,
         side: str = "top_left",
         int_max: float = 1.0,
         **kwargs,
@@ -72,32 +72,37 @@ class LFrameLayout(BaseLayout):
     def get_corridor_prompt(self, style_hint: str = "tech_minimal") -> str:
         if style_hint in ("tech_minimal", "minimal_studio"):
             return (
-                "A clean minimalist studio ambient lighting framing the top and left side, "
-                "subtle soft shadow gradation down the left edge, expansive luminous copy space for typography, "
+                "A clean, flat, pure solid dark monochrome studio canvas tone framing the top margin and left column, "
+                "completely uniform solid color negative space with zero texture, seamless flat studio backdrop softly matching the scene colors, "
+                "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("cyber_tech", "cyan_circuit"):
             return (
-                "A sleek futuristic dark tech studio atmosphere with subtle electric cyan edge lighting framing the upper-left corner, "
-                "clean uncluttered space for typography, high-tech minimalist environment, "
+                "A sleek, flat, pure solid deep navy monochrome canvas tone framing the top margin and left column, "
+                "completely uniform solid dark negative space with zero texture, seamless flat studio backdrop softly blending into the scene colors, "
+                "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("luxury_gold", "warm_editorial"):
             return (
-                "A sophisticated warm studio ambient illumination washing across the top and cascading down the left column, "
-                "soft golden rim accent, pristine clean space for typography, "
+                "A warm, flat, pure solid charcoal-toned studio canvas background framing the top margin and left column, "
+                "completely uniform solid color negative space with zero texture, seamless flat studio backdrop softly harmonizing with warm scene ambient tones, "
+                "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         elif style_hint in ("daylight_clean", "sunlight_airy"):
             return (
-                "A bright crisp natural daylight studio background with soft ambient light washing across the top and left margin, "
-                "airy pristine copy space, smooth subtle edge feathering, "
+                "A bright, crisp, flat, pure solid light studio canvas tone framing the top margin and left column, "
+                "completely uniform solid light negative space with zero texture, seamless flat studio backdrop softly harmonizing with bright daylight scene tones, "
+                "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
         else:
             return (
-                "A soft balanced studio ambient light wash framing the top margin and left column, "
-                "smooth gradient falloff, clean pristine space for typography, "
+                "A clean, flat, pure solid monochrome studio canvas tone framing the top margin and left column, "
+                "completely uniform solid color negative space with zero texture, seamless flat studio backdrop softly matching the scene colors, "
+                "pristine uncluttered space for typography, "
                 "clean photographic background, text-free corridor area, no floating graphic text, no poster typography"
             )
 
