@@ -27,6 +27,7 @@ for p in [PROJECT_ROOT, PROJECT_ROOT / "src", PROJECT_ROOT / "scripts"]:
         sys.path.insert(0, str(p))
 
 import pipeline_e2e_poster  # noqa: E402
+import verify_ref_kv_cache_hypothesis as verify_kv  # noqa: E402
 
 
 def _reference_denoise_regional_velocity_blended(
@@ -175,3 +176,109 @@ def test_batched_calls_model_half_as_many_times():
 
     # num_steps timesteps -> (num_steps - 1) denoise iterations -> 1 batched call each.
     assert call_count["n"] == num_steps - 1
+
+
+# ==================================================================================================
+# Mechanical sanity check for scripts/verify_ref_kv_cache_hypothesis.py
+#
+# This does NOT verify anything about the real FLUX.2 model (that requires a real
+# checkpoint + GPU -- run the script itself for that). It only verifies, with a
+# controlled fake, that the *reasoning* behind the audit finding is mechanically
+# sound: a KV-cache that freezes the reference tokens' modulation at extraction time
+# necessarily diverges from a per-step-evolving modulation as soon as the current
+# timestep moves away from the frozen one -- i.e. it is a different formula, not a
+# value-preserving cache, so treating it as a drop-in optimization would be wrong.
+# ==================================================================================================
+
+def _ref_influence(x_seq_concat: torch.Tensor, timestep_scalar: float) -> torch.Tensor:
+    """How much the reference tokens influence the canvas prediction, as a function of
+    their own content and whichever 'timestep' their modulation was computed at."""
+    B = x_seq_concat.shape[0]
+    ref_content_sig = x_seq_concat.mean(dim=(1, 2)).view(B, 1, 1)
+    return ref_content_sig + timestep_scalar * 0.1
+
+
+class _FakeFlux2ModelWithRefTokens:
+    """
+    Unified fake exposing all 3 call conventions under comparison:
+      - __call__(...)            : Path A's plain forward over [canvas, ref] concatenated,
+                                    modulating ref tokens with the EVOLVING per-step t_vec
+                                    (exactly what denoise_regional_velocity_blended's plain
+                                    model() calls currently do).
+      - forward_kv_extract(...)  : Path B's step-0 call, computing + caching the ref
+                                    tokens' influence using a FIXED `ref_fixed_timestep`.
+      - forward_kv_cached(...)   : Path B's later-step calls, reusing that frozen influence.
+
+    The canvas-only term is identical across all three by construction -- the only
+    thing that can make Path A and Path B disagree is how each treats the reference
+    tokens' contribution, isolating exactly the mechanism under audit.
+    """
+
+    def _canvas_term(self, x, timesteps, ctx, guidance, L):
+        B = x.shape[0]
+        ctx_sig = ctx.mean(dim=(1, 2)).view(B, 1, 1)
+        t_sig = timesteps.view(B, 1, 1) * 0.1
+        g_sig = guidance.view(B, 1, 1) * 0.001
+        pos_sig = torch.arange(L, dtype=x.dtype).view(1, L, 1) * 0.001
+        return x * 0.5 + ctx_sig + t_sig + g_sig + pos_sig
+
+    def __call__(self, x, x_ids, timesteps, ctx, ctx_ids, guidance):
+        B, L_total, C = x.shape
+        num_ref = 4
+        L_canvas = L_total - num_ref
+        canvas_x, ref_x = x[:, :L_canvas, :], x[:, L_canvas:, :]
+        pred_canvas = self._canvas_term(canvas_x, timesteps, ctx, guidance, L_canvas)
+        pred_canvas = pred_canvas + _ref_influence(ref_x, timesteps[0].item())
+        return torch.cat([pred_canvas, torch.zeros_like(ref_x)], dim=1)
+
+    def forward_kv_extract(self, x, x_ids, timesteps, ctx, ctx_ids, guidance, x_seq_concat, x_seq_concat_ids, ref_fixed_timestep=0.0):
+        L_canvas = x.shape[1]
+        pred = self._canvas_term(x, timesteps, ctx, guidance, L_canvas)
+        ref_infl = _ref_influence(x_seq_concat, ref_fixed_timestep)
+        return pred + ref_infl, {"ref_influence": ref_infl}
+
+    def forward_kv_cached(self, x, x_ids, timesteps, ctx, ctx_ids, guidance, kv_cache):
+        L_canvas = x.shape[1]
+        return self._canvas_term(x, timesteps, ctx, guidance, L_canvas) + kv_cache["ref_influence"]
+
+
+def test_kv_cached_hypothesis_mechanism_is_sound():
+    """Path A (evolving ref modulation) and Path B (frozen ref modulation) must:
+    (1) coincide at step 1 when ref_fixed_timestep == the first schedule timestep, and
+    (2) diverge at step 2 as soon as t_curr moves away from that frozen value.
+    If this test itself failed, the audit's reasoning (and verify_ref_kv_cache_hypothesis.py's
+    real-model script, which uses the exact same two implementations) would be unsound."""
+    num_canvas, num_ref, ctx_len, C = 10, 4, 6, 8
+    g = torch.Generator().manual_seed(123)
+    canvas_init = torch.randn(1, num_canvas, C, generator=g)
+    canvas_ids = torch.randn(1, num_canvas, 4, generator=g)
+    ref_tokens = torch.randn(1, num_ref, C, generator=g)
+    ref_ids = torch.randn(1, num_ref, 4, generator=g)
+    txt_scene = torch.randn(1, ctx_len, C, generator=g)
+    txt_scene_ids = torch.randn(1, ctx_len, 4, generator=g)
+    txt_corridor = torch.randn(1, ctx_len, C, generator=g)
+    txt_corridor_ids = torch.randn(1, ctx_len, 4, generator=g)
+    spatial_mask = torch.rand(1, num_canvas, 1, generator=g)
+
+    # 3 timesteps -> 2 denoise iterations. First iteration's t_curr (1.0) intentionally
+    # matches ref_fixed_timestep; the second iteration's t_curr (0.6) does not.
+    timesteps = [1.0, 0.6, 0.0]
+    model = _FakeFlux2ModelWithRefTokens()
+
+    _, traj_a = verify_kv._run_path_a_with_trajectory(
+        model, canvas_init.clone(), canvas_ids.clone(), ref_tokens.clone(), ref_ids.clone(),
+        txt_scene, txt_scene_ids, txt_corridor, txt_corridor_ids, spatial_mask, timesteps, guidance=1.5,
+    )
+    _, traj_b = verify_kv.denoise_regional_velocity_blended_kv_cached(
+        model, canvas_init.clone(), canvas_ids.clone(), ref_tokens.clone(), ref_ids.clone(),
+        txt_scene, txt_scene_ids, txt_corridor, txt_corridor_ids, spatial_mask, timesteps,
+        guidance=1.5, ref_fixed_timestep=1.0, record_trajectory=True,
+    )
+
+    assert torch.allclose(traj_a[0], traj_b[0], atol=1e-6), (
+        "Expected step-1 outputs to match when ref_fixed_timestep == the first t_curr"
+    )
+    assert not torch.allclose(traj_a[1], traj_b[1], atol=1e-4), (
+        "Expected step-2 outputs to diverge once t_curr moves away from ref_fixed_timestep "
+        "-- if they still match, the hypothesis (or this test's fake model) is wrong"
+    )
