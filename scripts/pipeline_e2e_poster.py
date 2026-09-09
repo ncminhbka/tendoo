@@ -527,52 +527,75 @@ def denoise_regional_velocity_blended(
     Co-evolves scene framing and physical negative space simultaneously from noise:
       v_blend = (1.0 - M) * v_scene + M * v_corridor
     Supports optional In-Context Reference Product Conditioning (RoPE t=10.0).
+
+    PERF: the scene and corridor branches share the exact same `x`/`x_ids`/`timesteps`/
+    `guidance` at every step -- only `ctx` differs -- so both are run as ONE batch-2
+    forward pass (`torch.cat([...], dim=0)` + `pred.chunk(2)`) instead of two sequential
+    single-batch calls. This mirrors the existing classifier-free-guidance pattern in
+    `flux2.sampling.denoise_cfg` and is mathematically identical to the previous
+    two-call version -- same two forward passes' worth of compute, just issued as one
+    kernel-launch-amortized batched call instead of two sequential ones. Requires
+    `txt_scene`/`txt_corridor` to already share the same sequence length (true here:
+    `Qwen3TextEncoder.forward` always pads to a fixed `MAX_LENGTH`, so this never needs
+    to pad/truncate the two prompts to match each other).
+
+    NOTE: a second optimization (reusing `model.forward_kv_extract`/`forward_kv_cached`
+    to skip recomputing the reference-image tokens' K/V at every step) was investigated
+    and deliberately NOT applied here -- see the audit notes in the project memory / the
+    conversation that added this comment. That path uses a *different* reference-token
+    modulation scheme (a fixed `ref_fixed_timestep`, default 0.0) than the uniform
+    per-step `t_vec` modulation this function (and `denoise_baseline`'s plain `forward()`
+    path, used for this same pipeline's raw-baseline comparison image) currently apply to
+    ref tokens -- i.e. it is not a value-preserving cache, it is a different sampling
+    formulation, and swapping it in without a real GPU render to compare would risk
+    silently changing generation quality with no way to verify it here.
     """
     orig_dtype = img.dtype
     device = img.device
     mask = spatial_mask.to(device=device, dtype=orig_dtype)
     L_canvas = num_canvas_tokens if num_canvas_tokens is not None else mask.shape[1]
 
+    # Batch the two conditioning branches along dim 0 once, up front.
+    img_b = torch.cat([img, img], dim=0)
+    img_ids_b = torch.cat([img_ids, img_ids], dim=0)
+    txt_b = torch.cat([txt_scene, txt_corridor], dim=0)
+    txt_ids_b = torch.cat([txt_scene_ids, txt_corridor_ids], dim=0)
+
     for step_idx in range(len(timesteps) - 1):
         t_curr = timesteps[step_idx]
         t_prev = timesteps[step_idx + 1]
 
-        t_vec = torch.full((img.shape[0],), t_curr, dtype=orig_dtype, device=device)
-        guidance_vec = torch.full((img.shape[0],), guidance, dtype=orig_dtype, device=device)
+        t_vec = torch.full((img_b.shape[0],), t_curr, dtype=orig_dtype, device=device)
+        guidance_vec = torch.full((img_b.shape[0],), guidance, dtype=orig_dtype, device=device)
 
-        # Branch 1: Framing Scene Velocity
-        pred_scene = model(
-            x=img,
-            x_ids=img_ids,
+        # Single batched forward pass computes both the scene and corridor velocity
+        # predictions together (batch 0 = scene, batch 1 = corridor).
+        pred_b = model(
+            x=img_b,
+            x_ids=img_ids_b,
             timesteps=t_vec,
-            ctx=txt_scene,
-            ctx_ids=txt_scene_ids,
+            ctx=txt_b,
+            ctx_ids=txt_ids_b,
             guidance=guidance_vec,
         )
-
-        # Branch 2: Semantic Physical Negative Space Velocity
-        pred_corridor = model(
-            x=img,
-            x_ids=img_ids,
-            timesteps=t_vec,
-            ctx=txt_corridor,
-            ctx_ids=txt_corridor_ids,
-            guidance=guidance_vec,
-        )
+        pred_scene, pred_corridor = pred_b[0:1], pred_b[1:2]
 
         # Regional Flow Matching velocity blending applied strictly to Canvas tokens
         v_scene_canvas = pred_scene[:, :L_canvas, :]
         v_corridor_canvas = pred_corridor[:, :L_canvas, :]
         v_blend_canvas = (1.0 - mask) * v_scene_canvas + mask * v_corridor_canvas
 
-        # Euler ODE step on canvas tokens
-        canvas_tokens = img[:, :L_canvas, :] + (t_prev - t_curr) * v_blend_canvas
-        if img.shape[1] > L_canvas:
-            img = torch.cat([canvas_tokens, img[:, L_canvas:, :]], dim=1).to(orig_dtype)
+        # Euler ODE step on canvas tokens (single copy -- both batch slots must stay
+        # identical going into the next step, since they represent the same co-evolving
+        # image conditioned on two different prompts, not two independent samples).
+        canvas_tokens = img_b[0:1, :L_canvas, :] + (t_prev - t_curr) * v_blend_canvas
+        if img_b.shape[1] > L_canvas:
+            new_img = torch.cat([canvas_tokens, img_b[0:1, L_canvas:, :]], dim=1).to(orig_dtype)
         else:
-            img = canvas_tokens.to(orig_dtype)
+            new_img = canvas_tokens.to(orig_dtype)
+        img_b = torch.cat([new_img, new_img], dim=0)
 
-    return img[:, :L_canvas, :]
+    return img_b[0:1, :L_canvas, :]
 
 
 def load_and_encode_ref_image(
