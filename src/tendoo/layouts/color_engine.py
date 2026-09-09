@@ -40,11 +40,36 @@ def hsl_to_rgb(h: float, s: float, l: float) -> Tuple[float, float, float]:
     return (r * 255.0, g * 255.0, b * 255.0)
 
 
+def hex_to_hue(hex_str: str) -> Optional[int]:
+    """
+    Converts a '#RRGGBB' (or '#RGB') hex color string to a hue in degrees [0..359], for
+    threading a user-picked "màu chủ đạo" (primary color) into analyze_color_harmony's
+    `user_hue` override. Returns None for anything that doesn't parse as a hex color
+    (blank string, malformed input) so callers can treat that as "no override".
+    """
+    if not hex_str:
+        return None
+    s = hex_str.strip().lstrip("#")
+    if len(s) == 3:
+        s = "".join(ch * 2 for ch in s)
+    if len(s) != 6:
+        return None
+    try:
+        r = int(s[0:2], 16) / 255.0
+        g = int(s[2:4], 16) / 255.0
+        b = int(s[4:6], 16) / 255.0
+    except ValueError:
+        return None
+    h, _s, _v = colorsys.rgb_to_hsv(r, g, b)
+    return int(h * 360)
+
+
 def analyze_color_harmony(
     img_np: np.ndarray,
     crop_zone: Tuple[float, float, float, float],
     color_mode: str = "auto",
     font_style: str = "modern_sans",
+    user_hue: Optional[int] = None,
 ) -> ColorPalette:
     """
     Computes mathematically harmonious text, badge, shadow, and glassmorphic colors
@@ -55,13 +80,19 @@ def analyze_color_harmony(
         crop_zone: Normalized (y1, x1, y2, x2) defining the text safe zone to analyze.
         color_mode: 'auto', 'dark', or 'light'.
         font_style: 'modern_sans' or 'luxury_serif'.
+        user_hue: optional hue override in degrees [0..359] (from a user-picked "màu chủ
+            đạo" hex color, see hex_to_hue()). When set, replaces the pixel-extracted hue
+            for all palette-color math below; luminance/is_dark (the WCAG contrast
+            guarantee) still comes from the real background pixels, untouched -- only the
+            *hue* is overridden, so contrast safety is never compromised by the override.
     """
     h, w, _ = img_np.shape
     y1, x1, y2, x2 = crop_zone
     crop = img_np[int(y1 * h) : int(y2 * h), int(x1 * w) : int(x2 * w)]
 
     lum = compute_relative_luminance(crop)
-    hue, sat, val = extract_dominant_hsv(crop)
+    extracted_hue, sat, val = extract_dominant_hsv(crop)
+    hue = user_hue if user_hue is not None else extracted_hue
 
     if color_mode == "dark":
         is_dark = True

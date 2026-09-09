@@ -27,7 +27,7 @@ import sys
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 for p in [PROJECT_ROOT, PROJECT_ROOT / "src"]:
@@ -48,6 +48,8 @@ from tendoo.layouts import (
     analyze_color_harmony,
     get_layout,
 )
+from tendoo.layouts.color_engine import hex_to_hue
+from tendoo.layouts.style_matcher import LAYOUT_COMPATIBLE_STYLES, resolve_style_preset
 from tendoo.poster_renderer import PosterRenderer
 
 
@@ -218,10 +220,18 @@ class GenerateRequest(BaseModel):
     prompt_corridor: Optional[str] = None
 
     # 4. Display / Design & Inference Controls (Common to all categories)
-    layout: str = "top_dome"
-    style_hint: str = "daylight"
+    # Phase B (per yeu_cau.txt): layout/style_hint/font_family are no longer raw
+    # user-facing pickers -- the UI only sends style_pref + primary_color now, and
+    # these three are auto-resolved by style_matcher.resolve_style_preset() in
+    # run_pipeline_inference whenever left unset (None/""). Kept as plain Optional
+    # fields (not removed) so a direct API caller / back-compat client can still force
+    # an explicit value, same as before Phase B.
+    layout: Optional[str] = None
+    style_hint: Optional[str] = None
     text_effect: str = "auto"
-    font_family: str = "auto"
+    font_family: Optional[str] = None
+    style_pref: str = "auto"
+    primary_color: Optional[str] = None
     aspect_ratio: str = "1:1"
     num_images: int = 1
     seed: int = 42
@@ -324,34 +334,6 @@ def pil_to_base64_data_uri(img: Image.Image) -> str:
     img.save(buf, format="PNG")
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
     return f"data:image/png;base64,{b64}"
-
-
-LAYOUT_COMPATIBLE_STYLES = {
-    "top_dome": {
-        "styles": ["daylight", "studio_dark", "golden_hour", "gold_bevel", "festive_moon", "ribbon"],
-        "default": "daylight",
-    },
-    "bottom_platform": {
-        "styles": ["cinematic_asphalt", "luxury_marble", "warm_wood", "nature_stone", "water_mirror", "cyberpunk_grid"],
-        "default": "cinematic_asphalt",
-    },
-    "split_column": {
-        "styles": ["champagne_silk", "silk_sash", "minimal_wall", "studio_light_pillar", "velvet_drape"],
-        "default": "champagne_silk",
-    },
-    "center_hourglass": {
-        "styles": ["moonbeam", "studio_spotlight", "festive_light"],
-        "default": "moonbeam",
-    },
-    "diagonal_slash": {
-        "styles": ["sport_speed", "cyber_neon", "carbon_mesh", "daylight_motion"],
-        "default": "sport_speed",
-    },
-    "l_frame": {
-        "styles": ["tech_minimal", "cyber_tech", "luxury_gold", "daylight_clean"],
-        "default": "tech_minimal",
-    },
-}
 
 
 def sanitize_and_inject_zero_text(user_prompt: str, has_ref_image: bool = False) -> str:
@@ -575,6 +557,47 @@ def detect_scene_lighting_tone(
         return default_style
 
 
+# Coarse hue-degree -> descriptive color-name buckets, for injecting a user-picked
+# "màu chủ đạo" (primary color) into the actual scene/corridor prompt text so the
+# generated imagery itself leans toward that color, not just the CSS overlay
+# (analyze_color_harmony's `user_hue` handles the CSS side -- see color_engine.py).
+_HUE_NAME_BUCKETS: List[Tuple[int, str]] = [
+    (15, "warm red"),
+    (45, "warm amber orange"),
+    (70, "golden yellow"),
+    (170, "fresh green"),
+    (200, "cyan teal"),
+    (250, "cool blue"),
+    (290, "deep purple violet"),
+    (330, "vivid magenta pink"),
+    (360, "warm red"),
+]
+
+
+def _hue_to_color_name(hue: int) -> str:
+    for upper_bound, name in _HUE_NAME_BUCKETS:
+        if hue <= upper_bound:
+            return name
+    return "warm red"
+
+
+def inject_color_guidance(prompt: str, hex_color: Optional[str]) -> str:
+    """
+    Appends a short color-accent clause derived from a user-picked hex color to a
+    scene/corridor prompt, mirroring inject_spatial_layout_guidance's append-once
+    pattern. No-op when hex_color is blank/unparseable (the default "auto-detected
+    color" path, i.e. today's behavior, is unaffected).
+    """
+    hue = hex_to_hue(hex_color) if hex_color else None
+    if hue is None:
+        return prompt
+    color_name = _hue_to_color_name(hue)
+    clause = f"{color_name} accent tones"
+    if clause in (prompt or ""):
+        return prompt
+    return f"{prompt}, {clause}" if prompt else clause
+
+
 def build_poster_content(
     req: GenerateRequest,
     final_headline: str,
@@ -646,16 +669,27 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         else:
             w, h = 1024, 1024
 
-    # 2. Retrieve Layout
+    # 2. Layout / Style / Font Auto-Match (Phase B -- see style_matcher.py). An explicit
+    # req.layout/style_hint/font_family (direct API caller, back-compat client) always
+    # wins; the redesigned UI never sends these anymore, only style_pref/primary_color.
+    _preset = resolve_style_preset(req.category, req.style_pref, req.image_description or req.prompt_scene or "")
+    if not req.layout:
+        req.layout = _preset["layout"]
+    if not req.style_hint:
+        req.style_hint = _preset["style_hint"]
+    if not req.font_family:
+        req.font_family = _preset["font_key"]
+
+    # 3. Retrieve Layout
     layout = get_layout(req.layout)
 
-    # 3. Generate Parametric Mask
+    # 4. Generate Parametric Mask
     mask_np = layout.generate_mask(width=w, height=h)
     mask_vis = Image.fromarray((mask_np * 255).astype(np.uint8), mode="L")
     mask_file = case_dir / "01_corridor_mask.png"
     mask_vis.save(mask_file)
 
-    # 4. Harmonize Field Values (Unified schema mapping)
+    # 5. Harmonize Field Values (Unified schema mapping)
     cat = (req.category or "promo").lower().strip()
     if cat == "product_intro":
         default_hl = "GIỚI THIỆU SẢN PHẨM"
@@ -694,9 +728,15 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     has_ref_image = bool(req.image_base64)
     zero_text_prompt = sanitize_and_inject_zero_text(raw_scene_prompt, has_ref_image=has_ref_image)
     final_scene_prompt = inject_spatial_layout_guidance(zero_text_prompt, layout_name=layout.name, has_ref_image=has_ref_image)
+    final_scene_prompt = inject_color_guidance(final_scene_prompt, req.primary_color)
     if raw_scene_prompt != final_scene_prompt:
         print(f"  [Prompt Engine] Injected ZERO-TEXT & Spatial Guidance:\n    Raw: '{raw_scene_prompt}'\n    Final: '{final_scene_prompt}'")
-    
+
+    # User-picked "màu chủ đạo" hue override, threaded into analyze_color_harmony()
+    # below (CSS accent palette) -- None when unset/unparseable, i.e. today's 100%
+    # auto-detected-from-pixels behavior is unchanged.
+    user_hue = hex_to_hue(req.primary_color) if req.primary_color else None
+
     style_hint = detect_scene_lighting_tone(final_scene_prompt, req.style_hint or "auto", layout_name=layout.name)
 
     dates_parts = []
@@ -706,7 +746,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         dates_parts.append(f"Đến {req.date_end}")
     final_dates = " - ".join(dates_parts) if dates_parts else ""
 
-    # 5. Optional QR Code Generation (Backend QR Engine)
+    # 6. Optional QR Code Generation (Backend QR Engine)
     qr_data_uri = ""
     qr_url = None
     if req.enable_qr and req.website_link and req.website_link.strip():
@@ -721,7 +761,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
             except Exception as e:
                 print(f"Notice: Failed to save QR code image: {e}")
 
-    # 6. Save Uploaded Product Image if provided
+    # 7. Save Uploaded Product Image if provided
     ref_image_path = None
     if req.image_base64:
         try:
@@ -736,7 +776,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         except Exception as e:
             print(f"Notice: Failed to save uploaded product image: {e}")
 
-    # 7. Generate Blended Background & Final Poster (Regional Velocity Blending + HTML Typography)
+    # 8. Generate Blended Background & Final Poster (Regional Velocity Blending + HTML Typography)
     num_images = max(1, min(4, req.num_images or 1))
     posters_list = []
     dur_dit_total = 0.0
@@ -755,7 +795,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                 blended_pil.save(case_dir / "02_blended_background.png")
 
             safe_zone = layout.get_safe_zone()
-            palette = analyze_color_harmony(np.array(blended_pil), safe_zone, color_mode="auto")
+            palette = analyze_color_harmony(np.array(blended_pil), safe_zone, color_mode="auto", user_hue=user_hue)
 
             bg_data_uri = pil_to_base64_data_uri(blended_pil)
             content = build_poster_content(
@@ -804,6 +844,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         from tendoo.velocity_blending import denoise_regional_velocity_blended, load_and_encode_ref_image
 
         prompt_corr = req.prompt_corridor or layout.get_corridor_prompt(style_hint)
+        prompt_corr = inject_color_guidance(prompt_corr, req.primary_color)
 
         # Encode prompts with Qwen3 ONCE outside loop
         with torch.no_grad():
@@ -890,7 +931,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                     blended_pil.save(case_dir / "02_blended_background.png")
 
                 safe_zone = layout.get_safe_zone()
-                palette = analyze_color_harmony(np.array(blended_pil), safe_zone, color_mode="auto")
+                palette = analyze_color_harmony(np.array(blended_pil), safe_zone, color_mode="auto", user_hue=user_hue)
 
                 bg_data_uri = pil_to_base64_data_uri(blended_pil)
                 content = build_poster_content(
@@ -948,6 +989,10 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         "category": req.category,
         "posters": posters_list,
         "num_images": len(posters_list),
+        # Exposes the Phase B auto-match's actual decision -- lets tests (and curious
+        # callers) verify layout/style_hint without parsing the rendered HTML/CSS.
+        "resolved_layout": layout.name,
+        "resolved_style_hint": style_hint,
     }
 
 

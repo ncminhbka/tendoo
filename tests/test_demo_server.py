@@ -727,6 +727,76 @@ def test_generate_succeeds_with_only_required_fields_filled(client, category, pa
     assert response.json()["success"] is True
 
 
+def test_generate_with_style_pref_auto_matches_layout_and_style(client):
+    """Phase B: no `layout`/`style_hint`/`font_family` sent at all -- the server must
+    auto-resolve them from category + style_pref (style_matcher.resolve_style_preset)
+    rather than silently defaulting to top_dome/daylight as if the caller had chosen it."""
+    payload = {
+        "category": "promo",
+        "title": "SIÊU SALE CUỐI TUẦN",
+        "discount": "GIẢM 30%",
+        "style_pref": "nang_dong",
+        "aspect_ratio": "1:1",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+    # nang_dong (dynamic/sport mood) nudges promo away from its plain top_dome default.
+    assert data["resolved_layout"] == "diagonal_slash"
+    assert data["resolved_style_hint"]
+
+
+def test_generate_with_explicit_layout_overrides_style_pref_auto_match(client):
+    """An explicit `layout` must still win over style_pref -- back-compat for direct API
+    callers, per the Phase B design (auto-match only fires when layout is left unset)."""
+    payload = {
+        "category": "promo",
+        "title": "SIÊU SALE CUỐI TUẦN",
+        "discount": "GIẢM 30%",
+        "style_pref": "nang_dong",
+        "layout": "split_column",
+        "aspect_ratio": "1:1",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    assert response.json()["resolved_layout"] == "split_column"
+
+
+def test_generate_with_primary_color_shifts_palette_hue(client):
+    """A user-picked "màu chủ đạo" (primary_color) must actually reach the rendered
+    poster's CSS accent tokens, not just be accepted and ignored."""
+    import re
+
+    def headline_hue(html: str):
+        m = re.search(r"--headline-color:\s*hsl\((\d+),", html)
+        return int(m.group(1)) if m else None
+
+    payload_base = {
+        "category": "promo",
+        "title": "SIÊU SALE CUỐI TUẦN",
+        "discount": "GIẢM 30%",
+        "aspect_ratio": "1:1",
+        "layout": "top_dome",
+        "style_hint": "studio_dark",  # force a dark-background palette branch deterministically
+    }
+
+    resp_red = client.post("/api/generate", json={**payload_base, "primary_color": "#FF0000", "seed": 1})
+    resp_blue = client.post("/api/generate", json={**payload_base, "primary_color": "#0000FF", "seed": 1})
+    assert resp_red.status_code == 200, resp_red.text
+    assert resp_blue.status_code == 200, resp_blue.text
+
+    html_red = (demo_server.OUTPUT_DIR / Path(resp_red.json()["final_poster_url"]).parent.name / "03_poster.html").read_text(encoding="utf-8")
+    html_blue = (demo_server.OUTPUT_DIR / Path(resp_blue.json()["final_poster_url"]).parent.name / "03_poster.html").read_text(encoding="utf-8")
+
+    hue_red = headline_hue(html_red)
+    hue_blue = headline_hue(html_blue)
+    assert hue_red is not None and hue_blue is not None
+    assert hue_red != hue_blue
+    assert hue_red == 0
+    assert hue_blue == 240
+
+
 def test_generate_guide_requires_non_empty_first_step(client):
     """guide has no named required field -- it's guide_steps[0] that must be non-blank."""
     # No steps at all -> 422

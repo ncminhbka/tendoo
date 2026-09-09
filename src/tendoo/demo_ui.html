@@ -1005,7 +1005,7 @@
       <div class="panel">
         <div class="panel-header">
           <span id="panel-category-title">Thông tin Poster Khuyến Mại</span>
-          <span id="layout-indicator" style="font-size: 13px; color: var(--accent-cyan);">Bố cục: Vòm Đỉnh</span>
+          <span id="layout-indicator" style="font-size: 13px; color: var(--accent-cyan);">Bố cục: Tự động thông minh</span>
         </div>
 
         <form id="poster-form" onsubmit="handleGenerate(event)">
@@ -1246,98 +1246,35 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:-2px; margin-right:6px;"><circle cx="12" cy="12" r="10"></circle><polygon points="12 8 8 12 12 16 16 12 12 8"></polygon></svg><span>PHẦN 3: HIỂN THỊ & THIẾT KẾ POSTER</span>
             </div>
 
+            <!-- Row 1: Style Suggestion & Primary Color -->
+            <!-- Per yeu_cau.txt: layout/font/corridor-material are no longer raw pickers
+                 here -- the server auto-matches all three from category + phong cách
+                 (style_matcher.resolve_style_preset). Only a coarse business-mood hint
+                 and an optional primary-color override remain user-facing. -->
             <div class="form-row-2">
-              <!-- Layout Topology -->
+              <!-- Phong cách (style suggestion) -->
               <div class="form-group">
-                <label class="form-label">Bố cục thị giác (Layout):</label>
-                <select id="sel-layout" class="form-select" onchange="onLayoutSelect(this.value)">
-                  <option value="top_dome" selected>Vòm Đỉnh (Top Arch Dome)</option>
-                  <option value="center_hourglass">Đồng Hồ Cát (Center Hourglass)</option>
-                  <option value="bottom_platform">Bệ Đáy Điện Ảnh (Bottom Platform)</option>
-                  <option value="split_column">Dải Lụa Phân Cột (Split Column)</option>
-                  <option value="diagonal_slash">Vát Chéo Năng Động (Diagonal Slash)</option>
-                  <option value="l_frame">Khung Góc L (L-Frame Anchor)</option>
+                <label class="form-label">Phong cách:<span class="hint">Gợi ý, hệ thống tự chọn bố cục & phông chữ phù hợp</span></label>
+                <select id="sel-style-pref" class="form-select">
+                  <option value="auto" selected>⚡ Tự động theo ngành hàng (Smart Auto)</option>
+                  <option value="hien_dai">Hiện đại / Tối giản</option>
+                  <option value="sang_trong">Sang trọng / Cao cấp</option>
+                  <option value="nang_dong">Năng động / Thể thao</option>
+                  <option value="am_cung">Ấm cúng / Gần gũi</option>
+                  <option value="le_hoi">Lễ hội / Rực rỡ</option>
                 </select>
               </div>
 
-              <!-- Style Hint -->
+              <!-- Màu chủ đạo (primary color) -->
               <div class="form-group">
-                <label class="form-label">Phong cách chất liệu & ánh sáng:</label>
-                <select id="sel-style-hint" class="form-select">
-                  <option value="auto" selected>Tự động theo bối cảnh (Smart Auto Harmonize)</option>
-                  <option value="daylight">Bầu trời ban ngày trong trẻo (Daylight Sky)</option>
-                  <option value="studio_dark">Studio tối dốc êm (Dark Studio Falloff)</option>
-                  <option value="golden_hour">Ánh hoàng hôn vàng ấm (Warm Golden Hour)</option>
-                  <option value="festive_moon">Ánh trăng lễ hội lung linh (Festive Moonlight Glow)</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Row 2: Headline Font & Text Effect -->
-            <div class="form-row-2">
-              <!-- Headline Font Family -->
-              <div class="form-group">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                  <label class="form-label" style="margin-bottom: 0;">Phông chữ tiêu đề (Headline Font):</label>
-                  <span id="font-smart-hint" style="display: none; font-size: 11px; color: #38BDF8; cursor: pointer; background: rgba(56, 189, 248, 0.12); padding: 2px 8px; border-radius: 9999px; border: 1px solid rgba(56, 189, 248, 0.35); transition: all 0.2s ease;" title="Bấm để áp dụng gợi ý này">
-                    <span id="font-hint-text">Gợi ý: Be Vietnam Pro</span>
-                  </span>
+                <label class="form-label">Màu chủ đạo:<span class="hint">Tùy chọn, mặc định tự nhận diện từ ảnh nền</span></label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <input type="color" id="inp-primary-color" class="form-input" value="#FF5722" style="width: 52px; height: 38px; padding: 3px; flex: 0 0 auto;" disabled>
+                  <label style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #94A3B8; cursor: pointer; user-select: none;">
+                    <input type="checkbox" id="inp-color-auto" checked onchange="document.getElementById('inp-primary-color').disabled = this.checked;">
+                    Tự động theo ảnh nền
+                  </label>
                 </div>
-                <select id="sel-font-family" class="form-select">
-                  <option value="auto" selected>⚡ Tự động tối ưu theo ngành hàng (Smart Auto)</option>
-                  <optgroup label="Hiện đại & Chuẩn mực (Modern Clean)">
-                    <option value="bevietnam">Be Vietnam Pro (Hiện đại / Siêu nét)</option>
-                    <option value="gotham">SVN-Gotham Ultra (Quyền lực / Doanh nghiệp)</option>
-                    <option value="harabaras">SVN-Harabaras (Geometric / Thân thiện)</option>
-                  </optgroup>
-                  <optgroup label="Mạnh mẽ & Flash Sale (Impact & Sport)">
-                    <option value="anton">Anton (Cô đọng / Giảm giá sốc)</option>
-                    <option value="days">SVN-Days (Tương lai / Thể thao / Tech)</option>
-                    <option value="hemihead">SVN-Hemi Head (Tốc độ / Đua xe / Đậm nét)</option>
-                    <option value="lolapeluza">SVN-Lolapeluza (Siêu dày / Đại tiệc Sale)</option>
-                    <option value="oswald">Oswald (Thanh mảnh / Gothic / Specs)</option>
-                  </optgroup>
-                  <optgroup label="Sang trọng & Thẩm mỹ (Luxury & Serif)">
-                    <option value="playfair">Playfair Display (Quý phái / Editorial Serif)</option>
-                    <option value="dancing">Dancing Script (Cursive / Spa & Beauty)</option>
-                    <option value="clementine">SVN-Clementine (Calligraphy / Tiệc cưới)</option>
-                  </optgroup>
-                  <optgroup label="F&B, Cafe & Bánh kẹo (Playful & Food)">
-                    <option value="pacifico">Pacifico (Cọ vẽ Retro / Cafe & Đồ uống)</option>
-                    <option value="cookies">SVN-Cookies (Bánh ngọt / Trà sữa / Kem)</option>
-                    <option value="gretoon">SVN-Gretoon (Pop-Art 3D / Đồ ăn vặt)</option>
-                    <option value="grocery">SVN-Grocery (Bảng phấn Vintage / Thực phẩm sạch)</option>
-                  </optgroup>
-                  <optgroup label="Đường phố & Thể thao (Street Art & Action)">
-                    <option value="blowbrush">SVN-Blow Brush (Marker cọ khô / Streetwear)</option>
-                    <option value="sedgwick">Sedgwick Ave (Graffiti / Văn hóa đường phố)</option>
-                    <option value="guerrilla">SVN-Guerrilla (Stencil / Quân đội / Underground)</option>
-                  </optgroup>
-                  <optgroup label="Lễ hội & Tết (Festive & Celebration)">
-                    <option value="holidays">SVN-Holidays (Lễ hội / Tết / Party)</option>
-                  </optgroup>
-                </select>
-              </div>
-
-              <!-- Text Effect -->
-              <div class="form-group">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                  <label class="form-label" style="margin-bottom: 0;">Hiệu ứng chữ tiêu đề (Hero Text Effect):</label>
-                  <span id="effect-smart-hint" style="display: none; font-size: 11px; color: #38BDF8; cursor: pointer; background: rgba(56, 189, 248, 0.12); padding: 2px 8px; border-radius: 9999px; border: 1px solid rgba(56, 189, 248, 0.35); transition: all 0.2s ease;" title="Bấm để áp dụng gợi ý này">
-                    <span id="effect-hint-text">Gợi ý: In nổi 3D mạ vàng</span>
-                  </span>
-                </div>
-                <select id="sel-text-effect" class="form-select">
-                  <option value="auto" selected>Tự động theo ngữ cảnh (Auto Harmonize)</option>
-                  <option value="embossed">In nổi 3D mạ vàng hoàng gia (3D Gold Relief)</option>
-                  <option value="shadow">Bóng đổ chiều sâu điện ảnh (Deep Studio Shadow)</option>
-                  <option value="led">Đèn LED Backlit viền công nghệ (Backlit LED Halo)</option>
-                  <option value="neon">Phát quang Neon rực rỡ (Vibrant Neon Glow)</option>
-                  <option value="chrome">Chrome bạch kim tráng gương (Liquid Chrome)</option>
-                  <option value="engraved">Khắc chìm sa thạch cổ điển (Deep Engraved)</option>
-                  <option value="holographic">Hologram ánh kim xà cừ (Iridescent Foil)</option>
-                  <option value="outline">Viền rỗng thể thao hiện đại (Ghost Outline)</option>
-                </select>
               </div>
             </div>
 
@@ -1585,7 +1522,6 @@
     // Category Configuration Metadata
     const CATEGORIES = {
       promo: {
-        recommendedLayout: "top_dome",
         title: "PHẦN 1: THÔNG TIN KHUYẾN MẠI / ƯU ĐÃI",
         panelTitle: "Thông tin Poster Khuyến Mại",
         lblTitle: "Tiêu đề ảnh (Headline):",
@@ -1600,7 +1536,6 @@
         scenePlaceholder: "Ly trà đào cam sả mát lạnh trên bàn gỗ sồi, lát cam tươi mọng nước, tép sả thơm, studio lighting..."
       },
       product_intro: {
-        recommendedLayout: "top_dome",
         title: "PHẦN 1: THÔNG TIN GIỚI THIỆU SẢN PHẨM",
         panelTitle: "Giới Thiệu Sản Phẩm / Dịch Vụ",
         lblTitle: "Tên sản phẩm & Định vị:",
@@ -1615,7 +1550,6 @@
         scenePlaceholder: "Sleek wireless headphones on dark slate pedestal, cinematic blue rim lighting, premium reflection..."
       },
       opening: {
-        recommendedLayout: "center_hourglass",
         title: "PHẦN 1: THÔNG TIN KHAI TRƯƠNG CHI NHÁNH",
         panelTitle: "Banner Khai Trương Chi Nhánh",
         lblTitle: "Tiêu đề sự kiện khai trương:",
@@ -1630,7 +1564,6 @@
         scenePlaceholder: "Grand opening modern storefront, golden confetti celebration, ribbon cutting ceremony atmosphere..."
       },
       feedback: {
-        recommendedLayout: "split_column",
         title: "PHẦN 1: THÔNG TIN FEEDBACK & ĐÁNH GIÁ",
         panelTitle: "Feedback & Đánh Giá Khách Hàng",
         lblTitle: "Tiêu đề phản hồi (Headline):",
@@ -1645,7 +1578,6 @@
         scenePlaceholder: "Warm cozy cafe ambiance, happy customer testimonial portrait setup, soft depth of field..."
       },
       recruitment: {
-        recommendedLayout: "split_column",
         title: "PHẦN 1: THÔNG TIN TUYỂN DỤNG NHÂN TÀI",
         panelTitle: "Poster Tuyển Dụng Nhân Tài",
         lblTitle: "Vị trí tuyển dụng chính:",
@@ -1660,7 +1592,6 @@
         scenePlaceholder: "High-tech innovative workspace, glass meeting room, modern collaborative work environment..."
       },
       guide: {
-        recommendedLayout: "split_column",
         title: "PHẦN 1: THÔNG TIN QUY TRÌNH & HƯỚNG DẪN",
         panelTitle: "Quy Trình & Hướng Dẫn Sử Dụng",
         lblTitle: "Tên quy trình / Hướng dẫn:",
@@ -1676,66 +1607,12 @@
       }
     };
 
-    // Compatible optical style hints for each layout topology (Cross-Semantic Clash Prevention)
-    const LAYOUT_STYLE_OPTIONS = {
-      top_dome: [
-        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "daylight", label: "Bầu trời ban ngày trong trẻo (Daylight Sky)" },
-        { value: "studio_dark", label: "Studio tối dốc êm (Dark Studio Falloff)" },
-        { value: "golden_hour", label: "Ánh hoàng hôn vàng ấm (Warm Golden Hour)" },
-        { value: "festive_moon", label: "Ánh trăng lễ hội lung linh (Festive Moonlight Glow)" }
-      ],
-      bottom_platform: [
-        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "cinematic_asphalt", label: "Bệ đường đua điện ảnh (Cinematic Asphalt Track)" },
-        { value: "luxury_marble", label: "Bục đá cẩm thạch sang trọng (Luxury Obsidian Marble)" },
-        { value: "warm_wood", label: "Mặt sàn gỗ tự nhiên ấm áp (Warm Wood Surface)" },
-        { value: "water_mirror", label: "Mặt nước phẳng phản chiếu (Reflective Water Platform)" }
-      ],
-      split_column: [
-        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "champagne_silk", label: "Dải voan lụa champagne bán trong suốt (Champagne Silk)" },
-        { value: "minimal_wall", label: "Cột vách kiến trúc tối giản tiệp màu (Minimal Studio Wall)" },
-        { value: "studio_light_pillar", label: "Cột khói sáng studio mờ ảo (Soft Studio Light Pillar)" }
-      ],
-      center_hourglass: [
-        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "moonbeam", label: "Luồng sáng đối xứng sân khấu (Volumetric Moonbeam)" },
-        { value: "studio_spotlight", label: "Đèn rọi studio trần và sàn (Studio Spotlight)" },
-        { value: "festive_light", label: "Luồng sáng vàng lễ hội (Festive Golden Rays)" }
-      ],
-      diagonal_slash: [
-        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "sport_speed", label: "Vệt sáng tốc độ thể thao (Sport Dynamic Velocity)" },
-        { value: "cyber_neon", label: "Dải neon công nghệ viễn tưởng (Cyber Neon Edge)" },
-        { value: "carbon_mesh", label: "Dốc bóng đen carbon mờ (Dark Carbon Mesh)" },
-        { value: "daylight_motion", label: "Vệt nắng chéo ban ngày rực rỡ (Daylight Motion)" }
-      ],
-      l_frame: [
-        { value: "auto", label: "Tự động theo bối cảnh (Smart Auto Harmonize)" },
-        { value: "tech_minimal", label: "Studio tối giản thanh lịch (Tech Minimal Studio)" },
-        { value: "cyber_tech", label: "Viền xanh neon công nghệ cao (Cyber Cyan Edge)" },
-        { value: "luxury_gold", label: "Hào quang vàng ấm cao cấp (Warm Luxury Glow)" },
-        { value: "daylight_clean", label: "Ánh sáng ban ngày trong trẻo (Daylight Clean)" }
-      ]
-    };
-
-    function updateStyleHintsForLayout(layoutKey, selectedVal = "auto") {
-      const sel = document.getElementById('sel-style-hint');
-      if (!sel) return;
-      const opts = LAYOUT_STYLE_OPTIONS[layoutKey] || LAYOUT_STYLE_OPTIONS.top_dome;
-      sel.innerHTML = opts.map(o => 
-        `<option value="${o.value}" ${o.value === selectedVal ? 'selected' : ''}>${o.label}</option>`
-      ).join('');
-    }
-
     // 1-Click Preset Catalog for all 6 Categories
     const PRESETS = {
       // 1. Promo Presets
       beverage: {
         category: "promo",
-        layout: "top_dome",
-        style_hint: "daylight",
+        style_pref: "hien_dai",
         title: "TRÀ ĐÀO CAM SẢ\nTHANH MÁT TỰ NHIÊN",
         discount: "MUA 2 TẶNG 1",
         applied_product: "Áp dụng cho toàn bộ trà trái cây & macchiato",
@@ -1750,8 +1627,7 @@
       },
       perfume: {
         category: "promo",
-        layout: "top_dome",
-        style_hint: "gold_bevel",
+        style_pref: "sang_trong",
         title: "HƯƠNG NƯỚC HOA PHÁP\nĐẲNG CẤP HOÀNG GIA",
         discount: "ƯU ĐÃI 25%",
         applied_product: "Tặng mini vial 10ml cho đơn hàng đầu tiên",
@@ -1766,8 +1642,7 @@
       },
       midautumn: {
         category: "promo",
-        layout: "center_hourglass",
-        style_hint: "festive_light",
+        style_pref: "le_hoi",
         title: "HỘP BÁNH TRUNG THU\nHOÀNG GIA THƯỢNG HẠNG",
         discount: "CHIẾT KHẤU ĐẾN 20%",
         applied_product: "Tặng kèm hộp trà sen Tây Hồ thượng hạng",
@@ -1782,8 +1657,7 @@
       },
       suv: {
         category: "promo",
-        layout: "bottom_platform",
-        style_hint: "cinematic_asphalt",
+        style_pref: "nang_dong",
         title: "KHÁM PHÁ ĐẲNG CẤP\nSUV THẾ HỆ MỚI 2026",
         discount: "ƯU ĐÃI 100 TRIỆU",
         applied_product: "Tặng gói bảo hiểm thân vỏ & 3 năm bảo dưỡng miễn phí",
@@ -1798,8 +1672,7 @@
       },
       lookbook: {
         category: "promo",
-        layout: "split_column",
-        style_hint: "silk_sash",
+        style_pref: "sang_trong",
         title: "ÁO KHOÁC MĂNG TÔ\nDẠ LÔNG CỪU Ý",
         discount: "ƯU ĐÃI ĐẾN 25%",
         applied_product: "Tặng khăn choàng lụa tơ tằm cao cấp cho hóa đơn từ 3 triệu",
@@ -1816,8 +1689,7 @@
       // 2. Product Intro Presets
       headphones: {
         category: "product_intro",
-        layout: "top_dome",
-        style_hint: "studio_dark",
+        style_pref: "hien_dai",
         title: "TAI NGHE KHÔNG DÂY\nHI-RES AUDIO CHỐNG ỒN",
         product_name: "Tendoo Sonic Pro Wireless",
         price: "1.290.000đ",
@@ -1832,8 +1704,7 @@
       },
       watch: {
         category: "product_intro",
-        layout: "center_hourglass",
-        style_hint: "gold_bevel",
+        style_pref: "sang_trong",
         title: "ĐỒNG HỒ THỤY SĨ\nCHRONOGRAPH TOURBILLON",
         product_name: "Tendoo Chrono Master",
         price: "18.500.000đ",
@@ -1850,8 +1721,7 @@
       // 3. Opening Banner Presets
       grand_opening: {
         category: "opening",
-        layout: "top_dome",
-        style_hint: "festive_light",
+        style_pref: "le_hoi",
         title: "TƯNG BỪNG KHAI TRƯƠNG\nCHI NHÁNH THỨ 10",
         opening_date: "15/10/2026",
         opening_promo: "TẶNG 100 PHẦN QUÀ ĐẦU TIÊN",
@@ -1867,8 +1737,7 @@
       // 4. Feedback Presets
       spa_review: {
         category: "feedback",
-        layout: "top_dome",
-        style_hint: "daylight",
+        style_pref: "am_cung",
         title: "KHÁCH HÀNG NÓI GÌ\nVỀ DỊCH VỤ TENDOO?",
         feedback_target: "Liệu trình trẻ hóa da chuyên sâu Collagen",
         feedback_rating: "⭐⭐⭐⭐⭐ 5.0 / 5.0",
@@ -1885,8 +1754,7 @@
       // 5. Recruitment Presets
       ai_engineer: {
         category: "recruitment",
-        layout: "split_column",
-        style_hint: "studio_dark",
+        style_pref: "hien_dai",
         title: "TENDOO TÌM ĐỒNG ĐỘI\nWE ARE HIRING",
         job_position: "SENIOR AI RESEARCH ENGINEER",
         job_desc: "Thu nhập up to $3,500 / Thưởng cổ phần ESOP, chế độ bảo hiểm quốc tế, làm việc Hybrid linh hoạt",
@@ -1903,8 +1771,7 @@
       // 6. Guide Presets
       order_guide: {
         category: "guide",
-        layout: "split_column",
-        style_hint: "daylight",
+        style_pref: "hien_dai",
         title: "3 BƯỚC ĐẶT HÀNG NHANH\nNHẬN TRONG 2 GIỜ",
         guide_steps: [
           "Chọn món đồ uống yêu thích trên menu",
@@ -2042,23 +1909,10 @@
       // see loadRequiredFieldsConfig()/applyRequiredMarkers() below.
       applyRequiredMarkers(catKey);
 
-      // Auto-switch to Recommended Layout for this business intent
-      const recLayout = meta.recommendedLayout || 'top_dome';
-      const selLayout = document.getElementById('sel-layout');
-      if (selLayout) {
-        selLayout.value = recLayout;
-        onLayoutSelect(recLayout, 'auto');
-
-        // Dynamically highlight "(Khuyên dùng)" in layout select dropdown
-        Array.from(selLayout.options).forEach(opt => {
-          const rawText = opt.textContent.replace(/\s*\(Khuyên dùng\)/g, '');
-          if (opt.value === recLayout) {
-            opt.textContent = `${rawText} (Khuyên dùng)`;
-          } else {
-            opt.textContent = rawText;
-          }
-        });
-      }
+      // Layout is no longer user-chosen (Phase B) -- the indicator just shows a neutral
+      // "auto" state until a real /api/generate response reports the actual resolved
+      // layout (see updateLayoutIndicator(), called from handleGenerate's success path).
+      updateLayoutIndicator(null);
 
       // Update preset chips to match this category
       renderCategoryPresets(catKey);
@@ -2067,25 +1921,25 @@
       document.getElementById('form-workspace').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Layout Indicator update & Dynamic Style Hints filter
-    function onLayoutSelect(val, preferredStyle = 'auto') {
+    // Layout is now 100% server auto-matched (Phase B, style_matcher.resolve_style_preset)
+    // -- this just displays whichever layout the last /api/generate response actually
+    // picked (or a neutral "auto" placeholder before the first request of a category).
+    const LAYOUT_DISPLAY_NAMES = {
+      top_dome: "Vòm Đỉnh",
+      split_column: "Dải Lụa Phân Cột",
+      bottom_platform: "Bệ Đáy Điện Ảnh",
+      center_hourglass: "Đồng Hồ Cát",
+      diagonal_slash: "Vát Chéo Năng Động",
+      l_frame: "Khung Góc L",
+      freeform: "Tự Do (Freeform)",
+    };
+
+    function updateLayoutIndicator(layoutName) {
       const ind = document.getElementById('layout-indicator');
-      if (ind) {
-        if (val === 'split_column') {
-          ind.textContent = "Bố cục: Dải Lụa Phân Cột";
-        } else if (val === 'bottom_platform') {
-          ind.textContent = "Bố cục: Bệ Đáy Điện Ảnh";
-        } else if (val === 'center_hourglass') {
-          ind.textContent = "Bố cục: Đồng Hồ Cát";
-        } else if (val === 'diagonal_slash') {
-          ind.textContent = "Bố cục: Vát Chéo Năng Động";
-        } else if (val === 'l_frame') {
-          ind.textContent = "Bố cục: Khung Góc L";
-        } else {
-          ind.textContent = "Bố cục: Vòm Đỉnh";
-        }
-      }
-      updateStyleHintsForLayout(val, preferredStyle);
+      if (!ind) return;
+      ind.textContent = layoutName
+        ? `Bố cục: ${LAYOUT_DISPLAY_NAMES[layoutName] || layoutName}`
+        : "Bố cục: Tự động thông minh";
     }
 
     // 1-Click Preset Loader
@@ -2095,10 +1949,7 @@
       if (p.category && p.category !== currentCategory) {
         switchCategory(p.category);
       }
-      const layoutVal = p.layout || 'top_dome';
-      const selLayout = document.getElementById('sel-layout');
-      if (selLayout) selLayout.value = layoutVal;
-      onLayoutSelect(layoutVal, p.style_hint || 'auto');
+      document.getElementById('sel-style-pref').value = p.style_pref || 'auto';
 
       document.getElementById('inp-title').value = p.title || '';
       document.getElementById('inp-scene-desc').value = p.image_description || '';
@@ -2149,154 +2000,6 @@
         }
       }
 
-      updateTextEffectSuggestion();
-      updateFontSuggestion();
-    }
-
-    // Font display names, mirrors FONT_CATALOG['display_name'] in src/tendoo/layouts/font_engine.py
-    const FONT_NAMES = {
-      bevietnam: 'Be Vietnam Pro',
-      gotham: 'SVN-Gotham Ultra',
-      harabaras: 'SVN-Harabaras',
-      anton: 'Anton',
-      days: 'SVN-Days',
-      hemihead: 'SVN-Hemi Head',
-      lolapeluza: 'SVN-Lolapeluza',
-      oswald: 'Oswald',
-      playfair: 'Playfair Display',
-      dancing: 'Dancing Script',
-      clementine: 'SVN-Clementine',
-      pacifico: 'Pacifico',
-      cookies: 'SVN-Cookies',
-      gretoon: 'SVN-Gretoon',
-      grocery: 'SVN-Grocery Rounded',
-      blowbrush: 'SVN-Blow Brush',
-      sedgwick: 'Sedgwick Ave Display',
-      guerrilla: 'SVN-Guerrilla',
-      holidays: 'SVN-Holidays',
-    };
-
-    // Mirrors the recommendation heuristic in src/tendoo/layouts/font_engine.py::recommend_font()
-    // Client-side preview only — the backend re-resolves "auto" independently and is the source of truth.
-    function suggestFontKey(category, styleHint, text) {
-      const hint = (styleHint || '').toLowerCase();
-      const txt = (text || '').toLowerCase();
-
-      if (/sport|speed|cyber|racing|gaming/.test(hint)) return 'days';
-      if (/luxury|gold|champagne|silk/.test(hint)) return 'playfair';
-      if (/festive|moon|tet|xuan|party/.test(hint)) return 'holidays';
-      if (/asphalt|rock|stone|dark/.test(hint)) return 'anton';
-
-      if (/cafe|cà phê|trà sữa|nước ép|sinh tố|bistro|ẩm thực|summer|mùa hè/.test(txt)) return 'pacifico';
-      if (/bánh|kem|bakery|sweet|ngọt|trẻ em|đồ chơi/.test(txt)) return 'cookies';
-      if (/spa|thẩm mỹ|massage|nước hoa|son|mỹ phẩm/.test(txt)) return (/spa|organic/.test(txt)) ? 'dancing' : 'playfair';
-      if (/tết|giáng sinh|chúc mừng|tri ân|gala/.test(txt)) return 'holidays';
-      if (/streetwear|sneaker|hiphop|skateboard|giày/.test(txt)) return 'blowbrush';
-
-      switch (category) {
-        case 'promo': return 'anton';
-        case 'opening': return 'pacifico';
-        case 'feedback': return 'playfair';
-        case 'recruitment': return 'gotham';
-        case 'product_intro': return (/sport|tech/.test(hint)) ? 'days' : 'bevietnam';
-        case 'guide': return 'bevietnam';
-        default: return 'bevietnam';
-      }
-    }
-
-    function updateFontSuggestion() {
-      const title = document.getElementById('inp-title')?.value || '';
-      const hintElem = document.getElementById('font-smart-hint');
-      const hintText = document.getElementById('font-hint-text');
-      const selFont = document.getElementById('sel-font-family');
-      if (!hintElem || !hintText || !selFont) return;
-
-      // Only surface a hint while the user is on "auto" — an explicit manual choice is never overridden.
-      if (selFont.value !== 'auto') {
-        hintElem.style.display = 'none';
-        return;
-      }
-
-      const styleHint = document.getElementById('sel-style-hint')?.value || '';
-      const matched = suggestFontKey(currentCategory, styleHint, title);
-      if (!matched || !FONT_NAMES[matched]) {
-        hintElem.style.display = 'none';
-        return;
-      }
-
-      hintElem.style.display = 'inline-block';
-      hintText.innerHTML = `✨ Gợi ý: <b>${FONT_NAMES[matched]}</b> (Bấm để chọn)`;
-      hintElem.onclick = () => {
-        selFont.value = matched;
-        hintText.innerHTML = `✓ Đã chọn: <b>${FONT_NAMES[matched]}</b>`;
-        hintElem.style.borderColor = '#10B981';
-        hintElem.style.color = '#34D399';
-        setTimeout(() => {
-          hintElem.style.display = 'none';
-          hintElem.style.borderColor = 'rgba(56, 189, 248, 0.35)';
-          hintElem.style.color = '#38BDF8';
-        }, 1800);
-      };
-    }
-
-    const EFFECT_NAMES = {
-      embossed: 'In nổi 3D Mạ Vàng',
-      shadow: 'Bóng Đổ Studio',
-      led: 'Đèn LED Backlit',
-      neon: 'Phát Quang Neon',
-      chrome: 'Chrome Bạch Kim',
-      engraved: 'Khắc Chìm Sa Thạch',
-      holographic: 'Hologram Xà Cừ',
-      outline: 'Viền Rỗng Thể Thao',
-    };
-
-    function updateTextEffectSuggestion() {
-      const title = (document.getElementById('inp-title')?.value || '').toLowerCase();
-      const hintElem = document.getElementById('effect-smart-hint');
-      const hintText = document.getElementById('effect-hint-text');
-      const selEffect = document.getElementById('sel-text-effect');
-      const layout = document.getElementById('sel-layout')?.value || '';
-
-      if (!hintElem || !hintText || !selEffect) return;
-
-      let matched = null;
-      if (/neon|phát quang|quán bar|đêm|night|cyber|glow|edm|club/i.test(title)) {
-        matched = 'neon';
-      } else if (/chrome|kim loại|siêu xe|sport|racing|tốc độ|bạch kim|flagship/i.test(title)) {
-        matched = 'chrome';
-      } else if (/hologram|xà cừ|lấp lánh|glitter|kpop|gen z|trang sức|mỹ phẩm|skincare|son môi/i.test(title)) {
-        matched = 'holographic';
-      } else if (/khắc chìm|sa thạch|đá cổ|sử thi|cổ kính|rượu vang|da thật|vintage/i.test(title)) {
-        matched = 'engraved';
-      } else if (/streetwear|thể thao|fitness|sneaker|chạy bộ|marathon|gym|rỗng/i.test(title)) {
-        matched = 'outline';
-      } else if (/led|hi-res|công nghệ|hybrid|tai nghe|audio|digital|suv/i.test(title)) {
-        matched = 'led';
-      } else if (/hoàng gia|thượng hạng|vàng|gold|trung thu|tết|quà tặng|xa xỉ|dạ lông cừu|atelier|luxury/i.test(title)) {
-        matched = 'embossed';
-      } else if (layout === 'center_hourglass') {
-        matched = 'embossed';
-      } else if (layout === 'bottom_platform' && (/hybrid|công nghệ/i.test(title))) {
-        matched = 'led';
-      }
-
-      if (matched && selEffect.value !== matched) {
-        hintElem.style.display = 'inline-block';
-        hintText.innerHTML = `✨ Gợi ý: <b>${EFFECT_NAMES[matched]}</b> (Bấm để chọn)`;
-        hintElem.onclick = () => {
-          selEffect.value = matched;
-          hintText.innerHTML = `✓ Đã chọn: <b>${EFFECT_NAMES[matched]}</b>`;
-          hintElem.style.borderColor = '#10B981';
-          hintElem.style.color = '#34D399';
-          setTimeout(() => {
-            hintElem.style.display = 'none';
-            hintElem.style.borderColor = 'rgba(56, 189, 248, 0.35)';
-            hintElem.style.color = '#38BDF8';
-          }, 1800);
-        };
-      } else {
-        hintElem.style.display = 'none';
-      }
     }
 
     // Toggle Advanced Technical Settings Box
@@ -2444,11 +2147,12 @@
         // Usage Guide
         guide_steps: getGuideSteps(),
 
-        // Visual / Design Controls
-        layout: document.getElementById('sel-layout').value,
-        style_hint: document.getElementById('sel-style-hint').value,
-        text_effect: document.getElementById('sel-text-effect').value,
-        font_family: document.getElementById('sel-font-family')?.value || 'auto',
+        // Visual / Design Controls -- layout/style_hint/font_family are no longer sent:
+        // the server auto-matches all three from category + style_pref (Phase B).
+        style_pref: document.getElementById('sel-style-pref').value,
+        primary_color: document.getElementById('inp-color-auto').checked
+          ? null
+          : document.getElementById('inp-primary-color').value,
         aspect_ratio: document.getElementById('sel-aspect-ratio').value,
         num_images: parseInt(document.getElementById('sel-num-images').value) || 1,
         seed: parseInt(document.getElementById('inp-seed').value) || 42,
@@ -2513,6 +2217,9 @@
 
         timingBadge.textContent = `Hoàn thành trong ${data.latency_s || durationSec}s`;
         timingBadge.style.display = 'inline-block';
+
+        // Reflects the server's actual Phase B auto-match decision, not a client guess.
+        updateLayoutIndicator(data.resolved_layout);
 
       } catch (err) {
         alert("Lỗi khi sinh ảnh: " + err.message);
@@ -2633,14 +2340,6 @@
       document.getElementById('poster-form')?.addEventListener('input', (ev) => {
         ev.target.classList?.remove('field-invalid');
       });
-
-      document.getElementById('inp-title')?.addEventListener('input', updateTextEffectSuggestion);
-      document.getElementById('sel-layout')?.addEventListener('change', updateTextEffectSuggestion);
-      document.getElementById('sel-text-effect')?.addEventListener('change', updateTextEffectSuggestion);
-
-      document.getElementById('inp-title')?.addEventListener('input', updateFontSuggestion);
-      document.getElementById('sel-style-hint')?.addEventListener('change', updateFontSuggestion);
-      document.getElementById('sel-font-family')?.addEventListener('change', updateFontSuggestion);
     });
   </script>
 </body>
