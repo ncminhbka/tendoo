@@ -141,9 +141,35 @@ class FreeformLayout(BaseLayout):
         # pair from the render plan (via req.prompt_corridor), since the actual mood
         # of a freeform poster is whatever the user's own prompt describes, not a
         # fixed per-layout aesthetic like the other 6 layouts have.
+        #
+        # DELIBERATE DESIGN DECISION (see yeu_cau.txt's own note asking about this):
+        # ONE shared corridor prompt is used for every reserved zone, however many/
+        # scattered they are -- NOT generalized to K+1 branches (1 scene + K per-zone
+        # corridors) through denoise_regional_velocity_blended. Two reasons:
+        #   1. Cost scales linearly with K -- a 4-5 zone freeform poster (see
+        #      prompt_test.txt's coffee-banner case) would mean 4-5x the forward
+        #      passes per step, on a pipeline already ~6s/image with just 2 branches.
+        #   2. It's less necessary than it first looks: denoise_regional_velocity_
+        #      blended still runs ONE shared token sequence -- the "corridor" branch's
+        #      prediction at any position still attends (self-attention) to the
+        #      surrounding CANVAS tokens' evolving state, not just this prompt's text.
+        #      So as long as this prompt describes "declutter/simplify, harmonize
+        #      with whatever is locally around you" rather than one fixed absolute
+        #      look, scattered zones over a naturally-varied scene (e.g. bright
+        #      top-left, shadowed bottom-right) should still pick up locally coherent
+        #      tone for free, without paying for extra branches.
+        # If a real GPU test later shows a genuinely different look is needed per
+        # region (not just tone drift), prefer encoding that variation in the SCENE
+        # prompt instead (e.g. "warm window light grazing the left side, cool falloff
+        # to the right") -- every reserved zone's corridor will then inherit local
+        # coherence from whatever the scene branch is producing nearby, still at zero
+        # extra branch cost. Only reach for true K+1 branches if that also proves
+        # insufficient on real renders.
         return (
-            "A clean, softly lit uncluttered background with a subtle gentle gradient "
-            "(never a hard-edged flat block), diffuse tone harmonizing with the scene, "
+            "A clean, softly lit uncluttered background, gently simplified and "
+            "decluttered wherever it appears in the frame -- never a hard-edged flat "
+            "block of one fixed color, always blending into and harmonizing with "
+            "whatever lighting and tone is locally around it, "
             "pristine space for typography, "
             "clean photographic background, text-free area, no floating graphic text, no poster typography"
         )
