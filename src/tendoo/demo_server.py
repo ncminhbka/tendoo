@@ -776,12 +776,13 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                     r_toks, r_ids = load_and_encode_ref_image(
                         ref_image_path=ref_image_path,
                         ae=AE_MODEL,
-                        device=DEVICE_AUX,
+                        device=DEVICE_DIT,
+                        ae_device=DEVICE_AUX,
                         target_dim=512,
                         time_offset=10.0,
                     )
-                    ref_toks = r_toks.to(device=DEVICE_DIT, dtype=torch.bfloat16)
-                    ref_ids = r_ids.to(device=DEVICE_DIT)
+                    ref_toks = r_toks.to(dtype=torch.bfloat16)
+                    ref_ids = r_ids
                     print(f"  [✓] In-Context Product Reference attached at RoPE t=10.0 (shape: {ref_toks.shape})")
                 except Exception as e:
                     print(f"  [!] Warning: Failed to encode reference product image: {e}")

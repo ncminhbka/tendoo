@@ -322,7 +322,9 @@ def main():
     L_canvas = canvas_init.shape[1]
 
     print(f"📎 Encoding reference image: {ref_path}")
-    ref_tokens, ref_ids = pep.load_and_encode_ref_image(ref_image_path=ref_path, ae=ae, device=device, target_dim=512, time_offset=10.0)
+    ref_tokens, ref_ids = pep.load_and_encode_ref_image(
+        ref_image_path=ref_path, ae=ae, device=device, ae_device=aux_device, target_dim=512, time_offset=10.0,
+    )
 
     timesteps = get_schedule(num_steps=args.steps, image_seq_len=canvas_init.shape[1] + ref_tokens.shape[1])
 

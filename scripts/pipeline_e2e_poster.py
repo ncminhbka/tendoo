@@ -604,8 +604,21 @@ def load_and_encode_ref_image(
     device: str,
     target_dim: int = 512,
     time_offset: float = 10.0,
+    ae_device: Optional[str] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Encodes user product image into VAE latent with canonical In-Context RoPE offset."""
+    """
+    Encodes user product image into VAE latent with canonical In-Context RoPE offset.
+
+    `device` is where the RETURNED tokens must end up (the DiT's device, to be
+    concatenated with the canvas tokens). `ae_device` is where the `ae` module itself
+    actually lives -- on a single-GPU (or CPU) setup these are the same device and
+    `ae_device` can be omitted, but on a multi-GPU setup (DiT on cuda:0, AE on cuda:1,
+    as util.load_ae(..., device=aux_device) sets up) they differ, and encoding must
+    run on `ae_device` or torch raises a cross-device RuntimeError from conv2d.
+    """
+    if ae_device is None:
+        ae_device = device
+
     pil_img = Image.open(ref_image_path).convert("RGB")
     pil_img.thumbnail((target_dim, target_dim), Image.Resampling.LANCZOS)
     w = max(16, (pil_img.width // 16) * 16)
@@ -613,7 +626,7 @@ def load_and_encode_ref_image(
     pil_img = pil_img.resize((w, h), Image.Resampling.LANCZOS)
 
     arr = (np.array(pil_img).astype(np.float32) / 127.5 - 1.0)
-    tensor = torch.from_numpy(arr).permute(2, 0, 1).unsqueeze(0).to(device=device, dtype=torch.bfloat16)
+    tensor = torch.from_numpy(arr).permute(2, 0, 1).unsqueeze(0).to(device=ae_device, dtype=torch.bfloat16)
 
     with torch.no_grad():
         z_ref = ae.encode(tensor)
@@ -1269,6 +1282,7 @@ def run_e2e_case(
             ref_image_path=Path(ref_target),
             ae=ae,
             device=device,
+            ae_device=aux_device,
             target_dim=512,
             time_offset=10.0,
         )
