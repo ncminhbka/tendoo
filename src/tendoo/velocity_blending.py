@@ -63,15 +63,25 @@ def denoise_regional_velocity_blended(
 
     NOTE: a second optimization (reusing `model.forward_kv_extract`/`forward_kv_cached`
     to skip recomputing the reference-image tokens' K/V at every step) was investigated
-    and deliberately NOT applied here -- see `scripts/verify_ref_kv_cache_hypothesis.py`
-    and the project memory. That path uses a *different* reference-token modulation
-    scheme (a fixed `ref_fixed_timestep`, default 0.0) than the uniform per-step `t_vec`
-    modulation this function currently applies to ref tokens -- i.e. it is not a
-    value-preserving cache, it is a different sampling formulation. A real-GPU
-    comparison found the two paths diverge substantially by the final step (cosine
-    similarity ~0.93, max pixel diff ~217/255 on one test case) -- confirmed, not
-    hypothetical -- so it was not swapped in without further validation of whether
-    reference-product fidelity is actually preserved either way.
+    and DELIBERATELY REJECTED, not just "not yet applied" -- see
+    `scripts/verify_ref_kv_cache_hypothesis.py`. That path uses a *different*
+    reference-token modulation scheme (a fixed `ref_fixed_timestep`, default 0.0) than
+    the uniform per-step `t_vec` modulation this function applies to ref tokens -- i.e.
+    it is not a value-preserving cache, it is a different sampling formulation, and it
+    was confirmed to matter: 2 real-GPU test cases (mismatched ref-image/prompt, and a
+    properly product-matched one) both show the two paths diverging sharply and
+    accelerating through the schedule (final-step cosine similarity 0.93 and 0.64,
+    relative latent L2 divergence 36% and 84%, pixel MAE up to 24/255 with local
+    diffs hitting full-scale 255/255) -- these are visibly different renderings (a
+    different product pose/composition), not subtle noise. Separately, neither path
+    was observed to strongly preserve the *reference photo's* actual look (composition/
+    lighting/background) in either test -- consistent with prior project research
+    (`scripts/test_flux2_reserve_region.py`'s "Co che C" notes) that this conditioning
+    needs an explicit reference-instruction phrase in the prompt to engage reliably,
+    which neither prompt here has. Net: the ~1.33x speedup is not worth adopting given
+    the uncontrolled change in rendered product fidelity -- keep the uniform-modulation
+    path as the safe default unless/until reference-instruction prompting is added and
+    re-validated.
     """
     orig_dtype = img.dtype
     device = img.device
