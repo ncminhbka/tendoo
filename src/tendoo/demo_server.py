@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-for p in [PROJECT_ROOT, PROJECT_ROOT / "src", PROJECT_ROOT / "scripts"]:
+for p in [PROJECT_ROOT, PROJECT_ROOT / "src"]:
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
@@ -64,8 +64,6 @@ IS_MOCK_MODE: bool = False
 OUTPUT_DIR = PROJECT_ROOT / "output_demo_server"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 UI_HTML_PATH = Path(__file__).resolve().parent / "demo_ui.html"
-if not UI_HTML_PATH.exists():
-    UI_HTML_PATH = PROJECT_ROOT / "scripts" / "demo_ui.html"
 
 
 def free_all_gpu_memory():
@@ -747,7 +745,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     else:
         # Real DiT inference on 2x A30
         from flux2.sampling import get_schedule, prc_img, prc_txt
-        from pipeline_e2e_poster import denoise_regional_velocity_blended, load_and_encode_ref_image
+        from tendoo.velocity_blending import denoise_regional_velocity_blended, load_and_encode_ref_image
 
         prompt_corr = req.prompt_corridor or layout.get_corridor_prompt(style_hint)
 
