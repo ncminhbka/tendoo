@@ -148,8 +148,12 @@ class PosterContent:
     # Freeform Multi-Zone layout only (see layouts/freeform/): a render plan of
     # independent text blocks, each {"text": str, "zone": one of
     # layouts.freeform.zones.ZONE_NAMES, "role": "hero"|"subtitle"|"body"|"caption"|
-    # "badge", "color": Optional[str] hex}. Ignored by the other 6 layouts.
+    # "badge", "color": Optional[str] hex, "icon": Optional[str] name from
+    # layouts.freeform.layout.ICON_SVG_BY_NAME}. Ignored by the other 6 layouts.
     free_text_blocks: List[Dict[str, Any]] = field(default_factory=list)
+    # Freeform layout only: which named zone (layouts.freeform.zones.ZONE_NAMES) to
+    # place the QR code image in, if qr_data_uri is set. None = no QR rendered.
+    qr_zone: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -187,6 +191,7 @@ class PosterContent:
             "steps": list(self.steps),
             "category_body_html": self.category_body_html,
             "free_text_blocks": list(self.free_text_blocks),
+            "qr_zone": self.qr_zone,
         }
 
 

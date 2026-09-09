@@ -24,13 +24,42 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from tendoo.layouts.base import BaseLayout, ColorPalette, PosterContent
+from tendoo.layouts.base import (
+    ARROW_RIGHT_ICON_SVG,
+    BaseLayout,
+    CALENDAR_ICON_SVG,
+    CHECK_ICON_SVG,
+    ColorPalette,
+    CLOCK_ICON_SVG,
+    GIFT_ICON_SVG,
+    GLOBE_ICON_SVG,
+    LOCATION_ICON_SVG,
+    PHONE_ICON_SVG,
+    PosterContent,
+    TAG_ICON_SVG,
+)
 from tendoo.layouts.font_engine import resolve_font
 from tendoo.layouts.freeform.mask import generate_freeform_mask
-from tendoo.layouts.freeform.zones import ZONE_DEFAULT_ALIGN, ZONE_GRID_AREA, ZONE_NAMES, is_valid_zone
+from tendoo.layouts.freeform.zones import ZONE_DEFAULT_ALIGN, ZONE_GRID_AREA, ZONE_NAMES, ZONE_SELF_ALIGN, is_valid_zone
 from tendoo.layouts.text_engine import normalize_text, resolve_headline_effect
 
 TEMPLATE_PATH = Path(__file__).resolve().parent / "template.html"
+
+# Optional per-block "icon" name -> the shared cross-platform SVG icon constants
+# every other layout's footer already uses (base.py) -- reused here so a block like
+# {"text": "0334842155", "zone": "bottom_left", "role": "caption", "icon": "phone"}
+# renders with the same visual language as the other 6 layouts' contact footers.
+ICON_SVG_BY_NAME: Dict[str, str] = {
+    "phone": PHONE_ICON_SVG,
+    "location": LOCATION_ICON_SVG,
+    "globe": GLOBE_ICON_SVG,
+    "calendar": CALENDAR_ICON_SVG,
+    "gift": GIFT_ICON_SVG,
+    "tag": TAG_ICON_SVG,
+    "clock": CLOCK_ICON_SVG,
+    "check": CHECK_ICON_SVG,
+    "arrow_right": ARROW_RIGHT_ICON_SVG,
+}
 
 # Static role -> (font-size ratio of canvas width, font-weight, uppercase?) scale.
 # Deliberately simple (no per-line-count adaptive ladder like the other 6 layouts use
@@ -181,7 +210,8 @@ class FreeformLayout(BaseLayout):
         zone_cells_html = []
         for zone_name in ZONE_NAMES:
             zone_blocks = by_zone[zone_name]
-            if not zone_blocks:
+            zone_has_qr = bool(content.qr_data_uri) and getattr(content, "qr_zone", None) == zone_name
+            if not zone_blocks and not zone_has_qr:
                 continue
             align = ZONE_DEFAULT_ALIGN[zone_name]
             items_html = []
@@ -195,16 +225,34 @@ class FreeformLayout(BaseLayout):
                 is_hero = b is hero_block
                 fill_css = headline_fill_css if is_hero else f"color: {html.escape(b.get('color') or palette.sub_color)};"
                 text_transform = "uppercase" if uppercase else "none"
+                icon_svg = ICON_SVG_BY_NAME.get(b.get("icon", ""), "")
                 items_html.append(
                     f'          <div class="freeform-block freeform-role-{role}" '
                     f'style="font-size:{font_size}px; font-weight:{weight}; text-transform:{text_transform}; '
-                    f'text-align:{align}; {fill_css}">{html.escape(text)}</div>'
+                    f'text-align:{align}; {fill_css}">{icon_svg}{html.escape(text)}</div>'
+                )
+            # QR code: a special image element (not a text block) placed into whichever
+            # zone the render plan (or the caller) designated via content.qr_zone.
+            if zone_has_qr:
+                items_html.append(
+                    '          <div class="freeform-qr-card">'
+                    f'<img class="freeform-qr-img" src="{content.qr_data_uri}" alt="QR Code">'
+                    '<div class="freeform-qr-hint">QUÉT MÃ QR</div></div>'
                 )
             if not items_html:
                 continue
+            justify_self, align_self = ZONE_SELF_ALIGN[zone_name]
+            # Cap each zone's footprint (in px, not %, to sidestep grid/percentage
+            # sizing ambiguity) so a long/large block placed in a side zone (e.g. a
+            # "hero" in middle_left, per prompt_test.txt's own examples) still wraps
+            # within a sane width instead of forcing its "auto" track to balloon --
+            # the middle row/column (the actual product/scene area) must stay intact.
+            max_w_px, max_h_px = int(width * 0.42), int(height * 0.42)
             zone_cells_html.append(
                 f'        <div class="freeform-zone" style="grid-area: {ZONE_GRID_AREA[zone_name]}; '
-                f'justify-items: {"flex-start" if align == "left" else ("flex-end" if align == "right" else "center")}; '
+                f'justify-self: {justify_self}; align-self: {align_self}; '
+                f'max-width: {max_w_px}px; max-height: {max_h_px}px; '
+                f'align-items: {"flex-start" if align == "left" else ("flex-end" if align == "right" else "center")}; '
                 f'text-align: {align};">\n' + "\n".join(items_html) + "\n        </div>"
             )
 

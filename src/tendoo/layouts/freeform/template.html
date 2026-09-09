@@ -45,14 +45,18 @@
       z-index: 1;
     }
 
-    /* 3x3 named-anchor grid -- must match zones.ZONE_GRID_AREA exactly */
+    /* 3x3 named-anchor grid -- must match zones.ZONE_GRID_AREA exactly.
+       Outer rows/columns are "auto" (hug their content) and only the middle
+       row/column absorbs remaining space -- this is what makes a corner cell (e.g. a
+       QR code or a short badge) anchor snugly against the actual canvas edge/corner
+       instead of floating centered inside a large equal-thirds band. */
     .freeform-grid {
       position: absolute;
       inset: 4%;
       z-index: 10;
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows: 1fr 1fr 1fr;
+      grid-template-columns: auto 1fr auto;
+      grid-template-rows: auto 1fr auto;
       column-gap: 3%;
       row-gap: 3%;
       pointer-events: none;
@@ -64,6 +68,7 @@
       justify-content: center;
       gap: 8px;
       min-width: 0;
+      max-width: 100%;
       {{wrap_filter_css}}
     }
 
@@ -87,6 +92,37 @@
       color: var(--badge-text);
       box-shadow: var(--badge-shadow);
       width: fit-content;
+    }
+
+    .freeform-qr-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: var(--footer-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+      width: fit-content;
+    }
+
+    .freeform-qr-img {
+      width: 56px;
+      height: 56px;
+      border-radius: 4px;
+      background: #FFFFFF;
+      padding: 2px;
+      display: block;
+    }
+
+    .freeform-qr-hint {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--accent-color);
+      text-transform: uppercase;
     }
 
     {{custom_css}}

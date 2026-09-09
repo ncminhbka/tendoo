@@ -109,6 +109,76 @@ PLAN_COFFEE_MULTI_CTA = [
 ]
 
 
+def test_render_freeform_plan_with_icons_and_qr():
+    """A realistic full request: prompt-driven hero/subtitle text PLUS other filled
+    form fields (brand, hotline, address) placed as footer-style blocks with icons,
+    PLUS a QR code -- the case the user asked about (are non-prompt fields handled?)."""
+    from tendoo.qr import generate_qr_base64
+
+    layout = get_layout("freeform")
+    plan = [
+        {"text": "GIAM 50% HOM NAY", "zone": "top_center", "role": "hero"},
+        {"text": "Tendoo Coffee", "zone": "bottom_left", "role": "body"},
+        {"text": "0334842155", "zone": "bottom_left", "role": "caption", "icon": "phone"},
+        {"text": "123 Le Loi, Q1, TP.HCM", "zone": "bottom_left", "role": "caption", "icon": "location"},
+    ]
+    zones_requested = list({b["zone"] for b in plan})
+
+    bg = _synth_bg()
+    mask = layout.generate_mask(width=1024, height=1024, zones=zones_requested)
+    safe_zone = layout.get_safe_zone()
+    palette = analyze_color_harmony(np.array(bg), safe_zone, color_mode="auto")
+
+    qr_data_uri = generate_qr_base64("https://tendoo.click") or ""
+    assert qr_data_uri, "QR generation should succeed for this test to be meaningful"
+
+    content = PosterContent(
+        headline=plan[0]["text"],
+        category="promo",
+        free_text_blocks=plan,
+        qr_data_uri=qr_data_uri,
+        qr_zone="bottom_right",
+    )
+
+    html_str = layout.render_html(
+        content=content, palette=palette, bg_data_uri=_pil_to_data_uri(bg), width=1024, height=1024,
+    )
+
+    assert "{{" not in html_str
+    assert "icon-phone" in html_str, "Phone icon SVG should be embedded for the icon='phone' block"
+    assert "icon-location" in html_str, "Location icon SVG should be embedded for the icon='location' block"
+    assert "freeform-qr-card" in html_str and qr_data_uri in html_str, "QR block should render in its own zone"
+    for block in plan:
+        assert html.escape(block["text"]) in html_str
+
+    out_path = OUTPUT_DIR / "test_freeform_icons_and_qr.png"
+    PosterRenderer.render(html_content=html_str, output_image_path=out_path, width=1024, height=1024)
+    assert out_path.exists() and out_path.stat().st_size > 30000
+    print(f"[PASSED] Rendered freeform plan with icons+QR -> {out_path}")
+
+
+def test_freeform_qr_only_zone_renders_even_with_no_text_blocks_there():
+    """QR must still render in its target zone even if no text block was also
+    assigned there (a real gap the naive 'skip empty zones' loop could hit)."""
+    from tendoo.qr import generate_qr_base64
+
+    layout = get_layout("freeform")
+    plan = [{"text": "HELLO", "zone": "top_center", "role": "hero"}]
+    bg = _synth_bg()
+    safe_zone = layout.get_safe_zone()
+    palette = analyze_color_harmony(np.array(bg), safe_zone, color_mode="auto")
+    qr_data_uri = generate_qr_base64("https://tendoo.click") or ""
+
+    content = PosterContent(
+        headline="HELLO", category="promo", free_text_blocks=plan,
+        qr_data_uri=qr_data_uri, qr_zone="bottom_right",
+    )
+    html_str = layout.render_html(
+        content=content, palette=palette, bg_data_uri=_pil_to_data_uri(bg), width=1024, height=1024,
+    )
+    assert "freeform-qr-card" in html_str
+
+
 @pytest.mark.parametrize("plan_name,plan", [
     ("watch_topleft_midleft", PLAN_WATCH_TOPLEFT_MIDLEFT),
     ("watch_top_bottom", PLAN_WATCH_TOP_BOTTOM),

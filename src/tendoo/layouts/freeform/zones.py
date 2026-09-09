@@ -53,6 +53,17 @@ ZONE_DEFAULT_ALIGN: Dict[str, str] = {
     "top_right": "right", "middle_right": "right", "bottom_right": "right",
 }
 
+# CSS Grid (justify-self, align-self) per zone -- the outer rows/columns are sized
+# "auto" (hug their content) precisely so a small element (a QR code, a short badge)
+# anchors snugly against the actual canvas edge/corner it names, instead of floating
+# centered inside a large equal-thirds band (the original 1fr/1fr/1fr + always-centered
+# layout looked "floating" for exactly this reason -- fixed 2026-09).
+ZONE_SELF_ALIGN: Dict[str, Tuple[str, str]] = {
+    "top_left": ("start", "start"), "top_center": ("center", "start"), "top_right": ("end", "start"),
+    "middle_left": ("start", "center"), "center": ("center", "center"), "middle_right": ("end", "center"),
+    "bottom_left": ("start", "end"), "bottom_center": ("center", "end"), "bottom_right": ("end", "end"),
+}
+
 
 def is_valid_zone(name: str) -> bool:
     return name in ZONE_RECTS
