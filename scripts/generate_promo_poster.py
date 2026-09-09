@@ -91,7 +91,7 @@ from flux2.sampling import (
     prc_img,
     prc_txt,
 )
-from tendoo.typography_engine import PosterRenderer
+from tendoo.poster_renderer import PosterRenderer
 
 
 # ==================================================================================================

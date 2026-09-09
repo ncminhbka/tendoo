@@ -49,7 +49,7 @@ from flux2.model import Flux2
 from flux2.sampling import batched_prc_txt, denoise, denoise_cfg, get_schedule, prc_img
 from flux2.text_encoder import load_qwen3_embedder
 from flux2.util import load_ae, load_flow_model
-from tendoo.glyph_engine import GlyphInfo, render_glyph
+from tendoo_legacy.glyph_engine import GlyphInfo, render_glyph
 
 # Default 4 Benchmark Cases (Uncensored, realistic commercial prompts)
 BENCHMARK_CASES: List[Dict[str, Any]] = [

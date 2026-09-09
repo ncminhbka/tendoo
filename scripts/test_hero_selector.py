@@ -493,7 +493,8 @@ def render_preview(blueprint: Dict[str, Any], out_path: Path, case_id: str) -> O
     """
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
     from PIL import Image, ImageDraw
-    from tendoo.typography_engine import PosterBackgroundAnalyzer, PosterRenderer, PosterTemplateEngine
+    from tendoo.poster_renderer import PosterRenderer
+    from tendoo_legacy.typography_engine import PosterBackgroundAnalyzer, PosterTemplateEngine
 
     canvas = blueprint.get("canvas", {}) or {}
     w, h = int(canvas.get("width", 1024)), int(canvas.get("height", 1024))

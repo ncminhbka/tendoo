@@ -1,8 +1,10 @@
 """
 ==================================================================================================
-TENDOO AI - DYNAMIC HTML/CSS TYPOGRAPHY OVERLAY ENGINE
+TENDOO AI - DYNAMIC HTML/CSS TYPOGRAPHY OVERLAY ENGINE (LEGACY "100%-overlay" pipeline)
 ==================================================================================================
-Module: src/tendoo/typography_engine.py
+Module: src/tendoo_legacy/typography_engine.py (moved out of src/tendoo/ on 2026-09-08 --
+        this is the older PosterTemplateEngine pipeline used by scripts/run_full_pipeline.py
+        and friends, NOT by the live tendoo.demo_server / tendoo.layouts stack)
 Purpose: State-of-the-Art Scalable Typography and Component Overlay Engine for Commercial Posters.
 Inspired by: AAAI 2026 Oral "PosterVerse: A Full-Workflow Framework for Commercial-Grade Poster
              Generation with HTML-Based Scalable Typography" (Liu et al., 2026).
@@ -15,12 +17,15 @@ CORE ARCHITECTURAL DIVISION OF LABOR:
        Discounts, Brand Footers, and Hotlines.
      - Performs automated background luminance and contrast analysis to prevent color clashing.
      - Offers both an Algorithmic Layout Generator (100% offline) and a VLM Prompt Builder (for GPT-4o / Qwen2.5-VL).
+
+NOTE: PosterRenderer (the Playwright HTML->PNG renderer) used to live at the bottom of this
+file. It is genuinely shared by the live demo too, so it now lives at tendoo.poster_renderer
+instead -- import it from there, not from here.
 ==================================================================================================
 """
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import colorsys
 import json
@@ -2102,109 +2107,3 @@ class PosterTemplateEngine:
             body_html=body_html,
         )
 
-
-# ==================================================================================================
-# 5. PLAYWRIGHT CHROMIUM HEADLESS RENDERER
-# ==================================================================================================
-
-class PosterRenderer:
-    """
-    High-performance headless Chromium renderer using Playwright.
-    Ensures zero-network offline rendering, sub-pixel rasterization, and font readiness.
-    """
-
-    @classmethod
-    async def render_html_async(
-        cls,
-        html_content: str,
-        output_image_path: str | Path,
-        width: int,
-        height: int,
-        device_scale_factor: int = 1,
-    ) -> Path:
-        """
-        Renders HTML content into a lossless PNG image using Playwright Chromium.
-        """
-        from playwright.async_api import async_playwright
-
-        out_file = Path(output_image_path).resolve()
-        out_file.parent.mkdir(parents=True, exist_ok=True)
-
-        async with async_playwright() as p:
-            launch_args = [
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-gpu",
-            ]
-            launch_kwargs: Dict[str, Any] = {
-                "headless": True,
-                "args": launch_args,
-            }
-
-            import shutil
-            sys_chrome = (
-                os.environ.get("PLAYWRIGHT_CHROME_PATH")
-                or shutil.which("chromium-browser")
-                or shutil.which("chromium")
-                or shutil.which("google-chrome")
-                or shutil.which("google-chrome-stable")
-            )
-            if sys_chrome:
-                logger.info(f"[PosterRenderer] Found system browser at: {sys_chrome}")
-                launch_kwargs["executable_path"] = sys_chrome
-
-            browser = await p.chromium.launch(**launch_kwargs)
-            context = await browser.new_context(
-                viewport={"width": width, "height": height},
-                device_scale_factor=device_scale_factor,
-            )
-            page = await context.new_page()
-
-            # Set content: wait for networkidle so external web fonts (Google Fonts) can download
-            try:
-                await page.set_content(html_content, wait_until="networkidle", timeout=6000)
-            except Exception as e:
-                logger.warning(f"[PosterRenderer] 'networkidle' wait failed or timed out ({e}), proceeding with rendered DOM...")
-                try:
-                    await page.set_content(html_content, wait_until="domcontentloaded", timeout=2000)
-                except Exception:
-                    pass
-
-            # Settle fonts if available, otherwise continue smoothly without blocking
-            try:
-                await asyncio.wait_for(page.evaluate("document.fonts.ready"), timeout=4.0)
-            except Exception as e:
-                logger.debug(f"[PosterRenderer] Font readiness check skipped or timed out: {e}")
-
-
-            # Take pixel-accurate screenshot
-            await page.screenshot(
-                path=str(out_file),
-                full_page=True,
-                type="png",
-            )
-            await browser.close()
-
-        logger.info(f"[PosterRenderer] Screenshot saved to: {out_file}")
-        return out_file
-
-    @classmethod
-    def render(
-        cls,
-        html_content: str,
-        output_image_path: str | Path,
-        width: int,
-        height: int,
-        device_scale_factor: int = 1,
-    ) -> Path:
-        """Synchronous wrapper for render_html_async."""
-        return asyncio.run(
-            cls.render_html_async(
-                html_content=html_content,
-                output_image_path=output_image_path,
-                width=width,
-                height=height,
-                device_scale_factor=device_scale_factor,
-            )
-        )

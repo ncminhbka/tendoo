@@ -31,8 +31,9 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from tendoo.typography_engine import PosterBackgroundAnalyzer, PosterRenderer, PosterTemplateEngine  # noqa: E402
-from tendoo.layout_geometry import compute_safe_rect_for_category  # noqa: E402
+from tendoo.poster_renderer import PosterRenderer  # noqa: E402
+from tendoo_legacy.typography_engine import PosterBackgroundAnalyzer, PosterTemplateEngine  # noqa: E402
+from tendoo_legacy.layout_geometry import compute_safe_rect_for_category  # noqa: E402
 
 OUT_DIR = PROJECT_ROOT / "output_hero_selector_test"
 

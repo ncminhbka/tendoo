@@ -26,7 +26,7 @@ from tendoo.layouts import (
     balance_vietnamese_headline,
     get_layout,
 )
-from tendoo.typography_engine import PosterRenderer
+from tendoo.poster_renderer import PosterRenderer
 
 
 OUTPUT_DIR = Path("output_layouts_test")

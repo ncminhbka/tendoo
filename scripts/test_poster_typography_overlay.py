@@ -49,10 +49,10 @@ if str(PROJECT_ROOT) not in sys.path:
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from tendoo.typography_engine import (
+from tendoo.poster_renderer import PosterRenderer
+from tendoo_legacy.typography_engine import (
     BackgroundAnalysis,
     PosterBackgroundAnalyzer,
-    PosterRenderer,
     PosterTemplateEngine,
     TypographyPromptBuilder,
 )

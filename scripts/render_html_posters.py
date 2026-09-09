@@ -31,7 +31,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from PIL import Image, ImageDraw, ImageFont
-from tendoo.typography_engine import PosterRenderer
+from tendoo.poster_renderer import PosterRenderer
 
 
 def get_fallback_font(size: int = 24, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:

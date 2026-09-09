@@ -192,7 +192,7 @@ def main():
     out_path = Path(args.output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
-    from src.tendoo.glyph_engine import resolve_font_path
+    from src.tendoo_legacy.glyph_engine import resolve_font_path
 
     # Build plan
     plan: List[Dict] = []

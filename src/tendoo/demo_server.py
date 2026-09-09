@@ -48,7 +48,7 @@ from tendoo.layouts import (
     analyze_color_harmony,
     get_layout,
 )
-from tendoo.typography_engine import PosterRenderer
+from tendoo.poster_renderer import PosterRenderer
 
 
 # Global application state

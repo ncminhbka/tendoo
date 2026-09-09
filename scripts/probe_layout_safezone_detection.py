@@ -214,7 +214,7 @@ def main():
         print(f"    [{tag:7s}] {d['class']:20s} conf={d['confidence']:.2f}  bbox={d['bbox_xyxy']}")
 
     # Compute MER
-    from tendoo.layout_geometry import compute_safe_rect_for_category
+    from tendoo_legacy.layout_geometry import compute_safe_rect_for_category
 
     canvas_w, canvas_h = result["canvas_size"]
     orientation = args.orientation or ("portrait" if canvas_h > canvas_w else "landscape")

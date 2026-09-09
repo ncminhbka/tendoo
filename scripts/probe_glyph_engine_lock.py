@@ -78,7 +78,7 @@ from PIL import Image
 from flux2.autoencoder import AutoEncoder
 from flux2.sampling import batched_prc_txt, denoise_cfg, get_schedule, prc_img
 from flux2.util import load_ae, load_flow_model, load_qwen3_embedder
-from tendoo.glyph_engine import GlyphInfo, render_glyph, resolve_font_path
+from tendoo_legacy.glyph_engine import GlyphInfo, render_glyph, resolve_font_path
 
 
 # ==================================================================================================
@@ -257,7 +257,7 @@ def render_glyph_for_run(run: RunConfig) -> GlyphInfo:
     if height_override is not None:
         # compute_optimal_glyph_box exposes this directly; render_glyph (Mode A) does not, so we
         # call the box computation once ourselves and force-render at that exact box via Mode B.
-        from tendoo.glyph_engine import compute_optimal_glyph_box
+        from tendoo_legacy.glyph_engine import compute_optimal_glyph_box
         box_w, box_h, chosen_pt, _lines = compute_optimal_glyph_box(
             text=run.text,
             font_name_or_path=kwargs.get("font_name_or_path", "bevietnam"),

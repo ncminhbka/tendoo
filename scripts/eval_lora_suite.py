@@ -31,8 +31,8 @@ from src.flux2.model import Flux2
 from src.flux2.sampling import batched_prc_txt, denoise_cfg, get_schedule, prc_img
 from src.flux2.text_encoder import load_qwen3_embedder
 from src.flux2.util import load_ae, load_flow_model
-from src.tendoo.glyph_engine import create_glyph_image, resolve_font_path
-from src.tendoo.lora import inject_lora_to_flux2_klein, load_lora_weights
+from src.tendoo_legacy.glyph_engine import create_glyph_image, resolve_font_path
+from src.tendoo_legacy.lora import inject_lora_to_flux2_klein, load_lora_weights
 
 
 BENCHMARK_PROBES = [

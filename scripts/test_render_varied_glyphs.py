@@ -13,7 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.tendoo.glyph_engine import render_glyph
+from src.tendoo_legacy.glyph_engine import render_glyph
 
 ARTIFACT_DIR = Path(r"C:\Users\Admin\.gemini\antigravity-ide\brain\7127dfb8-1b26-4b69-ad04-fa7b65c2dd63\test_glyphs")
 LOCAL_TEST_DIR = PROJECT_ROOT / "tests" / "rendered_glyphs"

@@ -2,7 +2,7 @@
 ====================================================================================================
 TENDOO AI - PRODUCTION GLYPH RENDERING ENGINE & RESOLUTION LOCK
 ====================================================================================================
-Module: src/tendoo/glyph_engine.py
+Module: src/tendoo_legacy/glyph_engine.py (moved out of src/tendoo/ on 2026-09-08)
 Purpose: Production-grade typography rasterizer and latent coordinate calculator for FLUX.2 DiT.
 Author: Tendoo AI Architecture Team (VDT2026)
 Frozen Policy: Standardized module for all training data pipelines, inference probes, and serving APIs.

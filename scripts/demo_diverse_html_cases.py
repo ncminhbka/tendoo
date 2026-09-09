@@ -18,7 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from tendoo.typography_engine import PosterRenderer
+from tendoo.poster_renderer import PosterRenderer
 
 OUTPUT_DIR = Path("output_diverse_cases")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

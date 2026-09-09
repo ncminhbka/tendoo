@@ -38,7 +38,7 @@ from tendoo.layouts import (
     get_layout,
 )
 from tendoo.layouts.diagonal_slash.mask import generate_diagonal_slash_mask
-from tendoo.typography_engine import PosterRenderer
+from tendoo.poster_renderer import PosterRenderer
 
 
 OUTPUT_DIR = Path("output_layouts_test")

@@ -1,24 +1,14 @@
 """
 Tendoo AI Core Package.
-Contains domain logic, typography engines, and dataset synthesis utilities for FLUX.2 DiT typography fine-tuning.
+Live demo package: the layout engine (`tendoo.layouts`), its HTML->PNG renderer
+(`tendoo.poster_renderer`), and the FastAPI demo server (`tendoo.demo_server`).
+
+The older "100%-overlay" pipeline (PosterTemplateEngine et al.), the glyph-rasterization
+dataset-synthesis engine, LoRA injection helpers, and the multi-region layout experiment
+moved to `tendoo_legacy` on 2026-09-08 -- they aren't imported by anything in this package.
 """
 
-from tendoo.glyph_engine import (
-    GlyphEngine,
-    GlyphInfo,
-    FONT_REGISTRY,
-    FONT_TIERS,
-    render_glyph,
-    compute_optimal_glyph_box,
-)
-from tendoo.typography_engine import (
-    BackgroundAnalysis,
-    ZoneMetrics,
-    PosterBackgroundAnalyzer,
-    TypographyPromptBuilder,
-    PosterTemplateEngine,
-    PosterRenderer,
-)
+from tendoo.poster_renderer import PosterRenderer
 from tendoo.layouts import (
     BaseLayout,
     ColorPalette,
@@ -31,17 +21,6 @@ from tendoo.layouts import (
 )
 
 __all__ = [
-    "GlyphEngine",
-    "GlyphInfo",
-    "FONT_REGISTRY",
-    "FONT_TIERS",
-    "render_glyph",
-    "compute_optimal_glyph_box",
-    "BackgroundAnalysis",
-    "ZoneMetrics",
-    "PosterBackgroundAnalyzer",
-    "TypographyPromptBuilder",
-    "PosterTemplateEngine",
     "PosterRenderer",
     "BaseLayout",
     "ColorPalette",

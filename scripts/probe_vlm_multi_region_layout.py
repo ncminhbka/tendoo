@@ -58,9 +58,10 @@ from dotenv import load_dotenv  # noqa: E402
 from openai import OpenAI  # noqa: E402
 from PIL import Image  # noqa: E402
 
-from tendoo.layout_geometry import compute_safe_rect_for_category  # noqa: E402
-from tendoo.typography_engine import PosterBackgroundAnalyzer, PosterRenderer, PosterTemplateEngine  # noqa: E402
-from tendoo.multi_region_layout import (  # noqa: E402
+from tendoo.poster_renderer import PosterRenderer  # noqa: E402
+from tendoo_legacy.layout_geometry import compute_safe_rect_for_category  # noqa: E402
+from tendoo_legacy.typography_engine import PosterBackgroundAnalyzer, PosterTemplateEngine  # noqa: E402
+from tendoo_legacy.multi_region_layout import (  # noqa: E402
     build_content_manifest, build_region_candidates, call_vlm_planner,
     render_debug_overlay, render_experiment_poster, resolve_assignments,
 )

@@ -38,7 +38,7 @@ from tendoo.layouts import (
     get_layout,
 )
 from tendoo.layouts.l_frame.mask import generate_l_frame_mask
-from tendoo.typography_engine import PosterRenderer
+from tendoo.poster_renderer import PosterRenderer
 
 
 OUTPUT_DIR = Path("output_layouts_test")

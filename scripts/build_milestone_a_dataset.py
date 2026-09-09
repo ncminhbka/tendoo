@@ -55,7 +55,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 load_dotenv(PROJECT_ROOT / ".env")
 
-from src.tendoo.glyph_engine import GlyphEngine  # noqa: E402
+from src.tendoo_legacy.glyph_engine import GlyphEngine  # noqa: E402
 
 glyph_engine = GlyphEngine()
 

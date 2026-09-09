@@ -32,7 +32,7 @@ from tendoo.layouts.font_engine import (
     recommend_font,
     resolve_font,
 )
-from tendoo.typography_engine import PosterRenderer
+from tendoo.poster_renderer import PosterRenderer
 
 OUTPUT_DIR = Path("output_layouts_test")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

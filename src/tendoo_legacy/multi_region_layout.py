@@ -2,7 +2,7 @@
 ==================================================================================================
 TENDOO AI -- MULTI-REGION VLM LAYOUT ASSIGNMENT (SPIKE, NOT WIRED INTO PRODUCTION)
 ==================================================================================================
-Module: src/tendoo/multi_region_layout.py
+Module: src/tendoo_legacy/multi_region_layout.py (moved out of src/tendoo/ on 2026-09-08)
 Purpose: evaluation spike for "does a VLM-driven multi-region layout beat the current fixed-CSS-
 template + single-safe_rect pipeline?" (see memory css-hero-title-overlay-direction.md, 2026-09-06
 update, and the plan this implements: content-aware layout generation, layer C).
@@ -55,8 +55,9 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 import numpy as np
 from PIL import Image, ImageDraw
 
-from tendoo.layout_geometry import BBox, EmptyRect, find_top_empty_rects
-from tendoo.typography_engine import PosterBackgroundAnalyzer, PosterRenderer, PosterTemplateEngine, _bg_image_css
+from tendoo.poster_renderer import PosterRenderer
+from tendoo_legacy.layout_geometry import BBox, EmptyRect, find_top_empty_rects
+from tendoo_legacy.typography_engine import PosterBackgroundAnalyzer, PosterTemplateEngine, _bg_image_css
 
 # ==================================================================================================
 # Reserved corner (logo / QR / contact stand-in) -- handled by a FIXED RULE, never delegated to the

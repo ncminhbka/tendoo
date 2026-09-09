@@ -2,7 +2,7 @@
 ==================================================================================================
 TENDOO AI - DETERMINISTIC LAYOUT GEOMETRY (Maximal Empty Rectangle)
 ==================================================================================================
-Module: src/tendoo/layout_geometry.py
+Module: src/tendoo_legacy/layout_geometry.py (moved out of src/tendoo/ on 2026-09-08)
 Purpose: Pure computational-geometry helper for Cấp độ 2 (Object Detection + Maximal Empty
 Rectangle) of the occlusion-avoidance discussion in AGENTS.md -- finds the largest axis-aligned
 empty rectangle available for an HTML secondary-content card WITHIN a given search region,

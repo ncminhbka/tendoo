@@ -2,7 +2,7 @@
 ====================================================================================================
 TENDOO AI - PEFT LORA INJECTION ENGINE FOR FLUX.2-KLEIN-BASE-4B
 ====================================================================================================
-Module: src/tendoo/lora.py
+Module: src/tendoo_legacy/lora.py (moved out of src/tendoo/ on 2026-09-08)
 Purpose:
     Production-grade Low-Rank Adaptation (LoRA) module for FLUX.2 Klein 4B DiT:
     1. Injects trainable rank-32 adapters into:

@@ -63,7 +63,7 @@ def build_notebook():
                     "    get_layout,\n",
                     "    list_layouts,\n",
                     ")\n",
-                    "from tendoo.typography_engine import PosterRenderer\n",
+                    "from tendoo.poster_renderer import PosterRenderer\n",
                     "\n",
                     "# Biến toàn cục giữ mô hình ấm trong VRAM\n",
                     "global DIT_MODEL, AE_MODEL, TEXT_ENCODER, AE_DTYPE, DEVICE_DIT, DEVICE_AUX\n",

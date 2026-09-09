@@ -61,7 +61,7 @@ from src.flux2.model import Flux2, Klein4BParams
 from src.flux2.sampling import batched_prc_txt, get_schedule, prc_img
 from src.flux2.text_encoder import load_qwen3_embedder
 from src.flux2.util import find_persistent_data_root, load_ae, load_flow_model
-from src.tendoo.lora import (
+from src.tendoo_legacy.lora import (
     extract_lora_state_dict,
     inject_lora_to_flux2_klein,
     load_lora_weights,

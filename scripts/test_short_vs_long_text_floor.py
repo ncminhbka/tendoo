@@ -63,7 +63,7 @@ from flux2.util import (
     load_flow_model,
     load_qwen3_embedder,
 )
-from src.tendoo.glyph_engine import resolve_font_path
+from src.tendoo_legacy.glyph_engine import resolve_font_path
 
 
 def render_multiline_glyph(

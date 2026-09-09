@@ -57,7 +57,8 @@ from openai import OpenAI  # noqa: E402
 from PIL import Image, ImageDraw  # noqa: E402
 from playwright.sync_api import sync_playwright  # noqa: E402
 
-from tendoo.typography_engine import PosterBackgroundAnalyzer, PosterRenderer, PosterTemplateEngine  # noqa: E402
+from tendoo.poster_renderer import PosterRenderer  # noqa: E402
+from tendoo_legacy.typography_engine import PosterBackgroundAnalyzer, PosterTemplateEngine  # noqa: E402
 
 load_dotenv(PROJECT_ROOT / ".env")
 _client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])

@@ -32,7 +32,7 @@ from tendoo.layouts import (
     analyze_color_harmony,
     get_layout,
 )
-from tendoo.typography_engine import PosterRenderer
+from tendoo.poster_renderer import PosterRenderer
 from tendoo.qr import generate_qr_base64
 
 

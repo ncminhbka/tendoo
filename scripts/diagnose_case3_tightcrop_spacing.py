@@ -56,7 +56,7 @@ from flux2.model import Flux2
 from flux2.sampling import batched_prc_txt, denoise, get_schedule, prc_img
 from flux2.text_encoder import load_qwen3_embedder
 from flux2.util import load_ae, load_flow_model
-from tendoo.glyph_engine import GlyphEngine, GlyphInfo, resolve_font_path
+from tendoo_legacy.glyph_engine import GlyphEngine, GlyphInfo, resolve_font_path
 
 CASE3_PROMPT = (
     "Poster flash sale thương mại điện tử bùng nổ, các hộp quà tặng màu đỏ và dải ruy băng vàng "

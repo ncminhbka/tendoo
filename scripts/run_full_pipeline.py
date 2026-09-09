@@ -51,8 +51,9 @@ logger = logging.getLogger("run_full_pipeline")
 from dotenv import load_dotenv  # noqa: E402
 from openai import OpenAI  # noqa: E402
 
-from tendoo.typography_engine import PosterBackgroundAnalyzer, PosterRenderer, PosterTemplateEngine  # noqa: E402
-from tendoo.layout_geometry import compute_safe_rect_for_category  # noqa: E402
+from tendoo.poster_renderer import PosterRenderer  # noqa: E402
+from tendoo_legacy.typography_engine import PosterBackgroundAnalyzer, PosterTemplateEngine  # noqa: E402
+from tendoo_legacy.layout_geometry import compute_safe_rect_for_category  # noqa: E402
 
 from test_hero_selector import HERO_SELECTOR_SYSTEM_PROMPT, validate_blueprint  # noqa: E402
 from probe_mer_representative_cases import detect_faces_opencv, detect_product_yoloworld  # noqa: E402

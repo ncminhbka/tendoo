@@ -45,7 +45,7 @@ from tendoo.layouts import (
     get_layout,
     list_layouts,
 )
-from tendoo.typography_engine import PosterRenderer
+from tendoo.poster_renderer import PosterRenderer
 
 
 # Catalog of 4 Canonical Commercial Campaigns
