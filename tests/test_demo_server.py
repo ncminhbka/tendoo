@@ -170,8 +170,8 @@ def test_generate_with_uploaded_product_image(client):
         "category": "product_intro",
         "title": "TAI NGHE KHÔNG DÂY",
         "image_base64": f"data:image/png;base64,{b64}",
-        "discount": "CHỐNG ỒN HYBRID",
-        "applied_product": "Bảo hành 2 năm",
+        "product_name": "Tai Nghe Không Dây Sonic",
+        "product_desc": "Chống ồn chủ động Hybrid",
         "layout": "top_dome",
         "aspect_ratio": "1:1",
         "num_images": 1,
@@ -530,6 +530,7 @@ def test_generate_diagonal_slash_mock(client):
         "category": "product_intro",
         "title": "GIÀY CHẠY BỘ CARBON\nSIÊU TỐC ĐỘ 2026",
         "product_name": "Tendoo Speed Elite",
+        "product_desc": "Đế carbon siêu nhẹ, bật nảy tối ưu tốc độ",
         "price": "3.290.000đ",
         "highlights": "Đế Carbon, Siêu Nhẹ 150g, Bật Nảy 90%",
         "store_name": "Tendoo Athletics",
@@ -557,6 +558,7 @@ def test_generate_l_frame_mock(client):
         "category": "product_intro",
         "title": "ROBOT HÚT BỤI LAU NHÀ\nECOVACS X1 OMNI PRO",
         "product_name": "Ecovacs Deebot X1",
+        "product_desc": "Robot hút bụi lau nhà cao cấp tự động",
         "price": "18.990.000đ",
         "highlights": "Lực hút 8000Pa, Giặt sấy giẻ khí nóng, Camera AI",
         "store_name": "Tendoo Smart Home",
@@ -603,6 +605,7 @@ def test_all_categories_no_raw_emojis_and_valid_svg_icons(client):
         {
             "category": "opening",
             "title": "🎉 TƯNG BỪNG KHAI TRƯƠNG\nCƠ SỞ MỚI",
+            "opening_date": "15/09/2026",
             "discount": "GIẢM 20% TOÀN BỘ MENU",
             "date_start": "15/09/2026",
             "store_name": "Tendoo Coffee",
@@ -614,6 +617,7 @@ def test_all_categories_no_raw_emojis_and_valid_svg_icons(client):
         {
             "category": "feedback",
             "title": "CẢM NHẬN KHÁCH HÀNG\nTRẢI NGHIỆM ĐỈNH CAO",
+            "feedback_target": "Liệu trình chăm sóc da chuyên sâu",
             "customer_name": "Nguyễn Văn A",
             "feedback_quote": "Dịch vụ tuyệt vời, sản phẩm rất tốt!",
             "rating": 5,
@@ -625,6 +629,9 @@ def test_all_categories_no_raw_emojis_and_valid_svg_icons(client):
         {
             "category": "recruitment",
             "title": "TUYỂN DỤNG NHÂN TÀI\nCHUYÊN VIÊN AI",
+            "job_position": "Chuyên Viên AI",
+            "apply_deadline": "30/09/2026",
+            "apply_method": "hr@tendoo.ai",
             "salary": "25 - 40 Triệu",
             "date_end": "30/09/2026",
             "store_name": "Tendoo Tech",
@@ -653,6 +660,92 @@ def test_all_categories_no_raw_emojis_and_valid_svg_icons(client):
         # Must contain vector SVGs
         assert "<svg" in html_content
         assert "</svg>" in html_content
+
+
+def test_required_fields_endpoint(client):
+    """/api/required-fields is the single source of truth the frontend fetches to
+    render '*' markers -- must match yeu_cau.txt's per-category spec exactly."""
+    response = client.get("/api/required-fields")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert data["guide_first_step"] is True
+    fields = data["fields"]
+    assert fields["promo"] == ["discount"]
+    assert fields["product_intro"] == ["product_name", "product_desc"]
+    assert fields["opening"] == ["opening_date"]
+    assert fields["feedback"] == ["feedback_target", "feedback_quote"]
+    assert fields["recruitment"] == ["job_position", "apply_deadline", "apply_method"]
+    assert fields["guide"] == []
+
+
+@pytest.mark.parametrize(
+    "category,payload_extra,expected_missing",
+    [
+        ("promo", {}, ["discount"]),
+        ("product_intro", {"product_name": "Sonic Pro"}, ["product_desc"]),
+        ("product_intro", {}, ["product_name", "product_desc"]),
+        ("opening", {}, ["opening_date"]),
+        ("feedback", {"feedback_target": "Spa"}, ["feedback_quote"]),
+        ("recruitment", {"job_position": "AI Engineer"}, ["apply_deadline", "apply_method"]),
+    ],
+)
+def test_generate_rejects_missing_required_fields(client, category, payload_extra, expected_missing):
+    """Omitting a category's required field(s) must 422 with the exact missing-field list --
+    never silently fall through to a 200 (or a 500) as it did before Phase A."""
+    payload = {"category": category, "title": "Tiêu đề bất kỳ", **payload_extra}
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 422, response.text
+    detail = response.json()["detail"]
+    assert detail["error"] == "missing_required_fields"
+    assert detail["category"] == category
+    assert sorted(detail["fields"]) == sorted(expected_missing)
+
+
+@pytest.mark.parametrize(
+    "category,payload_extra",
+    [
+        ("promo", {"discount": "GIẢM 50%"}),
+        ("product_intro", {"product_name": "Sonic Pro", "product_desc": "Chống ồn Hybrid"}),
+        ("opening", {"opening_date": "15/10/2026"}),
+        ("feedback", {"feedback_target": "Spa trẻ hóa da", "feedback_quote": "Rất hài lòng!"}),
+        (
+            "recruitment",
+            {
+                "job_position": "AI Engineer",
+                "apply_deadline": "30/10/2026",
+                "apply_method": "hr@tendoo.ai",
+            },
+        ),
+    ],
+)
+def test_generate_succeeds_with_only_required_fields_filled(client, category, payload_extra):
+    """Happy path: every other field left blank, only the category's required field(s) filled."""
+    payload = {"category": category, **payload_extra}
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    assert response.json()["success"] is True
+
+
+def test_generate_guide_requires_non_empty_first_step(client):
+    """guide has no named required field -- it's guide_steps[0] that must be non-blank."""
+    # No steps at all -> 422
+    resp_empty = client.post("/api/generate", json={"category": "guide", "guide_steps": []})
+    assert resp_empty.status_code == 422, resp_empty.text
+    assert resp_empty.json()["detail"]["fields"] == ["guide_steps[0]"]
+
+    # Step 1 present but blank/whitespace-only -> 422
+    resp_blank = client.post("/api/generate", json={"category": "guide", "guide_steps": ["   "]})
+    assert resp_blank.status_code == 422, resp_blank.text
+    assert resp_blank.json()["detail"]["fields"] == ["guide_steps[0]"]
+
+    # Step 1 non-empty -> 200
+    resp_ok = client.post(
+        "/api/generate",
+        json={"category": "guide", "guide_steps": ["Quét mã QR để bắt đầu"]},
+    )
+    assert resp_ok.status_code == 200, resp_ok.text
+    assert resp_ok.json()["success"] is True
 
 
 

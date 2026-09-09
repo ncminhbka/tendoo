@@ -231,6 +231,46 @@ class GenerateRequest(BaseModel):
     height: Optional[int] = None
 
 
+# Per-category required fields, per yeu_cau.txt (BA/tester spec). "Thông tin cửa hàng"
+# and "Hiển thị/thiết kế" sections are explicitly NOT required for any category, and
+# are therefore absent here entirely -- only fields inside a category's own "Thông tin
+# chung" block that carry a `*` in the spec are listed. `guide` has no named scalar
+# field to require -- it's special-cased in validate_required_fields() instead, since
+# its requirement is "step 1 of guide_steps must be non-empty", not a fixed field name.
+CATEGORY_REQUIRED_FIELDS: Dict[str, List[str]] = {
+    "promo": ["discount"],
+    "product_intro": ["product_name", "product_desc"],
+    "opening": ["opening_date"],
+    "feedback": ["feedback_target", "feedback_quote"],
+    "recruitment": ["job_position", "apply_deadline", "apply_method"],
+    "guide": [],
+}
+
+
+def validate_required_fields(req: GenerateRequest) -> List[str]:
+    """
+    Returns the list of required field names that are missing/blank for req.category,
+    per CATEGORY_REQUIRED_FIELDS. Empty list = valid. A field counts as missing when
+    it's absent, None, or a blank/whitespace-only string -- matching how the frontend
+    inputs behave (an untouched text input is just an empty string, never absent).
+
+    `guide` is special-cased: yeu_cau.txt requires "mô tả bước 1", i.e. the first
+    element of `guide_steps` must be non-blank (there's no fixed `guide_step_1` field --
+    steps are a dynamic list, add/removed client-side).
+    """
+    missing: List[str] = []
+    if req.category == "guide":
+        if not req.guide_steps or not req.guide_steps[0].strip():
+            missing.append("guide_steps[0]")
+        return missing
+
+    for field_name in CATEGORY_REQUIRED_FIELDS.get(req.category, []):
+        value = getattr(req, field_name, None)
+        if value is None or not str(value).strip():
+            missing.append(field_name)
+    return missing
+
+
 @app.get("/", response_class=HTMLResponse)
 async def serve_ui():
     """Serves the Tendoo Studio web frontend."""
@@ -252,6 +292,22 @@ async def get_fonts():
     return {
         "status": "success",
         "groups": list_font_options(),
+    }
+
+
+@app.get("/api/required-fields")
+async def get_required_fields():
+    """
+    Single source of truth for per-category required fields (see
+    CATEGORY_REQUIRED_FIELDS / validate_required_fields) -- the frontend fetches this
+    once on load instead of hand-duplicating the list in JS, so the two can't drift.
+    `guide_first_step: true` tells the frontend to special-case guide's first step
+    input rather than looking for a fixed field name in the `fields` dict.
+    """
+    return {
+        "status": "success",
+        "fields": CATEGORY_REQUIRED_FIELDS,
+        "guide_first_step": True,
     }
 
 
@@ -901,6 +957,17 @@ async def api_generate(req: GenerateRequest):
     Thread-safe poster generation endpoint protected by INFER_LOCK.
     Queues simultaneous requests smoothly without GPU VRAM collision.
     """
+    missing = validate_required_fields(req)
+    if missing:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": "missing_required_fields",
+                "category": req.category,
+                "fields": missing,
+            },
+        )
+
     async with INFER_LOCK:
         try:
             loop = asyncio.get_running_loop()

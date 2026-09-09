@@ -346,6 +346,11 @@
       margin-left: 3px;
     }
 
+    .field-invalid {
+      border-color: #F43F5E !important;
+      box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.25);
+    }
+
     .form-label span.hint {
       font-weight: 500;
       color: var(--text-dim);
@@ -1024,8 +1029,8 @@
 
             <!-- 1. Tiêu đề ảnh (Title / Headline) -->
             <div class="form-group">
-              <label class="form-label" id="lbl-title">Tiêu đề ảnh (Headline):<span class="req">*</span></label>
-              <textarea id="inp-title" class="form-textarea" placeholder="TRÀ ĐÀO CAM SẢ&#10;THANH MÁT TỰ NHIÊN" required></textarea>
+              <label class="form-label" id="lbl-title">Tiêu đề ảnh (Headline):</label>
+              <textarea id="inp-title" class="form-textarea" placeholder="TRÀ ĐÀO CAM SẢ&#10;THANH MÁT TỰ NHIÊN"></textarea>
             </div>
 
             <!-- 2. Tải ảnh lên (Product Reference Image) -->
@@ -1061,7 +1066,7 @@
             <div id="cat-fields-promo" class="cat-fields-block">
               <div class="form-row-2">
                 <div class="form-group">
-                  <label class="form-label">Mức ưu đãi nổi bật:<span class="hint">Nút Badge chính</span></label>
+                  <label class="form-label" id="lbl-discount">Mức ưu đãi nổi bật:<span class="hint">Nút Badge chính</span></label>
                   <input type="text" id="inp-discount" class="form-input" placeholder="MUA 2 TẶNG 1 hoặc GIẢM 50%">
                 </div>
                 <div class="form-group">
@@ -1085,7 +1090,7 @@
             <div id="cat-fields-product_intro" class="cat-fields-block" style="display: none;">
               <div class="form-row-2">
                 <div class="form-group">
-                  <label class="form-label">Tên sản phẩm / Dòng máy:<span class="req">*</span></label>
+                  <label class="form-label" id="lbl-product-name">Tên sản phẩm / Dòng máy:</label>
                   <input type="text" id="inp-product-name" class="form-input" placeholder="Tai Nghe Wireless Sonic Pro">
                 </div>
                 <div class="form-group">
@@ -1094,7 +1099,7 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Mô tả ngắn về sản phẩm:</label>
+                <label class="form-label" id="lbl-product-desc">Mô tả ngắn về sản phẩm:</label>
                 <input type="text" id="inp-product-desc" class="form-input" placeholder="Chất âm Hi-Res chuẩn phòng thu, công nghệ khử ồn tân tiến">
               </div>
               <div class="form-group">
@@ -1107,7 +1112,7 @@
             <div id="cat-fields-opening" class="cat-fields-block" style="display: none;">
               <div class="form-row-2">
                 <div class="form-group">
-                  <label class="form-label">Ngày khai trương:<span class="req">*</span></label>
+                  <label class="form-label" id="lbl-opening-date">Ngày khai trương:</label>
                   <input type="text" id="inp-opening-date" class="form-input" placeholder="15/10/2026 hoặc Thứ Bảy, 15.10">
                 </div>
                 <div class="form-group">
@@ -1125,7 +1130,7 @@
             <div id="cat-fields-feedback" class="cat-fields-block" style="display: none;">
               <div class="form-row-2">
                 <div class="form-group">
-                  <label class="form-label">Sản phẩm / Dịch vụ nhận feedback:<span class="req">*</span></label>
+                  <label class="form-label" id="lbl-feedback-target">Sản phẩm / Dịch vụ nhận feedback:</label>
                   <input type="text" id="inp-feedback-target" class="form-input" placeholder="Liệu trình Spa trẻ hóa da chuyên sâu">
                 </div>
                 <div class="form-group">
@@ -1134,7 +1139,7 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Mô tả feedback / Trích dẫn cảm nhận:<span class="req">*</span></label>
+                <label class="form-label" id="lbl-feedback-quote">Mô tả feedback / Trích dẫn cảm nhận:</label>
                 <textarea id="inp-feedback-quote" class="form-textarea" rows="2" placeholder="“Không gian cực kỳ thư thái, nhân viên chu đáo, da mình căng bóng sau buổi đầu tiên!”"></textarea>
               </div>
               <div class="form-group">
@@ -1147,27 +1152,27 @@
             <div id="cat-fields-recruitment" class="cat-fields-block" style="display: none;">
               <div class="form-row-2">
                 <div class="form-group">
-                  <label class="form-label">Vị trí tuyển dụng:<span class="req">*</span></label>
+                  <label class="form-label" id="lbl-job-position">Vị trí tuyển dụng:</label>
                   <input type="text" id="inp-job-position" class="form-input" placeholder="SENIOR AI ENGINEER (COMPUTER VISION)">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Thời hạn ứng tuyển:</label>
+                  <label class="form-label" id="lbl-apply-deadline">Thời hạn ứng tuyển:</label>
                   <input type="text" id="inp-apply-deadline" class="form-input" placeholder="Hạn nộp: 30/10/2026">
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Mô tả ngắn công việc & Quyền lợi / Thu nhập:<span class="req">*</span></label>
+                <label class="form-label">Mô tả ngắn công việc & Quyền lợi / Thu nhập:</label>
                 <textarea id="inp-job-desc" class="form-textarea" rows="2" placeholder="Thu nhập up to $3,000 / Chế độ bảo hiểm quốc tế, làm việc Hybrid linh hoạt..."></textarea>
               </div>
               <div class="form-group">
-                <label class="form-label">Cách thức ứng tuyển:</label>
+                <label class="form-label" id="lbl-apply-method">Cách thức ứng tuyển:</label>
                 <input type="text" id="inp-apply-method" class="form-input" placeholder="Gửi CV về hr@tendoo.ai hoặc quét mã QR bên dưới">
               </div>
             </div>
 
             <!-- 3F. Usage Guide Category Fields -->
             <div id="cat-fields-guide" class="cat-fields-block" style="display: none;">
-              <label class="form-label">Các bước thực hiện quy trình:<span class="hint">Tối đa 5 bước</span></label>
+              <label class="form-label" id="lbl-guide-steps">Các bước thực hiện quy trình:<span class="req">*</span><span class="hint">Tối đa 5 bước (bước 1 bắt buộc)</span></label>
               <div id="steps-container">
                 <div class="step-input-row" data-step-idx="1">
                   <span class="step-row-num">1</span>
@@ -1190,8 +1195,8 @@
 
             <!-- 5. Mô tả bối cảnh ảnh (AI Scene Prompt) -->
             <div class="form-group">
-              <label class="form-label" id="lbl-scene-desc">Mô tả bối cảnh ảnh (Prompt DiT sinh nền):<span class="req">*</span></label>
-              <textarea id="inp-scene-desc" class="form-textarea" rows="2" placeholder="Ly trà đào cam sả mát lạnh trên bàn gỗ sồi, lát cam tươi mọng nước, tép sả thơm..." required></textarea>
+              <label class="form-label" id="lbl-scene-desc">Mô tả bối cảnh ảnh (Prompt DiT sinh nền):</label>
+              <textarea id="inp-scene-desc" class="form-textarea" rows="2" placeholder="Ly trà đào cam sả mát lạnh trên bàn gỗ sồi, lát cam tươi mọng nước, tép sả thơm..."></textarea>
             </div>
           </div>
 
@@ -1472,6 +1477,104 @@
     let uploadedImageBase64 = null;
     let currentPostersList = [];
     let activePosterIdx = 0;
+
+    // Required-field validation -- single source of truth is the backend's
+    // CATEGORY_REQUIRED_FIELDS (see /api/required-fields), fetched once on load so the
+    // frontend's * markers and the backend's authoritative check can never drift apart.
+    // Maps a GenerateRequest field name to its <input>/<label> DOM ids (this mapping
+    // itself is stable -- only the per-category required-ness list is fetched).
+    const FIELD_ID_MAP = {
+      discount: { input: 'inp-discount', label: 'lbl-discount' },
+      product_name: { input: 'inp-product-name', label: 'lbl-product-name' },
+      product_desc: { input: 'inp-product-desc', label: 'lbl-product-desc' },
+      opening_date: { input: 'inp-opening-date', label: 'lbl-opening-date' },
+      feedback_target: { input: 'inp-feedback-target', label: 'lbl-feedback-target' },
+      feedback_quote: { input: 'inp-feedback-quote', label: 'lbl-feedback-quote' },
+      job_position: { input: 'inp-job-position', label: 'lbl-job-position' },
+      apply_deadline: { input: 'inp-apply-deadline', label: 'lbl-apply-deadline' },
+      apply_method: { input: 'inp-apply-method', label: 'lbl-apply-method' },
+    };
+    let REQUIRED_FIELDS = {};        // {category: [fieldName, ...]}, fetched from backend
+    let REQUIRED_GUIDE_FIRST_STEP = true;
+
+    async function loadRequiredFieldsConfig() {
+      try {
+        const url = BASE_URL ? `${BASE_URL}/api/required-fields` : '/api/required-fields';
+        const res = await fetch(url);
+        const data = await res.json();
+        REQUIRED_FIELDS = data.fields || {};
+        REQUIRED_GUIDE_FIRST_STEP = !!data.guide_first_step;
+      } catch (e) {
+        // Network hiccup: fail open on the *markers* (no stars shown) rather than block
+        // the form -- the backend's validate_required_fields() stays authoritative either way.
+        REQUIRED_FIELDS = {};
+      }
+      applyRequiredMarkers(currentCategory);
+    }
+
+    // Renders '*' markers + native `required` only on the fields that are actually
+    // required for `catKey`, per REQUIRED_FIELDS -- called on load and every category switch.
+    function applyRequiredMarkers(catKey) {
+      Object.values(FIELD_ID_MAP).forEach(({ input, label }) => {
+        const inputEl = document.getElementById(input);
+        const labelEl = document.getElementById(label);
+        if (inputEl) inputEl.required = false;
+        if (labelEl) labelEl.querySelector('span.req')?.remove();
+      });
+
+      const requiredNames = REQUIRED_FIELDS[catKey] || [];
+      requiredNames.forEach(name => {
+        const ids = FIELD_ID_MAP[name];
+        if (!ids) return;
+        const inputEl = document.getElementById(ids.input);
+        const labelEl = document.getElementById(ids.label);
+        if (inputEl) inputEl.required = true;
+        if (labelEl && !labelEl.querySelector('span.req')) {
+          labelEl.insertAdjacentHTML('beforeend', '<span class="req">*</span>');
+        }
+      });
+    }
+
+    // Client-side mirror of the backend's validate_required_fields() -- gives immediate
+    // feedback before the network round-trip. The backend check remains authoritative
+    // (e.g. for direct API callers bypassing this UI).
+    function getMissingRequiredFields(catKey) {
+      if (catKey === 'guide') {
+        if (!REQUIRED_GUIDE_FIRST_STEP) return [];
+        const steps = getGuideSteps();
+        return (!steps.length || !steps[0]) ? ['guide_steps[0]'] : [];
+      }
+      const missing = [];
+      (REQUIRED_FIELDS[catKey] || []).forEach(name => {
+        const ids = FIELD_ID_MAP[name];
+        const el = ids ? document.getElementById(ids.input) : null;
+        const val = el ? (el.value || '').trim() : '';
+        if (!val) missing.push(name);
+      });
+      return missing;
+    }
+
+    // Focuses + highlights the first missing required field so the user can find it fast.
+    function highlightMissingFields(missing) {
+      document.querySelectorAll('.field-invalid').forEach(el => el.classList.remove('field-invalid'));
+      let firstEl = null;
+      missing.forEach(name => {
+        let el;
+        if (name === 'guide_steps[0]') {
+          el = document.querySelector('#steps-container .step-input-row .inp-step-val');
+        } else {
+          el = document.getElementById(FIELD_ID_MAP[name]?.input);
+        }
+        if (el) {
+          el.classList.add('field-invalid');
+          if (!firstEl) firstEl = el;
+        }
+      });
+      if (firstEl) {
+        firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstEl.focus();
+      }
+    }
     let currentImages = {
       poster: null,
       bg: null,
@@ -1930,10 +2033,14 @@
       const meta = CATEGORIES[catKey] || CATEGORIES.promo;
       document.getElementById('section-general-title').textContent = meta.title;
       document.getElementById('panel-category-title').textContent = meta.panelTitle;
-      document.getElementById('lbl-title').innerHTML = `${meta.lblTitle}<span class="req">*</span>`;
+      document.getElementById('lbl-title').textContent = meta.lblTitle;
       document.getElementById('inp-title').placeholder = meta.titlePlaceholder;
-      document.getElementById('lbl-scene-desc').innerHTML = `${meta.lblSceneDesc}<span class="req">*</span>`;
+      document.getElementById('lbl-scene-desc').textContent = meta.lblSceneDesc;
       document.getElementById('inp-scene-desc').placeholder = meta.scenePlaceholder;
+
+      // Required-field markers (*) are driven by /api/required-fields, not hardcoded --
+      // see loadRequiredFieldsConfig()/applyRequiredMarkers() below.
+      applyRequiredMarkers(catKey);
 
       // Auto-switch to Recommended Layout for this business intent
       const recLayout = meta.recommendedLayout || 'top_dome';
@@ -2270,6 +2377,13 @@
     async function handleGenerate(e) {
       e.preventDefault();
 
+      const missingFields = getMissingRequiredFields(currentCategory);
+      if (missingFields.length) {
+        highlightMissingFields(missingFields);
+        alert("Vui lòng điền đầy đủ các trường bắt buộc (*) trước khi tạo ảnh.");
+        return;
+      }
+
       const btn = document.getElementById('btn-generate');
       const progressBox = document.getElementById('progress-box');
       const progressTitle = document.getElementById('progress-title');
@@ -2357,7 +2471,12 @@
 
         if (!resp.ok) {
           const err = await resp.json();
-          throw new Error(err.detail || "Sinh ảnh thất bại");
+          if (err.detail && err.detail.error === "missing_required_fields") {
+            highlightMissingFields(err.detail.fields || []);
+            throw new Error("Vui lòng điền đầy đủ các trường bắt buộc (*) trước khi tạo ảnh.");
+          }
+          const detailMsg = typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail);
+          throw new Error(detailMsg || "Sinh ảnh thất bại");
         }
 
         const data = await resp.json();
@@ -2508,6 +2627,12 @@
     window.addEventListener('DOMContentLoaded', () => {
       loadPreset('beverage');
       checkHealth();
+      loadRequiredFieldsConfig();
+
+      // Clear the invalid-field highlight as soon as the user starts fixing it.
+      document.getElementById('poster-form')?.addEventListener('input', (ev) => {
+        ev.target.classList?.remove('field-invalid');
+      });
 
       document.getElementById('inp-title')?.addEventListener('input', updateTextEffectSuggestion);
       document.getElementById('sel-layout')?.addEventListener('change', updateTextEffectSuggestion);
