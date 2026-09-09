@@ -49,7 +49,13 @@ from tendoo.layouts import (
     get_layout,
 )
 from tendoo.layouts.color_engine import hex_to_hue
-from tendoo.layouts.style_matcher import LAYOUT_COMPATIBLE_STYLES, resolve_style_preset
+from tendoo.layouts.freeform.zones import ZONE_NAMES
+from tendoo.layouts.style_matcher import (
+    CATEGORY_FIELD_SLOTS,
+    DEFAULT_FIELD_ROLE,
+    LAYOUT_COMPATIBLE_STYLES,
+    resolve_style_preset,
+)
 from tendoo.poster_renderer import PosterRenderer
 
 
@@ -598,6 +604,106 @@ def inject_color_guidance(prompt: str, hex_color: Optional[str]) -> str:
     return f"{prompt}, {clause}" if prompt else clause
 
 
+# Phase C: where the render-plan sidecar (src/tendoo/llm_render_plan_server.py) listens.
+# Distinct port from this server's own 7860 -- a genuinely separate OS process, started/
+# scaled/restarted independently (see project memory: tendoo-3phase-plan-2026-09-09.md).
+LLM_RENDER_PLAN_URL = os.environ.get("LLM_RENDER_PLAN_URL", "http://127.0.0.1:7861/api/render-plan")
+LLM_RENDER_PLAN_TIMEOUT_S = float(os.environ.get("LLM_RENDER_PLAN_TIMEOUT_S", "5"))
+
+def _collect_category_field_values(req: GenerateRequest) -> Dict[str, str]:
+    """Every CATEGORY_FIELD_SLOTS[category] field's real current value, blank string if
+    unfilled -- the single source of truth for both the render-plan LLM's context
+    payload and the Python-side mandatory-field / de-duplication logic in
+    run_pipeline_inference. Guide's steps are joined into one display string here (the
+    LLM only ever reasons about them as context); the real per-step list is read
+    straight from req.guide_steps wherever individual freeform step blocks are built."""
+    cat = (req.category or "promo").lower().strip()
+    values: Dict[str, str] = {}
+    for field in CATEGORY_FIELD_SLOTS.get(cat, []):
+        if field == "guide_steps":
+            steps = [s.strip() for s in (req.guide_steps or []) if s and s.strip()]
+            values[field] = " | ".join(steps)
+        else:
+            values[field] = str(getattr(req, field, "") or "").strip()
+    return values
+
+
+def try_fetch_render_plan(
+    req: GenerateRequest, category_field_values: Dict[str, str]
+) -> Optional[Dict[str, Any]]:
+    """
+    Calls the LLM render-plan sidecar (src/tendoo/llm_render_plan_server.py) with the
+    whole category's field values (filled and blank) + free prompt. Returns the
+    validated plan dict when usable, else None -- on ANY failure (sidecar unreachable,
+    timeout, non-200, invalid/empty plan), logs a warning and returns None. NEVER
+    raises: the caller must fall through to the deterministic
+    style_matcher.resolve_style_preset() path unchanged, exactly as if this function
+    didn't exist, so a sidecar hiccup never turns into a failed poster request.
+    """
+    import urllib.error
+    import urllib.request
+
+    payload = {
+        "category": req.category,
+        "title": req.title or "",
+        "category_fields": category_field_values,
+        "prompt": req.image_description or req.prompt_scene or "",
+        "style_pref": req.style_pref or "auto",
+        "primary_color": req.primary_color,
+    }
+    try:
+        body = json.dumps(payload).encode("utf-8")
+        http_req = urllib.request.Request(
+            LLM_RENDER_PLAN_URL,
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(http_req, timeout=LLM_RENDER_PLAN_TIMEOUT_S) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, ConnectionError, ValueError) as e:
+        print(f"  [Render Plan] Sidecar unavailable/failed ({e}); falling back to deterministic auto-match.")
+        return None
+
+    if not data.get("usable"):
+        print(f"  [Render Plan] Sidecar returned an unusable plan (errors: {data.get('errors')}); falling back.")
+        return None
+    return data.get("plan")
+
+
+# Role-ranked zone preference lists used to auto-place any freeform block that wasn't
+# given an explicit zone (either because the model correctly left it blank -- no
+# position was requested -- or because a mandatory field needs placing after the plan
+# escalated to freeform for an unrelated reason).
+_ZONE_ROLE_PREFERENCE: Dict[str, List[str]] = {
+    "hero": ["top_center", "center", "top_left"],
+    "subtitle": ["center", "top_center", "middle_left"],
+    "badge": ["top_left", "top_right", "bottom_left"],
+    "body": ["middle_left", "middle_right", "center"],
+    "caption": ["bottom_left", "bottom_right", "bottom_center"],
+}
+
+
+def _auto_assign_zones(blocks: List[Dict[str, Any]]) -> None:
+    """Mutates `blocks` in place, filling in a `zone` for every block that doesn't
+    already have one, via a role-ranked preference list that skips zones already
+    claimed by an earlier (explicit or auto-assigned) block. Degrades gracefully past 9
+    blocks by reusing the earliest-assigned zone -- FreeformLayout already groups/
+    stacks multiple blocks sharing one zone rather than erroring."""
+    used: List[str] = [b["zone"] for b in blocks if b.get("zone")]
+    for b in blocks:
+        if b.get("zone"):
+            continue
+        candidates = _ZONE_ROLE_PREFERENCE.get(b.get("role", "body"), ZONE_NAMES)
+        chosen = next((z for z in candidates if z not in used), None)
+        if chosen is None:
+            chosen = next((z for z in ZONE_NAMES if z not in used), None)
+        if chosen is None:
+            chosen = used[0] if used else ZONE_NAMES[0]
+        b["zone"] = chosen
+        used.append(chosen)
+
+
 def build_poster_content(
     req: GenerateRequest,
     final_headline: str,
@@ -605,10 +711,20 @@ def build_poster_content(
     final_offer_sub: str,
     final_dates: str,
     qr_data_uri: str,
+    free_text_blocks: Optional[List[Dict[str, Any]]] = None,
+    qr_zone: Optional[str] = None,
 ) -> PosterContent:
-    """Instantiates a complete, well-typed PosterContent from GenerateRequest."""
+    """Instantiates a complete, well-typed PosterContent from GenerateRequest.
+
+    free_text_blocks/qr_zone (Phase C): only meaningful for the `freeform` layout --
+    populated from an LLM-produced render plan (see try_fetch_render_plan()) when one
+    was available and usable; None/[] for every other layout and for the deterministic
+    fallback path, exactly as before Phase C existed.
+    """
     cat = (req.category or "promo").lower().strip()
     return PosterContent(
+        free_text_blocks=free_text_blocks or [],
+        qr_zone=qr_zone,
         headline=final_headline,
         pre_header=req.pre_header,
         slogan=req.slogan,
@@ -669,28 +785,176 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         else:
             w, h = 1024, 1024
 
-    # 2. Layout / Style / Font Auto-Match (Phase B -- see style_matcher.py). An explicit
-    # req.layout/style_hint/font_family (direct API caller, back-compat client) always
-    # wins; the redesigned UI never sends these anymore, only style_pref/primary_color.
+    cat = (req.category or "promo").lower().strip()
+
+    # 2. Category field values -- every CATEGORY_FIELD_SLOTS[cat] field's real current
+    # value (blank if unfilled). Computed unconditionally (not just when a render plan
+    # is fetched): the mandatory-field/freeform-block-building logic below needs it
+    # regardless of whether the LLM stage ran at all.
+    category_field_values = _collect_category_field_values(req)
+
+    # 3. LLM Render Plan (Phase C v2 -- see llm_render_plan_server.py's module
+    # docstring for the full rule). Only attempted when a free "prompt ảnh" was given
+    # AND the caller hasn't already forced an explicit layout (back-compat/direct-API
+    # callers) -- empty prompt keeps the deterministic path entirely unchanged.
+    render_plan: Optional[Dict[str, Any]] = None
+    if not req.layout and req.image_description and req.image_description.strip():
+        render_plan = try_fetch_render_plan(req, category_field_values)
+
+    # Style/font hints from the plan (still re-validated downstream against whatever
+    # layout actually gets chosen -- never trust the model's style_hint blindly) --
+    # only applied when the caller hasn't already forced an explicit value.
+    if render_plan is not None:
+        if render_plan.get("style_hint") and render_plan["style_hint"] != "auto" and not req.style_hint:
+            req.style_hint = render_plan["style_hint"]
+        if render_plan.get("font_key") and render_plan["font_key"] != "auto" and not req.font_family:
+            req.font_family = render_plan["font_key"]
+
+    # Per-field dedup/extraction resolution -- the actual duplicate-prevention AND
+    # blank-field-extraction mechanism. The real req value always wins when a field is
+    # already filled (fidelity + de-dup guarantee); the model's text is trusted only
+    # for genuinely-blank fields (fills the gap when the whole brief was typed into the
+    # free prompt instead of the form). has_freeform_trigger is computed from the RAW
+    # plan output -- any field:null block (ad-hoc content) or any block carrying an
+    # explicit zone (a positioning request) is what escalates to freeform; merely
+    # filling in a blank field never does.
+    field_values: Dict[str, Dict[str, Any]] = {}
+    ad_hoc_blocks: List[Dict[str, Any]] = []
+    qr_zone_request: Optional[str] = None
+    has_freeform_trigger = False
+    if render_plan is not None:
+        for b in render_plan.get("extra_blocks", []):
+            field = b.get("field")
+            zone = b.get("zone")
+            if zone is not None:
+                has_freeform_trigger = True
+            if field == "qr":
+                qr_zone_request = zone
+                continue
+            if field is None:
+                has_freeform_trigger = True
+                ad_hoc_blocks.append(b)
+            else:
+                real_value = category_field_values.get(field, "")
+                final_text = real_value if real_value else (b.get("text") or "")
+                if final_text:
+                    field_values[field] = {
+                        "text": final_text,
+                        "zone": zone,
+                        "role": b.get("role") or DEFAULT_FIELD_ROLE.get(field, "body"),
+                        "icon": b.get("icon"),
+                        "color": b.get("color"),
+                    }
+
+    # Title resolution (Python-enforced precedence -- never trust the model to apply
+    # this itself, same discipline as detect_scene_lighting_tone re-validating
+    # style_hint rather than trusting it outright):
+    #   (a) prompt-sourced title always wins outright
+    #   (b) genuinely ad-hoc scattered content (field:null blocks) with no hero mention
+    #       skips the title entirely -- deliberately NOT triggered by a mere
+    #       reposition of an existing field (e.g. "move the discount badge"), which
+    #       doesn't itself imply the user abandoned the hero-title concept.
+    #   (c) otherwise the filled form title wins verbatim
+    #   (d) otherwise the model must have generated one; if even that's absent the
+    #       existing per-category default_hl fallback further below still applies.
+    title_decision = (render_plan or {}).get("title") or {}
+    title_skipped = False
+    if title_decision.get("action") == "use_prompt" and title_decision.get("text"):
+        final_title = title_decision["text"]
+    elif ad_hoc_blocks:
+        final_title = None
+        title_skipped = True
+    elif req.title and req.title.strip():
+        final_title = req.title
+    elif title_decision.get("action") == "generate" and title_decision.get("text"):
+        final_title = title_decision["text"]
+    else:
+        final_title = req.title or None
+
+    # 4. Layout / Style / Font Auto-Match (Phase B -- see style_matcher.py -- plus
+    # Phase C's algorithmic freeform trigger above). Fills in whatever wasn't already
+    # resolved -- an explicit req.layout/style_hint/font_family (direct API caller,
+    # back-compat client) always wins over both deterministic paths.
     _preset = resolve_style_preset(req.category, req.style_pref, req.image_description or req.prompt_scene or "")
     if not req.layout:
-        req.layout = _preset["layout"]
+        req.layout = "freeform" if has_freeform_trigger else _preset["layout"]
     if not req.style_hint:
         req.style_hint = _preset["style_hint"]
     if not req.font_family:
         req.font_family = _preset["font_key"]
 
-    # 3. Retrieve Layout
+    # 5. Retrieve Layout
     layout = get_layout(req.layout)
 
-    # 4. Generate Parametric Mask
-    mask_np = layout.generate_mask(width=w, height=h)
+    plan_blocks: Optional[List[Dict[str, Any]]] = None
+    plan_qr_zone: Optional[str] = None
+    if layout.name == "freeform":
+        # Build the final freeform block list: every CATEGORY_FIELD_SLOTS field with
+        # real content (the real req value, or the model's extraction into a blank
+        # field), the resolved title (unless skipped), and any genuinely ad-hoc extra
+        # content -- then auto-place whatever wasn't given an explicit zone.
+        plan_blocks = []
+        for cat_field in CATEGORY_FIELD_SLOTS.get(cat, []):
+            if cat_field in field_values:
+                fv = field_values[cat_field]
+                block = {"text": fv["text"], "zone": fv["zone"], "role": fv["role"]}
+                if fv.get("icon"):
+                    block["icon"] = fv["icon"]
+                if fv.get("color"):
+                    block["color"] = fv["color"]
+                plan_blocks.append(block)
+            elif cat_field == "guide_steps":
+                for step in (req.guide_steps or []):
+                    if step and step.strip():
+                        plan_blocks.append({"text": step.strip(), "zone": None, "role": "body"})
+            else:
+                real_value = category_field_values.get(cat_field, "")
+                if real_value:
+                    plan_blocks.append({
+                        "text": real_value, "zone": None,
+                        "role": DEFAULT_FIELD_ROLE.get(cat_field, "body"),
+                    })
+        if not title_skipped and final_title:
+            plan_blocks.append({"text": final_title, "zone": None, "role": "hero"})
+        for b in ad_hoc_blocks:
+            block = {"text": b["text"], "zone": b.get("zone"), "role": b.get("role") or "body"}
+            if b.get("icon"):
+                block["icon"] = b["icon"]
+            if b.get("color"):
+                block["color"] = b["color"]
+            plan_blocks.append(block)
+        _auto_assign_zones(plan_blocks)
+        plan_qr_zone = qr_zone_request
+    else:
+        # Fixed-layout path: write any LLM-resolved content back onto req's own fields
+        # so the existing harmonization/build_poster_content code below picks it up
+        # completely unchanged -- this is the ONLY place req gets mutated with
+        # LLM-sourced content, and only for genuinely-blank fields or an actually
+        # generated/overridden title (title-skip cannot happen here -- it only ever
+        # occurs together with has_freeform_trigger, which always forces the freeform
+        # branch above).
+        if final_title and final_title != req.title:
+            req.title = final_title
+        for field_name, fv in field_values.items():
+            if field_name == "guide_steps":
+                if not req.guide_steps:
+                    req.guide_steps = [s.strip() for s in fv["text"].split("|") if s.strip()]
+            elif not getattr(req, field_name, ""):
+                setattr(req, field_name, fv["text"])
+
+    # 6. Generate Parametric Mask
+    if plan_blocks is not None:
+        mask_np = layout.generate_mask(
+            width=w, height=h, blocks=plan_blocks, qr_zone=plan_qr_zone,
+            font_key=req.font_family if req.font_family != "auto" else "bevietnam",
+        )
+    else:
+        mask_np = layout.generate_mask(width=w, height=h)
     mask_vis = Image.fromarray((mask_np * 255).astype(np.uint8), mode="L")
     mask_file = case_dir / "01_corridor_mask.png"
     mask_vis.save(mask_file)
 
-    # 5. Harmonize Field Values (Unified schema mapping)
-    cat = (req.category or "promo").lower().strip()
+    # 7. Harmonize Field Values (Unified schema mapping)
     if cat == "product_intro":
         default_hl = "GIỚI THIỆU SẢN PHẨM"
     elif cat == "opening":
@@ -724,7 +988,13 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     )
     final_brand = req.store_name or req.brand or ""
     final_hotline = req.phone or req.hotline or ""
-    raw_scene_prompt = req.image_description or req.prompt_scene or ""
+    # A usable render plan's scene_prompt (LLM-refined, already zero-text by
+    # construction) takes precedence over the raw user prompt; still runs through the
+    # same sanitize/inject chain below as a defense-in-depth net either way.
+    raw_scene_prompt = (
+        (render_plan.get("scene_prompt") if render_plan else "")
+        or req.image_description or req.prompt_scene or ""
+    )
     has_ref_image = bool(req.image_base64)
     zero_text_prompt = sanitize_and_inject_zero_text(raw_scene_prompt, has_ref_image=has_ref_image)
     final_scene_prompt = inject_spatial_layout_guidance(zero_text_prompt, layout_name=layout.name, has_ref_image=has_ref_image)
@@ -746,7 +1016,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         dates_parts.append(f"Đến {req.date_end}")
     final_dates = " - ".join(dates_parts) if dates_parts else ""
 
-    # 6. Optional QR Code Generation (Backend QR Engine)
+    # 8. Optional QR Code Generation (Backend QR Engine)
     qr_data_uri = ""
     qr_url = None
     if req.enable_qr and req.website_link and req.website_link.strip():
@@ -761,7 +1031,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
             except Exception as e:
                 print(f"Notice: Failed to save QR code image: {e}")
 
-    # 7. Save Uploaded Product Image if provided
+    # 9. Save Uploaded Product Image if provided
     ref_image_path = None
     if req.image_base64:
         try:
@@ -776,7 +1046,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         except Exception as e:
             print(f"Notice: Failed to save uploaded product image: {e}")
 
-    # 8. Generate Blended Background & Final Poster (Regional Velocity Blending + HTML Typography)
+    # 10. Generate Blended Background & Final Poster (Regional Velocity Blending + HTML Typography)
     num_images = max(1, min(4, req.num_images or 1))
     posters_list = []
     dur_dit_total = 0.0
@@ -805,6 +1075,8 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                 final_offer_sub=final_offer_sub,
                 final_dates=final_dates,
                 qr_data_uri=qr_data_uri,
+                free_text_blocks=plan_blocks,
+                qr_zone=plan_qr_zone,
             )
             html_str = layout.render_html(
                 content=content,
@@ -941,6 +1213,8 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                     final_offer_sub=final_offer_sub,
                     final_dates=final_dates,
                     qr_data_uri=qr_data_uri,
+                    free_text_blocks=plan_blocks,
+                    qr_zone=plan_qr_zone,
                 )
                 html_str = layout.render_html(
                     content=content,
@@ -1002,16 +1276,24 @@ async def api_generate(req: GenerateRequest):
     Thread-safe poster generation endpoint protected by INFER_LOCK.
     Queues simultaneous requests smoothly without GPU VRAM collision.
     """
-    missing = validate_required_fields(req)
-    if missing:
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "error": "missing_required_fields",
-                "category": req.category,
-                "fields": missing,
-            },
-        )
+    # Phase A's required-field gate only applies to the deterministic (no-prompt) form
+    # flow. When a free "prompt ảnh" is given, Phase C's render-plan LLM is a valid
+    # alternative way to supply that same required content (prompt_test.txt lines
+    # 21-41's whole-brief-in-prompt shape depends on this) -- rejecting the request
+    # before the LLM stage even runs would defeat that path's entire purpose. If the
+    # LLM's extraction fails to produce the content, that surfaces as a poster missing
+    # that field's slot, not a pre-flight validation error.
+    if not (req.image_description and req.image_description.strip()):
+        missing = validate_required_fields(req)
+        if missing:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": "missing_required_fields",
+                    "category": req.category,
+                    "fields": missing,
+                },
+            )
 
     async with INFER_LOCK:
         try:

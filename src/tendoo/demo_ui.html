@@ -2080,7 +2080,11 @@
     async function handleGenerate(e) {
       e.preventDefault();
 
-      const missingFields = getMissingRequiredFields(currentCategory);
+      // Required-field markers only apply to the no-prompt form flow -- a filled
+      // "prompt ảnh" lets the render-plan LLM supply that same content instead (mirrors
+      // the same bypass in api_generate's backend check).
+      const hasFreePrompt = !!(document.getElementById('inp-scene-desc')?.value || '').trim();
+      const missingFields = hasFreePrompt ? [] : getMissingRequiredFields(currentCategory);
       if (missingFields.length) {
         highlightMissingFields(missingFields);
         alert("Vui lòng điền đầy đủ các trường bắt buộc (*) trước khi tạo ảnh.");

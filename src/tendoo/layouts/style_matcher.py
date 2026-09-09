@@ -67,6 +67,48 @@ CATEGORY_DEFAULT_LAYOUT: Dict[str, str] = {
     "guide": "split_column",
 }
 
+# Every non-title field a category's form / fixed layout holds -- mirrors
+# demo_ui.html's cat-fields-* blocks exactly. Phase C (LLM render-plan) uses this as
+# the single source of truth for: (1) which fields to show the render-plan LLM as
+# context, (2) which fields are "mandatory if filled" (see llm_render_plan_server.py's
+# module docstring for the full rule), (3) which field names extra_blocks[].field is
+# allowed to reference. This is the generalization of Phase A's
+# CATEGORY_REQUIRED_FIELDS to every field, not just the required ones.
+CATEGORY_FIELD_SLOTS: Dict[str, list] = {
+    "promo": ["discount", "applied_product", "date_start", "date_end"],
+    "product_intro": ["product_name", "price", "product_desc", "highlights"],
+    "opening": ["opening_date", "opening_promo", "booking_contact"],
+    "feedback": ["feedback_target", "feedback_quote", "feedback_rating", "special_offer"],
+    "recruitment": ["job_position", "job_desc", "apply_deadline", "apply_method"],
+    "guide": ["guide_steps"],  # every non-empty step is mandatory-if-filled, not just step 1
+}
+
+# Default visual role for each CATEGORY_FIELD_SLOTS field, used only when a field's
+# content needs to be placed into a freeform zone (i.e. when the plan escalates to
+# freeform for an unrelated reason and these mandatory fields need auto-placement too).
+DEFAULT_FIELD_ROLE: Dict[str, str] = {
+    "discount": "badge",
+    "applied_product": "body",
+    "date_start": "caption",
+    "date_end": "caption",
+    "product_name": "subtitle",
+    "price": "badge",
+    "product_desc": "body",
+    "highlights": "body",
+    "opening_date": "badge",
+    "opening_promo": "body",
+    "booking_contact": "caption",
+    "feedback_target": "subtitle",
+    "feedback_quote": "body",
+    "feedback_rating": "badge",
+    "special_offer": "body",
+    "job_position": "subtitle",
+    "job_desc": "body",
+    "apply_deadline": "caption",
+    "apply_method": "caption",
+    "guide_steps": "body",
+}
+
 # The 6 "phong cách" (style preference) values the redesigned UI exposes -- a business
 # mood, deliberately decoupled from the technical layout/style_hint vocabulary it
 # replaces. "auto" means: don't bias anything, let the category default and the

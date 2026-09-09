@@ -797,6 +797,208 @@ def test_generate_with_primary_color_shifts_palette_hue(client):
     assert hue_blue == 240
 
 
+def _canned_plan(title=None, extra_blocks=None, scene_prompt="a clean sunlit studio background, unbranded"):
+    """Builds a v2-schema render plan dict for monkeypatching try_fetch_render_plan."""
+    return {
+        "title": title or {"action": "none", "text": None},
+        "extra_blocks": extra_blocks or [],
+        "scene_prompt": scene_prompt,
+        "style_hint": "auto",
+        "font_key": "auto",
+    }
+
+
+def test_generate_uses_llm_render_plan_ad_hoc_block_triggers_freeform(client, monkeypatch):
+    """Phase C v2: a field:null (ad-hoc, positioned) extra_block must drive the
+    freeform layout and actually reach the rendered HTML, not get silently ignored."""
+    plan = _canned_plan(extra_blocks=[
+        {"field": None, "text": "GIẢM SỐC 50%", "zone": "top_left", "role": "badge"},
+        {"field": None, "text": "0334 842 155", "zone": "bottom_left", "role": "caption", "icon": "phone"},
+    ])
+    monkeypatch.setattr(demo_server, "try_fetch_render_plan", lambda req, fields: plan)
+
+    payload = {
+        "category": "promo",
+        "discount": "GIẢM 50%",
+        "image_description": "thêm dòng GIẢM SỐC 50% ở góc trên trái, số điện thoại ở góc dưới trái",
+        "aspect_ratio": "1:1",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+    assert data["resolved_layout"] == "freeform"
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "GIẢM SỐC 50%" in html
+    assert "0334 842 155" in html
+    # The mandatory (already-filled) discount field must also still render.
+    assert "GIẢM 50%" in html
+
+
+def test_generate_falls_back_to_deterministic_path_when_sidecar_unavailable(client, monkeypatch):
+    """Phase C's core robustness contract: if the LLM sidecar is down/unreachable (here
+    simulated as returning None, exactly what try_fetch_render_plan does on any real
+    failure), the request must still succeed via the Phase B deterministic path --
+    never a hard failure just because the sidecar hiccupped."""
+    monkeypatch.setattr(demo_server, "try_fetch_render_plan", lambda req, fields: None)
+
+    payload = {
+        "category": "promo",
+        "title": "SIÊU SALE",
+        "discount": "GIẢM 50%",
+        "image_description": "a clean sunlit studio background",
+        "aspect_ratio": "1:1",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["success"] is True
+    # Falls back to Phase B's deterministic auto-match (promo's plain default), not freeform.
+    assert data["resolved_layout"] == "top_dome"
+
+
+def test_generate_duplicate_content_renders_real_value_once_not_freeform(client, monkeypatch):
+    """The user's exact flagged scenario: date_start/date_end already filled in the
+    form, and the render plan ALSO includes a field-tagged (no zone) block for
+    date_start with different/paraphrased text -- the real req value must win (not the
+    model's paraphrase), rendered exactly once, and this alone must NOT escalate to
+    freeform (no zone was requested, so it stays on the fixed promo layout)."""
+    plan = _canned_plan(extra_blocks=[
+        {"field": "date_start", "text": "một ngày nào đó trong tháng 9", "zone": None, "role": "caption"},
+    ])
+    monkeypatch.setattr(demo_server, "try_fetch_render_plan", lambda req, fields: plan)
+
+    payload = {
+        "category": "promo",
+        "title": "SIÊU SALE",
+        "discount": "GIẢM 50%",
+        "date_start": "01/09/2026",
+        "date_end": "15/09/2026",
+        "image_description": "Áp dụng từ 01/09/2026 đến 15/09/2026",
+        "aspect_ratio": "1:1",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["resolved_layout"] == "top_dome"  # not escalated to freeform
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert html.count("01/09/2026") == 1
+    assert "một ngày nào đó" not in html  # the model's paraphrase must never win
+
+
+def test_generate_blank_field_extraction_stays_on_fixed_layout(client, monkeypatch):
+    """prompt_test.txt lines 21-41's real shape: form left blank, whole brief typed
+    into the free prompt. A field-tagged (no zone) extraction into BLANK fields must
+    still render, and must NOT by itself escalate to freeform."""
+    plan = _canned_plan(extra_blocks=[
+        {"field": "feedback_target", "text": "Liệu trình chăm sóc da chuyên sâu", "zone": None, "role": "subtitle"},
+        {"field": "feedback_quote", "text": "Khách hàng cực kỳ hài lòng!", "zone": None, "role": "body"},
+    ])
+    monkeypatch.setattr(demo_server, "try_fetch_render_plan", lambda req, fields: plan)
+
+    payload = {
+        "category": "feedback",
+        "image_description": "Tên dịch vụ: Liệu trình chăm sóc da chuyên sâu. Mô tả ngắn: Khách hàng cực kỳ hài lòng!",
+        "aspect_ratio": "1:1",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["resolved_layout"] != "freeform"
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "Liệu trình chăm sóc da chuyên sâu" in html
+    assert "Khách hàng cực kỳ hài lòng!" in html
+
+
+def test_generate_title_skipped_when_freeform_requested_without_hero_mention(client, monkeypatch):
+    """Confirmed rule: a filled title is DISCARDED (not auto-placed) when the prompt
+    asks for positioned text without mentioning a hero/title."""
+    plan = _canned_plan(
+        title={"action": "none", "text": None},
+        extra_blocks=[{"field": None, "text": "GIẢM SỐC 70%", "zone": "bottom_right", "role": "badge"}],
+    )
+    monkeypatch.setattr(demo_server, "try_fetch_render_plan", lambda req, fields: plan)
+
+    payload = {
+        "category": "promo",
+        "title": "TIÊU ĐỀ GỐC KHÔNG DÙNG NỮA",
+        "discount": "GIẢM 50%",
+        "image_description": "thêm dòng GIẢM SỐC 70% ở góc dưới phải",
+        "aspect_ratio": "1:1",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["resolved_layout"] == "freeform"
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "TIÊU ĐỀ GỐC KHÔNG DÙNG NỮA" not in html
+    assert "GIẢM SỐC 70%" in html
+
+
+def test_generate_title_override_from_prompt_wins_over_form(client, monkeypatch):
+    """Branch (a): prompt-sourced title always wins, regardless of the form's own
+    title value. Kept deliberately SHORT (single line) -- balance_vietnamese_headline()
+    auto-wraps longer titles across multiple <span class="headline-line"> elements, so
+    a naive full-string substring check would be a test artifact, not a real signal."""
+    plan = _canned_plan(title={"action": "use_prompt", "text": "PROMPTWINS"})
+    monkeypatch.setattr(demo_server, "try_fetch_render_plan", lambda req, fields: plan)
+
+    payload = {
+        "category": "promo",
+        "title": "FORMWINS",
+        "discount": "GIẢM 50%",
+        "image_description": "đổi tiêu đề thành PROMPTWINS",
+        "aspect_ratio": "1:1",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["resolved_layout"] == "top_dome"  # no zone/ad-hoc block -- stays fixed
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert "PROMPTWINS" in html
+    assert "FORMWINS" not in html
+
+
+def test_generate_reposition_field_with_zone_triggers_freeform_no_duplicate(client, monkeypatch):
+    """A field-tagged block WITH an explicit zone (the user asked for a specific
+    position for existing content) must escalate to freeform, place the REAL field
+    value at that zone, and never duplicate it via the fixed layout's normal slot. A
+    mere single-field reposition (not a field:null ad-hoc block) must NOT skip the
+    title -- that's narrower than "the user took over the whole composition"."""
+    plan = _canned_plan(extra_blocks=[
+        {"field": "discount", "text": "should be ignored", "zone": "bottom_right", "role": "badge"},
+    ])
+    monkeypatch.setattr(demo_server, "try_fetch_render_plan", lambda req, fields: plan)
+
+    payload = {
+        "category": "promo",
+        "title": "SIEUSALE",
+        "discount": "GIẢM 50%",
+        "image_description": "đặt mức ưu đãi ở góc dưới phải",
+        "aspect_ratio": "1:1",
+    }
+    response = client.post("/api/generate", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["resolved_layout"] == "freeform"
+
+    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
+    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    assert html.count("GIẢM 50%") == 1
+    assert "should be ignored" not in html
+    assert "SIEUSALE" in html  # title not skipped -- this was only a single-field reposition
+
+
 def test_generate_guide_requires_non_empty_first_step(client):
     """guide has no named required field -- it's guide_steps[0] that must be non-blank."""
     # No steps at all -> 422

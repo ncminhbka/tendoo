@@ -9,7 +9,12 @@ from tendoo.layouts.color_engine import analyze_color_harmony, hex_to_hue
 from tendoo.layouts.component_engine import get_component_css, render_category_body
 from tendoo.layouts.font_engine import FONT_CATALOG, list_font_options, recommend_font, resolve_font
 from tendoo.layouts.registry import get_layout, list_layouts, register_layout
-from tendoo.layouts.style_matcher import LAYOUT_COMPATIBLE_STYLES, resolve_style_preset
+from tendoo.layouts.style_matcher import (
+    CATEGORY_FIELD_SLOTS,
+    DEFAULT_FIELD_ROLE,
+    LAYOUT_COMPATIBLE_STYLES,
+    resolve_style_preset,
+)
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text
 
 __all__ = [
@@ -32,5 +37,7 @@ __all__ = [
     "FONT_CATALOG",
     "resolve_style_preset",
     "LAYOUT_COMPATIBLE_STYLES",
+    "CATEGORY_FIELD_SLOTS",
+    "DEFAULT_FIELD_ROLE",
 ]
 
