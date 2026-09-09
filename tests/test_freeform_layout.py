@@ -1,0 +1,150 @@
+"""
+tests/test_freeform_layout.py
+
+Unit + visual tests for the new Freeform Multi-Zone layout (src/tendoo/layouts/freeform/).
+
+This layout renders whatever render plan it's given (a list of {text, zone, role}
+blocks) -- it does NOT itself decide what to draw or where (that's an upstream LLM
+stage, not implemented yet). So these tests exercise it with hand-written render plans
+modeled on real cases from prompt_test.txt (custom text placement requests), to verify
+the mask/template mechanics work correctly independent of the LLM stage.
+"""
+
+import base64
+import html
+import io
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+import numpy as np
+import pytest
+from PIL import Image, ImageDraw
+
+from tendoo.layouts import PosterContent, analyze_color_harmony, get_layout
+from tendoo.layouts.freeform.mask import generate_freeform_mask
+from tendoo.layouts.freeform.zones import ZONE_NAMES, is_valid_zone
+from tendoo.poster_renderer import PosterRenderer
+
+OUTPUT_DIR = Path("output_layouts_test")
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def test_all_zone_names_are_used_by_grid_area_and_default_align():
+    from tendoo.layouts.freeform.zones import ZONE_DEFAULT_ALIGN, ZONE_GRID_AREA
+    assert set(ZONE_GRID_AREA.keys()) == set(ZONE_NAMES)
+    assert set(ZONE_DEFAULT_ALIGN.keys()) == set(ZONE_NAMES)
+    assert len(ZONE_NAMES) == 9
+
+
+def test_mask_union_covers_all_requested_zones():
+    mask = generate_freeform_mask(height=512, width=512, zones=["top_left", "bottom_right"])
+    from tendoo.layouts.freeform.zones import ZONE_RECTS
+    for zone in ["top_left", "bottom_right"]:
+        y0, x0, y1, x1 = ZONE_RECTS[zone]
+        cy, cx = int((y0 + y1) / 2 * 511), int((x0 + x1) / 2 * 511)
+        assert mask[cy, cx] > 0.95, f"Center of requested zone '{zone}' should be near-fully reserved"
+    # An unrequested zone's center should be untouched (0.0)
+    from tendoo.layouts.freeform.zones import ZONE_RECTS as _R
+    y0, x0, y1, x1 = _R["bottom_left"]
+    cy, cx = int((y0 + y1) / 2 * 511), int((x0 + x1) / 2 * 511)
+    assert mask[cy, cx] == 0.0, "Unrequested zone should be fully open for the product/scene"
+
+
+def test_mask_empty_zones_falls_back_to_generic_top_band():
+    mask = generate_freeform_mask(height=256, width=256, zones=[])
+    assert mask.max() > 0.0, "Empty zone list should still produce a sane fallback corridor, not an all-zero mask"
+
+
+def test_mask_unknown_zone_name_ignored_not_crashed():
+    mask = generate_freeform_mask(height=256, width=256, zones=["top_left", "totally_bogus_zone"])
+    assert mask.shape == (256, 256)
+    assert mask.max() <= 1.0 and mask.min() >= 0.0
+
+
+def test_is_valid_zone():
+    assert is_valid_zone("center")
+    assert not is_valid_zone("nonexistent")
+
+
+def _synth_bg(w=1024, h=1024) -> Image.Image:
+    img = Image.new("RGB", (w, h))
+    draw = ImageDraw.Draw(img)
+    for y in range(h):
+        t = y / max(1, h - 1)
+        r, g, b = int(30 + t * 20), int(28 + t * 18), int(45 + t * 25)
+        draw.line([(0, y), (w, y)], fill=(r, g, b))
+    return img
+
+
+def _pil_to_data_uri(img: Image.Image) -> str:
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("utf-8")
+
+
+# Render plans modeled directly on real prompt_test.txt cases (smart watch ads with
+# custom per-position text requests) -- this is exactly the class of request the fixed
+# 6-layout system cannot represent.
+PLAN_WATCH_TOPLEFT_MIDLEFT = [
+    {"text": "THOI GIAN LA CUA BAN", "zone": "top_left", "role": "caption"},
+    {"text": "NANG TAM PHONG CACH DOI SONG", "zone": "middle_left", "role": "hero"},
+]
+
+PLAN_WATCH_TOP_BOTTOM = [
+    {"text": "CHINH PHUC MOI GIOI HAN", "zone": "top_center", "role": "hero"},
+    {"text": "DONG DONG HO THE THAO CAO CAP", "zone": "bottom_center", "role": "subtitle"},
+]
+
+PLAN_COFFEE_MULTI_CTA = [
+    {"text": "GRAND OPENING", "zone": "center", "role": "hero"},
+    {"text": "MUA 1 TANG 1", "zone": "center", "role": "subtitle"},
+    {"text": "Ap dung tu 14/05 - 30/05", "zone": "bottom_center", "role": "caption"},
+    {"text": "Ghe ngay hom nay!", "zone": "bottom_left", "role": "badge"},
+    {"text": "Deal cuc hot!", "zone": "bottom_right", "role": "badge"},
+    {"text": "Coffee rang moc chuan vi", "zone": "top_left", "role": "caption"},
+]
+
+
+@pytest.mark.parametrize("plan_name,plan", [
+    ("watch_topleft_midleft", PLAN_WATCH_TOPLEFT_MIDLEFT),
+    ("watch_top_bottom", PLAN_WATCH_TOP_BOTTOM),
+    ("coffee_multi_cta", PLAN_COFFEE_MULTI_CTA),
+])
+def test_render_freeform_plan(plan_name, plan):
+    layout = get_layout("freeform")
+    zones_requested = list({b["zone"] for b in plan})
+
+    bg = _synth_bg()
+    mask = layout.generate_mask(width=1024, height=1024, zones=zones_requested)
+    assert mask.shape == (1024, 1024)
+
+    safe_zone = layout.get_safe_zone()
+    palette = analyze_color_harmony(np.array(bg), safe_zone, color_mode="auto")
+
+    content = PosterContent(
+        headline=plan[0]["text"],  # unused by freeform rendering itself, but required by the dataclass
+        category="promo",
+        free_text_blocks=plan,
+    )
+
+    html_str = layout.render_html(
+        content=content,
+        palette=palette,
+        bg_data_uri=_pil_to_data_uri(bg),
+        width=1024,
+        height=1024,
+    )
+
+    # No unrendered {{...}} placeholders left over.
+    assert "{{" not in html_str, f"Unrendered placeholder left in freeform HTML for {plan_name}"
+    for block in plan:
+        assert html.escape(block["text"]) in html_str, f"Block text {block['text']!r} missing from rendered HTML"
+
+    out_path = OUTPUT_DIR / f"test_freeform_{plan_name}.png"
+    PosterRenderer.render(html_content=html_str, output_image_path=out_path, width=1024, height=1024)
+    assert out_path.exists() and out_path.stat().st_size > 30000
+    print(f"[PASSED] Rendered freeform plan '{plan_name}' -> {out_path}")

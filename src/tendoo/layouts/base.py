@@ -145,6 +145,12 @@ class PosterContent:
     # Optional pre-rendered or custom category body HTML
     category_body_html: str = ""
 
+    # Freeform Multi-Zone layout only (see layouts/freeform/): a render plan of
+    # independent text blocks, each {"text": str, "zone": one of
+    # layouts.freeform.zones.ZONE_NAMES, "role": "hero"|"subtitle"|"body"|"caption"|
+    # "badge", "color": Optional[str] hex}. Ignored by the other 6 layouts.
+    free_text_blocks: List[Dict[str, Any]] = field(default_factory=list)
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "headline": self.headline,
@@ -180,6 +186,7 @@ class PosterContent:
             "apply_method": self.apply_method,
             "steps": list(self.steps),
             "category_body_html": self.category_body_html,
+            "free_text_blocks": list(self.free_text_blocks),
         }
 
 
