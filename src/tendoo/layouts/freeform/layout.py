@@ -40,6 +40,7 @@ from tendoo.layouts.base import (
 )
 from tendoo.layouts.font_engine import resolve_font
 from tendoo.layouts.freeform.mask import generate_freeform_mask
+from tendoo.layouts.freeform.measure import compute_zone_rects
 from tendoo.layouts.freeform.zones import ZONE_DEFAULT_ALIGN, ZONE_GRID_AREA, ZONE_NAMES, ZONE_SELF_ALIGN, is_valid_zone
 from tendoo.layouts.text_engine import normalize_text, resolve_headline_effect
 
@@ -105,14 +106,31 @@ class FreeformLayout(BaseLayout):
         width: int,
         height: int,
         zones: Optional[List[str]] = None,
+        blocks: Optional[List[Dict[str, Any]]] = None,
+        font_key: str = "bevietnam",
+        qr_zone: Optional[str] = None,
         delta: float = 0.05,
         int_max: float = 1.0,
         **kwargs,
     ) -> np.ndarray:
+        """
+        Prefer passing `blocks` (the render plan's text blocks, same shape as
+        PosterContent.free_text_blocks) + `qr_zone`: sizes each reserved zone to fit
+        that zone's ACTUAL measured content (see measure.compute_zone_rects) rather
+        than a fixed guess -- this is the path production should use. `zones` (a bare
+        list of names, using the static ZONE_RECTS footprint) is kept for simple
+        callers that don't have real content yet (e.g. a quick preview).
+        """
+        zone_rects = None
+        if blocks:
+            zone_rects = compute_zone_rects(
+                blocks=blocks, width=width, height=height, font_key=font_key, qr_zone=qr_zone,
+            )
         return generate_freeform_mask(
             height=height,
             width=width,
             zones=zones,
+            zone_rects=zone_rects,
             delta=delta,
             int_max=int_max,
             **kwargs,

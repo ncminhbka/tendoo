@@ -70,6 +70,80 @@ def test_is_valid_zone():
     assert not is_valid_zone("nonexistent")
 
 
+# ---------------------------------------------------------------------------
+# Content-aware (dynamic) zone sizing -- fixes the "static rect is either too
+# small (text overflows past the mask) or too large (starves the product of
+# space needlessly)" gap the fixed 6-layout system already had.
+# ---------------------------------------------------------------------------
+
+def test_compute_zone_rects_grows_with_more_content():
+    from tendoo.layouts.freeform.measure import compute_zone_rects
+
+    short_plan = [{"text": "OK", "zone": "top_left", "role": "caption"}]
+    long_plan = [
+        {"text": "MOT TIEU DE RAT DAI VOI NHIEU TU DE KIEM TRA WRAP", "zone": "top_left", "role": "hero"},
+        {"text": "Mot dong phu cung khong ngan chut nao", "zone": "top_left", "role": "subtitle"},
+    ]
+
+    short_rects = compute_zone_rects(short_plan, width=1024, height=1024)
+    long_rects = compute_zone_rects(long_plan, width=1024, height=1024)
+
+    def _area(rect):
+        y0, x0, y1, x1 = rect
+        return (y1 - y0) * (x1 - x0)
+
+    assert "top_left" in short_rects and "top_left" in long_rects
+    assert _area(long_rects["top_left"]) > _area(short_rects["top_left"]), (
+        "A zone with more/longer stacked text should reserve a larger area than one with a short caption"
+    )
+
+
+def test_compute_zone_rects_anchors_to_correct_corner():
+    from tendoo.layouts.freeform.measure import compute_zone_rects
+
+    plan = [{"text": "CORNER TEST", "zone": "bottom_right", "role": "hero"}]
+    rects = compute_zone_rects(plan, width=1024, height=1024)
+    y0, x0, y1, x1 = rects["bottom_right"]
+    # Anchored to the bottom-right corner: the rect's far edge should sit at the
+    # canvas margin (0.96), not floating away from it.
+    assert x1 == pytest.approx(0.96, abs=1e-6)
+    assert y1 == pytest.approx(0.96, abs=1e-6)
+
+
+def test_compute_zone_rects_includes_qr_footprint():
+    from tendoo.layouts.freeform.measure import compute_zone_rects
+
+    rects_no_qr = compute_zone_rects([], width=1024, height=1024, qr_zone=None)
+    rects_with_qr = compute_zone_rects([], width=1024, height=1024, qr_zone="bottom_right")
+    assert "bottom_right" not in rects_no_qr, "No content and no QR -> zone should be entirely absent"
+    assert "bottom_right" in rects_with_qr, "QR-only zone should still reserve space for the QR image"
+
+
+def test_compute_zone_rects_ignores_unknown_zone_gracefully():
+    from tendoo.layouts.freeform.measure import compute_zone_rects
+
+    rects = compute_zone_rects(
+        [{"text": "hi", "zone": "not_a_real_zone", "role": "body"}], width=512, height=512,
+    )
+    assert rects == {}
+
+
+def test_dynamic_mask_differs_from_static_mask_for_small_content():
+    """The whole point: a small caption in a zone should reserve noticeably LESS
+    mask area dynamically than the fixed static-zone-size fallback would."""
+    plan = [{"text": "OK", "zone": "top_left", "role": "caption"}]
+    layout = get_layout("freeform")
+
+    static_mask = layout.generate_mask(width=1024, height=1024, zones=["top_left"])
+    dynamic_mask = layout.generate_mask(width=1024, height=1024, blocks=plan)
+
+    assert dynamic_mask.sum() < static_mask.sum(), (
+        "A short caption's dynamically-sized reservation should be smaller than the "
+        "fixed static zone footprint -- otherwise the product is being starved of "
+        "space it doesn't actually need to give up"
+    )
+
+
 def _synth_bg(w=1024, h=1024) -> Image.Image:
     img = Image.new("RGB", (w, h))
     draw = ImageDraw.Draw(img)
