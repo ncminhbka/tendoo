@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-scripts/demo_server.py
+src/tendoo/demo_server.py
 
 TENDOO AI - MULTI-USER DEMO SERVER
 ===================================
