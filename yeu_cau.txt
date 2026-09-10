@@ -1,0 +1,70 @@
+6 form của 6 button đều giống nhau phần Thông tin cửa hàng và Hiển thị/thiết kế, các trường trong 2 phần này đều không bắt buộc
+
+Phần khác nhau: Thông tin chung, dưới đây là chi tiết phần này từng button, dấu * là trường đó bắt buộc điền
+Poster khuyến mại/ quảng cáo: 
+- tiêu đề ảnh
+- ảnh upload
+- mức ưu đãi *
+- sp áp dụng
+- từ ngày đến ngày
+- prompt ảnh
+Ảnh gthieu sản phẩm:
+- tiêu đề ảnh
+- ảnh upload
+- Tên sp *
+- mô tả ngắn *
+- điểm nổi bật
+- giá bán
+- prompt ảnh
+Banner khai trương: 
+- Tiêu đề ảnh
+- ảnh upload
+- ngày khai trương * 
+- ưu đãi khai trương
+- liên hệ đặt bàn
+- prompt ảnh
+Feedback khách hàng
+- tiêu đề 
+- ảnh upload
+- Tên sp/dịch vụ nhận feedback *
+- mô tả ngắn feedback *
+- điểm nổi bật của sp/dịch vụ
+- ưu đãi đặc biệt
+- prompt ảnh
+Tuyển dụng:
+- tiêu đề ảnh
+- ảnh upload
+- vị trí tuyển dụng *
+- mô tả ngắn công việc
+- thời hạn ứng tuyển *
+- cách thức ứng tuyển *
+- prompt ảnh
+Quy trình, hướng dẫn
+- tiêu đề ảnh
+- ảnh upload
+- mô tả bước 1 + nút thêm bước
+- prompt ảnh
+
+Phần Hiển thị / thiết kế phải làm giống tendoo hiện tại
+- phong cách (drop down gợi ý)
+- màu chủ đạo (cho chọn)
+- tỷ lệ đầu ra (4 tỷ lệ), mặc định 1:1
+- số lượng ảnh cần tạo
+
+
+Các mẫu prompt mà người dùng có thể nhét vào trường prompt ảnh nằm trong prompt_test.txt
+Người dùng có thể điền hết các ô, nhưng prompt người dùng yêu cầu thế nào thì render thế đó, không phải luôn viết tất cả text
+Nếu người dùng không nhập prompt gì -> sinh tự do (dùng template như hiện tại hợp lý) 
+Nếu người dùng có điền địa chỉ thì vẽ
+Thực tế user sử dụng thì rất nhiều trường hợp, cho nên phải dùng LLM
+Nói chung phải dùng một LLM nhận kết quả form, hiểu intent và tạo prompt cuối, vẽ text gì, không vẽ text gì
+
+-> dẫn đến bài toán vẽ text ở vị trí bất kỳ như prompt 1 - 19 trong prompt_test.txt
+Đắt hơn: nếu thật sự cần mỗi zone một kiểu nền khác nhau (vd. góc trên sáng, góc dưới tối), phải tổng quát hàm thành K+1 nhánh (1 scene + K corridor riêng mỗi zone), chi phí tăng tuyến tính theo K — nên áp dụng luôn batching kiểu denoise_cfg
+
+Hiển thị / thiết kế hiện tại đang cho phép chọn layout, text font, chất liệu corridor prompt, phải thiết kế lại theo đúng tendoo, chỉ có
+- phong cách (drop down gợi ý)
+- màu chủ đạo (cho chọn)
+- tỷ lệ đầu ra (4 tỷ lệ), mặc định 1:1
+- số lượng ảnh cần tạo
+nên phải bỏ thiết kế hiện tại và phải tự match layout, font, chất liệu thông minh. mặt khác prompt người dùng có thể yêu cầu chất liệu text từng vùng khác nhau, có nên dùng nếu thật sự cần mỗi zone một kiểu nền khác nhau (vd. góc trên sáng, góc dưới tối), phải tổng quát hàm thành K+1 nhánh (1 scene + K corridor riêng mỗi zone), chi phí tăng tuyến tính theo K — nên áp dụng luôn batching kiểu denoise_cfg không?

@@ -92,6 +92,7 @@ def fit_font_size_px(
     max_height_px: float,
     min_font_size: int = 14,
     step: int = 2,
+    is_uppercase: bool = False,
 ) -> Tuple[int, float, float]:
     """
     Shrinks `base_font_size` (px) just enough that `text`, greedily word-wrapped at
@@ -99,37 +100,22 @@ def fit_font_size_px(
     compute_zone_rects() (mask sizing) and FreeformLayout.render_html() (actual CSS),
     so both agree on how big a block can render before it must shrink.
 
-    Checks width too, not just height: _wrap_and_measure() lets a single word that
-    still doesn't fit `max_width_px` overflow it anyway (rather than splitting the
-    word) -- for a narrow zone (e.g. a 9:16 canvas's 42%-width budget, ~240px) a long
-    unbroken English/French word ("TRANSFORMATION") can still exceed the width budget
-    even after the height constraint alone is satisfied, if the loop stopped too
-    early. Confirmed on a real measurement (2026-09-10): height-only fitting converged
-    at a font size whose widest wrapped line was still ~40% over the width budget.
-
-    Without this, a block whose ROLE implies a large flat font (e.g. "hero" at 7.2% of
-    canvas width) but whose actual TEXT is long (a full sentence, not a short title --
-    real render-plan LLM output isn't guaranteed to keep hero/subtitle text short)
-    overflows both the diffusion-reserved mask AND its own HTML box with no safety
-    net -- confirmed on a real render-plan LLM run (2026-09-10): a full-sentence
-    "hero"/"subtitle" pair flooded the entire canvas, each rendered at its flat
-    ROLE_SCALE size regardless of length. This is the freeform-specific instance of
-    the same "MER-vs-content-height" bug class the 6 fixed layouts already had fixed
-    (l_frame/diagonal_slash) -- freeform predates that fix and was never exercised
-    against long text until a real LLM produced some.
-
-    Returns (chosen_font_size, wrapped_width_px, wrapped_height_px) so the caller gets
-    the final measurement back without a second pass.
+    CRITICAL FIX FOR CLIPPING (e.g. 'TRANSFORMATION'):
+    If `is_uppercase` is True, `text` is measured in uppercase (`text.upper()`)
+    so the advance widths of capital letters are accurately accounted for before
+    rendering in CSS with `text-transform: uppercase`.
     """
+    measure_text = text.upper() if is_uppercase else text
+
     font_size = base_font_size
     while font_size > min_font_size:
         font = ImageFont.truetype(font_path, font_size)
-        w, h = _wrap_and_measure(text, font, max_width_px)
+        w, h = _wrap_and_measure(measure_text, font, max_width_px)
         if h <= max_height_px and w <= max_width_px:
             return font_size, w, h
         font_size -= step
     font = ImageFont.truetype(font_path, min_font_size)
-    w, h = _wrap_and_measure(text, font, max_width_px)
+    w, h = _wrap_and_measure(measure_text, font, max_width_px)
     return min_font_size, w, h
 
 

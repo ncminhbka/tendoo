@@ -42,7 +42,7 @@ from tendoo.layouts.font_engine import resolve_font
 from tendoo.layouts.freeform.mask import generate_freeform_mask
 from tendoo.layouts.freeform.measure import _font_path_for, compute_zone_rects, fit_font_size_px
 from tendoo.layouts.freeform.zones import ZONE_DEFAULT_ALIGN, ZONE_GRID_AREA, ZONE_NAMES, ZONE_SELF_ALIGN, is_valid_zone
-from tendoo.layouts.text_engine import normalize_text, resolve_headline_effect
+from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
 
 TEMPLATE_PATH = Path(__file__).resolve().parent / "template.html"
 
@@ -279,21 +279,29 @@ class FreeformLayout(BaseLayout):
                 role = b.get("role") if b.get("role") in ROLE_SCALE else "body"
                 size_ratio, weight, uppercase = ROLE_SCALE[role]
                 base_font_size = max(14, int(width * size_ratio))
+
+                # Cân bằng dòng tiếng Việt cho hero nếu nhiều từ để tránh 1 từ 1 dòng
+                display_text = text
+                if role == "hero" and "\n" not in text and len(text.split()) >= 3:
+                    lines, _ = balance_vietnamese_headline(text)
+                    if len(lines) > 1:
+                        display_text = "\n".join(lines)
+
                 # Shrinks the flat ROLE_SCALE size only if this block's actual text is
-                # too long to fit its share of the zone at that size (e.g. the
-                # render-plan LLM assigned "hero"/"subtitle" to a full sentence, not a
-                # short title) -- see fit_font_size_px()'s docstring for the real bug
-                # this fixes (confirmed on a live run, 2026-09-10: unchecked overflow
-                # flooded the whole canvas).
-                font_size, _, _ = fit_font_size_px(text, font_path, base_font_size, wrap_w_px, share_h_px)
+                # too long to fit its share of the zone at that size --
+                # Truyền is_uppercase=uppercase để đo đạc chính xác trên chuỗi in hoa
+                font_size, _, _ = fit_font_size_px(
+                    display_text, font_path, base_font_size, wrap_w_px, share_h_px, is_uppercase=uppercase
+                )
                 is_hero = b is hero_block
                 fill_css = headline_fill_css if is_hero else f"color: {html.escape(b.get('color') or palette.sub_color)};"
                 text_transform = "uppercase" if uppercase else "none"
                 icon_svg = ICON_SVG_BY_NAME.get(b.get("icon", ""), "")
+                escaped_text = html.escape(display_text).replace("\n", "<br>")
                 items_html.append(
                     f'          <div class="freeform-block freeform-role-{role}" '
                     f'style="font-size:{font_size}px; font-weight:{weight}; text-transform:{text_transform}; '
-                    f'text-align:{align}; {fill_css}">{icon_svg}{html.escape(text)}</div>'
+                    f'text-align:{align}; {fill_css}">{icon_svg}{escaped_text}</div>'
                 )
             # QR code: a special image element (not a text block) placed into whichever
             # zone the render plan (or the caller) designated via content.qr_zone.

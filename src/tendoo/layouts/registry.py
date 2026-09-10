@@ -48,6 +48,8 @@ def list_layouts() -> List[Dict[str, str]]:
     ]
 
 
+from tendoo.engine.layout import OmniBlockLayout
+
 # Auto-register canonical layouts
 register_layout(TopDomeLayout())
 register_layout(CenterHourglassLayout())
@@ -56,5 +58,6 @@ register_layout(SplitColumnLayout())
 register_layout(DiagonalSlashLayout())
 register_layout(LFrameLayout())
 register_layout(FreeformLayout())
+register_layout(OmniBlockLayout())
 
 

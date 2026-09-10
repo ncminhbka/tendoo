@@ -901,12 +901,13 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
 
     plan_blocks: Optional[List[Dict[str, Any]]] = None
     plan_qr_zone: Optional[str] = None
-    if layout.name == "freeform":
-        # Build the final freeform block list: every CATEGORY_FIELD_SLOTS field with
-        # real content (the real req value, or the model's extraction into a blank
-        # field), the resolved title (unless skipped), and any genuinely ad-hoc extra
-        # content -- then auto-place whatever wasn't given an explicit zone.
+    if layout.name in ("freeform", "omni"):
+        # Build the final block list: prioritize resolved title first, followed by
+        # category fields and ad-hoc extra content -- then deduplicate via Content Fingerprint.
         plan_blocks = []
+        if not title_skipped and final_title:
+            plan_blocks.append({"text": final_title, "zone": None, "role": "hero"})
+
         for cat_field in CATEGORY_FIELD_SLOTS.get(cat, []):
             if cat_field in field_values:
                 fv = field_values[cat_field]
@@ -927,8 +928,16 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                         "text": real_value, "zone": None,
                         "role": DEFAULT_FIELD_ROLE.get(cat_field, "body"),
                     })
+
+        # Content Dedup: If final_title is rendered as hero, don't re-render an identical
+        # category field block (e.g. feedback_target) as a subordinate body block.
         if not title_skipped and final_title:
-            plan_blocks.append({"text": final_title, "zone": None, "role": "hero"})
+            norm_title = " ".join(re.sub(r"[^\w\s]", "", final_title.lower()).split())
+            plan_blocks = [
+                b for b in plan_blocks
+                if " ".join(re.sub(r"[^\w\s]", "", b["text"].lower()).split()) != norm_title
+            ]
+            plan_blocks.insert(0, {"text": final_title, "zone": None, "role": "hero"})
         for b in ad_hoc_blocks:
             block = {"text": b["text"], "zone": b.get("zone"), "role": b.get("role") or "body"}
             if b.get("icon"):
@@ -936,6 +945,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
             if b.get("color"):
                 block["color"] = b["color"]
             plan_blocks.append(block)
+
         _auto_assign_zones(plan_blocks)
         plan_qr_zone = qr_zone_request
     else:
