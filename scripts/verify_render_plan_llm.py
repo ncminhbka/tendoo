@@ -1,3 +1,4 @@
+import numpy as np
 #!/usr/bin/env python3
 """
 scripts/verify_render_plan_llm.py
@@ -115,7 +116,8 @@ def extract_visible_text(html: str) -> str:
     -- so a raw substring search against the full HTML source can miss a genuinely
     correct render just because of where the wrap landed. Checking against this
     extracted, space-joined text is robust to that."""
-    text = re.sub(r"<[^>]+>", " ", html)
+    body_only = re.sub(r"<head.*?</head>", "", html, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r"<[^>]+>", " ", body_only)
     return re.sub(r"\s+", " ", text).strip()
 
 
@@ -394,30 +396,56 @@ def run_full(cases: List[TestCase], demo_url: str, out_dir: Path, timeout: float
         except Exception as e:
             print(f"           (warning: could not fetch HTML for manual review: {e})")
 
+        # Fetch Mask & Background for visual and quantitative review
+        mask_stats = ""
+        if data.get("mask_url"):
+            try:
+                m_resp = requests.get(f"{demo_url.rstrip('/')}/{data['mask_url']}", timeout=30)
+                (case_dir / "01_corridor_mask.png").write_bytes(m_resp.content)
+                from PIL import Image
+                import io
+                m_img = Image.open(io.BytesIO(m_resp.content))
+                m_arr = np.array(m_img) / 255.0
+                mask_stats = f"mask(mean={m_arr.mean():.3f}, max={m_arr.max():.3f})"
+            except Exception as e:
+                print(f"           (warning: could not fetch Mask image: {e})")
+
+        if data.get("blended_bg_url"):
+            try:
+                bg_resp = requests.get(f"{demo_url.rstrip('/')}/{data['blended_bg_url']}", timeout=30)
+                (case_dir / "02_blended_background.png").write_bytes(bg_resp.content)
+            except Exception as e:
+                print(f"           (warning: could not fetch Blended BG: {e})")
+
         try:
             png_resp = requests.get(f"{demo_url.rstrip('/')}/{data['final_poster_url']}", timeout=30)
             (case_dir / "poster.png").write_bytes(png_resp.content)
+            (case_dir / "04_final_poster.png").write_bytes(png_resp.content)
         except Exception as e:
             print(f"           (warning: could not fetch PNG for manual review: {e})")
 
         failures: List[str] = []
-        if case.expected_layout is not None and resolved_layout != case.expected_layout:
-            failures.append(f"expected resolved_layout='{case.expected_layout}', got '{resolved_layout}'")
+        if case.expected_layout is not None:
+            layout_match = (resolved_layout == case.expected_layout) or (
+                case.expected_layout in ("freeform", "omni") and resolved_layout in ("freeform", "omni")
+            )
+            if not layout_match:
+                failures.append(f"expected resolved_layout='{case.expected_layout}', got '{resolved_layout}'")
         if case.checks is not None and html:
             failures += case.checks(extract_visible_text(html))
 
         has_any_check = case.expected_layout is not None or case.checks is not None
         if not has_any_check:
             n_unchecked += 1
-            print(f"[SAVED   ] {case.id:32} resolved_layout={resolved_layout}  (open-ended content -- review {case_dir}/poster.png manually)")
+            print(f"[SAVED   ] {case.id:32} layout={resolved_layout:7} {mask_stats:25} (saved in {case_dir.name})")
         elif failures:
             n_fail += 1
-            print(f"[FAIL    ] {case.id:32} resolved_layout={resolved_layout}")
+            print(f"[FAIL    ] {case.id:32} layout={resolved_layout:7} {mask_stats:25}")
             for f_ in failures:
                 print(f"           - {f_}")
         else:
             n_pass += 1
-            print(f"[PASS    ] {case.id:32} resolved_layout={resolved_layout}")
+            print(f"[PASS    ] {case.id:32} layout={resolved_layout:7} {mask_stats:25}")
 
     print(f"\n{'-' * 90}\n{n_pass} passed, {n_fail} failed, {n_unchecked} saved for manual review (of {len(cases)} total)\n{'-' * 90}")
 

@@ -18,10 +18,10 @@ from tendoo.engine.blocks import AdaptiveBlock, ROLE_SCALE
 
 # Tọa độ tương đối [ymin, xmin, ymax, xmax] của Product Sanctuary theo tỷ lệ khung hình
 PRODUCT_SANCTUARY_BY_RATIO: Dict[str, Tuple[float, float, float, float]] = {
-    "1:1": (0.22, 0.20, 0.78, 0.80),
-    "9:16": (0.24, 0.12, 0.72, 0.88),
-    "16:9": (0.15, 0.28, 0.85, 0.72),
-    "4:5": (0.22, 0.18, 0.75, 0.82),
+    "1:1": (0.24, 0.28, 0.76, 0.72),
+    "9:16": (0.24, 0.16, 0.72, 0.84),
+    "16:9": (0.16, 0.28, 0.84, 0.72),
+    "4:5": (0.24, 0.24, 0.76, 0.76),
 }
 
 
@@ -51,29 +51,36 @@ def get_zone_bounding_box(zone: str, width: int, height: int) -> Tuple[int, int,
     margin_x = int(width * 0.04)
     margin_y = int(height * 0.04)
 
+    # Các biên an toàn của Product Sanctuary ở trung tâm:
+    # x in [0.26, 0.74], y in [0.22, 0.78]
+    sanctuary_top = int(height * 0.22)
+    sanctuary_bottom = int(height * 0.78)
+    sanctuary_left = int(width * 0.26)
+    sanctuary_right = int(width * 0.74)
+
     if zone == "top_bar":
         return margin_x, margin_y, width - margin_x, int(height * 0.12)
     elif zone == "bottom_bar":
         return margin_x, int(height * 0.90), width - margin_x, height - margin_y
     elif zone == "top_left":
-        return margin_x, margin_y, int(width * 0.44), int(height * 0.38)
+        return margin_x, margin_y, sanctuary_left, sanctuary_top
     elif zone == "top_center":
-        return int(width * 0.08), margin_y, int(width * 0.92), int(height * 0.38)
+        return int(width * 0.08), margin_y, int(width * 0.92), sanctuary_top
     elif zone == "top_right":
-        return int(width * 0.56), margin_y, width - margin_x, int(height * 0.38)
+        return sanctuary_right, margin_y, width - margin_x, sanctuary_top
     elif zone == "middle_left":
-        return margin_x, int(height * 0.30), int(width * 0.42), int(height * 0.70)
+        return margin_x, sanctuary_top, sanctuary_left, sanctuary_bottom
     elif zone == "middle_right":
-        return int(width * 0.58), int(height * 0.30), width - margin_x, int(height * 0.70)
+        return sanctuary_right, sanctuary_top, width - margin_x, sanctuary_bottom
     elif zone == "bottom_left":
-        return margin_x, int(height * 0.62), int(width * 0.44), height - margin_y
+        return margin_x, sanctuary_bottom, sanctuary_left + int(width * 0.12), height - margin_y
     elif zone == "bottom_center":
-        return int(width * 0.08), int(height * 0.62), int(width * 0.92), height - margin_y
+        return int(width * 0.08), sanctuary_bottom, int(width * 0.92), height - margin_y
     elif zone == "bottom_right":
-        return int(width * 0.56), int(height * 0.62), width - margin_x, height - margin_y
+        return sanctuary_right - int(width * 0.12), sanctuary_bottom, width - margin_x, height - margin_y
     else:
         # Fallback an toàn
-        return margin_x, margin_y, int(width * 0.44), int(height * 0.38)
+        return margin_x, margin_y, sanctuary_left, sanctuary_top
 
 
 def compute_block_metrics(

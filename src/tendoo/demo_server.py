@@ -459,6 +459,11 @@ def inject_spatial_layout_guidance(
             "studio commercial composition, hero product positioned in the center aperture of the frame, "
             "clean open negative copy space across top header and bottom footer, balanced hourglass framing"
         )
+    elif layout in ("omni", "freeform"):
+        spatial_guidance = (
+            "commercial advertising composition, centered subject protected in the product sanctuary, "
+            "harmonious balanced negative copy space around outer borders for typography"
+        )
     else:  # top_dome
         spatial_guidance = (
             "commercial advertising composition, hero product centered in the lower two-thirds of the frame, "
@@ -473,6 +478,8 @@ def inject_spatial_layout_guidance(
         "bottom_platform": ["bottom platform stage", "lower pedestal"],
         "center_hourglass": ["center aperture", "hourglass framing"],
         "top_dome": ["lower two-thirds", "upper dome"],
+        "omni": ["product sanctuary", "negative copy space"],
+        "freeform": ["product sanctuary", "negative copy space"],
     }
     needed = not any(k in lower_p for k in steering_check_keys.get(layout, []))
     if needed:

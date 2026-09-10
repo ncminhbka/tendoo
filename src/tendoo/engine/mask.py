@@ -23,9 +23,9 @@ def generate_omni_corridor_mask(
     height: int,
     blocks: List[AdaptiveBlock],
     font_path: str,
-    padding_px: int = 24,
-    blur_radius_px: int = 36,
-    int_max: float = 0.85,
+    padding_px: int = 28,
+    blur_radius_px: int = 16,
+    int_max: float = 1.0,
 ) -> np.ndarray:
     """
     Sinh 1 ma trận mask float32 [height, width] với giá trị [0.0, 1.0]:

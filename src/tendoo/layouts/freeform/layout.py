@@ -121,16 +121,21 @@ class FreeformLayout(BaseLayout):
         list of names, using the static ZONE_RECTS footprint) is kept for simple
         callers that don't have real content yet (e.g. a quick preview).
         """
-        zone_rects = None
         if blocks:
-            zone_rects = compute_zone_rects(
-                blocks=blocks, width=width, height=height, font_key=font_key, qr_zone=qr_zone,
+            from tendoo.engine.blocks import AdaptiveBlock
+            from tendoo.engine.mask import generate_omni_corridor_mask
+            adaptive_blocks = [AdaptiveBlock.from_dict(b) for b in blocks]
+            font_path = _font_path_for(font_key)
+            return generate_omni_corridor_mask(
+                width=width,
+                height=height,
+                blocks=adaptive_blocks,
+                font_path=font_path,
             )
         return generate_freeform_mask(
             height=height,
             width=width,
             zones=zones,
-            zone_rects=zone_rects,
             delta=delta,
             int_max=int_max,
             **kwargs,
