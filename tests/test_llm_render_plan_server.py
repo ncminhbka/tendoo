@@ -101,6 +101,27 @@ def test_parse_render_plan_json_handles_malformed_json():
     assert errors
 
 
+def test_parse_render_plan_json_ignores_trailing_prose_with_braces():
+    """Regression for the greedy-regex bug (audit PHẦN 3.1, confirmed real): the old
+    `re.search(r"\\{.*\\}", ..., re.DOTALL)` matched from the FIRST '{' to the LAST '}'
+    in the whole response, so trailing commentary that happens to mention a brace
+    corrupted the parse. A balanced-brace scanner must stop at the real JSON object's
+    own closing brace and ignore everything after it."""
+    raw = '{"scene_prompt": "a clean background"} Lưu ý: hãy nhớ dùng ký hiệu {ok} khi cần.'
+    plan, errors = srv.parse_render_plan_json(raw)
+    assert plan == {"scene_prompt": "a clean background"}
+    assert errors == []
+
+
+def test_parse_render_plan_json_handles_nested_braces_in_string_values():
+    """A '}' inside a quoted string value must not be mistaken for the object's closing
+    brace (the balanced scanner tracks string-literal state, not just raw brace count)."""
+    raw = '{"scene_prompt": "a sign reading {SALE} in the background"}'
+    plan, errors = srv.parse_render_plan_json(raw)
+    assert plan == {"scene_prompt": "a sign reading {SALE} in the background"}
+    assert errors == []
+
+
 # ==================================================================================
 # validate_render_plan
 # ==================================================================================
@@ -273,6 +294,39 @@ def test_validate_render_plan_field_tagged_block_never_filtered_as_duplicate():
     cleaned, errors = srv.validate_render_plan(plan, "promo", fields)
     assert len(cleaned["extra_blocks"]) == 1
     assert cleaned["extra_blocks"][0]["field"] == "discount"
+
+
+# ==================================================================================
+# title vs. filled-field duplicate filter (audit PHẦN 2.1, confirmed real: a
+# "generate" title could restate an already-filled field's real value verbatim,
+# rendering it twice -- once as the field, once as the invented "title").
+# ==================================================================================
+
+def test_validate_render_plan_drops_generated_title_duplicating_filled_field():
+    fields = dict(PROMO_FIELDS_BLANK, discount="GIẢM 50%")
+    plan = dict(VALID_PLAN, title={"action": "generate", "text": "GIẢM 50%"})
+    cleaned, errors = srv.validate_render_plan(plan, "promo", fields)
+    assert cleaned["title"] == {"action": "none", "text": None}
+    assert any("near-duplicate" in e for e in errors)
+
+
+def test_validate_render_plan_keeps_generated_title_not_matching_any_field():
+    fields = dict(PROMO_FIELDS_BLANK, discount="GIẢM 50%")
+    plan = dict(VALID_PLAN, title={"action": "generate", "text": "Ưu Đãi Cuối Tuần"})
+    cleaned, errors = srv.validate_render_plan(plan, "promo", fields)
+    assert cleaned["title"] == {"action": "generate", "text": "Ưu Đãi Cuối Tuần"}
+    assert not any("near-duplicate" in e for e in errors)
+
+
+def test_validate_render_plan_use_prompt_title_never_filtered_as_duplicate():
+    """action == 'use_prompt' is an explicit user request (branch (a) of the title
+    precedence rule) and must be honored verbatim even if it happens to overlap a
+    filled field -- only 'generate' (the model's own invention) is second-guessed."""
+    fields = dict(PROMO_FIELDS_BLANK, discount="GIẢM 50%")
+    plan = dict(VALID_PLAN, title={"action": "use_prompt", "text": "GIẢM 50%"})
+    cleaned, errors = srv.validate_render_plan(plan, "promo", fields)
+    assert cleaned["title"] == {"action": "use_prompt", "text": "GIẢM 50%"}
+    assert not any("near-duplicate" in e for e in errors)
 
 
 # ==================================================================================

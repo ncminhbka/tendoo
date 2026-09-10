@@ -69,14 +69,31 @@
       gap: 8px;
       min-width: 0;
       max-width: 100%;
+      /* Last-resort safety net: fit_font_size_px() (measure.py/layout.py) already
+         shrinks each block to fit its share of this zone's max-height budget, but if
+         it ever still doesn't (e.g. min_font_size floor reached on genuinely huge
+         text), clip here rather than let it spill into neighboring zones -- a clipped
+         block is a recoverable bug to notice, an unbounded one floods the whole
+         canvas (confirmed on a live run, 2026-09-10). */
+      overflow: hidden;
       {{wrap_filter_css}}
     }
 
     .freeform-block {
       line-height: 1.2;
       letter-spacing: -0.2px;
-      word-break: break-word;
-      overflow-wrap: break-word;
+      /* keep-all/normal, not break-word: fit_font_size_px() (measure.py) already wraps
+         and sizes text at WORD boundaries to fit the zone's width budget, so a mid-word
+         split here would only ever happen as browser behavior disagreeing with that
+         measurement -- and produces an ugly hyphen-less break ("COACHIN-G") rather than
+         a clean wrap. break-word was defensive-but-wrong: it hides a measurement bug
+         instead of surfacing it, and reads worse for Vietnamese diacritics + mixed
+         Latin/CJK-adjacent text than an overflowing word would in practice, since
+         real hero/title text is now short (system prompt) and long body/caption text
+         wraps at real word boundaries anyway. Confirmed via audit review, 2026-09-10.
+      */
+      word-break: keep-all;
+      overflow-wrap: normal;
       max-width: 100%;
     }
 

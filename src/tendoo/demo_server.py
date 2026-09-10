@@ -680,11 +680,19 @@ def try_fetch_render_plan(
 # given an explicit zone (either because the model correctly left it blank -- no
 # position was requested -- or because a mandatory field needs placing after the plan
 # escalated to freeform for an unrelated reason).
+#
+# "center" deliberately excluded from every role's preference list: it's the
+# zone diffusion needs clearest for the actual product/subject, and an auto-GUESSED
+# placement (the LLM left this block's zone unset) should never compete for it --
+# only an EXPLICIT zone="center" from the render plan (a deliberate user/LLM request)
+# ever lands text there. It's still technically reachable as the absolute last resort
+# in _auto_assign_zones()'s "any remaining zone" fallback below, once every other
+# named zone is already taken.
 _ZONE_ROLE_PREFERENCE: Dict[str, List[str]] = {
-    "hero": ["top_center", "center", "top_left"],
-    "subtitle": ["center", "top_center", "middle_left"],
+    "hero": ["top_center", "top_left", "top_right"],
+    "subtitle": ["top_center", "middle_left", "middle_right"],
     "badge": ["top_left", "top_right", "bottom_left"],
-    "body": ["middle_left", "middle_right", "center"],
+    "body": ["middle_left", "middle_right", "bottom_center"],
     "caption": ["bottom_left", "bottom_right", "bottom_center"],
 }
 

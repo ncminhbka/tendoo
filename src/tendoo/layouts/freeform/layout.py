@@ -40,7 +40,7 @@ from tendoo.layouts.base import (
 )
 from tendoo.layouts.font_engine import resolve_font
 from tendoo.layouts.freeform.mask import generate_freeform_mask
-from tendoo.layouts.freeform.measure import compute_zone_rects
+from tendoo.layouts.freeform.measure import _font_path_for, compute_zone_rects, fit_font_size_px
 from tendoo.layouts.freeform.zones import ZONE_DEFAULT_ALIGN, ZONE_GRID_AREA, ZONE_NAMES, ZONE_SELF_ALIGN, is_valid_zone
 from tendoo.layouts.text_engine import normalize_text, resolve_headline_effect
 
@@ -224,12 +224,13 @@ class FreeformLayout(BaseLayout):
         hero_text = normalize_text((hero_block or {}).get("text", ""))
 
         font_key = getattr(content, "font_family", "auto")
-        _, font_face_css, headline_font_css = resolve_font(
+        resolved_font_key, font_face_css, headline_font_css = resolve_font(
             font_key=font_key,
             category=content.category,
             style_hint=kwargs.get("style_hint", ""),
             text_content=hero_text,
         )
+        font_path = _font_path_for(resolved_font_key)
 
         effect_name = headline_effect or content.text_effect or "auto"
         _, headline_fill_css, wrap_filter_css = resolve_headline_effect(
@@ -258,6 +259,18 @@ class FreeformLayout(BaseLayout):
             if not zone_blocks and not zone_has_qr:
                 continue
             align = ZONE_DEFAULT_ALIGN[zone_name]
+            # Cap each zone's footprint (in px, not %, to sidestep grid/percentage
+            # sizing ambiguity) so a long/large block placed in a side zone (e.g. a
+            # "hero" in middle_left, per prompt_test.txt's own examples) still wraps
+            # within a sane width instead of forcing its "auto" track to balloon --
+            # the middle row/column (the actual product/scene area) must stay intact.
+            max_w_px, max_h_px = int(width * 0.42), int(height * 0.42)
+            # Equal-share height budget per block sharing this zone (same heuristic
+            # compute_zone_rects() uses for mask sizing -- kept identical so the HTML
+            # and the diffusion-reserved mask agree on how much room each block gets).
+            num_shares = len(zone_blocks) + (1 if zone_has_qr else 0)
+            share_h_px = max_h_px / max(1, num_shares)
+            wrap_w_px = min(max_w_px, width * 0.9)
             items_html = []
             for b in zone_blocks:
                 text = normalize_text(b.get("text", ""))
@@ -265,7 +278,14 @@ class FreeformLayout(BaseLayout):
                     continue
                 role = b.get("role") if b.get("role") in ROLE_SCALE else "body"
                 size_ratio, weight, uppercase = ROLE_SCALE[role]
-                font_size = max(14, int(width * size_ratio))
+                base_font_size = max(14, int(width * size_ratio))
+                # Shrinks the flat ROLE_SCALE size only if this block's actual text is
+                # too long to fit its share of the zone at that size (e.g. the
+                # render-plan LLM assigned "hero"/"subtitle" to a full sentence, not a
+                # short title) -- see fit_font_size_px()'s docstring for the real bug
+                # this fixes (confirmed on a live run, 2026-09-10: unchecked overflow
+                # flooded the whole canvas).
+                font_size, _, _ = fit_font_size_px(text, font_path, base_font_size, wrap_w_px, share_h_px)
                 is_hero = b is hero_block
                 fill_css = headline_fill_css if is_hero else f"color: {html.escape(b.get('color') or palette.sub_color)};"
                 text_transform = "uppercase" if uppercase else "none"
@@ -286,12 +306,6 @@ class FreeformLayout(BaseLayout):
             if not items_html:
                 continue
             justify_self, align_self = ZONE_SELF_ALIGN[zone_name]
-            # Cap each zone's footprint (in px, not %, to sidestep grid/percentage
-            # sizing ambiguity) so a long/large block placed in a side zone (e.g. a
-            # "hero" in middle_left, per prompt_test.txt's own examples) still wraps
-            # within a sane width instead of forcing its "auto" track to balloon --
-            # the middle row/column (the actual product/scene area) must stay intact.
-            max_w_px, max_h_px = int(width * 0.42), int(height * 0.42)
             zone_cells_html.append(
                 f'        <div class="freeform-zone" style="grid-area: {ZONE_GRID_AREA[zone_name]}; '
                 f'justify-self: {justify_self}; align-self: {align_self}; '

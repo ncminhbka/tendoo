@@ -98,6 +98,53 @@ def test_compute_zone_rects_grows_with_more_content():
     )
 
 
+def test_fit_font_size_px_shrinks_long_text_to_fit_budget():
+    """The exact bug found on a live render-plan LLM run (2026-09-10): a "hero"-role
+    block whose text is a full sentence (not a short title) must shrink well below the
+    flat ROLE_SCALE size to fit a bounded height budget, rather than overflowing it."""
+    from tendoo.layouts.freeform.measure import _font_path_for, fit_font_size_px
+
+    font_path = _font_path_for("bevietnam")
+    long_sentence = (
+        "KHÁCH HÀNG HÀI LÒNG VỚI KẾT QUẢ TĂNG CƠ VÀ CẢI THIỆN VÓC DÁNG CHỈ SAU BA THÁNG"
+    )
+    base_font_size = 74  # matches ROLE_SCALE["hero"] at width=1024 (0.072 * 1024)
+    max_width_px = 1024 * 0.42
+    max_height_px = 1024 * 0.42
+
+    font_size, _, wrapped_h = fit_font_size_px(
+        long_sentence, font_path, base_font_size, max_width_px, max_height_px,
+    )
+    assert font_size < base_font_size, "a full sentence at hero size must shrink, not render at the flat ratio"
+    assert wrapped_h <= max_height_px + 1, "the shrunk text must actually fit the height budget"
+
+
+def test_fit_font_size_px_leaves_short_text_at_base_size():
+    """A short phrase that already fits shouldn't be shrunk needlessly."""
+    from tendoo.layouts.freeform.measure import _font_path_for, fit_font_size_px
+
+    font_path = _font_path_for("bevietnam")
+    font_size, _, _ = fit_font_size_px("SALE 50%", font_path, 74, 1024 * 0.42, 1024 * 0.42)
+    assert font_size == 74
+
+
+def test_compute_zone_rects_stays_capped_with_pathologically_long_hero_text():
+    """Even with a very long "hero" text, the reserved rect must stay within
+    ZONE_MAX_W_PCT/ZONE_MAX_H_PCT (42%) -- the font-fitting engaging is what makes this
+    cap actually meaningful, rather than just clamping a rect whose real content still
+    overflows past it when rendered."""
+    from tendoo.layouts.freeform.measure import compute_zone_rects
+
+    plan = [{
+        "text": "KHÁCH HÀNG HÀI LÒNG VỚI PRIVATE COACHING TRANSFORMATION SAU BA THÁNG TẬP LUYỆN CÙNG PT RIÊNG",
+        "zone": "top_center", "role": "hero",
+    }]
+    rects = compute_zone_rects(plan, width=1024, height=1024)
+    y0, x0, y1, x1 = rects["top_center"]
+    assert (y1 - y0) <= 0.42 + 1e-6
+    assert (x1 - x0) <= 0.42 + 1e-6
+
+
 def test_compute_zone_rects_anchors_to_correct_corner():
     from tendoo.layouts.freeform.measure import compute_zone_rects
 
@@ -229,6 +276,45 @@ def test_render_freeform_plan_with_icons_and_qr():
     PosterRenderer.render(html_content=html_str, output_image_path=out_path, width=1024, height=1024)
     assert out_path.exists() and out_path.stat().st_size > 30000
     print(f"[PASSED] Rendered freeform plan with icons+QR -> {out_path}")
+
+
+def test_render_html_shrinks_long_hero_text_instead_of_overflowing():
+    """Regression test for the exact bug found on a real render-plan LLM run
+    (2026-09-10): the model assigned "hero" role to a full sentence (not a short
+    title), which rendered at the flat ROLE_SCALE size and flooded the whole canvas.
+    The emitted font-size must now be meaningfully smaller than the flat ratio would
+    produce, and the rendered PNG must not blow up in file size from runaway text."""
+    import re
+
+    layout = get_layout("freeform")
+    long_hero_text = (
+        "KHÁCH HÀNG HÀI LÒNG VỚI PRIVATE COACHING TRANSFORMATION SAU BA THÁNG"
+    )
+    plan = [
+        {"text": long_hero_text, "zone": "top_center", "role": "hero"},
+        {"text": "97% khách hàng hài lòng với kết quả", "zone": "center", "role": "subtitle"},
+    ]
+    bg = _synth_bg()
+    safe_zone = layout.get_safe_zone()
+    palette = analyze_color_harmony(np.array(bg), safe_zone, color_mode="auto")
+    content = PosterContent(headline=long_hero_text, category="feedback", free_text_blocks=plan)
+
+    html_str = layout.render_html(
+        content=content, palette=palette, bg_data_uri=_pil_to_data_uri(bg), width=1024, height=1024,
+    )
+
+    flat_hero_size = int(1024 * 0.072)  # ROLE_SCALE["hero"][0] -- what it would be unshrunk
+    sizes = [int(m) for m in re.findall(r"font-size:(\d+)px", html_str)]
+    assert sizes, "expected at least one inline font-size in the rendered HTML"
+    hero_block_size = sizes[0]  # the hero block is emitted first (zone iteration order)
+    assert hero_block_size < flat_hero_size, (
+        f"long hero text rendered at {hero_block_size}px, expected shrunk below the flat {flat_hero_size}px"
+    )
+
+    out_path = OUTPUT_DIR / "test_freeform_long_hero_shrinks.png"
+    PosterRenderer.render(html_content=html_str, output_image_path=out_path, width=1024, height=1024)
+    assert out_path.exists() and out_path.stat().st_size > 30000
+    print(f"[PASSED] Long hero text shrunk to {hero_block_size}px (flat would be {flat_hero_size}px) -> {out_path}")
 
 
 def test_freeform_qr_only_zone_renders_even_with_no_text_blocks_there():

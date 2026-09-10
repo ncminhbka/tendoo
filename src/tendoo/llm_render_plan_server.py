@@ -217,12 +217,24 @@ QUY TẮC TUYỆT ĐỐI (không tự suy diễn khác):
   -- đừng tự ý gán zone nếu người dùng không yêu cầu vị trí.
 - Mã QR: nếu người dùng yêu cầu vị trí cụ thể cho mã QR, tạo 1 block field="qr" kèm "zone" tương ứng (bỏ qua "text").
   Nếu không có yêu cầu, đừng tạo block này -- mã QR (nếu bật) sẽ tự hiển thị ở vị trí mặc định.
+- MẶC ĐỊNH AN TOÀN là "extra_blocks": [] (mảng RỖNG). Chỉ thêm 1 phần tử khi có tín hiệu RÕ RÀNG trong prompt tự do
+  (một vị trí cụ thể được nêu, hoặc một nội dung mới thực sự không khớp trường nào). Lỗi thật đã xảy ra: model tự ý
+  thêm block cho nội dung không ai yêu cầu định vị, khiến bố cục tự do (freeform) bị kích hoạt một cách không cần
+  thiết. Nếu không chắc prompt có yêu cầu vị trí/nội dung mới hay không -> ĐỪNG thêm block, để mảng rỗng.
 
 TIÊU ĐỀ (title), quyết định theo đúng thứ tự sau:
 (a) Nếu prompt tự do nêu rõ 1 dòng chữ lớn/hero/tiêu đề nổi bật (không nhất thiết dùng đúng từ "tiêu đề") -> action="use_prompt", text=nội dung đó.
 (b) Nếu prompt tự do yêu cầu các đoạn chữ rải rác theo vị trí NHƯNG KHÔNG nhắc đến hero/tiêu đề -> action="none" (bỏ qua tiêu đề hoàn toàn).
 (c) Nếu (a) và (b) đều không đúng và trường tiêu đề đã điền -> action="none" (dùng nguyên giá trị đã điền, không cần bạn nêu lại).
 (d) Nếu không trường hợp nào đúng (tiêu đề trống, prompt không nhắc) -> action="generate", text=tiêu đề bạn tự nghĩ ra phù hợp ngữ cảnh.
+
+QUAN TRỌNG -- ĐỘ DÀI CHỮ THEO ROLE (lỗi thật đã xảy ra: chữ tràn kín cả khung vì gán "hero" cho cả 1 câu dài):
+- "hero" và tiêu đề (title): CHỈ dùng cho 1 cụm từ NGẮN, súc tích (tối đa ~5-6 chữ) -- vì render ở cỡ chữ RẤT LỚN.
+  Nếu nội dung là cả 1 câu dài (vd trích một câu feedback, một câu mô tả), TUYỆT ĐỐI KHÔNG gán "hero"/"subtitle" cho
+  nguyên câu đó -- hãy rút gọn thành cụm từ ngắn thể hiện ý chính, hoặc gán role "body" (cỡ chữ nhỏ hơn nhiều, chịu
+  được câu dài) thay vào đó.
+- "subtitle": ngắn hơn hero nhưng vẫn nên là 1 cụm/1 dòng, không phải cả đoạn văn.
+- "body"/"caption": mới là role phù hợp cho câu dài, mô tả chi tiết, trích dẫn.
 
 VÙNG ĐẶT CHỮ HỢP LỆ (zone, đúng 9 tên sau): {zones}
 VAI TRÒ CHỮ HỢP LỆ (role): {roles}
@@ -327,14 +339,56 @@ def generate_raw_response(
     return tokenizer.decode(generated[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
 
 
+def _extract_first_json_object(raw_response: str) -> Optional[str]:
+    """Scans for the first balanced {...} block via brace-depth counting, honoring
+    string literals (so a `}` inside a quoted JSON string value never closes the
+    object early) and backslash escapes within them.
+
+    Replaces a naive `re.search(r"\\{.*\\}", ..., re.DOTALL)`, which is GREEDY: `.*`
+    matches as much as possible, so if the model's raw output is
+    `{"title": ...} some trailing prose that happens to mention a brace: {ok}` the old
+    regex captured from the FIRST `{` all the way to the LAST `}` in the whole
+    response -- including that trailing prose -- producing either a hard JSONDecodeError
+    (if the trailing text isn't valid JSON, the common case) or, worse, a silently wrong
+    parse if it happened to still be valid-looking JSON. Chat models routinely emit
+    trailing commentary after the JSON block despite instructions not to, so this isn't
+    a theoretical risk. A balanced scanner starting from the first `{` and stopping at
+    ITS matching `}` is immune to anything after that point."""
+    start = raw_response.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    in_string = False
+    escaped = False
+    for i in range(start, len(raw_response)):
+        ch = raw_response[i]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return raw_response[start : i + 1]
+    return None
+
+
 def parse_render_plan_json(raw_response: str) -> Tuple[Optional[Dict[str, Any]], List[str]]:
-    """Extracts the first {...} block from the model's raw text and JSON-decodes it.
-    Never raises -- returns (None, [error]) on any parse failure."""
-    match = re.search(r"\{.*\}", raw_response, re.DOTALL)
-    if not match:
+    """Extracts the first balanced {...} block from the model's raw text and
+    JSON-decodes it. Never raises -- returns (None, [error]) on any parse failure."""
+    candidate = _extract_first_json_object(raw_response)
+    if candidate is None:
         return None, ["No JSON object found in model response."]
     try:
-        return json.loads(match.group(0)), []
+        return json.loads(candidate), []
     except json.JSONDecodeError as e:
         return None, [f"JSON parse failure: {e}"]
 
@@ -440,6 +494,21 @@ def validate_render_plan(
             if difflib.SequenceMatcher(None, norm_text, norm_fv).ratio() >= DUPLICATE_SIMILARITY_THRESHOLD:
                 return True
         return False
+
+    # Same duplicate-content problem, but for `title` instead of an extra_block --
+    # only when action == "generate" (the model invented this text itself, with no
+    # explicit user request behind it) do we second-guess it against the already-filled
+    # fields. action == "use_prompt" is left untouched even if it happens to overlap a
+    # filled field: the user explicitly asked for that exact hero text in the free
+    # prompt (branch (a) of the title precedence rule), which outranks any dedup
+    # heuristic -- an explicit request should never be silently overridden by a filter
+    # meant to catch the model restating content nobody asked it to.
+    if title_action == "generate" and title_text and _is_near_duplicate(title_text):
+        errors.append(
+            f"generated title '{title_text}' looks like a near-duplicate of an "
+            f"already-filled field, discarded (falls through to form title / category default)"
+        )
+        title_action, title_text = "none", None
 
     deduped_blocks: List[Dict[str, Any]] = []
     for b in clean_blocks:

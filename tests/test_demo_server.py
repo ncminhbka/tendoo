@@ -1020,6 +1020,29 @@ def test_generate_guide_requires_non_empty_first_step(client):
     assert resp_ok.json()["success"] is True
 
 
+def test_zone_role_preference_never_auto_assigns_center():
+    """Regression for audit PHẦN 2.3 ('Product Sanctuary Violation', confirmed real):
+    center is the zone diffusion needs clearest for the product/subject, so an
+    auto-GUESSED placement (no explicit zone requested) must never compete for it --
+    only an explicit zone="center" on the block itself should ever land text there."""
+    from tendoo.demo_server import _ZONE_ROLE_PREFERENCE, _auto_assign_zones
+
+    for role, candidates in _ZONE_ROLE_PREFERENCE.items():
+        assert "center" not in candidates, f"role '{role}' still prefers 'center'"
+
+    # End-to-end: an unzoned block must not land on center as long as another named
+    # zone remains free.
+    blocks = [{"role": "hero", "text": "X", "zone": None}]
+    _auto_assign_zones(blocks)
+    assert blocks[0]["zone"] != "center"
+
+    # An EXPLICIT zone="center" request is still honored verbatim -- only the
+    # auto-guess path avoids it.
+    explicit_blocks = [{"role": "hero", "text": "X", "zone": "center"}]
+    _auto_assign_zones(explicit_blocks)
+    assert explicit_blocks[0]["zone"] == "center"
+
+
 
 
 

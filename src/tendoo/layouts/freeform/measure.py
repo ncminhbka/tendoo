@@ -84,6 +84,55 @@ def _wrap_and_measure(text: str, font: "ImageFont.FreeTypeFont", max_width_px: f
     return float(max_line_w), float(len(lines) * line_h)
 
 
+def fit_font_size_px(
+    text: str,
+    font_path: str,
+    base_font_size: int,
+    max_width_px: float,
+    max_height_px: float,
+    min_font_size: int = 14,
+    step: int = 2,
+) -> Tuple[int, float, float]:
+    """
+    Shrinks `base_font_size` (px) just enough that `text`, greedily word-wrapped at
+    `max_width_px`, fits within BOTH `max_width_px` and `max_height_px` -- shared by
+    compute_zone_rects() (mask sizing) and FreeformLayout.render_html() (actual CSS),
+    so both agree on how big a block can render before it must shrink.
+
+    Checks width too, not just height: _wrap_and_measure() lets a single word that
+    still doesn't fit `max_width_px` overflow it anyway (rather than splitting the
+    word) -- for a narrow zone (e.g. a 9:16 canvas's 42%-width budget, ~240px) a long
+    unbroken English/French word ("TRANSFORMATION") can still exceed the width budget
+    even after the height constraint alone is satisfied, if the loop stopped too
+    early. Confirmed on a real measurement (2026-09-10): height-only fitting converged
+    at a font size whose widest wrapped line was still ~40% over the width budget.
+
+    Without this, a block whose ROLE implies a large flat font (e.g. "hero" at 7.2% of
+    canvas width) but whose actual TEXT is long (a full sentence, not a short title --
+    real render-plan LLM output isn't guaranteed to keep hero/subtitle text short)
+    overflows both the diffusion-reserved mask AND its own HTML box with no safety
+    net -- confirmed on a real render-plan LLM run (2026-09-10): a full-sentence
+    "hero"/"subtitle" pair flooded the entire canvas, each rendered at its flat
+    ROLE_SCALE size regardless of length. This is the freeform-specific instance of
+    the same "MER-vs-content-height" bug class the 6 fixed layouts already had fixed
+    (l_frame/diagonal_slash) -- freeform predates that fix and was never exercised
+    against long text until a real LLM produced some.
+
+    Returns (chosen_font_size, wrapped_width_px, wrapped_height_px) so the caller gets
+    the final measurement back without a second pass.
+    """
+    font_size = base_font_size
+    while font_size > min_font_size:
+        font = ImageFont.truetype(font_path, font_size)
+        w, h = _wrap_and_measure(text, font, max_width_px)
+        if h <= max_height_px and w <= max_width_px:
+            return font_size, w, h
+        font_size -= step
+    font = ImageFont.truetype(font_path, min_font_size)
+    w, h = _wrap_and_measure(text, font, max_width_px)
+    return min_font_size, w, h
+
+
 def compute_zone_rects(
     blocks: List[Dict[str, Any]],
     width: int,
@@ -121,13 +170,22 @@ def compute_zone_rects(
         if not zone_blocks and not has_qr:
             continue
 
+        # Each block sharing this zone gets an equal slice of the zone's total height
+        # budget (a simple, bounded heuristic -- not "hero deserves more room than
+        # caption", just "no single block can silently claim the whole zone and push
+        # its neighbors out"); fit_font_size_px() then shrinks that block's font until
+        # its wrapped text actually fits its slice, rather than rendering at a flat
+        # ROLE_FONT_RATIO size regardless of how long the text turns out to be.
+        share_h_px = max_h_px / max(1, len(zone_blocks))
+        wrap_w_px = min(max_w_px, width * 0.9)
         total_h_px = 0.0
         max_w_needed_px = 0.0
         for i, b in enumerate(zone_blocks):
             role = b.get("role") if b.get("role") in ROLE_FONT_RATIO else "body"
-            font_size = max(14, int(width * ROLE_FONT_RATIO[role]))
-            font = ImageFont.truetype(font_path, font_size)
-            w_px, h_px = _wrap_and_measure(b.get("text", ""), font, min(max_w_px, width * 0.9))
+            base_font_size = max(14, int(width * ROLE_FONT_RATIO[role]))
+            _, w_px, h_px = fit_font_size_px(
+                b.get("text", ""), font_path, base_font_size, wrap_w_px, share_h_px,
+            )
             total_h_px += h_px + (BLOCK_GAP_PX if i > 0 else 0.0)
             max_w_needed_px = max(max_w_needed_px, w_px)
 
