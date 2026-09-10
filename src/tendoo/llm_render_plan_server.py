@@ -68,6 +68,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import json
+import os
 import re
 import sys
 from contextlib import asynccontextmanager
@@ -114,8 +115,6 @@ def _resolve_qwen3_checkpoint_path(variant: str) -> str:
     up the SAME local weights the main demo server already uses, without needing the
     embedding-only Qwen3Embedder wrapper class (which has no .generate() method).
     """
-    import os
-
     env_key = f"QWEN3_{variant.upper()}_MODEL_PATH"
     if env_key in os.environ and os.path.exists(os.environ[env_key]):
         return os.environ[env_key]
@@ -136,16 +135,61 @@ def _resolve_qwen3_checkpoint_path(variant: str) -> str:
     return f"Qwen/Qwen3-{variant}-FP8"
 
 
+# Standard Qwen ChatML template (system/user/assistant turns), used ONLY as a last-
+# resort fallback -- see load_model()'s defensive check below. Confirmed needed on a
+# real server run (2026-09-10): a local '.../text_encoder' checkpoint directory can
+# have valid model weights but an incomplete tokenizer (missing chat_template.json),
+# which crashes apply_chat_template() with "chat_template is not set" even though the
+# checkpoint is otherwise perfectly usable.
+QWEN_CHATML_FALLBACK_TEMPLATE = (
+    "{%- for message in messages %}"
+    "{{- '<|im_start|>' + message['role'] + '\\n' + message['content'] + '<|im_end|>' + '\\n' }}"
+    "{%- endfor %}"
+    "{%- if add_generation_prompt %}"
+    "{{- '<|im_start|>assistant\\n' }}"
+    "{%- endif %}"
+)
+
+
+def _resolve_tokenizer_path(model_path: str) -> str:
+    """
+    Mirrors src/flux2/text_encoder.py::Qwen3Embedder's own tokenizer-path resolution
+    EXACTLY: when the model weights live in a local '.../text_encoder' directory, the
+    full tokenizer (incl. chat_template.json) often lives in a SIBLING '.../tokenizer'
+    directory instead of alongside the model weights -- loading the tokenizer from
+    `model_path` directly can silently pick up an incomplete tokenizer missing its
+    chat template. Only applies to local paths; a bare HF hub id (e.g.
+    'Qwen/Qwen3-4B-FP8') has no local sibling to check and is returned as-is.
+    """
+    if os.path.exists(model_path):
+        parent_dir = os.path.dirname(os.path.abspath(model_path))
+        sibling_tokenizer = os.path.join(parent_dir, "tokenizer")
+        if os.path.exists(sibling_tokenizer):
+            return sibling_tokenizer
+    return model_path
+
+
 def load_model(model_path: str, device: str) -> Tuple[Any, Any]:
     """Loads a plain AutoModelForCausalLM + AutoTokenizer for real text generation
     (unlike Qwen3Embedder, which only ever does an embedding forward pass)."""
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+    tokenizer_path = _resolve_tokenizer_path(model_path)
+    if tokenizer_path != model_path:
+        print(f"  [Tokenizer] Model dir has no full tokenizer -- using sibling: {tokenizer_path}")
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(
         model_path, torch_dtype=torch.bfloat16, device_map=device, trust_remote_code=True
     ).eval()
+
+    # Defensive fallback: if even the resolved tokenizer has no chat_template (e.g. an
+    # unexpected local layout, or a bare hub id whose repo genuinely lacks one), install
+    # a standard Qwen ChatML template rather than crashing every single request.
+    if getattr(tokenizer, "chat_template", None) is None:
+        print("  [Tokenizer] No chat_template found on the resolved tokenizer -- falling back to a manual ChatML template.")
+        tokenizer.chat_template = QWEN_CHATML_FALLBACK_TEMPLATE
+
     return model, tokenizer
 
 

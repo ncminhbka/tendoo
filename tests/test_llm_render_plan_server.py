@@ -37,6 +37,48 @@ PROMO_FIELDS_FILLED = {"discount": "GIẢM 50%", "applied_product": "", "date_st
 
 
 # ==================================================================================
+# _resolve_tokenizer_path -- confirmed bug found on a real server run (2026-09-10):
+# a local ".../text_encoder" checkpoint dir can have valid model weights but an
+# incomplete tokenizer (missing chat_template.json), crashing apply_chat_template()
+# with "chat_template is not set" even though the checkpoint is otherwise fine. Mirrors
+# src/flux2/text_encoder.py::Qwen3Embedder's own sibling-tokenizer-directory lookup.
+# ==================================================================================
+
+def test_resolve_tokenizer_path_uses_sibling_tokenizer_dir_when_present(tmp_path):
+    root = tmp_path / "FLUX.2-klein-base-4B"
+    text_encoder_dir = root / "text_encoder"
+    tokenizer_dir = root / "tokenizer"
+    text_encoder_dir.mkdir(parents=True)
+    tokenizer_dir.mkdir(parents=True)
+
+    result = srv._resolve_tokenizer_path(str(text_encoder_dir))
+    assert result == str(tokenizer_dir)
+
+
+def test_resolve_tokenizer_path_falls_back_to_model_path_without_sibling(tmp_path):
+    text_encoder_dir = tmp_path / "some_checkpoint" / "text_encoder"
+    text_encoder_dir.mkdir(parents=True)
+
+    result = srv._resolve_tokenizer_path(str(text_encoder_dir))
+    assert result == str(text_encoder_dir)
+
+
+def test_resolve_tokenizer_path_passes_through_hub_id_unchanged():
+    # A bare HF hub id (no local sibling to check) must be returned as-is.
+    assert srv._resolve_tokenizer_path("Qwen/Qwen3-4B-FP8") == "Qwen/Qwen3-4B-FP8"
+
+
+def test_qwen_chatml_fallback_template_renders_valid_chatml():
+    from jinja2 import Template
+
+    rendered = Template(srv.QWEN_CHATML_FALLBACK_TEMPLATE).render(
+        messages=[{"role": "system", "content": "sys msg"}, {"role": "user", "content": "user msg"}],
+        add_generation_prompt=True,
+    )
+    assert rendered == "<|im_start|>system\nsys msg<|im_end|>\n<|im_start|>user\nuser msg<|im_end|>\n<|im_start|>assistant\n"
+
+
+# ==================================================================================
 # parse_render_plan_json
 # ==================================================================================
 
