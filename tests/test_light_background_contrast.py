@@ -25,7 +25,7 @@ import pytest
 from tendoo.layouts.registry import get_layout, list_layouts
 from tendoo.layouts.base import ColorPalette, PosterContent
 from tendoo.layouts.color_engine import analyze_color_harmony
-from tendoo.layouts.component_engine import render_category_body
+from tendoo_legacy.layouts.component_engine import render_category_body
 
 
 def create_solid_image(width: int, height: int, color_rgb: tuple) -> Image.Image:
@@ -45,7 +45,12 @@ def test_no_dark_shims_in_any_template():
     for layout_info in list_layouts():
         layout_name = layout_info["name"]
         layout = get_layout(layout_name)
-        template_file = PROJECT_ROOT / "src" / "tendoo" / "layouts" / layout_name / "template.html"
+        if layout_name == "omni":
+            template_file = PROJECT_ROOT / "src" / "tendoo" / "engine" / "templates" / "master.html"
+        else:
+            template_file = PROJECT_ROOT / "src" / "tendoo_legacy" / "layouts" / layout_name / "template.html"
+            if not template_file.exists():
+                template_file = PROJECT_ROOT / "src" / "tendoo" / "layouts" / layout_name / "template.html"
         assert template_file.exists(), f"Template {template_file} must exist"
         content = template_file.read_text(encoding="utf-8")
 

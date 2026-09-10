@@ -25,8 +25,8 @@ import pytest
 from PIL import Image, ImageDraw
 
 from tendoo.layouts import PosterContent, analyze_color_harmony, get_layout
-from tendoo.layouts.freeform.mask import generate_freeform_mask
-from tendoo.layouts.freeform.zones import ZONE_NAMES, is_valid_zone
+from tendoo_legacy.layouts.freeform.mask import generate_freeform_mask
+from tendoo_legacy.layouts.freeform.zones import ZONE_NAMES, is_valid_zone
 from tendoo.poster_renderer import PosterRenderer
 
 OUTPUT_DIR = Path("output_layouts_test")
@@ -34,7 +34,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def test_all_zone_names_are_used_by_grid_area_and_default_align():
-    from tendoo.layouts.freeform.zones import ZONE_DEFAULT_ALIGN, ZONE_GRID_AREA
+    from tendoo_legacy.layouts.freeform.zones import ZONE_DEFAULT_ALIGN, ZONE_GRID_AREA
     assert set(ZONE_GRID_AREA.keys()) == set(ZONE_NAMES)
     assert set(ZONE_DEFAULT_ALIGN.keys()) == set(ZONE_NAMES)
     assert len(ZONE_NAMES) == 9
@@ -42,13 +42,13 @@ def test_all_zone_names_are_used_by_grid_area_and_default_align():
 
 def test_mask_union_covers_all_requested_zones():
     mask = generate_freeform_mask(height=512, width=512, zones=["top_left", "bottom_right"])
-    from tendoo.layouts.freeform.zones import ZONE_RECTS
+    from tendoo_legacy.layouts.freeform.zones import ZONE_RECTS
     for zone in ["top_left", "bottom_right"]:
         y0, x0, y1, x1 = ZONE_RECTS[zone]
         cy, cx = int((y0 + y1) / 2 * 511), int((x0 + x1) / 2 * 511)
         assert mask[cy, cx] > 0.95, f"Center of requested zone '{zone}' should be near-fully reserved"
     # An unrequested zone's center should be untouched (0.0)
-    from tendoo.layouts.freeform.zones import ZONE_RECTS as _R
+    from tendoo_legacy.layouts.freeform.zones import ZONE_RECTS as _R
     y0, x0, y1, x1 = _R["bottom_left"]
     cy, cx = int((y0 + y1) / 2 * 511), int((x0 + x1) / 2 * 511)
     assert mask[cy, cx] == 0.0, "Unrequested zone should be fully open for the product/scene"
@@ -77,7 +77,7 @@ def test_is_valid_zone():
 # ---------------------------------------------------------------------------
 
 def test_compute_zone_rects_grows_with_more_content():
-    from tendoo.layouts.freeform.measure import compute_zone_rects
+    from tendoo_legacy.layouts.freeform.measure import compute_zone_rects
 
     short_plan = [{"text": "OK", "zone": "top_left", "role": "caption"}]
     long_plan = [
@@ -102,7 +102,7 @@ def test_fit_font_size_px_shrinks_long_text_to_fit_budget():
     """The exact bug found on a live render-plan LLM run (2026-09-10): a "hero"-role
     block whose text is a full sentence (not a short title) must shrink well below the
     flat ROLE_SCALE size to fit a bounded height budget, rather than overflowing it."""
-    from tendoo.layouts.freeform.measure import _font_path_for, fit_font_size_px
+    from tendoo_legacy.layouts.freeform.measure import _font_path_for, fit_font_size_px
 
     font_path = _font_path_for("bevietnam")
     long_sentence = (
@@ -121,7 +121,7 @@ def test_fit_font_size_px_shrinks_long_text_to_fit_budget():
 
 def test_fit_font_size_px_leaves_short_text_at_base_size():
     """A short phrase that already fits shouldn't be shrunk needlessly."""
-    from tendoo.layouts.freeform.measure import _font_path_for, fit_font_size_px
+    from tendoo_legacy.layouts.freeform.measure import _font_path_for, fit_font_size_px
 
     font_path = _font_path_for("bevietnam")
     font_size, _, _ = fit_font_size_px("SALE 50%", font_path, 74, 1024 * 0.42, 1024 * 0.42)
@@ -133,7 +133,7 @@ def test_compute_zone_rects_stays_capped_with_pathologically_long_hero_text():
     ZONE_MAX_W_PCT/ZONE_MAX_H_PCT (42%) -- the font-fitting engaging is what makes this
     cap actually meaningful, rather than just clamping a rect whose real content still
     overflows past it when rendered."""
-    from tendoo.layouts.freeform.measure import compute_zone_rects
+    from tendoo_legacy.layouts.freeform.measure import compute_zone_rects
 
     plan = [{
         "text": "KHÁCH HÀNG HÀI LÒNG VỚI PRIVATE COACHING TRANSFORMATION SAU BA THÁNG TẬP LUYỆN CÙNG PT RIÊNG",
@@ -146,7 +146,7 @@ def test_compute_zone_rects_stays_capped_with_pathologically_long_hero_text():
 
 
 def test_compute_zone_rects_anchors_to_correct_corner():
-    from tendoo.layouts.freeform.measure import compute_zone_rects
+    from tendoo_legacy.layouts.freeform.measure import compute_zone_rects
 
     plan = [{"text": "CORNER TEST", "zone": "bottom_right", "role": "hero"}]
     rects = compute_zone_rects(plan, width=1024, height=1024)
@@ -158,7 +158,7 @@ def test_compute_zone_rects_anchors_to_correct_corner():
 
 
 def test_compute_zone_rects_includes_qr_footprint():
-    from tendoo.layouts.freeform.measure import compute_zone_rects
+    from tendoo_legacy.layouts.freeform.measure import compute_zone_rects
 
     rects_no_qr = compute_zone_rects([], width=1024, height=1024, qr_zone=None)
     rects_with_qr = compute_zone_rects([], width=1024, height=1024, qr_zone="bottom_right")
@@ -167,7 +167,7 @@ def test_compute_zone_rects_includes_qr_footprint():
 
 
 def test_compute_zone_rects_ignores_unknown_zone_gracefully():
-    from tendoo.layouts.freeform.measure import compute_zone_rects
+    from tendoo_legacy.layouts.freeform.measure import compute_zone_rects
 
     rects = compute_zone_rects(
         [{"text": "hi", "zone": "not_a_real_zone", "role": "body"}], width=512, height=512,

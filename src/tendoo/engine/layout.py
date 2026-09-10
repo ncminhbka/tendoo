@@ -25,15 +25,15 @@ from tendoo.engine.blocks import (
     deduplicate_blocks,
     map_category_to_default_blocks,
 )
-from tendoo.engine.geometry import compute_block_metrics
-from tendoo.engine.mask import generate_omni_corridor_mask
-from tendoo.layouts.base import BaseLayout, ColorPalette, PosterContent
-from tendoo.layouts.freeform.layout import ICON_SVG_BY_NAME
-from tendoo.layouts.freeform.zones import (
+from tendoo.core.base import BaseLayout, ColorPalette, PosterContent
+from tendoo.core.components import ICON_SVG_BY_NAME
+from tendoo.engine.geometry import (
+    compute_block_metrics,
     ZONE_DEFAULT_ALIGN,
     ZONE_GRID_AREA,
     ZONE_NAMES,
 )
+from tendoo.engine.mask import generate_omni_corridor_mask
 
 _TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
 _JINJA_ENV = jinja2.Environment(

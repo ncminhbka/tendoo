@@ -17,9 +17,9 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from tendoo.layouts.base import BaseLayout, ColorPalette, PosterContent
-from tendoo.layouts.component_engine import get_component_css, render_category_body
+from tendoo_legacy.layouts.component_engine import get_component_css, render_category_body
 from tendoo.layouts.font_engine import resolve_font
-from tendoo.layouts.l_frame.mask import generate_l_frame_mask
+from tendoo_legacy.layouts.l_frame.mask import generate_l_frame_mask
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
 
 

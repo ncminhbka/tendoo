@@ -83,10 +83,11 @@ for p in [PROJECT_ROOT, PROJECT_ROOT / "src"]:
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from tendoo.layouts.font_engine import FONT_CATALOG
-from tendoo.layouts.freeform.layout import ICON_SVG_BY_NAME, ROLE_SCALE
-from tendoo.layouts.freeform.zones import ZONE_NAMES
-from tendoo.layouts.style_matcher import CATEGORY_FIELD_SLOTS
+from tendoo.core.components import ICON_SVG_BY_NAME
+from tendoo.core.fonts import FONT_CATALOG
+from tendoo.core.style import CATEGORY_FIELD_SLOTS
+from tendoo.engine.blocks import ROLE_SCALE
+from tendoo.engine.geometry import ZONE_NAMES
 
 VALID_ROLES = set(ROLE_SCALE.keys())
 VALID_ICONS = set(ICON_SVG_BY_NAME.keys())

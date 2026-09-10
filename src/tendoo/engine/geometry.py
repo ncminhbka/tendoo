@@ -138,3 +138,35 @@ def compute_block_metrics(
         "measured_h": measured_h,
         "zone_rect": (x1, y1, x2, y2),
     }
+
+
+ZONE_NAMES: List[str] = [
+    "top_left", "top_center", "top_right",
+    "middle_left", "center", "middle_right",
+    "bottom_left", "bottom_center", "bottom_right",
+]
+
+ZONE_GRID_AREA: Dict[str, str] = {
+    "top_left": "1 / 1 / 2 / 2",
+    "top_center": "1 / 2 / 2 / 3",
+    "top_right": "1 / 3 / 2 / 4",
+    "middle_left": "2 / 1 / 3 / 2",
+    "center": "2 / 2 / 3 / 3",
+    "middle_right": "2 / 3 / 3 / 4",
+    "bottom_left": "3 / 1 / 4 / 2",
+    "bottom_center": "3 / 2 / 4 / 3",
+    "bottom_right": "3 / 3 / 4 / 4",
+}
+
+ZONE_DEFAULT_ALIGN: Dict[str, str] = {
+    "top_left": "left", "middle_left": "left", "bottom_left": "left",
+    "top_center": "center", "center": "center", "bottom_center": "center",
+    "top_right": "right", "middle_right": "right", "bottom_right": "right",
+}
+
+ZONE_SELF_ALIGN: Dict[str, Tuple[str, str]] = {
+    "top_left": ("start", "start"), "top_center": ("center", "start"), "top_right": ("end", "start"),
+    "middle_left": ("start", "center"), "center": ("center", "center"), "middle_right": ("end", "center"),
+    "bottom_left": ("start", "end"), "bottom_center": ("center", "end"), "bottom_right": ("end", "end"),
+}
+

@@ -29,7 +29,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from PIL import ImageFont
 
 from tendoo.layouts.font_engine import FONT_CATALOG, FONTS_DIR
-from tendoo.layouts.freeform.zones import ZONE_NAMES, ZONE_SELF_ALIGN
+from tendoo_legacy.layouts.freeform.zones import ZONE_NAMES, ZONE_SELF_ALIGN
 
 # Must mirror layout.py's ROLE_SCALE font-size ratios exactly -- these two tables
 # describe the SAME rendering decision (how big does each role render), just consumed

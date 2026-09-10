@@ -1,5 +1,5 @@
 """
-TopDomeLayout implementation.
+BottomPlatformLayout implementation.
 """
 
 from __future__ import annotations
@@ -11,87 +11,88 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from tendoo.layouts.base import BaseLayout, CALENDAR_ICON_SVG, ColorPalette, PosterContent
-from tendoo.layouts.component_engine import get_component_css, render_category_body
+from tendoo_legacy.layouts.bottom_platform.mask import generate_bottom_platform_mask
+from tendoo_legacy.layouts.component_engine import get_component_css, render_category_body
 from tendoo.layouts.font_engine import resolve_font
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
-from tendoo.layouts.top_dome.mask import generate_top_dome_mask
 
 
 TEMPLATE_PATH = Path(__file__).resolve().parent / "template.html"
 
 
-class TopDomeLayout(BaseLayout):
+class BottomPlatformLayout(BaseLayout):
     """
-    Top Arch Dome Layout:
-    Focuses all typography inside the upper 35-38% safe zone.
-    Leaves the bottom 62-65% completely unconstrained for the hero product, reflections, and splashes.
+    Bottom Platform (Cinematic Base) Layout:
+      - Upper 60% is strictly 0.0 copy space, preserving unobstructed scenic photography,
+        sky, architecture, luxury vehicles, or grand real estate.
+      - Lower 35-40% forms a solid, elegant platform/pedestal holding commanding theatrical typography.
     """
 
     @property
     def name(self) -> str:
-        return "top_dome"
+        return "bottom_platform"
 
     @property
     def display_name(self) -> str:
-        return "Vòm Đỉnh (Top Arch Dome)"
+        return "Bệ Đáy Điện Ảnh (Bottom Platform)"
 
     @property
     def description(self) -> str:
-        return "Bố cục vòm sáng trên cao (y < 0.38), giải phóng 62% không gian bên dưới cho sản phẩm chính."
+        return (
+            "Bố cục bệ sàn điện ảnh ở đáy, giải phóng 60% không gian phía trên cho cảnh quan "
+            "hùng vĩ, kiến trúc biệt thự, xe hơi hoặc sản phẩm cao cấp."
+        )
 
     def generate_mask(
         self,
         width: int,
         height: int,
-        y_max: float = 0.40,
-        w_half_top: float = 0.49,
-        w_half_bottom: float = 0.38,
-        delta: float = 0.04,
+        y_start: float = 0.58,
+        y_full: float = 0.72,
+        curvature: float = 0.025,
+        w_half: float = 0.49,
+        delta_x: float = 0.04,
+        int_max: float = 1.0,
         **kwargs,
     ) -> np.ndarray:
-        return generate_top_dome_mask(
+        return generate_bottom_platform_mask(
             height=height,
             width=width,
-            y_max=y_max,
-            w_half_top=w_half_top,
-            w_half_bottom=w_half_bottom,
-            delta=delta,
+            y_start=y_start,
+            y_full=y_full,
+            curvature=curvature,
+            w_half=w_half,
+            delta_x=delta_x,
+            int_max=int_max,
+            **kwargs,
         )
 
-    def get_corridor_prompt(self, style_hint: str = "daylight") -> str:
-        if style_hint == "studio_dark":
+    def get_corridor_prompt(self, style_hint: str = "cinematic_asphalt") -> str:
+        if style_hint == "luxury_marble":
             return (
-                "Soft diffuse downward studio spotlight illumination, ethereal ambient atmospheric haze, "
-                "clean smooth dark gradient falloff, luminous negative space for text, "
-                "pure diffuse lighting with no ceiling, no walls, no architecture, zero clutter, "
-                "clean photographic background, text-free background area, no floating graphic text, no poster typography"
+                "A grand dark polished obsidian marble platform terrace, dramatic subtle ambient rim light, "
+                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
             )
-        elif style_hint in ("festive_moon", "ribbon"):
+        elif style_hint in ("warm_wood", "nature_stone"):
             return (
-                "A gentle, ethereal sweep of translucent luminous ambient light across the upper area, "
-                "soft golden atmospheric particles, radiant festive glow, smooth luminous gradient, "
-                "pure atmospheric lighting with no heavy physical structures, zero clutter, "
-                "clean photographic background, text-free background area, no floating graphic text, no poster typography"
+                "A warm natural dark oak wood table platform surface, gentle soft studio reflection, atmospheric rim light, "
+                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
             )
-        elif style_hint in ("golden_hour", "gold_bevel"):
+        elif style_hint in ("water_mirror", "cyberpunk_grid"):
             return (
-                "Warm golden hour atmospheric light descending from above, soft ethereal sunbeams, "
-                "luminous golden haze, smooth radiant gradient negative space, "
-                "pure light and atmospheric glow with no architectural arches, no alcove, no walls, zero clutter, "
-                "clean photographic background, text-free background area, no floating graphic text, no poster typography"
+                "A sleek reflective dark water platform mirror surface with subtle ripple reflections, minimal futuristic ambient glow, "
+                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
             )
         else:
-            # Default daylight: Pure luminous sky light (no architecture)
+            # Default cinematic asphalt / wet polished floor
             return (
-                "Soft glowing natural daylight radiating from above, bright airy ambient sky illumination, "
-                "clean ethereal atmospheric gradient, luminous pristine copy space, "
-                "pure diffuse lighting with no buildings, no arches, no ceiling, no architecture, zero clutter, "
-                "clean photographic background, text-free background area, no floating graphic text, no poster typography"
+                "A clean sleek dark wet asphalt road surface reflecting atmospheric lights, cinematic mist, "
+                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
             )
 
     def get_safe_zone(self) -> Tuple[float, float, float, float]:
-        """Normalized (y1, x1, y2, x2) defining the primary dome safe zone."""
-        return (0.03, 0.08, 0.38, 0.92)
+        """Lower platform safe zone: (y1, x1, y2, x2)."""
+        return (0.60, 0.05, 0.97, 0.95)
 
     def render_html(
         self,
@@ -112,12 +113,11 @@ class TopDomeLayout(BaseLayout):
 
         # 1. Headline balancing & font sizing ladder
         raw_hl = content.headline
-        hl_lines, metrics = balance_vietnamese_headline(raw_hl, max_one_line_chars=16)
+        hl_lines, metrics = balance_vietnamese_headline(raw_hl, max_one_line_chars=18)
 
-        # Build headline HTML lines
         if hl_lines:
             headline_html = "\n".join(
-                f'        <div class="headline-line">{html.escape(line)}</div>'
+                f'          <div class="headline-line">{html.escape(line)}</div>'
                 for line in hl_lines
             )
             headline_plain = " - ".join(hl_lines)
@@ -158,6 +158,7 @@ class TopDomeLayout(BaseLayout):
         offer_main = normalize_text(content.offer_main)
         offer_sub = normalize_text(content.offer_sub)
         dates = normalize_text(content.dates)
+        applicable = normalize_text(content.applicable)
         brand = normalize_text(content.brand)
         hotline = normalize_text(content.hotline)
         address = normalize_text(content.address)
@@ -192,21 +193,23 @@ class TopDomeLayout(BaseLayout):
             "{{headline_fill_css}}": headline_fill_css,
             "{{headline_html}}": headline_html,
             "{{pre_header}}": html.escape(pre_header),
-            "{{pre_header_display}}": "block" if pre_header else "none",
+            "{{pre_header_display}}": "inline-flex" if pre_header else "none",
             "{{slogan}}": html.escape(slogan),
             "{{slogan_display}}": "block" if slogan else "none",
             "{{category_body_html}}": category_body_html,
             "{{offer_main}}": html.escape(offer_main),
-            "{{badge_display}}": "flex" if offer_main else "none",
+            "{{badge_display}}": "inline-flex" if offer_main else "none",
             "{{badge_border}}": badge_border,
             "{{offer_sub}}": html.escape(offer_sub),
             "{{offer_sub_display}}": "block" if offer_sub else "none",
             "{{dates}}": f"{CALENDAR_ICON_SVG}{html.escape(dates)}" if dates else "",
-            "{{dates_display}}": "inline-flex" if dates else "none",
-            "{{brand}}": html.escape(brand),
-            "{{brand_display}}": "block" if brand else "none",
+            "{{dates_display}}": "block" if dates else "none",
+            "{{applicable}}": html.escape(applicable),
+            "{{applicable_display}}": "block" if applicable else "none",
             "{{address}}": html.escape(address),
             "{{address_display}}": "block" if address else "none",
+            "{{brand}}": html.escape(brand),
+            "{{brand_display}}": "block" if brand else "none",
             "{{hotline}}": f"HOTLINE: {html.escape(hotline)}" if hotline else "",
             "{{hotline_display}}": "inline-flex" if hotline else "none",
             "{{website_link}}": html.escape(website_link),

@@ -37,7 +37,7 @@ from tendoo.layouts import (
     analyze_color_harmony,
     get_layout,
 )
-from tendoo.layouts.diagonal_slash.mask import generate_diagonal_slash_mask
+from tendoo_legacy.layouts.diagonal_slash.mask import generate_diagonal_slash_mask
 from tendoo.poster_renderer import PosterRenderer
 
 

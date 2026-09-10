@@ -37,7 +37,7 @@ from tendoo.layouts import (
     analyze_color_harmony,
     get_layout,
 )
-from tendoo.layouts.l_frame.mask import generate_l_frame_mask
+from tendoo_legacy.layouts.l_frame.mask import generate_l_frame_mask
 from tendoo.poster_renderer import PosterRenderer
 
 

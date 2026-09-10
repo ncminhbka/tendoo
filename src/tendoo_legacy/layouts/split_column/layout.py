@@ -1,5 +1,5 @@
 """
-CenterHourglassLayout implementation.
+SplitColumnLayout implementation.
 """
 
 from __future__ import annotations
@@ -11,91 +11,96 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from tendoo.layouts.base import BaseLayout, CALENDAR_ICON_SVG, ColorPalette, PosterContent
-from tendoo.layouts.center_hourglass.mask import generate_hourglass_mask
-from tendoo.layouts.component_engine import get_component_css, render_category_body
+from tendoo_legacy.layouts.component_engine import get_component_css, render_category_body
 from tendoo.layouts.font_engine import resolve_font
+from tendoo_legacy.layouts.split_column.mask import generate_split_column_mask
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
 
 
 TEMPLATE_PATH = Path(__file__).resolve().parent / "template.html"
 
 
-class CenterHourglassLayout(BaseLayout):
+class SplitColumnLayout(BaseLayout):
     """
-    Center Hourglass Layout:
-    2-tier flowing stream:
-      - Upper light funnel (y < 0.42) holds the main headline, subtitle, and primary promotional badges.
-      - Central waist (y in [0.42, 0.72]) tapers to frame the central hero product with rim-light.
-      - Perspective floor (y >= 0.72) expands outward to hold clean floating footer typography.
+    Split Column (Cascading Ribbon Sash) Layout:
+      - Occupies approximately 36-40% along the left side with an organic, undulating silk ribbon wave.
+      - Preserves 60-64% pristine canvas on the right for full-length fashion models, lookbooks, or cosmetics.
+      - Uses Vogue / Harper's Bazaar high-fashion editorial typography with left-aligned vertical rhythm.
     """
 
     @property
     def name(self) -> str:
-        return "center_hourglass"
+        return "split_column"
 
     @property
     def display_name(self) -> str:
-        return "Đồng Hồ Cát (Center Hourglass)"
+        return "Dải Lụa Phân Cột (Split Column / Silk Sash)"
 
     @property
     def description(self) -> str:
         return (
-            "Bố cục phễu sáng đa tầng ở đỉnh, thắt eo ôm lấy sản phẩm trung tâm "
-            "và mở rộng chân sàn cho footer."
+            "Bố cục dải lụa phẳng phân cột dọc bên trái (x < 0.38), phẳng mịn hoàn toàn không cuộn xoắn, "
+            "dành 62% cho người mẫu toàn thân, ảnh lookbook thời trang hoặc mỹ phẩm cao cấp."
         )
 
     def generate_mask(
         self,
         width: int,
         height: int,
-        y_waist: float = 0.56,
-        w_half_top: float = 0.485,
-        w_half_waist: float = 0.26,
-        w_half_floor: float = 0.485,
-        int_top: float = 1.0,
-        int_waist: float = 0.72,
-        int_floor: float = 0.96,
-        delta: float = 0.05,
+        side: str = "left",
+        col_width: float = 0.36,
+        delta: float = 0.10,
+        wave_amp: float = 0.0,
+        wave_freq: float = 1.0,
+        int_max: float = 1.0,
         **kwargs,
     ) -> np.ndarray:
-        return generate_hourglass_mask(
+        return generate_split_column_mask(
             height=height,
             width=width,
-            y_waist=y_waist,
-            w_half_top=w_half_top,
-            w_half_waist=w_half_waist,
-            w_half_floor=w_half_floor,
-            int_top=int_top,
-            int_waist=int_waist,
-            int_floor=int_floor,
+            side=side,
+            col_width=col_width,
             delta=delta,
+            wave_amp=wave_amp,
+            wave_freq=wave_freq,
+            int_max=int_max,
             **kwargs,
         )
 
-
-    def get_corridor_prompt(self, style_hint: str = "moonbeam") -> str:
-        if style_hint == "studio_spotlight":
+    def get_corridor_prompt(self, style_hint: str = "champagne_silk") -> str:
+        if style_hint in ("velvet_drape", "studio_light_pillar"):
             return (
-                "A focused theatrical vertical studio spotlight beam streaming down "
-                "from the top ceiling onto a clean dark polished floor walkway, "
-                "pristine copy space, zero clutter, text-free background area, no floating graphic text, no poster typography"
+                "A clean, flat, smooth studio ambient shadow wash and soft vertical light column cascading down the left column (x < 0.36), "
+                "uniform flat negative copy space with zero texture, diffuse gradient gradation harmonizing with scene tones, seamless transition into the right product stage, "
+                "smooth unwrinkled surface, pristine copy space for text, zero clutter, "
+                "clean photographic background, text-free column area, no floating graphic text, no poster typography"
             )
-        elif style_hint == "festive_light":
+        elif style_hint == "minimal_wall":
             return (
-                "Festive golden volumetric light rays descending from the top, "
-                "gentle atmospheric haze, clean floorboards, pristine empty negative space, "
-                "zero clutter, text-free background area, no floating graphic text, no poster typography"
+                "A clean, flat, diffused vertical studio ambient light column running down the left column (x < 0.36), "
+                "uniform flat negative copy space with zero texture, subtle airy gradient softly blending into the scene atmosphere, luminous clean copy space, "
+                "zero clutter, clean photographic background, text-free column area, no floating graphic text, no poster typography"
+            )
+        elif style_hint in ("champagne_silk", "silk_sash"):
+            return (
+                "A clean, soft, flat sheer silk wash with warm champagne ambient studio glow down the left column (x < 0.36), "
+                "uniform flat negative copy space with zero texture, harmonious pastel environmental tones, smooth airy gradient, pristine clean space for typography, "
+                "subtle edge feathering blending smoothly into the right-side product stage, zero clutter, "
+                "clean photographic background, text-free column area, no floating graphic text, no poster typography"
             )
         else:
-            # Default volumetric moonbeam
+            # Default: Soft translucent ambient light veil & sheer silk wash
             return (
-                "Volumetric golden moonbeam, ethereal mist, wooden floor, empty space, "
-                "zero clutter, text-free background area, no floating graphic text, no poster typography"
+                "A clean, soft, flat vertical ambient light veil and sheer silk wash gently flowing down the left column (x < 0.36), "
+                "uniform flat negative copy space with zero texture, naturally catching and blending with the environmental colors and warm lighting of the scene, "
+                "smooth gradient falloff, clean uncluttered space for typography, "
+                "subtle edge feathering seamlessly merging into the right-side product stage, "
+                "clean photographic background, text-free column area, no floating graphic text, no poster typography"
             )
 
     def get_safe_zone(self) -> Tuple[float, float, float, float]:
-        """Upper funnel safe zone: (y1, x1, y2, x2)."""
-        return (0.03, 0.06, 0.42, 0.94)
+        """Left silk column safe zone: (y1, x1, y2, x2)."""
+        return (0.04, 0.04, 0.96, 0.30)
 
     def render_html(
         self,
@@ -114,9 +119,9 @@ class CenterHourglassLayout(BaseLayout):
             actual_bg_data_uri = height if isinstance(height, str) else kwargs.get("bg_data_uri", "")
             width, height, bg_data_uri = actual_width, actual_height, actual_bg_data_uri
 
-        # 1. Headline balancing & font sizing ladder
+        # 1. Headline balancing & font sizing ladder (tuned for narrower column width: max_one_line_chars=12)
         raw_hl = content.headline
-        hl_lines, metrics = balance_vietnamese_headline(raw_hl, max_one_line_chars=16)
+        hl_lines, metrics = balance_vietnamese_headline(raw_hl, max_one_line_chars=12)
 
         if hl_lines:
             headline_html = "\n".join(
@@ -196,7 +201,7 @@ class CenterHourglassLayout(BaseLayout):
             "{{headline_fill_css}}": headline_fill_css,
             "{{headline_html}}": headline_html,
             "{{pre_header}}": html.escape(pre_header),
-            "{{pre_header_display}}": "block" if pre_header else "none",
+            "{{pre_header_display}}": "flex" if pre_header else "none",
             "{{slogan}}": html.escape(slogan),
             "{{slogan_display}}": "block" if slogan else "none",
             "{{category_body_html}}": category_body_html,
@@ -206,7 +211,7 @@ class CenterHourglassLayout(BaseLayout):
             "{{offer_sub}}": html.escape(offer_sub),
             "{{offer_sub_display}}": "block" if offer_sub else "none",
             "{{dates}}": f"{CALENDAR_ICON_SVG}{html.escape(dates)}" if dates else "",
-            "{{dates_display}}": "inline-flex" if dates else "none",
+            "{{dates_display}}": "block" if dates else "none",
             "{{applicable}}": html.escape(applicable),
             "{{applicable_display}}": "block" if applicable else "none",
             "{{address}}": html.escape(address),

@@ -1,5 +1,5 @@
 """
-SplitColumnLayout implementation.
+TopDomeLayout implementation.
 """
 
 from __future__ import annotations
@@ -11,96 +11,87 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from tendoo.layouts.base import BaseLayout, CALENDAR_ICON_SVG, ColorPalette, PosterContent
-from tendoo.layouts.component_engine import get_component_css, render_category_body
+from tendoo_legacy.layouts.component_engine import get_component_css, render_category_body
 from tendoo.layouts.font_engine import resolve_font
-from tendoo.layouts.split_column.mask import generate_split_column_mask
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
+from tendoo_legacy.layouts.top_dome.mask import generate_top_dome_mask
 
 
 TEMPLATE_PATH = Path(__file__).resolve().parent / "template.html"
 
 
-class SplitColumnLayout(BaseLayout):
+class TopDomeLayout(BaseLayout):
     """
-    Split Column (Cascading Ribbon Sash) Layout:
-      - Occupies approximately 36-40% along the left side with an organic, undulating silk ribbon wave.
-      - Preserves 60-64% pristine canvas on the right for full-length fashion models, lookbooks, or cosmetics.
-      - Uses Vogue / Harper's Bazaar high-fashion editorial typography with left-aligned vertical rhythm.
+    Top Arch Dome Layout:
+    Focuses all typography inside the upper 35-38% safe zone.
+    Leaves the bottom 62-65% completely unconstrained for the hero product, reflections, and splashes.
     """
 
     @property
     def name(self) -> str:
-        return "split_column"
+        return "top_dome"
 
     @property
     def display_name(self) -> str:
-        return "Dải Lụa Phân Cột (Split Column / Silk Sash)"
+        return "Vòm Đỉnh (Top Arch Dome)"
 
     @property
     def description(self) -> str:
-        return (
-            "Bố cục dải lụa phẳng phân cột dọc bên trái (x < 0.38), phẳng mịn hoàn toàn không cuộn xoắn, "
-            "dành 62% cho người mẫu toàn thân, ảnh lookbook thời trang hoặc mỹ phẩm cao cấp."
-        )
+        return "Bố cục vòm sáng trên cao (y < 0.38), giải phóng 62% không gian bên dưới cho sản phẩm chính."
 
     def generate_mask(
         self,
         width: int,
         height: int,
-        side: str = "left",
-        col_width: float = 0.36,
-        delta: float = 0.10,
-        wave_amp: float = 0.0,
-        wave_freq: float = 1.0,
-        int_max: float = 1.0,
+        y_max: float = 0.40,
+        w_half_top: float = 0.49,
+        w_half_bottom: float = 0.38,
+        delta: float = 0.04,
         **kwargs,
     ) -> np.ndarray:
-        return generate_split_column_mask(
+        return generate_top_dome_mask(
             height=height,
             width=width,
-            side=side,
-            col_width=col_width,
+            y_max=y_max,
+            w_half_top=w_half_top,
+            w_half_bottom=w_half_bottom,
             delta=delta,
-            wave_amp=wave_amp,
-            wave_freq=wave_freq,
-            int_max=int_max,
-            **kwargs,
         )
 
-    def get_corridor_prompt(self, style_hint: str = "champagne_silk") -> str:
-        if style_hint in ("velvet_drape", "studio_light_pillar"):
+    def get_corridor_prompt(self, style_hint: str = "daylight") -> str:
+        if style_hint == "studio_dark":
             return (
-                "A clean, flat, smooth studio ambient shadow wash and soft vertical light column cascading down the left column (x < 0.36), "
-                "uniform flat negative copy space with zero texture, diffuse gradient gradation harmonizing with scene tones, seamless transition into the right product stage, "
-                "smooth unwrinkled surface, pristine copy space for text, zero clutter, "
-                "clean photographic background, text-free column area, no floating graphic text, no poster typography"
+                "Soft diffuse downward studio spotlight illumination, ethereal ambient atmospheric haze, "
+                "clean smooth dark gradient falloff, luminous negative space for text, "
+                "pure diffuse lighting with no ceiling, no walls, no architecture, zero clutter, "
+                "clean photographic background, text-free background area, no floating graphic text, no poster typography"
             )
-        elif style_hint == "minimal_wall":
+        elif style_hint in ("festive_moon", "ribbon"):
             return (
-                "A clean, flat, diffused vertical studio ambient light column running down the left column (x < 0.36), "
-                "uniform flat negative copy space with zero texture, subtle airy gradient softly blending into the scene atmosphere, luminous clean copy space, "
-                "zero clutter, clean photographic background, text-free column area, no floating graphic text, no poster typography"
+                "A gentle, ethereal sweep of translucent luminous ambient light across the upper area, "
+                "soft golden atmospheric particles, radiant festive glow, smooth luminous gradient, "
+                "pure atmospheric lighting with no heavy physical structures, zero clutter, "
+                "clean photographic background, text-free background area, no floating graphic text, no poster typography"
             )
-        elif style_hint in ("champagne_silk", "silk_sash"):
+        elif style_hint in ("golden_hour", "gold_bevel"):
             return (
-                "A clean, soft, flat sheer silk wash with warm champagne ambient studio glow down the left column (x < 0.36), "
-                "uniform flat negative copy space with zero texture, harmonious pastel environmental tones, smooth airy gradient, pristine clean space for typography, "
-                "subtle edge feathering blending smoothly into the right-side product stage, zero clutter, "
-                "clean photographic background, text-free column area, no floating graphic text, no poster typography"
+                "Warm golden hour atmospheric light descending from above, soft ethereal sunbeams, "
+                "luminous golden haze, smooth radiant gradient negative space, "
+                "pure light and atmospheric glow with no architectural arches, no alcove, no walls, zero clutter, "
+                "clean photographic background, text-free background area, no floating graphic text, no poster typography"
             )
         else:
-            # Default: Soft translucent ambient light veil & sheer silk wash
+            # Default daylight: Pure luminous sky light (no architecture)
             return (
-                "A clean, soft, flat vertical ambient light veil and sheer silk wash gently flowing down the left column (x < 0.36), "
-                "uniform flat negative copy space with zero texture, naturally catching and blending with the environmental colors and warm lighting of the scene, "
-                "smooth gradient falloff, clean uncluttered space for typography, "
-                "subtle edge feathering seamlessly merging into the right-side product stage, "
-                "clean photographic background, text-free column area, no floating graphic text, no poster typography"
+                "Soft glowing natural daylight radiating from above, bright airy ambient sky illumination, "
+                "clean ethereal atmospheric gradient, luminous pristine copy space, "
+                "pure diffuse lighting with no buildings, no arches, no ceiling, no architecture, zero clutter, "
+                "clean photographic background, text-free background area, no floating graphic text, no poster typography"
             )
 
     def get_safe_zone(self) -> Tuple[float, float, float, float]:
-        """Left silk column safe zone: (y1, x1, y2, x2)."""
-        return (0.04, 0.04, 0.96, 0.30)
+        """Normalized (y1, x1, y2, x2) defining the primary dome safe zone."""
+        return (0.03, 0.08, 0.38, 0.92)
 
     def render_html(
         self,
@@ -119,13 +110,14 @@ class SplitColumnLayout(BaseLayout):
             actual_bg_data_uri = height if isinstance(height, str) else kwargs.get("bg_data_uri", "")
             width, height, bg_data_uri = actual_width, actual_height, actual_bg_data_uri
 
-        # 1. Headline balancing & font sizing ladder (tuned for narrower column width: max_one_line_chars=12)
+        # 1. Headline balancing & font sizing ladder
         raw_hl = content.headline
-        hl_lines, metrics = balance_vietnamese_headline(raw_hl, max_one_line_chars=12)
+        hl_lines, metrics = balance_vietnamese_headline(raw_hl, max_one_line_chars=16)
 
+        # Build headline HTML lines
         if hl_lines:
             headline_html = "\n".join(
-                f'          <div class="headline-line">{html.escape(line)}</div>'
+                f'        <div class="headline-line">{html.escape(line)}</div>'
                 for line in hl_lines
             )
             headline_plain = " - ".join(hl_lines)
@@ -166,7 +158,6 @@ class SplitColumnLayout(BaseLayout):
         offer_main = normalize_text(content.offer_main)
         offer_sub = normalize_text(content.offer_sub)
         dates = normalize_text(content.dates)
-        applicable = normalize_text(content.applicable)
         brand = normalize_text(content.brand)
         hotline = normalize_text(content.hotline)
         address = normalize_text(content.address)
@@ -201,23 +192,21 @@ class SplitColumnLayout(BaseLayout):
             "{{headline_fill_css}}": headline_fill_css,
             "{{headline_html}}": headline_html,
             "{{pre_header}}": html.escape(pre_header),
-            "{{pre_header_display}}": "flex" if pre_header else "none",
+            "{{pre_header_display}}": "block" if pre_header else "none",
             "{{slogan}}": html.escape(slogan),
             "{{slogan_display}}": "block" if slogan else "none",
             "{{category_body_html}}": category_body_html,
             "{{offer_main}}": html.escape(offer_main),
-            "{{badge_display}}": "inline-flex" if offer_main else "none",
+            "{{badge_display}}": "flex" if offer_main else "none",
             "{{badge_border}}": badge_border,
             "{{offer_sub}}": html.escape(offer_sub),
             "{{offer_sub_display}}": "block" if offer_sub else "none",
             "{{dates}}": f"{CALENDAR_ICON_SVG}{html.escape(dates)}" if dates else "",
-            "{{dates_display}}": "block" if dates else "none",
-            "{{applicable}}": html.escape(applicable),
-            "{{applicable_display}}": "block" if applicable else "none",
-            "{{address}}": html.escape(address),
-            "{{address_display}}": "block" if address else "none",
+            "{{dates_display}}": "inline-flex" if dates else "none",
             "{{brand}}": html.escape(brand),
             "{{brand_display}}": "block" if brand else "none",
+            "{{address}}": html.escape(address),
+            "{{address_display}}": "block" if address else "none",
             "{{hotline}}": f"HOTLINE: {html.escape(hotline)}" if hotline else "",
             "{{hotline_display}}": "inline-flex" if hotline else "none",
             "{{website_link}}": html.escape(website_link),

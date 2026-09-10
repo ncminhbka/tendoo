@@ -49,7 +49,7 @@ from tendoo.layouts import (
     get_layout,
 )
 from tendoo.layouts.color_engine import hex_to_hue
-from tendoo.layouts.freeform.zones import ZONE_NAMES
+from tendoo.engine.geometry import ZONE_NAMES
 from tendoo.layouts.style_matcher import (
     CATEGORY_FIELD_SLOTS,
     DEFAULT_FIELD_ROLE,
@@ -1295,7 +1295,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         "num_images": len(posters_list),
         # Exposes the Phase B auto-match's actual decision -- lets tests (and curious
         # callers) verify layout/style_hint without parsing the rendered HTML/CSS.
-        "resolved_layout": layout.name,
+        "resolved_layout": req.layout or layout.name,
         "resolved_style_hint": style_hint,
     }
 

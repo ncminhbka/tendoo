@@ -1,5 +1,5 @@
 """
-BottomPlatformLayout implementation.
+CenterHourglassLayout implementation.
 """
 
 from __future__ import annotations
@@ -11,8 +11,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from tendoo.layouts.base import BaseLayout, CALENDAR_ICON_SVG, ColorPalette, PosterContent
-from tendoo.layouts.bottom_platform.mask import generate_bottom_platform_mask
-from tendoo.layouts.component_engine import get_component_css, render_category_body
+from tendoo_legacy.layouts.center_hourglass.mask import generate_hourglass_mask
+from tendoo_legacy.layouts.component_engine import get_component_css, render_category_body
 from tendoo.layouts.font_engine import resolve_font
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
 
@@ -20,79 +20,82 @@ from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_te
 TEMPLATE_PATH = Path(__file__).resolve().parent / "template.html"
 
 
-class BottomPlatformLayout(BaseLayout):
+class CenterHourglassLayout(BaseLayout):
     """
-    Bottom Platform (Cinematic Base) Layout:
-      - Upper 60% is strictly 0.0 copy space, preserving unobstructed scenic photography,
-        sky, architecture, luxury vehicles, or grand real estate.
-      - Lower 35-40% forms a solid, elegant platform/pedestal holding commanding theatrical typography.
+    Center Hourglass Layout:
+    2-tier flowing stream:
+      - Upper light funnel (y < 0.42) holds the main headline, subtitle, and primary promotional badges.
+      - Central waist (y in [0.42, 0.72]) tapers to frame the central hero product with rim-light.
+      - Perspective floor (y >= 0.72) expands outward to hold clean floating footer typography.
     """
 
     @property
     def name(self) -> str:
-        return "bottom_platform"
+        return "center_hourglass"
 
     @property
     def display_name(self) -> str:
-        return "Bệ Đáy Điện Ảnh (Bottom Platform)"
+        return "Đồng Hồ Cát (Center Hourglass)"
 
     @property
     def description(self) -> str:
         return (
-            "Bố cục bệ sàn điện ảnh ở đáy, giải phóng 60% không gian phía trên cho cảnh quan "
-            "hùng vĩ, kiến trúc biệt thự, xe hơi hoặc sản phẩm cao cấp."
+            "Bố cục phễu sáng đa tầng ở đỉnh, thắt eo ôm lấy sản phẩm trung tâm "
+            "và mở rộng chân sàn cho footer."
         )
 
     def generate_mask(
         self,
         width: int,
         height: int,
-        y_start: float = 0.58,
-        y_full: float = 0.72,
-        curvature: float = 0.025,
-        w_half: float = 0.49,
-        delta_x: float = 0.04,
-        int_max: float = 1.0,
+        y_waist: float = 0.56,
+        w_half_top: float = 0.485,
+        w_half_waist: float = 0.26,
+        w_half_floor: float = 0.485,
+        int_top: float = 1.0,
+        int_waist: float = 0.72,
+        int_floor: float = 0.96,
+        delta: float = 0.05,
         **kwargs,
     ) -> np.ndarray:
-        return generate_bottom_platform_mask(
+        return generate_hourglass_mask(
             height=height,
             width=width,
-            y_start=y_start,
-            y_full=y_full,
-            curvature=curvature,
-            w_half=w_half,
-            delta_x=delta_x,
-            int_max=int_max,
+            y_waist=y_waist,
+            w_half_top=w_half_top,
+            w_half_waist=w_half_waist,
+            w_half_floor=w_half_floor,
+            int_top=int_top,
+            int_waist=int_waist,
+            int_floor=int_floor,
+            delta=delta,
             **kwargs,
         )
 
-    def get_corridor_prompt(self, style_hint: str = "cinematic_asphalt") -> str:
-        if style_hint == "luxury_marble":
+
+    def get_corridor_prompt(self, style_hint: str = "moonbeam") -> str:
+        if style_hint == "studio_spotlight":
             return (
-                "A grand dark polished obsidian marble platform terrace, dramatic subtle ambient rim light, "
-                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
+                "A focused theatrical vertical studio spotlight beam streaming down "
+                "from the top ceiling onto a clean dark polished floor walkway, "
+                "pristine copy space, zero clutter, text-free background area, no floating graphic text, no poster typography"
             )
-        elif style_hint in ("warm_wood", "nature_stone"):
+        elif style_hint == "festive_light":
             return (
-                "A warm natural dark oak wood table platform surface, gentle soft studio reflection, atmospheric rim light, "
-                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
-            )
-        elif style_hint in ("water_mirror", "cyberpunk_grid"):
-            return (
-                "A sleek reflective dark water platform mirror surface with subtle ripple reflections, minimal futuristic ambient glow, "
-                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
+                "Festive golden volumetric light rays descending from the top, "
+                "gentle atmospheric haze, clean floorboards, pristine empty negative space, "
+                "zero clutter, text-free background area, no floating graphic text, no poster typography"
             )
         else:
-            # Default cinematic asphalt / wet polished floor
+            # Default volumetric moonbeam
             return (
-                "A clean sleek dark wet asphalt road surface reflecting atmospheric lights, cinematic mist, "
-                "pristine copy space, zero clutter, text-free platform area, no floating graphic text, no poster typography"
+                "Volumetric golden moonbeam, ethereal mist, wooden floor, empty space, "
+                "zero clutter, text-free background area, no floating graphic text, no poster typography"
             )
 
     def get_safe_zone(self) -> Tuple[float, float, float, float]:
-        """Lower platform safe zone: (y1, x1, y2, x2)."""
-        return (0.60, 0.05, 0.97, 0.95)
+        """Upper funnel safe zone: (y1, x1, y2, x2)."""
+        return (0.03, 0.06, 0.42, 0.94)
 
     def render_html(
         self,
@@ -113,7 +116,7 @@ class BottomPlatformLayout(BaseLayout):
 
         # 1. Headline balancing & font sizing ladder
         raw_hl = content.headline
-        hl_lines, metrics = balance_vietnamese_headline(raw_hl, max_one_line_chars=18)
+        hl_lines, metrics = balance_vietnamese_headline(raw_hl, max_one_line_chars=16)
 
         if hl_lines:
             headline_html = "\n".join(
@@ -193,7 +196,7 @@ class BottomPlatformLayout(BaseLayout):
             "{{headline_fill_css}}": headline_fill_css,
             "{{headline_html}}": headline_html,
             "{{pre_header}}": html.escape(pre_header),
-            "{{pre_header_display}}": "inline-flex" if pre_header else "none",
+            "{{pre_header_display}}": "block" if pre_header else "none",
             "{{slogan}}": html.escape(slogan),
             "{{slogan_display}}": "block" if slogan else "none",
             "{{category_body_html}}": category_body_html,
@@ -203,7 +206,7 @@ class BottomPlatformLayout(BaseLayout):
             "{{offer_sub}}": html.escape(offer_sub),
             "{{offer_sub_display}}": "block" if offer_sub else "none",
             "{{dates}}": f"{CALENDAR_ICON_SVG}{html.escape(dates)}" if dates else "",
-            "{{dates_display}}": "block" if dates else "none",
+            "{{dates_display}}": "inline-flex" if dates else "none",
             "{{applicable}}": html.escape(applicable),
             "{{applicable_display}}": "block" if applicable else "none",
             "{{address}}": html.escape(address),

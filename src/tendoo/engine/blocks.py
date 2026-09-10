@@ -97,7 +97,7 @@ def normalize_fingerprint(text: str) -> str:
 def deduplicate_blocks(
     blocks: List[AdaptiveBlock],
     hero_title: Optional[str] = None,
-    similarity_threshold: float = 0.75,
+    similarity_threshold: float = 0.88,
 ) -> List[AdaptiveBlock]:
     """
     Thuật toán Content Fingerprint khử trùng lặp 100%:
@@ -122,7 +122,7 @@ def deduplicate_blocks(
         # Kiểm tra trùng với các nội dung đã duyệt qua
         is_dup = False
         for s_fp in seen_fingerprints:
-            if fp == s_fp or fp in s_fp or s_fp in fp:
+            if fp == s_fp:
                 is_dup = True
                 break
             if difflib.SequenceMatcher(None, fp, s_fp).ratio() >= similarity_threshold:

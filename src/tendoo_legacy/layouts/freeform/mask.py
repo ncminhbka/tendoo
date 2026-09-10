@@ -27,7 +27,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from tendoo.layouts.freeform.zones import ZONE_RECTS
+from tendoo_legacy.layouts.freeform.zones import ZONE_RECTS
 
 
 def _soft_interval(coord: np.ndarray, lo: float, hi: float, delta: float) -> np.ndarray:

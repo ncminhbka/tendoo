@@ -39,9 +39,9 @@ from tendoo.layouts.base import (
     TAG_ICON_SVG,
 )
 from tendoo.layouts.font_engine import resolve_font
-from tendoo.layouts.freeform.mask import generate_freeform_mask
-from tendoo.layouts.freeform.measure import _font_path_for, compute_zone_rects, fit_font_size_px
-from tendoo.layouts.freeform.zones import ZONE_DEFAULT_ALIGN, ZONE_GRID_AREA, ZONE_NAMES, ZONE_SELF_ALIGN, is_valid_zone
+from tendoo_legacy.layouts.freeform.mask import generate_freeform_mask
+from tendoo_legacy.layouts.freeform.measure import _font_path_for, compute_zone_rects, fit_font_size_px
+from tendoo_legacy.layouts.freeform.zones import ZONE_DEFAULT_ALIGN, ZONE_GRID_AREA, ZONE_NAMES, ZONE_SELF_ALIGN, is_valid_zone
 from tendoo.layouts.text_engine import balance_vietnamese_headline, normalize_text, resolve_headline_effect
 
 TEMPLATE_PATH = Path(__file__).resolve().parent / "template.html"
