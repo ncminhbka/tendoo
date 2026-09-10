@@ -295,15 +295,25 @@ def generate_raw_response(
     tokenizer: Any,
     device: str,
     messages: List[Dict[str, str]],
-    max_new_tokens: int = 700,
+    max_new_tokens: int = 1024,
 ) -> str:
     """Runs one .generate() call and returns the decoded continuation text (raw model
     output, not yet JSON-parsed). Separated from parsing so a mocked/monkeypatched
     version of this exact function is all tests need to exercise the rest of the
-    pipeline without a GPU."""
+    pipeline without a GPU.
+
+    enable_thinking=False mirrors src/flux2/text_encoder.py::Qwen3Embedder.forward()'s
+    own apply_chat_template() call on this exact model family -- Qwen3 defaults to an
+    internal <think>...</think> reasoning pass before its actual answer, which can eat
+    the entire max_new_tokens budget before ever reaching the JSON output (confirmed on
+    a real server run, 2026-09-10: every case timed out around ~28s with "No JSON
+    object found in model response" until this flag was added).
+    """
     import torch
 
-    text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    text = tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True, enable_thinking=False
+    )
     inputs = tokenizer(text, return_tensors="pt").to(device)
     with torch.no_grad():
         generated = model.generate(
@@ -500,7 +510,11 @@ def generate_render_plan(
     raw_response = generate_raw_response(MODEL, TOKENIZER, DEVICE, messages)
     raw_plan, parse_errors = parse_render_plan_json(raw_response)
     if raw_plan is None:
-        return None, parse_errors
+        # Include a preview of what the model actually said -- otherwise a parse
+        # failure is undiagnosable after the fact (confirmed needed on a real server
+        # run, 2026-09-10: "No JSON object found" alone didn't say WHY).
+        preview = raw_response[:400].replace("\n", " ")
+        return None, parse_errors + [f"raw model output preview: {preview!r}"]
     cleaned, validation_errors = validate_render_plan(raw_plan, category, category_fields)
     return cleaned, parse_errors + validation_errors
 
