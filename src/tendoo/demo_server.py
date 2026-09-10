@@ -608,7 +608,12 @@ def inject_color_guidance(prompt: str, hex_color: Optional[str]) -> str:
 # Distinct port from this server's own 7860 -- a genuinely separate OS process, started/
 # scaled/restarted independently (see project memory: tendoo-3phase-plan-2026-09-09.md).
 LLM_RENDER_PLAN_URL = os.environ.get("LLM_RENDER_PLAN_URL", "http://127.0.0.1:7861/api/render-plan")
-LLM_RENDER_PLAN_TIMEOUT_S = float(os.environ.get("LLM_RENDER_PLAN_TIMEOUT_S", "5"))
+# A real Qwen3-4B-FP8 .generate() call for this JSON-shaped output measured ~10-28s on
+# a real server (2026-09-10) -- the original "5" default here was a placeholder picked
+# before that was known and silently caused most requests to time out and fall back to
+# the deterministic path (never an error, just the wrong resolved_layout/title -- only
+# caught via scripts/verify_render_plan_llm.py's assertions). 45s leaves real margin.
+LLM_RENDER_PLAN_TIMEOUT_S = float(os.environ.get("LLM_RENDER_PLAN_TIMEOUT_S", "45"))
 
 def _collect_category_field_values(req: GenerateRequest) -> Dict[str, str]:
     """Every CATEGORY_FIELD_SLOTS[category] field's real current value, blank string if
