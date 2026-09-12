@@ -2,12 +2,18 @@
 src/tendoo/core
 
 Tầng cốt lõi đồ họa & typography cho hệ thống Tendoo AI:
-- base: BaseLayout, PosterContent, ColorPalette, SVG icons
-- fonts: Quản lý font catalog & font-face CSS
-- colors: Color harmony & WCAG contrast ratio
-- typography: Bounding box math, measurement & line balancing
-- components: SVG icons & visual building blocks
-- style: Category slot definitions & style presets
+========================================================
+- base: BaseLayout, PosterContent, ColorPalette, SVG icons vector
+- fonts: Quản lý Font Catalog 19 họ font thương mại tiếng Việt & font-face CSS
+- colors: Color harmony (đơn sắc, tương phản, tam giác màu) & WCAG contrast ratio
+- typography: Bounding box math, greedy word-wrapping, PIL font fitting & Vietnamese line balancing
+- components: SVG icons vector & visual building blocks (O(1) semantic icon lookup)
+- style: Category slot definitions, style presets & color guidance injection
+
+TẠI SAO CẦN TẦNG CORE ĐỘC LẬP:
+- Tách biệt rõ ràng giữa Business Logic / Data Models (core) và Spatial Layout / Rendering (engine & renderer).
+- Cho phép bất kỳ module nào (LLM planner, API server, layout generator, visual test suite)
+  dễ dàng import các hằng số, kiểu dữ liệu, và công cụ typography mà không bị dính vòng lặp phụ thuộc (circular imports).
 """
 
 from tendoo.core.base import (
@@ -37,11 +43,13 @@ from tendoo.core.colors import (
     hex_to_hue,
 )
 from tendoo.core.typography import (
+    LINE_HEIGHT_MULT,
     balance_vietnamese_headline,
     fit_font_size_px,
     normalize_text,
     resolve_headline_effect,
     strip_emojis,
+    wrap_and_measure,
 )
 from tendoo.core.components import (
     ICON_SVG_BY_NAME,
@@ -72,6 +80,7 @@ __all__ = [
     "ARROW_RIGHT_ICON_SVG",
     "FONT_CATALOG",
     "FONTS_DIR",
+    "LINE_HEIGHT_MULT",
     "resolve_font",
     "recommend_font",
     "list_font_options",
@@ -79,6 +88,7 @@ __all__ = [
     "hex_to_hue",
     "balance_vietnamese_headline",
     "fit_font_size_px",
+    "wrap_and_measure",
     "normalize_text",
     "resolve_headline_effect",
     "strip_emojis",

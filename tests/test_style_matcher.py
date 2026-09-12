@@ -1,9 +1,12 @@
 """
 tests/test_style_matcher.py
 
-Phase B: verifies the deterministic layout/style auto-match engine that replaced the
-raw layout/font/corridor-material pickers in the UI (see src/tendoo/layouts/style_matcher.py
-and yeu_cau.txt's "Hiển thị/thiết kế" redesign requirement).
+Phase B / Pure OmniBlock: verifies the layout/style auto-match engine in
+src/tendoo/layouts/style_matcher.py.
+Under Pure OmniBlock Architecture:
+  - Layout is unconditionally DEFAULT_LAYOUT = "omni".
+  - Style preferences map cleanly via STYLE_PREF_TO_STYLE_HINT to OMNI_STYLES.
+  - Zero legacy layouts or fallback matrices.
 """
 
 import sys
@@ -17,54 +20,60 @@ if str(PROJECT_ROOT / "src") not in sys.path:
 
 from tendoo.layouts.registry import list_layouts
 from tendoo.layouts.style_matcher import (
-    CATEGORY_DEFAULT_LAYOUT,
+    DEFAULT_LAYOUT,
     LAYOUT_COMPATIBLE_STYLES,
+    OMNI_STYLES,
     STYLE_PREFS,
+    STYLE_PREF_TO_STYLE_HINT,
     resolve_style_preset,
 )
 
 CATEGORIES = ["promo", "product_intro", "opening", "feedback", "recruitment", "guide"]
 
 
-def test_category_defaults_are_real_registered_layouts():
+def test_default_layout_is_omni():
+    assert DEFAULT_LAYOUT == "omni"
     registered = {l["name"] for l in list_layouts()}
-    for category, layout_name in CATEGORY_DEFAULT_LAYOUT.items():
-        assert layout_name in registered, f"{category}'s default layout '{layout_name}' isn't registered"
+    assert "omni" in registered
+
+
+def test_omni_compatible_styles():
+    assert "omni" in LAYOUT_COMPATIBLE_STYLES
+    assert set(LAYOUT_COMPATIBLE_STYLES["omni"]["styles"]) == set(OMNI_STYLES)
+    assert len(OMNI_STYLES) == 11
 
 
 @pytest.mark.parametrize("category", CATEGORIES)
 @pytest.mark.parametrize("style_pref", STYLE_PREFS)
-def test_resolve_style_preset_returns_valid_layout_and_style(category, style_pref):
-    """Every (category, style_pref) combination must resolve to a real registered layout
-    and a style_hint that's either 'auto' or a genuinely compatible style for that layout
-    (per LAYOUT_COMPATIBLE_STYLES) -- never a style_hint the layout would reject."""
-    registered = {l["name"] for l in list_layouts()}
+def test_resolve_style_preset_returns_omni_and_valid_style(category, style_pref):
+    """Every (category, style_pref) combination must resolve to layout='omni'
+    and a style_hint that's either 'auto' or a genuinely compatible style for OmniBlock."""
     result = resolve_style_preset(category, style_pref, "")
-    assert result["layout"] in registered
+    assert result["layout"] == "omni"
     assert result["font_key"] == "auto"
 
     if style_pref == "auto":
         assert result["style_hint"] == "auto"
     else:
-        valid_styles = LAYOUT_COMPATIBLE_STYLES[result["layout"]]["styles"]
-        assert result["style_hint"] in valid_styles
+        assert result["style_hint"] in OMNI_STYLES
+        assert result["style_hint"] == STYLE_PREF_TO_STYLE_HINT[style_pref]
 
 
 def test_unknown_style_pref_falls_back_to_auto():
     result = resolve_style_preset("promo", "not_a_real_mood", "")
     assert result["style_hint"] == "auto"
-    assert result["layout"] == CATEGORY_DEFAULT_LAYOUT["promo"]
+    assert result["layout"] == "omni"
 
 
-def test_unknown_category_falls_back_to_top_dome():
+def test_unknown_category_resolves_to_omni():
     result = resolve_style_preset("not_a_real_category", "auto", "")
-    assert result["layout"] == "top_dome"
+    assert result["layout"] == "omni"
 
 
-def test_style_pref_can_override_category_default_layout():
-    """nang_dong (dynamic/sport mood) should nudge promo away from its plain top_dome
-    default toward the more energetic diagonal_slash layout."""
-    default = resolve_style_preset("promo", "auto", "")
-    nudged = resolve_style_preset("promo", "nang_dong", "")
-    assert default["layout"] == "top_dome"
-    assert nudged["layout"] == "diagonal_slash"
+def test_style_pref_mapping():
+    """Verify specific 1D mappings from user style_pref to rich commercial Omni styles."""
+    assert resolve_style_preset("promo", "sang_trong", "")["style_hint"] == "luxury_gold"
+    assert resolve_style_preset("promo", "nang_dong", "")["style_hint"] == "cyberpunk_grid"
+    assert resolve_style_preset("promo", "hien_dai", "")["style_hint"] == "minimal_wall"
+    assert resolve_style_preset("promo", "am_cung", "")["style_hint"] == "warm_wood"
+    assert resolve_style_preset("promo", "le_hoi", "")["style_hint"] == "festive_light"

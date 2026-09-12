@@ -33,16 +33,15 @@ re-litigate without new direction):
        (c) title field filled (and neither (a) nor (b) applies) -> use it verbatim.
        (d) neither -> this model must generate a contextually fitting title.
 
-DUPLICATE/OMISSION PREVENTION (extra_blocks[].field): a block tagged with `field` never
-by itself triggers `freeform` -- it only affects that ONE field's content, resolved in
+DUPLICATE/OMISSION PREVENTION (extra_blocks[].field): a block tagged with `field`
+only affects that ONE field's content, resolved in
 Python (see demo_server.py::run_pipeline_inference): the real already-filled value wins
 over anything this model writes (fidelity + de-duplication guarantee -- a form value can
 never be silently corrupted/duplicated by generation), while a genuinely blank field
 falls back to trusting this model's extraction (fills gaps when the user typed the whole
 brief into the free prompt instead of the form, e.g. prompt_test.txt lines 21-41).
-`freeform` triggers only when a block has `field: null` (content matching no known slot)
-or an explicit `zone` (the user asked for a specific position for that content,
-regardless of whether it's also field-tagged) -- computed in demo_server.py, not here.
+In Pure OmniBlock architecture, every block is dynamically routed to its sanctuary zone
+based on role and explicit zone request.
 
 Model: a plain Qwen3-4B-FP8 checkpoint (the same weights already used as FLUX.2's text
 encoder in demo_server.py, but loaded HERE as a genuine AutoModelForCausalLM + .generate()
@@ -102,6 +101,18 @@ DUPLICATE_SIMILARITY_THRESHOLD = 0.72
 MODEL: Any = None
 TOKENIZER: Any = None
 DEVICE: str = "cuda:0"
+
+__all__ = [
+    "RenderPlanRequest",
+    "app",
+    "build_messages",
+    "generate_raw_response",
+    "generate_render_plan",
+    "is_render_plan_usable",
+    "load_model",
+    "parse_render_plan_json",
+    "validate_render_plan",
+]
 
 
 # ==================================================================================
@@ -219,9 +230,7 @@ QUY TẮC TUYỆT ĐỐI (không tự suy diễn khác):
 - Mã QR: nếu người dùng yêu cầu vị trí cụ thể cho mã QR, tạo 1 block field="qr" kèm "zone" tương ứng (bỏ qua "text").
   Nếu không có yêu cầu, đừng tạo block này -- mã QR (nếu bật) sẽ tự hiển thị ở vị trí mặc định.
 - MẶC ĐỊNH AN TOÀN là "extra_blocks": [] (mảng RỖNG). Chỉ thêm 1 phần tử khi có tín hiệu RÕ RÀNG trong prompt tự do
-  (một vị trí cụ thể được nêu, hoặc một nội dung mới thực sự không khớp trường nào). Lỗi thật đã xảy ra: model tự ý
-  thêm block cho nội dung không ai yêu cầu định vị, khiến bố cục tự do (freeform) bị kích hoạt một cách không cần
-  thiết. Nếu không chắc prompt có yêu cầu vị trí/nội dung mới hay không -> ĐỪNG thêm block, để mảng rỗng.
+  (một vị trí cụ thể được nêu, hoặc một nội dung mới thực sự không khớp trường nào). Nếu không chắc prompt có yêu cầu vị trí/nội dung mới hay không -> ĐỪNG thêm block, để mảng rỗng.
 
 TIÊU ĐỀ (title), quyết định theo đúng thứ tự sau:
 (a) Nếu prompt tự do nêu rõ 1 dòng chữ lớn/hero/tiêu đề nổi bật (không nhất thiết dùng đúng từ "tiêu đề") -> action="use_prompt", text=nội dung đó.
@@ -411,7 +420,7 @@ def validate_render_plan(
     this category and to run the duplicate-content filter against already-filled ones.
 
     Never raises. Drops/corrects individual bad pieces rather than rejecting the whole
-    plan outright (mirrors FreeformLayout.render_html's own silent-drop tolerance for
+    plan outright (mirrors OmniLayout.render_html's own silent-drop tolerance for
     unknown zone/icon) -- every drop/correction is recorded in `errors` but doesn't by
     itself invalidate the plan. Returns (None, errors) only when the input isn't a dict
     at all.
@@ -538,10 +547,8 @@ def validate_render_plan(
     style_hint = plan.get("style_hint")
     if not isinstance(style_hint, str) or not style_hint.strip():
         style_hint = "auto"
-    # Not validated against LAYOUT_COMPATIBLE_STYLES here -- the final layout isn't
-    # known yet (decided downstream in demo_server.py from has_freeform_trigger); the
-    # existing detect_scene_lighting_tone() re-validates it against whatever layout
-    # actually gets chosen, same as every other style_hint source in this pipeline.
+    # Style hint is passed through and re-validated downstream by detect_scene_lighting_tone
+    # against the rich commercial styles supported by OmniBlockLayout.
 
     cleaned = {
         "title": {"action": title_action, "text": title_text},
@@ -594,6 +601,16 @@ def generate_render_plan(
 # ==================================================================================
 
 class RenderPlanRequest(BaseModel):
+    """
+    Schema nhận diện yêu cầu tạo Render Plan từ demo_server.
+    
+    TẠI SAO CẦN LÀM:
+    - Định nghĩa tường minh các trường dữ liệu cần thiết cho Qwen3 suy luận:
+      danh mục (category), tiêu đề hiện tại, các trường danh mục (category_fields),
+      prompt tự do của người dùng và style gợi ý.
+    - Giúp FastAPI và Pydantic tự động validate kiểu dữ liệu, ngăn ngừa injection
+      hoặc payload rỗng làm crash sidecar process.
+    """
     category: str = "promo"
     title: str = ""
     category_fields: Dict[str, str] = {}
@@ -604,6 +621,14 @@ class RenderPlanRequest(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Quản lý vòng đời FastAPI sidecar service.
+    
+    TẠI SAO CẦN LÀM:
+    - MODEL và TOKENIZER được nạp trước khi server lắng nghe request.
+    - Sử dụng mô hình lifespan hiện đại của FastAPI (thay thế @app.on_event deprecated)
+      giúp giải phóng tài nguyên và tương thích chuẩn ASGI/Uvicorn mới nhất.
+    """
     global MODEL, TOKENIZER
     # MODEL/TOKENIZER are set by main() before uvicorn starts in production; tests
     # exercise the endpoint with them monkeypatched and never hit this branch.
@@ -615,11 +640,21 @@ app = FastAPI(title="Tendoo LLM Render-Plan Sidecar", lifespan=lifespan)
 
 @app.get("/api/health")
 async def health_check():
+    """Kiểm tra trạng thái sẵn sàng của LLM Sidecar."""
     return {"status": "online", "model_loaded": MODEL is not None}
 
 
 @app.post("/api/render-plan")
 async def api_render_plan(req: RenderPlanRequest):
+    """
+    Endpoint chính sinh Render Plan từ form + prompt tự do.
+    
+    TẠI SAO CẦN LÀM:
+    - Tiếp nhận yêu cầu từ demo_server qua HTTP REST nội bộ.
+    - Nếu sidecar chưa nạp weights (hoặc đang tải), trả mã 503 ngay lập tức để
+      demo_server chủ động fallback sang quy tắc heuristic xác định (deterministic fallback),
+      tuyệt đối không làm treo hoặc crash tiến trình sinh ảnh chính.
+    """
     if MODEL is None or TOKENIZER is None:
         raise HTTPException(status_code=503, detail="model not loaded")
     plan, errors = generate_render_plan(

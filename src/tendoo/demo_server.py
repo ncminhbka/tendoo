@@ -44,6 +44,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from tendoo.layouts import (
+    ColorPalette,
     PosterContent,
     analyze_color_harmony,
     get_layout,
@@ -73,9 +74,42 @@ OUTPUT_DIR = PROJECT_ROOT / "output_demo_server"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 UI_HTML_PATH = Path(__file__).resolve().parent / "demo_ui.html"
 
+# Retention cap (2026-09-10): every generate request writes a brand-new run_<ts>/
+# folder (mask/backgrounds/HTML/final poster) and nothing ever deleted the old ones --
+# this directory grew to 1600+ run folders with no bound. Keep only the N most
+# recently created run folders; the rest are pruned right after each successful
+# generation (see _prune_old_output_runs()). Override via env var if needed.
+MAX_OUTPUT_RUNS = int(os.environ.get("MAX_OUTPUT_RUNS", "100"))
+
+
+__all__ = [
+    "CATEGORY_REQUIRED_FIELDS",
+    "GenerateRequest",
+    "app",
+    "build_poster_content",
+    "detect_scene_lighting_tone",
+    "free_all_gpu_memory",
+    "inject_color_guidance",
+    "inject_spatial_layout_guidance",
+    "main",
+    "run_pipeline_inference",
+    "sanitize_and_inject_zero_text",
+    "try_fetch_render_plan",
+    "validate_required_fields",
+]
+
 
 def free_all_gpu_memory():
-    """Flushes VRAM across all CUDA devices cleanly."""
+    """
+    Giải phóng triệt để VRAM trên toàn bộ các GPU CUDA khi tắt server hoặc reload.
+    
+    TẠI SAO CẦN LÀM:
+    - Trên môi trường multi-GPU (2x NVIDIA A30), PyTorch caching allocator thường giữ lại
+      reserved memory ngay cả khi python process kết thúc hoặc reload.
+    - Xóa tường minh tham chiếu model, ép gọi gc.collect(), rồi lặp qua từng device ID
+      để gọi empty_cache() + ipc_collect() đảm bảo không rò rỉ VRAM (OOM) cho các phiên
+      chạy tiếp theo.
+    """
     global DIT_MODEL, AE_MODEL, TEXT_ENCODER
     print("\n🛑 SHUTTING DOWN TENDOO DEMO SERVER...")
     print("🧹 Releasing model weights and cleaning GPU memory...")
@@ -222,6 +256,8 @@ class GenerateRequest(BaseModel):
     applicable: Optional[str] = None
     brand: Optional[str] = None
     hotline: Optional[str] = None
+    rating: Optional[Any] = None
+    customer_name: Optional[str] = None
     prompt_scene: Optional[str] = None
     prompt_corridor: Optional[str] = None
 
@@ -342,6 +378,35 @@ def pil_to_base64_data_uri(img: Image.Image) -> str:
     return f"data:image/png;base64,{b64}"
 
 
+def _prune_old_output_runs(max_runs: int = MAX_OUTPUT_RUNS) -> None:
+    """
+    Keeps only the `max_runs` most recently created `run_*` folders under OUTPUT_DIR,
+    deleting the rest. Called once per generate request (see run_pipeline_inference)
+    so the directory self-limits instead of growing without bound. Sorts by folder
+    name -- `run_<timestamp_ms>` is already lexicographically time-ordered -- rather
+    than filesystem mtime, which Windows can report inconsistently for directories.
+    Best-effort: a folder that fails to delete (e.g. still open elsewhere) is skipped,
+    not fatal to the request that triggered the prune.
+    """
+    try:
+        run_dirs = sorted(
+            (p for p in OUTPUT_DIR.iterdir() if p.is_dir() and p.name.startswith("run_")),
+            key=lambda p: p.name,
+        )
+    except FileNotFoundError:
+        return
+
+    excess = len(run_dirs) - max_runs
+    if excess <= 0:
+        return
+
+    for old_dir in run_dirs[:excess]:
+        try:
+            shutil.rmtree(old_dir)
+        except Exception as e:
+            print(f"  [!] Notice: failed to prune old output run {old_dir.name}: {e}")
+
+
 def sanitize_and_inject_zero_text(user_prompt: str, has_ref_image: bool = False) -> str:
     """
     Sanitizes user scene prompt and injects targeted background ZERO-TEXT negative constraints.
@@ -404,84 +469,24 @@ def sanitize_and_inject_zero_text(user_prompt: str, has_ref_image: bool = False)
 
 def inject_spatial_layout_guidance(
     scene_prompt: str,
-    layout_name: str = "top_dome",
+    layout_name: str = "omni",
     has_ref_image: bool = False,
 ) -> str:
     """
-    Injects layout-aware spatial composition steering tokens into the scene prompt to overcome
-    the diffusion model's inherent center bias and prevent product/typography collision.
-
-    Center layouts (top_dome, bottom_platform, center_hourglass):
-      Reinforce clean copy space around the central aperture.
-
-    Asymmetrical layouts (split_column, diagonal_slash, l_frame):
-      Explicitly steer the hero subject/product away from the typography corridor and into the
-      dedicated product zone (right side, lower-right diagonal, or lower-right quadrant).
+    Tiêm chỉ dẫn không gian bảo vệ Product Sanctuary của OmniBlock vào scene prompt.
+    Giúp mô hình khuếch tán tập trung chủ thể thương mại vào tâm, chừa khoảng trống biên 9 ô cho chữ.
     """
     prompt = (scene_prompt or "").strip()
     lower_p = prompt.lower()
-    layout = (layout_name or "top_dome").lower().strip()
 
-    if layout == "split_column":
-        spatial_guidance = (
-            "asymmetrical editorial composition, hero product placed prominently on the right half of the frame (x > 0.48, rule of thirds), "
-            "clean open negative copy space across the left vertical third, no subject or foreground elements on the left side, "
-            "balanced commercial fashion layout"
-        )
-        if has_ref_image:
-            spatial_guidance = f"{spatial_guidance}, preserve authentic product placed on the right side"
+    spatial_guidance = (
+        "commercial advertising composition, pristine central sanctuary protecting centered subject, "
+        "harmonious balanced negative copy space on perimeter and corners reserved for typography"
+    )
+    if has_ref_image:
+        spatial_guidance = f"{spatial_guidance}, preserve authentic product details and branding placed in the center sanctuary"
 
-    elif layout == "diagonal_slash":
-        spatial_guidance = (
-            "dynamic athletic diagonal composition, hero product positioned dynamically in the lower-right diagonal half of the frame (x > 0.45, y > 0.45), "
-            "angled towards center, wide open clean negative copy space across the upper-left diagonal quadrant, "
-            "no product or clutter in the upper-left area, high energy motion background"
-        )
-        if has_ref_image:
-            spatial_guidance = f"{spatial_guidance}, preserve authentic product placed in the lower-right diagonal area"
-
-    elif layout == "l_frame":
-        spatial_guidance = (
-            "architectural framing composition, hero product positioned strictly in the lower-right quadrant of the frame (x in [0.42, 0.94], y in [0.32, 0.94]), "
-            "wide open clean negative copy space framing the entire top horizontal header and left vertical column, "
-            "no product or foreground elements in upper-left corner or top bar, modern technology commercial setup"
-        )
-        if has_ref_image:
-            spatial_guidance = f"{spatial_guidance}, preserve authentic product placed in the lower-right quadrant"
-
-    elif layout == "bottom_platform":
-        spatial_guidance = (
-            "cinematic commercial composition, hero product standing centered on the bottom platform stage, "
-            "clean negative copy space across the lower pedestal area, stable centered framing"
-        )
-    elif layout == "center_hourglass":
-        spatial_guidance = (
-            "studio commercial composition, hero product positioned in the center aperture of the frame, "
-            "clean open negative copy space across top header and bottom footer, balanced hourglass framing"
-        )
-    elif layout in ("omni", "freeform"):
-        spatial_guidance = (
-            "commercial advertising composition, centered subject protected in the product sanctuary, "
-            "harmonious balanced negative copy space around outer borders for typography"
-        )
-    else:  # top_dome
-        spatial_guidance = (
-            "commercial advertising composition, hero product centered in the lower two-thirds of the frame, "
-            "clean open negative copy space in the upper dome area, no product in the top header"
-        )
-
-    # Prevent redundant token injection
-    steering_check_keys = {
-        "split_column": ["right half", "right side", "left vertical third"],
-        "diagonal_slash": ["lower-right diagonal", "upper-left diagonal"],
-        "l_frame": ["lower-right quadrant", "architectural framing"],
-        "bottom_platform": ["bottom platform stage", "lower pedestal"],
-        "center_hourglass": ["center aperture", "hourglass framing"],
-        "top_dome": ["lower two-thirds", "upper dome"],
-        "omni": ["product sanctuary", "negative copy space"],
-        "freeform": ["product sanctuary", "negative copy space"],
-    }
-    needed = not any(k in lower_p for k in steering_check_keys.get(layout, []))
+    needed = not any(k in lower_p for k in ["product sanctuary", "negative copy space"])
     if needed:
         prompt = f"{prompt}, {spatial_guidance}" if prompt else spatial_guidance
 
@@ -491,83 +496,52 @@ def inject_spatial_layout_guidance(
 def detect_scene_lighting_tone(
     scene_prompt: str,
     user_hint: str = "auto",
-    layout_name: str = "top_dome",
+    layout_name: str = "omni",
 ) -> str:
     """
-    Prevents Spatial Semantic Clash between Layout geometry, corridor lighting, and scene atmosphere.
-    Validates compatibility against LAYOUT_COMPATIBLE_STYLES:
-      - If user specifies an explicit valid style for this layout, respects user's choice.
-      - If user chooses 'auto' or specifies an incompatible style (e.g. top_dome + cinematic_asphalt),
-        intelligently analyzes scene keywords to select the most harmonious optical corridor style.
+    Tự động nhận diện phong cách ánh sáng và chất liệu quang học phù hợp nhất từ mô tả cảnh.
+    Tương thích với danh mục 11 phong cách thẩm mỹ thương mại cao cấp của OmniBlock.
     """
-    layout_cfg = LAYOUT_COMPATIBLE_STYLES.get(layout_name, LAYOUT_COMPATIBLE_STYLES["top_dome"])
-    valid_styles = layout_cfg["styles"]
-    default_style = layout_cfg["default"]
+    from tendoo.layouts.style_matcher import LAYOUT_COMPATIBLE_STYLES, OMNI_STYLES
 
-    # If user explicitly chose a compatible style, respect it
+    valid_styles = OMNI_STYLES
+    default_style = str(LAYOUT_COMPATIBLE_STYLES["omni"]["default"])
+
+    # Nếu người dùng chỉ định một phong cách hợp lệ trong danh mục Omni, tôn trọng lựa chọn đó
     if user_hint and user_hint.lower() not in ("auto", "", "none"):
         clean_hint = user_hint.lower().strip()
         if clean_hint in valid_styles:
             return clean_hint
-        print(f"  [Notice] Incompatible style_hint '{user_hint}' for layout '{layout_name}'. Auto-harmonizing...")
 
-    # Auto-detection based on scene keywords and layout geometry
+    # Tự động nhận diện phong cách dựa trên từ khóa ngữ nghĩa trong prompt
     lower_p = (scene_prompt or "").lower()
-    is_dark = any(k in lower_p for k in ["neon", "cyber", "night", "dark", "tối", "bóng đêm", "đen", "slate", "black", "moody", "asphalt"])
-    is_warm_gold = any(k in lower_p for k in ["gold", "vàng", "hoàng gia", "luxury", "sunset", "golden hour", "warm", "trung thu", "lễ hội", "nến", "candle"])
-    is_stone_marble = any(k in lower_p for k in ["marble", "đá cẩm thạch", "bục đá", "sa thạch", "stone", "pedestal"])
-    is_wood = any(k in lower_p for k in ["wood", "gỗ", "mặt bàn", "quán cafe", "tea table"])
-    is_water = any(k in lower_p for k in ["water", "nước", "hồ", "lake", "ocean", "river", "biển", "phản chiếu", "reflection"])
+    is_dark = any(k in lower_p for k in ["neon", "cyber", "night", "dark", "tối", "bóng đêm", "đen", "slate", "black", "moody", "gaming", "tech"])
+    is_warm_gold = any(k in lower_p for k in ["gold", "vàng", "hoàng gia", "luxury", "sunset", "golden hour", "warm", "nến", "candle", "sang trọng"])
+    is_stone_marble = any(k in lower_p for k in ["marble", "đá cẩm thạch", "bục đá", "sa thạch", "stone", "pedestal", "nhựa đường", "asphalt"])
+    is_wood = any(k in lower_p for k in ["wood", "gỗ", "mặt bàn", "quán cafe", "tea table", "ấm cúng"])
+    is_festive = any(k in lower_p for k in ["lễ hội", "festival", "light", "sparkle", "festive", "trăng", "moon", "tết", "trung thu", "pháo hoa"])
+    is_minimal = any(k in lower_p for k in ["tường", "bê tông", "wall", "minimal", "phòng", "văn phòng", "office", "tối giản"])
+    is_silk = any(k in lower_p for k in ["lụa", "silk", "thời trang", "fashion", "champagne", "mềm mại"])
+    is_daylight = any(k in lower_p for k in ["daylight", "ban ngày", "ánh sáng tự nhiên", "sunlight", "sunny", "morning", "buổi sáng", "clean"])
 
-    if layout_name == "bottom_platform":
-        if is_stone_marble:
-            return "luxury_marble"
-        if is_wood:
-            return "warm_wood"
-        if is_water:
-            return "water_mirror"
-        return "cinematic_asphalt"
-
-    elif layout_name == "split_column":
-        if any(k in lower_p for k in ["tường", "bê tông", "wall", "minimal", "phòng"]):
-            return "minimal_wall"
-        if any(k in lower_p for k in ["khói", "pillar", "beam", "smoke", "haze"]):
-            return "studio_light_pillar"
+    if is_dark:
+        return "cyberpunk_grid"
+    if is_warm_gold:
+        return "luxury_gold"
+    if is_wood:
+        return "warm_wood"
+    if is_festive:
+        return "festive_light"
+    if is_minimal:
+        return "minimal_wall"
+    if is_silk:
         return "champagne_silk"
+    if is_stone_marble:
+        return "cinematic_asphalt"
+    if is_daylight:
+        return "daylight_clean"
 
-    elif layout_name == "center_hourglass":
-        if is_warm_gold:
-            return "festive_light"
-        if is_dark:
-            return "studio_spotlight"
-        return "moonbeam"
-
-    elif layout_name == "diagonal_slash":
-        if is_dark or any(k in lower_p for k in ["cyber", "neon", "gaming", "tech"]):
-            return "cyber_neon"
-        if any(k in lower_p for k in ["carbon", "black", "matte", "stealth", "kim loại"]):
-            return "carbon_mesh"
-        if any(k in lower_p for k in ["daylight", "sun", "outdoor", "sáng", "nắng"]):
-            return "daylight_motion"
-        return "sport_speed"
-
-    elif layout_name == "l_frame":
-        if any(k in lower_p for k in ["cyber", "neon", "tech", "điện tử", "gaming"]):
-            return "cyber_tech"
-        if is_warm_gold:
-            return "luxury_gold"
-        if any(k in lower_p for k in ["daylight", "sun", "outdoor", "sáng", "nắng", "văn phòng", "office"]):
-            return "daylight_clean"
-        return "tech_minimal"
-
-    else:  # top_dome
-        if is_dark:
-            return "studio_dark"
-        if is_warm_gold:
-            return "golden_hour"
-        if any(k in lower_p for k in ["moon", "trăng", "lễ hội", "festival"]):
-            return "festive_moon"
-        return default_style
+    return default_style
 
 
 # Coarse hue-degree -> descriptive color-name buckets, for injecting a user-picked
@@ -628,13 +602,16 @@ def _collect_category_field_values(req: GenerateRequest) -> Dict[str, str]:
     payload and the Python-side mandatory-field / de-duplication logic in
     run_pipeline_inference. Guide's steps are joined into one display string here (the
     LLM only ever reasons about them as context); the real per-step list is read
-    straight from req.guide_steps wherever individual freeform step blocks are built."""
+    straight from req.guide_steps wherever individual omni step blocks are built."""
     cat = (req.category or "promo").lower().strip()
     values: Dict[str, str] = {}
     for field in CATEGORY_FIELD_SLOTS.get(cat, []):
         if field == "guide_steps":
             steps = [s.strip() for s in (req.guide_steps or []) if s and s.strip()]
             values[field] = " | ".join(steps)
+        elif field == "feedback_rating":
+            val = req.feedback_rating or (str(req.rating) if req.rating is not None else "")
+            values[field] = str(val or "").strip()
         else:
             values[field] = str(getattr(req, field, "") or "").strip()
     return values
@@ -683,10 +660,9 @@ def try_fetch_render_plan(
     return data.get("plan")
 
 
-# Role-ranked zone preference lists used to auto-place any freeform block that wasn't
+# Role-ranked zone preference lists used to auto-place any omni block that wasn't
 # given an explicit zone (either because the model correctly left it blank -- no
-# position was requested -- or because a mandatory field needs placing after the plan
-# escalated to freeform for an unrelated reason).
+# position was requested -- or because a mandatory field needs placing).
 #
 # "center" deliberately excluded from every role's preference list: it's the
 # zone diffusion needs clearest for the actual product/subject, and an auto-GUESSED
@@ -707,19 +683,26 @@ _ZONE_ROLE_PREFERENCE: Dict[str, List[str]] = {
 def _auto_assign_zones(blocks: List[Dict[str, Any]]) -> None:
     """Mutates `blocks` in place, filling in a `zone` for every block that doesn't
     already have one, via a role-ranked preference list that skips zones already
-    claimed by an earlier (explicit or auto-assigned) block. Degrades gracefully past 9
-    blocks by reusing the earliest-assigned zone -- FreeformLayout already groups/
-    stacks multiple blocks sharing one zone rather than erroring."""
+    claimed by an earlier (explicit or auto-assigned) block. Degrades gracefully past 8
+    blocks by reusing the earliest-assigned zone. Always stays in outer perimeter zones,
+    never assigning into center sanctuary or top_bar/bottom_bar."""
+    from tendoo.engine.geometry import GRID_ZONE_NAMES
+    from tendoo.engine.blocks import normalize_zone
+
+    for b in blocks:
+        if b.get("zone"):
+            b["zone"] = normalize_zone(b["zone"])
+
     used: List[str] = [b["zone"] for b in blocks if b.get("zone")]
     for b in blocks:
         if b.get("zone"):
             continue
-        candidates = _ZONE_ROLE_PREFERENCE.get(b.get("role", "body"), ZONE_NAMES)
+        candidates = _ZONE_ROLE_PREFERENCE.get(b.get("role", "body"), GRID_ZONE_NAMES)
         chosen = next((z for z in candidates if z not in used), None)
         if chosen is None:
-            chosen = next((z for z in ZONE_NAMES if z not in used), None)
+            chosen = next((z for z in GRID_ZONE_NAMES if z not in used), None)
         if chosen is None:
-            chosen = used[0] if used else ZONE_NAMES[0]
+            chosen = used[0] if used else GRID_ZONE_NAMES[0]
         b["zone"] = chosen
         used.append(chosen)
 
@@ -735,11 +718,7 @@ def build_poster_content(
     qr_zone: Optional[str] = None,
 ) -> PosterContent:
     """Instantiates a complete, well-typed PosterContent from GenerateRequest.
-
-    free_text_blocks/qr_zone (Phase C): only meaningful for the `freeform` layout --
-    populated from an LLM-produced render plan (see try_fetch_render_plan()) when one
-    was available and usable; None/[] for every other layout and for the deterministic
-    fallback path, exactly as before Phase C existed.
+    free_text_blocks/qr_zone: fed directly into OmniBlockLayout for dynamic adaptive composition.
     """
     cat = (req.category or "promo").lower().strip()
     return PosterContent(
@@ -787,6 +766,7 @@ def build_poster_content(
 def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     """Synchronous core inference worker executed under INFER_LOCK."""
     t_start = time.time()
+    _prune_old_output_runs()  # keep OUTPUT_DIR bounded to MAX_OUTPUT_RUNS folders
     timestamp_str = str(int(time.time() * 1000))
     case_dir = OUTPUT_DIR / f"run_{timestamp_str}"
     case_dir.mkdir(parents=True, exist_ok=True)
@@ -809,7 +789,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
 
     # 2. Category field values -- every CATEGORY_FIELD_SLOTS[cat] field's real current
     # value (blank if unfilled). Computed unconditionally (not just when a render plan
-    # is fetched): the mandatory-field/freeform-block-building logic below needs it
+    # is fetched): the mandatory-field/omni-block-building logic below needs it
     # regardless of whether the LLM stage ran at all.
     category_field_values = _collect_category_field_values(req)
 
@@ -834,25 +814,18 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     # blank-field-extraction mechanism. The real req value always wins when a field is
     # already filled (fidelity + de-dup guarantee); the model's text is trusted only
     # for genuinely-blank fields (fills the gap when the whole brief was typed into the
-    # free prompt instead of the form). has_freeform_trigger is computed from the RAW
-    # plan output -- any field:null block (ad-hoc content) or any block carrying an
-    # explicit zone (a positioning request) is what escalates to freeform; merely
-    # filling in a blank field never does.
+    # free prompt instead of the form).
     field_values: Dict[str, Dict[str, Any]] = {}
     ad_hoc_blocks: List[Dict[str, Any]] = []
     qr_zone_request: Optional[str] = None
-    has_freeform_trigger = False
     if render_plan is not None:
         for b in render_plan.get("extra_blocks", []):
             field = b.get("field")
             zone = b.get("zone")
-            if zone is not None:
-                has_freeform_trigger = True
             if field == "qr":
                 qr_zone_request = zone
                 continue
             if field is None:
-                has_freeform_trigger = True
                 ad_hoc_blocks.append(b)
             else:
                 real_value = category_field_values.get(field, "")
@@ -891,27 +864,102 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     else:
         final_title = req.title or None
 
-    # 4. Layout / Style / Font Auto-Match (Phase B -- see style_matcher.py -- plus
-    # Phase C's algorithmic freeform trigger above). Fills in whatever wasn't already
-    # resolved -- an explicit req.layout/style_hint/font_family (direct API caller,
-    # back-compat client) always wins over both deterministic paths.
+    # Write any LLM-resolved content back onto req's own fields for consistency & logging
+    if final_title and final_title != req.title:
+        req.title = final_title
+    for field_name, fv in field_values.items():
+        if field_name == "guide_steps":
+            if not req.guide_steps:
+                req.guide_steps = [s.strip() for s in fv["text"].split("|") if s.strip()]
+        elif not getattr(req, field_name, ""):
+            setattr(req, field_name, fv["text"])
+
+    # 4. Layout / Style / Font Auto-Match
+    # Pure Omni architecture: every request runs through OmniBlockLayout.
     _preset = resolve_style_preset(req.category, req.style_pref, req.image_description or req.prompt_scene or "")
-    if not req.layout:
-        req.layout = "freeform" if has_freeform_trigger else _preset["layout"]
+    req.layout = "omni"
     if not req.style_hint:
         req.style_hint = _preset["style_hint"]
     if not req.font_family:
         req.font_family = _preset["font_key"]
 
-    # 5. Retrieve Layout
-    layout = get_layout(req.layout)
+    # 5. Retrieve Layout (Pure OmniBlock)
+    layout = get_layout("omni")
 
-    plan_blocks: Optional[List[Dict[str, Any]]] = None
-    plan_qr_zone: Optional[str] = None
-    if layout.name in ("freeform", "omni"):
-        # Build the final block list: prioritize resolved title first, followed by
-        # category fields and ad-hoc extra content -- then deduplicate via Content Fingerprint.
-        plan_blocks = []
+    dates_parts = []
+    if req.date_start:
+        dates_parts.append(f"Từ {req.date_start}")
+    if req.date_end:
+        dates_parts.append(f"Đến {req.date_end}")
+    final_dates = " - ".join(dates_parts) if dates_parts else ""
+
+    # Store Info blocks (Brand / Hotline / Address) cho bottom_bar hoặc top_bar
+    st_brand = (req.store_name or req.brand or "").strip()
+    st_phone = (req.phone or req.hotline or "").strip()
+    st_addr = (req.address or "").strip()
+    store_parts = []
+    if st_brand:
+        store_parts.append(st_brand)
+    if st_phone:
+        store_parts.append(f"Hotline: {st_phone}")
+    if st_addr:
+        store_parts.append(st_addr)
+
+    user_prompt_lower = (req.image_description or req.prompt_scene or "").lower()
+    store_top_triggers = [
+        "cửa hàng nhảy lên đầu", "thông tin ở trên", "store ở trên",
+        "store on top", "header bar", "store info on top", "thông tin lên đầu"
+    ]
+    store_zone = "top_bar" if any(trig in user_prompt_lower for trig in store_top_triggers) else "bottom_bar"
+
+    # Build the final block list: prioritize resolved title first, followed by
+    # category fields and ad-hoc extra content -- then deduplicate via Content Fingerprint.
+    plan_blocks: Optional[List[Dict[str, Any]]] = []
+    if render_plan is None:
+        from tendoo.engine.blocks import map_category_to_default_blocks
+        fields_for_map = {
+            "discount": req.discount or req.offer_main,
+            "offer_main": req.discount or req.offer_main,
+            "applied_product": req.applied_product or req.offer_sub,
+            "offer_sub": req.applied_product or req.offer_sub,
+            "date_start": req.date_start,
+            "date_end": req.date_end,
+            "dates": final_dates,
+            "product_name": req.product_name,
+            "product_desc": req.product_desc,
+            "highlights": req.highlights,
+            "price": req.price,
+            "opening_date": req.opening_date,
+            "opening_promo": req.opening_promo,
+            "booking_contact": req.booking_contact,
+            "feedback_target": req.feedback_target,
+            "feedback_quote": req.feedback_quote,
+            "feedback_rating": req.feedback_rating,
+            "special_offer": req.special_offer,
+            "job_position": req.job_position,
+            "job_desc": req.job_desc,
+            "apply_deadline": req.apply_deadline,
+            "apply_method": req.apply_method,
+            "guide_steps": " | ".join(req.guide_steps) if req.guide_steps else "",
+        }
+        st_dict = {}
+        if st_brand:
+            st_dict["store_name"] = st_brand
+        if st_phone:
+            st_dict["phone"] = st_phone
+        if st_addr:
+            st_dict["address"] = st_addr
+
+        default_blocks = map_category_to_default_blocks(
+            category=cat,
+            title=final_title,
+            fields=fields_for_map,
+            store_info=st_dict if st_dict else None,
+            spatial_override_zone=store_zone if st_dict else None,
+        )
+        plan_blocks = [b.to_dict() for b in default_blocks]
+        plan_qr_zone = None
+    else:
         if not title_skipped and final_title:
             plan_blocks.append({"text": final_title, "zone": None, "role": "hero"})
 
@@ -921,6 +969,10 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                 block = {"text": fv["text"], "zone": fv["zone"], "role": fv["role"]}
                 if fv.get("icon"):
                     block["icon"] = fv["icon"]
+                elif cat_field in ("date_start", "date_end", "opening_date"):
+                    block["icon"] = "calendar"
+                elif cat_field in ("discount", "price"):
+                    block["icon"] = "tag"
                 if fv.get("color"):
                     block["color"] = fv["color"]
                 plan_blocks.append(block)
@@ -931,10 +983,15 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
             else:
                 real_value = category_field_values.get(cat_field, "")
                 if real_value:
-                    plan_blocks.append({
+                    block = {
                         "text": real_value, "zone": None,
                         "role": DEFAULT_FIELD_ROLE.get(cat_field, "body"),
-                    })
+                    }
+                    if cat_field in ("date_start", "date_end", "opening_date"):
+                        block["icon"] = "calendar"
+                    elif cat_field in ("discount", "price"):
+                        block["icon"] = "tag"
+                    plan_blocks.append(block)
 
         # Content Dedup: If final_title is rendered as hero, don't re-render an identical
         # category field block (e.g. feedback_target) as a subordinate body block.
@@ -953,38 +1010,19 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                 block["color"] = b["color"]
             plan_blocks.append(block)
 
+        if store_parts:
+            plan_blocks.append({
+                "text": "  •  ".join(store_parts),
+                "zone": store_zone,
+                "role": "brand_bar",
+                "field": "store_info",
+                "icon": "phone" if st_phone else "globe",
+            })
+
         _auto_assign_zones(plan_blocks)
         plan_qr_zone = qr_zone_request
-    else:
-        # Fixed-layout path: write any LLM-resolved content back onto req's own fields
-        # so the existing harmonization/build_poster_content code below picks it up
-        # completely unchanged -- this is the ONLY place req gets mutated with
-        # LLM-sourced content, and only for genuinely-blank fields or an actually
-        # generated/overridden title (title-skip cannot happen here -- it only ever
-        # occurs together with has_freeform_trigger, which always forces the freeform
-        # branch above).
-        if final_title and final_title != req.title:
-            req.title = final_title
-        for field_name, fv in field_values.items():
-            if field_name == "guide_steps":
-                if not req.guide_steps:
-                    req.guide_steps = [s.strip() for s in fv["text"].split("|") if s.strip()]
-            elif not getattr(req, field_name, ""):
-                setattr(req, field_name, fv["text"])
 
-    # 6. Generate Parametric Mask
-    if plan_blocks is not None:
-        mask_np = layout.generate_mask(
-            width=w, height=h, blocks=plan_blocks, qr_zone=plan_qr_zone,
-            font_key=req.font_family if req.font_family != "auto" else "bevietnam",
-        )
-    else:
-        mask_np = layout.generate_mask(width=w, height=h)
-    mask_vis = Image.fromarray((mask_np * 255).astype(np.uint8), mode="L")
-    mask_file = case_dir / "01_corridor_mask.png"
-    mask_vis.save(mask_file)
-
-    # 7. Harmonize Field Values (Unified schema mapping)
+    # 6. Harmonize Field Values (Unified schema mapping)
     if cat == "product_intro":
         default_hl = "GIỚI THIỆU SẢN PHẨM"
     elif cat == "opening":
@@ -998,7 +1036,11 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
     else:
         default_hl = "ƯU ĐÃI ĐẶC BIỆT"
 
-    final_headline = req.title or req.headline or default_hl
+    if title_skipped:
+        final_headline = ""
+        req.title = ""
+    else:
+        final_headline = req.title or req.headline or default_hl
     final_offer_main = (
         req.discount
         or req.offer_main
@@ -1039,14 +1081,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
 
     style_hint = detect_scene_lighting_tone(final_scene_prompt, req.style_hint or "auto", layout_name=layout.name)
 
-    dates_parts = []
-    if req.date_start:
-        dates_parts.append(f"Từ {req.date_start}")
-    if req.date_end:
-        dates_parts.append(f"Đến {req.date_end}")
-    final_dates = " - ".join(dates_parts) if dates_parts else ""
-
-    # 8. Optional QR Code Generation (Backend QR Engine)
+    # 7. Optional QR Code Generation (Backend QR Engine)
     qr_data_uri = ""
     qr_url = None
     if req.enable_qr and req.website_link and req.website_link.strip():
@@ -1061,7 +1096,69 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
             except Exception as e:
                 print(f"Notice: Failed to save QR code image: {e}")
 
-    # 9. Save Uploaded Product Image if provided
+    # 8. Build PosterContent ONCE (identical across the mock/real branches below and
+    # across every num_images iteration -- none of these fields depend on the
+    # background/palette, only on req/plan_blocks/qr_data_uri, all resolved by now).
+    content = build_poster_content(
+        req=req,
+        final_headline=final_headline,
+        final_offer_main=final_offer_main,
+        final_offer_sub=final_offer_sub,
+        final_dates=final_dates,
+        qr_data_uri=qr_data_uri,
+        free_text_blocks=plan_blocks,
+        qr_zone=plan_qr_zone,
+    )
+
+    # 9. Generate Parametric Corridor Mask
+    # Preferred path: render this exact `content` through the SAME Chromium engine that
+    # will later draw the final pixels (with a neutral placeholder background -- colors
+    # don't affect text geometry) and read back its real getBoundingClientRect() rects
+    # after the in-page autofit script settles. This is what makes the mask match the
+    # HTML text exactly, at any output size -- see OmniBlockLayout.generate_mask_from_render.
+    # Falls back to the legacy PIL-estimated mask (generate_mask) only if the browser
+    # measurement pass fails outright (e.g. Playwright unavailable), so the pipeline
+    # degrades gracefully instead of crashing.
+    mask_np = None
+    if hasattr(layout, "generate_mask_from_render") and hasattr(layout, "render_html"):
+        try:
+            _dummy_palette = ColorPalette(
+                is_dark=True, luminance=0.5, hue=0, comp_hue=180, headline_color="#FFFFFF",
+            )
+            # Colors/pixels of this placeholder never influence text geometry (CSS
+            # `background-size:cover` on a 1x1 image is purely a fill color); only
+            # `content`/`width`/`height`/font/CSS drive layout, and those are identical
+            # to the real render below -- so the rects measured against this
+            # placeholder are exactly the rects the final render will occupy.
+            _neutral_bg_data_uri = pil_to_base64_data_uri(Image.new("RGB", (1, 1), (60, 60, 60)))
+            _measure_html = layout.render_html(
+                content=content,
+                palette=_dummy_palette,
+                bg_data_uri=_neutral_bg_data_uri,
+                width=w,
+                height=h,
+                headline_effect=req.text_effect,
+                style_hint=style_hint,
+            )
+            mask_np = layout.generate_mask_from_render(_measure_html, width=w, height=h)
+        except Exception as e:
+            print(f"  [!] Warning: browser-measured mask generation failed, falling back to PIL estimate: {e}")
+            mask_np = None
+
+    if mask_np is None:
+        if plan_blocks is not None:
+            mask_np = layout.generate_mask(
+                width=w, height=h, blocks=plan_blocks, qr_zone=plan_qr_zone,
+                font_key=req.font_family if req.font_family != "auto" else "bevietnam",
+            )
+        else:
+            mask_np = layout.generate_mask(width=w, height=h)
+
+    mask_vis = Image.fromarray((mask_np * 255).astype(np.uint8), mode="L")
+    mask_file = case_dir / "01_corridor_mask.png"
+    mask_vis.save(mask_file)
+
+    # 10. Save Uploaded Product Image if provided
     ref_image_path = None
     if req.image_base64:
         try:
@@ -1076,7 +1173,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
         except Exception as e:
             print(f"Notice: Failed to save uploaded product image: {e}")
 
-    # 10. Generate Blended Background & Final Poster (Regional Velocity Blending + HTML Typography)
+    # 11. Generate Blended Background & Final Poster (Regional Velocity Blending + HTML Typography)
     num_images = max(1, min(4, req.num_images or 1))
     posters_list = []
     dur_dit_total = 0.0
@@ -1098,16 +1195,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
             palette = analyze_color_harmony(np.array(blended_pil), safe_zone, color_mode="auto", user_hue=user_hue)
 
             bg_data_uri = pil_to_base64_data_uri(blended_pil)
-            content = build_poster_content(
-                req=req,
-                final_headline=final_headline,
-                final_offer_main=final_offer_main,
-                final_offer_sub=final_offer_sub,
-                final_dates=final_dates,
-                qr_data_uri=qr_data_uri,
-                free_text_blocks=plan_blocks,
-                qr_zone=plan_qr_zone,
-            )
+            # `content` (step 8) is identical across every img_idx -- built once above.
             html_str = layout.render_html(
                 content=content,
                 palette=palette,
@@ -1236,16 +1324,7 @@ def run_pipeline_inference(req: GenerateRequest) -> Dict[str, Any]:
                 palette = analyze_color_harmony(np.array(blended_pil), safe_zone, color_mode="auto", user_hue=user_hue)
 
                 bg_data_uri = pil_to_base64_data_uri(blended_pil)
-                content = build_poster_content(
-                    req=req,
-                    final_headline=final_headline,
-                    final_offer_main=final_offer_main,
-                    final_offer_sub=final_offer_sub,
-                    final_dates=final_dates,
-                    qr_data_uri=qr_data_uri,
-                    free_text_blocks=plan_blocks,
-                    qr_zone=plan_qr_zone,
-                )
+                # `content` (step 8) is identical across every img_idx -- built once above.
                 html_str = layout.render_html(
                     content=content,
                     palette=palette,

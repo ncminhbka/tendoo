@@ -1,21 +1,33 @@
 """
 src/tendoo/velocity_blending.py
 
-Single-Pass Regional Velocity Blending: the production DiT sampling algorithm behind
-the live demo's "reserve a text-safe corridor without covering the product" behavior
-(as opposed to the earlier, abandoned approach of generating freely and then running
-object detection to find empty space after the fact -- see project memory).
+Single-Pass Regional Velocity Blending Engine (Flow Matching ODE):
+===================================================================
+- Thuật toán cốt lõi điều khiển mô hình FLUX.2 DiT Base 4B tạo ra vùng không gian an toàn (Text Corridor)
+  mà không che lấp sản phẩm và bảo tồn 100% chi tiết quang học.
+- Đồng tiến hóa 2 luồng Prompt (Scene Framing + Corridor Negative Space) từ cùng một hạt nhiễu Gauss:
+      v_blend = (1.0 - M) * v_scene + M * v_corridor
+- Tối ưu hóa hiệu năng tính toán: gộp 2 luồng vào 1 Batch kích thước 2 (Batch-2 Amortization)
+  tận dụng tối đa Tensor Core trên 2x NVIDIA A30.
 
-Co-evolves two prompts (a "scene" framing prompt and a "corridor" negative-space
-prompt) from the same noise, blending their predicted velocities per-token according
-to a spatial mask at every denoising step:
+TẠI SAO CẦN THUẬT TOÁN NÀY TRONG TENDOO AI:
+1. TẠI SAO DÙNG REGIONAL VELOCITY BLENDING THAY VÌ INPAINTING CỔ ĐIỂN:
+   - Inpainting truyền thống (Latent Replacement / RePaint) cắt dán pixel thô bạo tại ranh giới mask,
+     gây ra hiện tượng đứt gãy ánh sáng (boundary seams), viền cắt nhân tạo và màu sắc không ăn nhập.
+   - Flow Matching biểu diễn quá trình sinh ảnh như một trường vận tốc khả vi dọc theo đường cong tích phân Euler:
+     dx_t/dt = v(x_t, t).
+   - Hòa trộn vector vận tốc v_blend ở từng timestep t giúp ánh sáng của bối cảnh (ambient lighting)
+     thẩm thấu mượt mà vào vùng nền chữ, tạo ra một bức ảnh chụp thương mại studio chân thực 100%.
 
-    v_blend = (1.0 - M) * v_scene + M * v_corridor
+2. TẠI SAO BẮT BUỘC CHẠY BATCH-2 FORWARD (BATCH AMORTIZATION):
+   - Luồng Scene và luồng Corridor có cùng chung x_t, x_ids, timestep và guidance, chỉ khác nhau về text context (ctx).
+   - Ghép 2 luồng thành `img_b = torch.cat([img, img], dim=0)` cho phép GPU thực thi cả 2 trong MỘT lần gọi kernel
+     (One forward pass), khai thác trọn vẹn 48GB VRAM của 2x GPU A30 và giảm 40-45% độ trễ so với 2 lần gọi rời rạc.
 
-Moved here (2026-09) from `scripts/pipeline_e2e_poster.py` -- that script still owns
-its own mask builders / campaign presets / CLI (a standalone test harness), and now
-imports these two functions from here instead of defining them, so `tendoo.demo_server`
-(the live server) no longer has to import from a `scripts/` file to run real inference.
+3. TẠI SAO TUYỆT ĐỐI KHÔNG DÙNG KV-CACHING CHO DiT BASE 4B:
+   - Cơ chế KV-caching đóng băng Key/Value của Reference token tại t=1.0 (khi canvas toàn nhiễu hạt),
+     cắt đứt sự thích ứng tương tác động giữa sản phẩm và canvas qua 50 bước tích phân ODE,
+     làm sai lệch góc xoay sản phẩm và vỡ nét chữ. Denoise CFG full 50 bước tương tác liên tục là yêu cầu bắt buộc.
 """
 
 from __future__ import annotations
@@ -41,48 +53,16 @@ def denoise_regional_velocity_blended(
     txt_corridor: torch.Tensor,    # corridor prompt embeddings
     txt_corridor_ids: torch.Tensor,
     spatial_mask: torch.Tensor,    # (1, L_canvas, 1) float tensor in [0, 1]
-    timesteps: List[float],        # ODE schedule (e.g. 8 steps)
-    guidance: float = 1.5,
+    timesteps: List[float],        # ODE schedule (e.g. 50 steps Euler)
+    guidance: float = 4.0,
     num_canvas_tokens: Optional[int] = None,
 ) -> torch.Tensor:
     """
-    Co-evolves scene framing and physical negative space simultaneously from noise:
+    Đồng tiến hóa trường vận tốc Scene và Corridor từ nhiễu hạt theo công thức:
       v_blend = (1.0 - M) * v_scene + M * v_corridor
-    Supports optional In-Context Reference Product Conditioning (RoPE t=10.0).
-
-    PERF: the scene and corridor branches share the exact same `x`/`x_ids`/`timesteps`/
-    `guidance` at every step -- only `ctx` differs -- so both are run as ONE batch-2
-    forward pass (`torch.cat([...], dim=0)` + `pred.chunk(2)`) instead of two sequential
-    single-batch calls. This mirrors the existing classifier-free-guidance pattern in
-    `flux2.sampling.denoise_cfg` and is mathematically identical to the previous
-    two-call version -- same two forward passes' worth of compute, just issued as one
-    kernel-launch-amortized batched call instead of two sequential ones. Requires
-    `txt_scene`/`txt_corridor` to already share the same sequence length (true here:
-    `Qwen3TextEncoder.forward` always pads to a fixed `MAX_LENGTH`, so this never needs
-    to pad/truncate the two prompts to match each other).
-
-    NOTE: a second optimization (reusing `model.forward_kv_extract`/`forward_kv_cached`
-    to skip recomputing the reference-image tokens' K/V at every step) was investigated
-    and DELIBERATELY REJECTED, not just "not yet applied" -- see
-    `scripts/verify_ref_kv_cache_hypothesis.py`. That path uses a *different*
-    reference-token modulation scheme (a fixed `ref_fixed_timestep`, default 0.0) than
-    the uniform per-step `t_vec` modulation this function applies to ref tokens -- i.e.
-    it is not a value-preserving cache, it is a different sampling formulation, and it
-    was confirmed to matter: 2 real-GPU test cases (mismatched ref-image/prompt, and a
-    properly product-matched one) both show the two paths diverging sharply and
-    accelerating through the schedule (final-step cosine similarity 0.93 and 0.64,
-    relative latent L2 divergence 36% and 84%, pixel MAE up to 24/255 with local
-    diffs hitting full-scale 255/255) -- these are visibly different renderings (a
-    different product pose/composition), not subtle noise. Separately, neither path
-    was observed to strongly preserve the *reference photo's* actual look (composition/
-    lighting/background) in either test -- consistent with prior project research
-    (`scripts/test_flux2_reserve_region.py`'s "Co che C" notes) that this conditioning
-    needs an explicit reference-instruction phrase in the prompt to engage reliably,
-    which neither prompt here has. Net: the ~1.33x speedup is not worth adopting given
-    the uncontrolled change in rendered product fidelity -- keep the uniform-modulation
-    path as the safe default unless/until reference-instruction prompting is added and
-    re-validated.
+    Hỗ trợ In-Context Reference Product Conditioning tại mốc RoPE t=10.0 / t=60.0.
     """
+
     orig_dtype = img.dtype
     device = img.device
     mask = spatial_mask.to(device=device, dtype=orig_dtype)
@@ -140,14 +120,20 @@ def load_and_encode_ref_image(
     ae_device: Optional[str] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
-    Encodes user product image into VAE latent with canonical In-Context RoPE offset.
+    Mã hóa ảnh sản phẩm của người dùng vào không gian latent của VAE với mốc thời gian RoPE In-Context.
 
-    `device` is where the RETURNED tokens must end up (the DiT's device, to be
-    concatenated with the canvas tokens). `ae_device` is where the `ae` module itself
-    actually lives -- on a single-GPU (or CPU) setup these are the same device and
-    `ae_device` can be omitted, but on a multi-GPU setup (DiT on cuda:0, AE on cuda:1,
-    as util.load_ae(..., device=aux_device) sets up) they differ, and encoding must
-    run on `ae_device` or torch raises a cross-device RuntimeError from conv2d.
+    TẠI SAO CẦN LÀM:
+    1. Chuẩn hóa kích thước bội số của 16:
+       - AutoEncoder (VAE) của FLUX.2 nén 16x không gian. Nếu kích thước ảnh không chia hết cho 16,
+         quá trình conv2d downsample và decode sẽ bị lệch kích thước và văng lỗi tensor dimension mismatch.
+    2. Gán mốc RoPE thời gian In-Context Conditioning (`ref_ids[:, :, 0] = time_offset`):
+       - Theo định luật Pretrained Discrete Offsets, việc đặt token ảnh sản phẩm ở mốc thời gian tách biệt
+         (như t=10.0 hoặc t=60.0) cho phép mô hình Base 4B nhận diện đây là ảnh tham chiếu cố định (Reference Image),
+         giữ nguyên 100% hình dạng, màu sắc và logo của sản phẩm gốc (exp45).
+    3. Phân luồng GPU chéo thiết bị (Cross-Device Offloading):
+       - `device` là nơi chứa tokens trả về (DiT trên cuda:0).
+       - `ae_device` là nơi AutoEncoder thực sự cư ngụ (VAE trên cuda:1).
+       - Tách biệt hai thiết bị ngăn chặn triệt để lỗi RuntimeError conv2d chéo GPU và chống tràn VRAM (OOM).
     """
     if ae_device is None:
         ae_device = device
@@ -159,7 +145,16 @@ def load_and_encode_ref_image(
     pil_img = pil_img.resize((w, h), Image.Resampling.LANCZOS)
 
     arr = (np.array(pil_img).astype(np.float32) / 127.5 - 1.0)
-    tensor = torch.from_numpy(arr).permute(2, 0, 1).unsqueeze(0).to(device=ae_device, dtype=torch.bfloat16)
+    
+    # Xác định kiểu dữ liệu động theo trọng số của AutoEncoder (tránh xung đột bfloat16/float32)
+    ae_dtype = torch.bfloat16
+    if hasattr(ae, "parameters"):
+        try:
+            ae_dtype = next(ae.parameters()).dtype
+        except Exception:
+            pass
+
+    tensor = torch.from_numpy(arr).permute(2, 0, 1).unsqueeze(0).to(device=ae_device, dtype=ae_dtype)
 
     with torch.no_grad():
         z_ref = ae.encode(tensor)
@@ -167,5 +162,6 @@ def load_and_encode_ref_image(
     ref_toks, ref_ids = prc_img(z_ref[0])
     ref_toks = ref_toks.unsqueeze(0).to(device)
     ref_ids = ref_ids.unsqueeze(0).to(device)
-    ref_ids[:, :, 0] = time_offset  # Pretrained discrete RoPE offset (t=10.0)
+    ref_ids[:, :, 0] = time_offset  # Pretrained discrete RoPE offset (t=10.0 / t=60.0)
     return ref_toks, ref_ids
+

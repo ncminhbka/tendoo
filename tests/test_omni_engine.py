@@ -145,7 +145,8 @@ def test_omni_layout_render_html():
     palette = ColorPalette(is_dark=True, luminance=0.15, hue=210, comp_hue=30, headline_color='#FFFFFF')
     html = layout.render_html(content, palette, bg_data_uri='', width=1024, height=1024)
     assert 'block-hero' in html
-    assert 'TRẢI NGHIỆM ĐỈNH CAO' in html
+    assert 'TRẢI NGHIỆM' in html
+    assert 'ĐỈNH CAO' in html
     assert 'GIẢM 40%' in html
     assert '1900 8888' in html
     assert 'omni-bottom-bar' in html

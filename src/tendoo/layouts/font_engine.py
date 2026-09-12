@@ -1,11 +1,30 @@
 """
 src/tendoo/layouts/font_engine.py
 
-Central Font Engine for Tendoo Studio:
-- Registers 19 verified Vietnamese typography fonts across 6 aesthetic archetypes.
-- Generates zero-dependency @font-face CSS using Base64 Data URIs (cached in-memory).
-- Provides category-aware intelligent font recommendation (Auto mode).
-- Guarantees 100% offline rendering fidelity for Playwright on remote servers.
+Central Typography Font Engine for Tendoo Studio:
+=================================================
+- Quản lý 19 họ font chữ Unicode tiếng Việt chuẩn (Việt hóa 100% dấu thanh) qua 6 phong cách thẩm mỹ.
+- Tự động sinh khối CSS `@font-face` nhúng trực tiếp chuỗi Base64 Data URI (cached trong RAM bằng lru_cache).
+- Khuyến nghị font thông minh theo ngành nghề, phong cách thị giác và từ khóa nội dung (Auto mode).
+- Cam kết độ trung thực hiển thị 100% offline cho Chromium Playwright trên server nội bộ.
+
+TẠI SAO CẦN MODULE NÀY TRONG HỆ THỐNG TENDOO AI:
+1. TẠI SAO BẮT BUỘC NHÚNG FONT BASE64 DATA URI THAY VÌ LINK GOOGLE FONTS:
+   - Trong môi trường máy chủ nội bộ cô lập (Offline/Air-gapped server) như JupyterLab 2x A30,
+     trình duyệt headless Chromium không thể tải font từ CDN bên ngoài (fonts.googleapis.com).
+   - Nếu gọi font ngoài, trang web sẽ bị timeout hoặc rơi vào hiện tượng FOUC (Flash of Unstyled Content),
+     Chromium chụp ảnh canvas trước khi font kịp render, dẫn đến chữ bị biến dạng thành font Times New Roman
+     mặc định hoặc mất dấu tiếng Việt (Tofu Glyphs).
+   - Nhúng Base64 Data URI biến file HTML thành một tài liệu tự chứa 100% (self-contained), render tức thì
+     với độ sắc nét vector tuyệt đối tại bất kỳ độ phân giải nào (1024x1024, 4K).
+   - Thuật toán `lru_cache` lưu trữ các chuỗi Base64 trong RAM, giúp tốc độ sinh HTML đạt dưới 1ms.
+
+2. TẠI SAO LUÔN NHÚNG KÈM BE VIETNAM PRO CHO CÁC KHỐI CHỮ PHỤ:
+   - Các font tiêu đề nghệ thuật (Display/Brush/Calligraphy như Pacifico, Blow Brush, Dancing Script)
+     rất ấn tượng cho tiêu đề lớn, nhưng hoàn toàn không thích hợp cho chữ nhỏ (12-14px) như hotline,
+     địa chỉ cửa hàng, điều kiện áp dụng hay danh sách bước thực hiện.
+   - Nhúng kèm Be Vietnam Pro đảm bảo toàn bộ các thành phần UI phụ (Store bar, badge, step badge)
+     luôn có font Sans-serif quốc tế chuẩn mực, siêu nét và dễ đọc tuyệt đối.
 """
 
 from __future__ import annotations
@@ -15,7 +34,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-# Locate fonts directory robustly
+# Xác định đường dẫn thư mục fonts một cách an toàn và linh hoạt
 _CURRENT_DIR = Path(__file__).resolve().parent
 _PROJECT_ROOT = _CURRENT_DIR.parent.parent.parent
 FONTS_DIR = _PROJECT_ROOT / "fonts"
@@ -23,7 +42,8 @@ if not FONTS_DIR.exists():
     FONTS_DIR = Path("fonts")
 
 
-# Registry of 19 QA-verified Vietnamese Unicode fonts
+# Bảng tra cứu 19 họ font tiếng Việt chuẩn đã kiểm thử chất lượng (QA Verified)
+
 FONT_CATALOG: Dict[str, Dict[str, Any]] = {
     # Nhóm 1: Hiện đại & Chuẩn mực (Modern Clean)
     "bevietnam": {
@@ -259,7 +279,7 @@ def recommend_font(category: str, style_hint: str = "", text_content: str = "") 
         return "anton"
 
     # 2. Check text content keywords
-    if any(k in txt for k in ["cafe", "cà phê", "trà sữa", "nước ép", "sinh tố", "bistro", "ẩm thực", "summer", "mùa hè"]):
+    if any(k in txt for k in ["cafe", "cà phê", "trà", "trà đào", "trà sữa", "nước ép", "sinh tố", "bistro", "ẩm thực", "summer", "mùa hè"]):
         return "pacifico"
     if any(k in txt for k in ["bánh", "kem", "bakery", "sweet", "ngọt", "trẻ em", "đồ chơi"]):
         return "cookies"
@@ -314,8 +334,9 @@ def resolve_font(
     css_family = meta["css_family"]
     fallback = meta["fallback"]
 
+    faces = []
     if font_b64:
-        font_face_css = f"""
+        faces.append(f"""
     @font-face {{
       font-family: '{css_family}';
       src: url('data:font/{fmt};charset=utf-8;base64,{font_b64}') format('{fmt}');
@@ -323,13 +344,31 @@ def resolve_font(
       font-style: normal;
       font-display: swap;
     }}
-        """.strip()
+        """.strip())
         headline_font_css = f"'{css_family}', {fallback}"
     else:
         # Graceful fallback if file is missing
-        font_face_css = ""
         headline_font_css = f"'{css_family}', {fallback}"
 
+    # Luôn nhúng kèm Be Vietnam Pro Base64 để phục vụ các thành phần UI
+    # (badge, body, store info, step list) mà không cần internet/Google Fonts.
+    if k != "bevietnam":
+        bv_meta = FONT_CATALOG.get("bevietnam", {})
+        if bv_meta:
+            bv_file = FONTS_DIR / bv_meta["file"]
+            bv_b64 = _read_and_encode_font(str(bv_file))
+            if bv_b64:
+                faces.append(f"""
+    @font-face {{
+      font-family: 'Be Vietnam Pro';
+      src: url('data:font/truetype;charset=utf-8;base64,{bv_b64}') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }}
+                """.strip())
+
+    font_face_css = "\n\n".join(faces)
     return k, font_face_css, headline_font_css
 
 
@@ -354,3 +393,14 @@ def list_font_options() -> List[Dict[str, Any]]:
             "fonts": font_list,
         })
     return result
+
+
+__all__ = [
+    "FONT_ALIASES",
+    "FONT_CATALOG",
+    "FONTS_DIR",
+    "list_font_options",
+    "recommend_font",
+    "resolve_font",
+]
+

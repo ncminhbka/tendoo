@@ -1,9 +1,29 @@
+<!--
+src/tendoo/engine/templates/master.html
+
+Master Jinja2 Template cho Hệ thống Dựng hình OmniBlockLayout:
+================================================================
+- 3x3 Spatial Grid: Tự động phân bổ các AdaptiveBlocks vào 8 ô xung quanh vùng Sanctuary.
+- Dynamic Bar Containers: omni-top-bar và omni-bottom-bar với hiệu ứng Glassmorphism.
+- Client-side Shrink-to-fit Loop: Đồng bộ 100% giữa Chromium DOM rects và Velocity Blending Mask.
+
+TẠI SAO CẦN THIẾT KẾ DOM/CSS NÀY TRONG TENDOO AI:
+1. TẠI SAO CẦN 3x3 GRID VỚI CHÍNH GIỮA LÀ SANCTUARY CHO SẢN PHẨM:
+   - Các mô hình khuếch tán (FLUX.2 DiT) sinh vật thể chính (sản phẩm, mẫu người) tập trung
+     ở vùng trung tâm 50-60% canvas.
+   - Lưới 3x3 loại bỏ ô middle_center, chỉ cho phép đặt chữ ở các cạnh biên và góc,
+     bảo vệ tuyệt đối chủ thể chính không bị che khuất hay đè nét.
+
+2. TẠI SAO CẦN CHẠY SHRINK-TO-FIT JAVASCRIPT TRỰC TIẾP TRONG CHROMIUM:
+   - Đảm bảo tính tất định (determinism): Cả 2 lần Chromium mở HTML (lần 1 đo rects để sinh mask,
+     lần 2 chụp ảnh hoàn thiện) đều chạy cùng một thuật toán thu nhỏ font chữ nếu bị tràn ô.
+   - Nhờ đó, Bounding Box của Mask và Bounding Box của Text thật luôn khớp nhau đến từng pixel,
+     triệt tiêu hiện tượng chữ bị tràn ra ngoài vùng dọn nền.
+-->
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width={{width}}, height={{height}}, initial-scale=1.0">
-  <title>{{headline_plain}}</title>
   <style>
     {{font_face_css}}
     {{css_vars}}
@@ -33,6 +53,7 @@
       background-color: #000;
     }
 
+
     .poster-canvas {
       position: relative;
       width: {{width}}px;
@@ -49,46 +70,63 @@
       z-index: 1;
     }
 
-    /* Top Bar Container (khi Store info nhảy lên trên) */
+    /* Top Bar Container (Store info hoặc thông báo trên đỉnh) */
     .omni-top-bar {
       position: absolute;
       top: 3.5%;
-      left: 4%;
-      right: 4%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: fit-content;
+      max-width: 92%;
       z-index: 20;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 8px 16px;
-      background: rgba(0, 0, 0, 0.45);
+      justify-content: center;
+      gap: 16px;
+      padding: 8px 20px;
+      background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(12px);
       border-radius: 9999px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
-      font-size: 15px;
-      font-weight: 500;
+      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', system-ui, sans-serif !important;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
       pointer-events: none;
+      white-space: nowrap;
     }
 
     /* Bottom Bar Container (Store info mặc định) */
     .omni-bottom-bar {
       position: absolute;
       bottom: 3.5%;
-      left: 4%;
-      right: 4%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: fit-content;
+      max-width: 92%;
       z-index: 20;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 10px 18px;
+      justify-content: center;
+      gap: 16px;
+      padding: 8px 20px;
       background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(14px);
       border-radius: 9999px;
       border: 1px solid rgba(255, 255, 255, 0.22);
       color: #fff;
-      font-size: 15px;
-      font-weight: 500;
+      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', system-ui, sans-serif !important;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
       pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .omni-top-bar span, .omni-bottom-bar span {
+      display: inline-flex;
+      align-items: center;
     }
 
     /* 3x3 Spatial Grid cho các vị trí tự do */
@@ -97,8 +135,8 @@
       inset: 4%;
       z-index: 10;
       display: grid;
-      grid-template-columns: auto 1fr auto;
-      grid-template-rows: auto 1fr auto;
+      grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+      grid-template-rows: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
       column-gap: 3%;
       row-gap: 3%;
       pointer-events: none;
@@ -111,18 +149,39 @@
       gap: 10px;
       min-width: 0;
       max-width: 100%;
-      overflow: hidden;
+      width: fit-content;
+      height: fit-content;
+      padding: 4px 8px;
+      overflow: visible;
+    }
+
+    .hero-effect-wrap {
+      display: inline-flex;
+      flex-direction: column;
+      width: fit-content;
+      max-width: 100%;
       {{wrap_filter_css}}
+    }
+
+    .omni-zone.zone-top_right, .omni-zone.zone-middle_right, .omni-zone.zone-bottom_right {
+      align-items: flex-end;
+    }
+    .omni-zone.zone-top_left, .omni-zone.zone-middle_left, .omni-zone.zone-bottom_left {
+      align-items: flex-start;
+    }
+    .omni-zone.zone-top_center, .omni-zone.zone-bottom_center {
+      align-items: center;
     }
 
     /* ĐỊNH NGHĨA TỪNG KHỐI CHỮ (BLOCKS) */
     .block-hero {
-      line-height: 1.15;
+      line-height: 1.28;
       letter-spacing: -0.5px;
       font-weight: 900;
       text-transform: uppercase;
       word-break: keep-all;
       overflow-wrap: normal;
+      padding: 4px 6px;
       text-shadow: 0 4px 20px rgba(0, 0, 0, 0.85), 0 2px 6px rgba(0, 0, 0, 0.6);
       {{headline_fill_css}}
     }
@@ -138,29 +197,75 @@
     .block-badge {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
-      padding: 8px 18px;
+      padding: 10px 24px;
       border-radius: 9999px;
       background: var(--badge-bg, var(--accent, #f59e0b));
       color: var(--badge-text, #000);
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
       font-weight: 800;
       letter-spacing: 0.5px;
+      white-space: nowrap !important;
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
       border: 1px solid rgba(255, 255, 255, 0.3);
       width: fit-content;
+      min-width: fit-content;
       max-width: 100%;
     }
 
     .block-body {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       line-height: 1.4;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
       font-weight: 500;
       color: #f1f5f9;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 10px 16px;
       border-radius: 12px;
       backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+      text-wrap: balance;
+      word-break: keep-all;
+      width: fit-content;
+      max-width: 100%;
+    }
+
+    .block-badge svg, .block-body svg, .block-meta svg {
+      width: 1.25em;
+      height: 1.25em;
+      min-width: 1.25em;
+      min-height: 1.25em;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+
+    /* Style Variant: Feature Card (dành cho danh sách tính năng công nghệ có icon nổi bật) */
+    .block-badge.style-feature-card, .block-body.style-feature-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .block-badge.style-feature-card svg, .block-body.style-feature-card svg {
+      width: 1.5em;
+      height: 1.5em;
+      min-width: 1.5em;
+      min-height: 1.5em;
+      color: var(--accent, #f43f5e);
+      stroke: var(--accent, #f43f5e);
+      filter: drop-shadow(0 2px 6px rgba(244, 63, 94, 0.4));
     }
 
     .block-quote {
@@ -184,7 +289,9 @@
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: #fff;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
       font-weight: 600;
+      line-height: 1.35;
     }
 
     .step-badge {
@@ -227,6 +334,127 @@
       height: 54px;
       display: block;
     }
+
+    /* Block QR Adaptive Card */
+    .block-qr {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+      width: fit-content;
+      min-width: fit-content;
+      max-width: 100%;
+    }
+
+    .block-qr .qr-canvas {
+      background: #ffffff;
+      padding: 4px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .block-qr .qr-canvas img {
+      width: 60px;
+      height: 60px;
+      display: block;
+    }
+
+    .block-qr .qr-caption {
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 11px;
+      font-weight: 700;
+      color: #e2e8f0;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      text-align: center;
+      padding: 0 2px;
+    }
+
+    /* Visual Style Variants (Bảng II Thẩm Mỹ Tendoo) */
+    .block-badge.style-pill-badge {
+      background: linear-gradient(135deg, var(--accent, #f59e0b) 0%, #ef4444 100%);
+      color: #fff;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      padding: 8px 22px;
+      border-radius: 9999px;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      letter-spacing: 0.8px;
+      white-space: nowrap !important;
+      width: fit-content;
+      min-width: fit-content;
+      max-width: 100%;
+    }
+
+    .block-badge.style-luxury-tag {
+      background: rgba(15, 23, 42, 0.75);
+      color: var(--accent, #f59e0b);
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      padding: 6px 18px;
+      border-radius: 8px;
+      border: 1px solid var(--accent, #f59e0b);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      letter-spacing: 0.5px;
+      font-weight: 800;
+      white-space: nowrap !important;
+      width: fit-content;
+      min-width: fit-content;
+    }
+
+    .block-badge.style-calendar-box, .block-meta.style-calendar-box {
+      background: rgba(15, 23, 42, 0.75);
+      color: #fff;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border-left: 3px solid var(--accent, #f59e0b);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      border-right: 1px solid rgba(255, 255, 255, 0.15);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+      white-space: nowrap !important;
+      width: fit-content;
+      min-width: fit-content;
+    }
+
+    .block-badge.style-rating-badge {
+      background: rgba(0, 0, 0, 0.65);
+      color: #fbbf24;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      box-shadow: 0 2px 12px rgba(251, 191, 36, 0.25);
+      font-weight: 800;
+      letter-spacing: 1px;
+      white-space: nowrap !important;
+      width: fit-content;
+      min-width: fit-content;
+    }
+
+    .block-badge.style-cta-button, .block-body.style-cta-button {
+      background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+      color: #fff;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      padding: 10px 22px;
+      border-radius: 9999px;
+      font-weight: 800;
+      box-shadow: 0 4px 18px rgba(6, 182, 212, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      letter-spacing: 0.5px;
+      white-space: nowrap !important;
+      width: fit-content;
+      min-width: fit-content;
+    }
   </style>
 </head>
 <body>
@@ -235,15 +463,15 @@
 
     <!-- Top Bar (nếu có block thuộc top_bar) -->
     {% if top_bar_html %}
-    <div class="omni-top-bar">
+    <div class="omni-top-bar" data-tendoo-zone="top_bar">
       {{ top_bar_html }}
     </div>
     {% endif %}
 
     <!-- 3x3 Spatial Grid -->
-    <div class="omni-grid">
+    <div class="omni-grid" style="{% if top_bar_html %}top: 13%;{% else %}top: 4%;{% endif %} {% if bottom_bar_html %}bottom: 13%;{% else %}bottom: 4%;{% endif %}">
       {% for zone_name, zone_html in zone_cells.items() %}
-      <div class="omni-zone zone-{{ zone_name }}" style="grid-area: {{ zone_grid_areas[zone_name] }}; text-align: {{ zone_aligns[zone_name] }};">
+      <div class="omni-zone zone-{{ zone_name }}" data-tendoo-zone="{{ zone_name }}" style="grid-area: {{ zone_grid_areas[zone_name] }}; text-align: {{ zone_aligns[zone_name] }}; justify-self: {{ zone_self_aligns[zone_name][0] }}; align-self: {{ zone_self_aligns[zone_name][1] }}; max-width: {{ zone_max_w.get(zone_name, width) }}px; max-height: {{ zone_max_h.get(zone_name, height) }}px;">
         {{ zone_html }}
       </div>
       {% endfor %}
@@ -251,10 +479,146 @@
 
     <!-- Bottom Bar (nếu có block thuộc bottom_bar) -->
     {% if bottom_bar_html %}
-    <div class="omni-bottom-bar">
+    <div class="omni-bottom-bar" data-tendoo-zone="bottom_bar">
       {{ bottom_bar_html }}
     </div>
     {% endif %}
   </div>
+
+  <script>
+    // Shrink-to-fit Autofit (2026-09-10):
+    // Runs in THIS same Chromium instance right after layout settles, both when this
+    // HTML is loaded for real screenshotting AND when it is loaded purely to measure
+    // geometry for the corridor mask (see PosterRenderer.measure_zone_rects). Because
+    // both passes run the identical DOM/CSS/text through the identical autofit logic,
+    // they always converge on the identical final font-size and rect -- the mask and
+    // the text it protects can no longer drift apart, at any canvas size.
+    // `.omni-zone` has hard `max-width`/`max-height` (px, from get_zone_bounding_box())
+    // plus `overflow:hidden`, so `scrollWidth/Height > clientWidth/Height` reliably
+    // detects overflow of the real safe-zone rect, not just of an estimated one.
+    (function () {
+      var MIN_FONT_PX = 8;
+      var SHRINK_STEP = 0.94;
+      var MAX_ITERATIONS = 40;
+
+      function overflows(el) {
+        var maxW = parseFloat(el.style.maxWidth) || el.clientWidth || 9999;
+        var maxH = parseFloat(el.style.maxHeight) || el.clientHeight || 9999;
+        if (el.scrollWidth > maxW + 1 || el.scrollHeight > maxH + 1) return true;
+        if (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1) return true;
+        var children = el.querySelectorAll('.block-hero, .block-subtitle, .block-badge, .block-body, .block-quote, .block-step, .block-meta, .block-qr, .qr-badge');
+        for (var i = 0; i < children.length; i++) {
+          var c = children[i];
+          if (c.scrollWidth > maxW + 1 || c.offsetWidth > maxW + 1) return true;
+          if (c.scrollHeight > maxH + 1 || c.offsetHeight > maxH + 1) return true;
+        }
+        return false;
+      }
+
+      function shrinkStep(container) {
+        var scalables = container.querySelectorAll('[style*="font-size"]');
+        var targets = scalables.length ? Array.prototype.slice.call(scalables) : [container];
+        var reduced = false;
+        for (var j = 0; j < targets.length; j++) {
+          var el = targets[j];
+          var current = parseFloat(getComputedStyle(el).fontSize) || 0;
+          if (current > MIN_FONT_PX) {
+            el.style.fontSize = Math.max(MIN_FONT_PX, current * SHRINK_STEP) + 'px';
+            reduced = true;
+          }
+        }
+        return reduced;
+      }
+
+      function shrink(container) {
+        // Prefer shrinking each inline-sized block independently (hero/badge/body/...
+        // each carry their own explicit `style="font-size:...px"`) so visual hierarchy
+        // between roles is preserved; fall back to shrinking the container itself for
+        // simple containers (top/bottom info bars) whose children inherit font-size.
+        var scalables = container.querySelectorAll('[style*="font-size"]');
+        var targets = scalables.length ? Array.prototype.slice.call(scalables) : [container];
+
+        for (var i = 0; i < MAX_ITERATIONS && overflows(container); i++) {
+          var reachedFloor = true;
+          for (var j = 0; j < targets.length; j++) {
+            var el = targets[j];
+            var current = parseFloat(getComputedStyle(el).fontSize) || 0;
+            if (current <= MIN_FONT_PX) continue;
+            var next = Math.max(MIN_FONT_PX, current * SHRINK_STEP);
+            el.style.fontSize = next + 'px';
+            reachedFloor = false;
+          }
+          if (reachedFloor) break;
+        }
+      }
+
+      var zones = document.querySelectorAll('[data-tendoo-zone]');
+      zones.forEach(shrink);
+
+      // Pass 2: Sibling Zone Anti-Collision (Phát hiện & giải phóng va chạm giữa các ô cạnh nhau)
+      var MIN_ZONE_GAP = 14;
+      var gridZones = Array.prototype.slice.call(document.querySelectorAll('.omni-zone'));
+      for (var cIter = 0; cIter < 30; cIter++) {
+        var hasCollision = false;
+        for (var a = 0; a < gridZones.length; a++) {
+          for (var b = a + 1; b < gridZones.length; b++) {
+            var za = gridZones[a];
+            var zb = gridZones[b];
+            var ra = za.getBoundingClientRect();
+            var rb = zb.getBoundingClientRect();
+            if (ra.width === 0 || ra.height === 0 || rb.width === 0 || rb.height === 0) continue;
+            var overlapX = (ra.left < rb.right + MIN_ZONE_GAP) && (ra.right + MIN_ZONE_GAP > rb.left);
+            var overlapY = (ra.top < rb.bottom + MIN_ZONE_GAP) && (ra.bottom + MIN_ZONE_GAP > rb.top);
+            if (overlapX && overlapY) {
+              hasCollision = true;
+              // Thu nhỏ ô có kích thước lớn hơn hoặc rộng hơn trước
+              var targetZone = (ra.width >= rb.width) ? za : zb;
+              if (!shrinkStep(targetZone)) {
+                shrinkStep(targetZone === za ? zb : za);
+              }
+            }
+          }
+        }
+        if (!hasCollision) break;
+      }
+
+      var rects = {};
+      zones.forEach(function (el) {
+        var zoneName = el.getAttribute('data-tendoo-zone');
+        // Top bar và Bottom bar là các khối pill container hoàn chỉnh (có border, backdrop, padding)
+        // Bắt buộc đo trực tiếp el.getBoundingClientRect() để mask TRÙM HẾT 100% capsule,
+        // không được đo span con bên trong khiến 2 đầu bo cong của pill bị lòi ra ngoài mask.
+        if (zoneName === 'top_bar' || zoneName === 'bottom_bar') {
+          var r = el.getBoundingClientRect();
+          rects[zoneName] = [r.left, r.top, r.right, r.bottom];
+          return;
+        }
+
+        var children = el.querySelectorAll('.block-hero, .block-subtitle, .block-badge, .block-body, .block-quote, .block-step, .block-meta, .block-qr, .qr-badge');
+        if (children.length > 0) {
+          var minL = Infinity, minT = Infinity, maxR = -Infinity, maxB = -Infinity;
+          var found = false;
+          children.forEach(function (c) {
+            var cr = c.getBoundingClientRect();
+            if (cr.width > 0 && cr.height > 0) {
+              minL = Math.min(minL, cr.left);
+              minT = Math.min(minT, cr.top);
+              maxR = Math.max(maxR, cr.right);
+              maxB = Math.max(maxB, cr.bottom);
+              found = true;
+            }
+          });
+          if (found && minL < maxR && minT < maxB) {
+            rects[zoneName] = [minL, minT, maxR, maxB];
+            return;
+          }
+        }
+        var r = el.getBoundingClientRect();
+        rects[zoneName] = [r.left, r.top, r.right, r.bottom];
+      });
+      window.__tendooZoneRects = rects;
+      window.__tendooAutofitDone = true;
+    })();
+  </script>
 </body>
 </html>

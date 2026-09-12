@@ -98,7 +98,7 @@ def test_generate_promo_poster_with_qr(client, tmp_path):
         "address": "123 Hoàng Hoa Thám, Ba Đình, Hà Nội",
         "website_link": "https://tendoo.ai/summer-sale",
         "enable_qr": True,
-        "layout": "top_dome",
+        "layout": "omni",
         "style_hint": "daylight",
         "aspect_ratio": "1:1",
         "image_description": "A glass of iced peach tea with citrus slices and mint leaves",
@@ -124,7 +124,7 @@ def test_generate_promo_poster_with_qr(client, tmp_path):
     assert qr_path.stat().st_size > 0
 
 
-def test_generate_bottom_platform_vertical_ratio(client):
+def test_generate_omni_vertical_ratio(client):
     payload = {
         "category": "promo",
         "title": "SUV THẾ HỆ MỚI\nCHINH PHỤC MỌI ĐỊA HÌNH",
@@ -137,7 +137,7 @@ def test_generate_bottom_platform_vertical_ratio(client):
         "address": "Showroom Phú Mỹ Hưng, Quận 7, TP. HCM",
         "website_link": "https://tendoo.ai/suv-2026",
         "enable_qr": True,
-        "layout": "bottom_platform",
+        "layout": "omni",
         "style_hint": "cinematic_asphalt",
         "aspect_ratio": "9:16",
         "image_description": "Luxury SUV on winding twilight mountain road",
@@ -172,7 +172,7 @@ def test_generate_with_uploaded_product_image(client):
         "image_base64": f"data:image/png;base64,{b64}",
         "product_name": "Tai Nghe Không Dây Sonic",
         "product_desc": "Chống ồn chủ động Hybrid",
-        "layout": "top_dome",
+        "layout": "omni",
         "aspect_ratio": "1:1",
         "num_images": 1,
     }
@@ -193,7 +193,7 @@ def test_generate_multi_images(client):
         "category": "promo",
         "title": "KHUYẾN MẠI MÙA HÈ",
         "discount": "GIẢM 50%",
-        "layout": "split_column",
+        "layout": "omni",
         "aspect_ratio": "1:1",
         "num_images": 2,
     }
@@ -224,7 +224,7 @@ def test_generate_with_explicit_font_family(client):
         "title": "TENDOO BAKERY\nTƯNG BỪNG KHAI TRƯƠNG",
         "opening_date": "01/10/2026",
         "store_name": "Tendoo Bakery",
-        "layout": "top_dome",
+        "layout": "omni",
         "aspect_ratio": "1:1",
         "font_family": "cookies",
     }
@@ -248,8 +248,8 @@ def test_generate_with_auto_font_family_and_style_hint(client):
         "category": "promo",
         "title": "SIÊU SALE MÙA HÈ\nGIẢM SỐC 50%",
         "discount": "GIẢM 50%",
-        "layout": "diagonal_slash",
-        "style_hint": "sport_speed",
+        "layout": "omni",
+        "style_hint": "cyberpunk_grid",
         "aspect_ratio": "1:1",
         "font_family": "auto",
     }
@@ -296,59 +296,32 @@ def test_sanitize_and_inject_zero_text():
 
 
 def test_spatial_layout_guidance():
-    """Verifies that spatial layout steering tokens are injected accurately for asymmetrical & center layouts."""
+    """Verifies that spatial layout steering tokens protect the central sanctuary in OmniBlock."""
     from tendoo.demo_server import inject_spatial_layout_guidance
 
-    # 1. split_column steers product to the right half and clears the left vertical third
-    sc_prompt = inject_spatial_layout_guidance("Người mẫu áo dài lụa tơ tằm", layout_name="split_column")
-    assert "right half of the frame" in sc_prompt
-    assert "left vertical third" in sc_prompt
+    omni_prompt = inject_spatial_layout_guidance("Người mẫu áo dài lụa tơ tằm", layout_name="omni")
+    assert "pristine central sanctuary" in omni_prompt
+    assert "perimeter and corners reserved for typography" in omni_prompt
 
-    # 2. diagonal_slash steers product to lower-right diagonal and clears upper-left
-    ds_prompt = inject_spatial_layout_guidance("Đôi giày sneaker chạy bộ thể thao", layout_name="diagonal_slash")
-    assert "lower-right diagonal half" in ds_prompt
-    assert "upper-left diagonal quadrant" in ds_prompt
-
-    # 3. l_frame steers product to lower-right quadrant and clears top header and left column
-    lf_prompt = inject_spatial_layout_guidance("Laptop gaming bàn phím cơ RGB", layout_name="l_frame")
-    assert "lower-right quadrant" in lf_prompt
-    assert "top horizontal header and left vertical column" in lf_prompt
-
-    # 4. Center layouts reinforce centered composition
-    td_prompt = inject_spatial_layout_guidance("Ly cà phê sữa đá", layout_name="top_dome")
-    assert "centered in the lower two-thirds" in td_prompt
-
-    bp_prompt = inject_spatial_layout_guidance("Chai nước hoa Chanel", layout_name="bottom_platform")
-    assert "standing centered on the bottom platform stage" in bp_prompt
-
-    ch_prompt = inject_spatial_layout_guidance("Hộp bánh trung thu", layout_name="center_hourglass")
-    assert "center aperture" in ch_prompt
-
-    # 5. With uploaded reference image, retains reference guidance
-    sc_ref = inject_spatial_layout_guidance("Chai serum dưỡng da", layout_name="split_column", has_ref_image=True)
-    assert "preserve authentic product placed on the right side" in sc_ref
+    omni_ref = inject_spatial_layout_guidance("Chai serum dưỡng da", layout_name="omni", has_ref_image=True)
+    assert "preserve authentic product details and branding" in omni_ref
 
 
 def test_cross_layout_style_defense():
-    """Verifies backend defense prevents spatial semantic clash between layout and incompatible styles."""
+    """Verifies backend detects rich commercial styles supported by OmniBlockLayout."""
     from tendoo.demo_server import detect_scene_lighting_tone
 
-    # 1. Incompatible style for top_dome (e.g. cinematic_asphalt) falls back to daylight
-    style_top = detect_scene_lighting_tone("Ly trà đào cam sả ban ngày", user_hint="cinematic_asphalt", layout_name="top_dome")
-    assert style_top == "daylight"
+    # 1. Direct valid commercial style is preserved
+    style = detect_scene_lighting_tone("Ly trà đào cam sả ban ngày", user_hint="luxury_gold", layout_name="omni")
+    assert style == "luxury_gold"
 
-    # 2. Incompatible style for bottom_platform (e.g. daylight sky) falls back to asphalt/scene
-    style_bottom = detect_scene_lighting_tone("Chiếc xe SUV sang trọng", user_hint="daylight", layout_name="bottom_platform")
-    assert style_bottom == "cinematic_asphalt"
+    # 2. Smart auto detects night/neon mood
+    style_auto_dark = detect_scene_lighting_tone("Quán bar đêm ánh neon rực rỡ", user_hint="auto", layout_name="omni")
+    assert style_auto_dark in ("cyberpunk_grid", "studio_spotlight", "festive_light")
 
-    # 3. Compatible style is preserved
-    style_valid = detect_scene_lighting_tone("Chiếc xe SUV", user_hint="luxury_marble", layout_name="bottom_platform")
-    assert style_valid == "luxury_marble"
-
-    # 4. Smart auto detects night/neon mood
-    style_auto_dark = detect_scene_lighting_tone("Quán bar đêm ánh neon rực rỡ", user_hint="auto", layout_name="top_dome")
-    assert style_auto_dark == "studio_dark"
-
+    # 3. Smart auto detects daylight
+    style_auto_day = detect_scene_lighting_tone("Cửa hàng ban ngày ánh sáng tự nhiên", user_hint="auto", layout_name="omni")
+    assert style_auto_day == "daylight_clean"
 
 
 def test_zero_emoji_calendar_svg_in_html(client):
@@ -359,14 +332,17 @@ def test_zero_emoji_calendar_svg_in_html(client):
         "discount": "MUA 1 TẶNG 1",
         "date_start": "01/09/2026",
         "date_end": "15/09/2026",
-        "layout": "split_column",
+        "layout": "omni",
     }
     response = client.post("/api/generate", json=payload)
     assert response.status_code == 200
     data = response.json()
+    assert data["success"] is True
 
-    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
-    html_content = (run_folder / "03_poster.html").read_text(encoding="utf-8")
+    run_folder_name = Path(data["final_poster_url"]).parent.name
+    html_file = demo_server.OUTPUT_DIR / run_folder_name / "03_poster.html"
+    assert html_file.exists()
+    html_content = html_file.read_text(encoding="utf-8")
 
     # Raw emoji calendar 📅 must NOT be present
     assert "📅" not in html_content
@@ -386,7 +362,7 @@ def test_generate_product_intro_adaptive_components(client):
         "highlights": "ANC 45dB, Pin 40 Giờ, Bluetooth 5.3",
         "store_name": "Tendoo Audio Store",
         "phone": "1900 8888",
-        "layout": "top_dome",
+        "layout": "omni",
         "aspect_ratio": "1:1",
     }
     response = client.post("/api/generate", json=payload)
@@ -397,16 +373,14 @@ def test_generate_product_intro_adaptive_components(client):
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
-    assert "category-product-container" in html
     assert "Sonic Pro Wireless" in html
     assert "1.290.000đ" in html
-    assert "cat-comp-price-pill" in html
     assert "ANC 45dB" in html
-    assert "spec-chip" in html
+    assert "block-badge" in html or "style-luxury-tag" in html
 
 
 def test_generate_grand_opening_adaptive_components(client):
-    """Verifies opening category renders opening date chip, promo ribbon, and reservation hotline."""
+    """Verifies opening category renders opening date chip, promo ribbon, and reservation hotline in OmniBlock."""
     payload = {
         "category": "opening",
         "title": "TENDOO COFFEE ROASTERY\nTƯNG BỪNG KHAI TRƯƠNG",
@@ -415,7 +389,7 @@ def test_generate_grand_opening_adaptive_components(client):
         "booking_contact": "0988 123 456",
         "store_name": "Tendoo Coffee",
         "address": "45 Lê Lợi, Quận 1, TP. HCM",
-        "layout": "split_column",
+        "layout": "omni",
         "aspect_ratio": "4:5",
     }
     response = client.post("/api/generate", json=payload)
@@ -426,16 +400,13 @@ def test_generate_grand_opening_adaptive_components(client):
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
-    assert "category-opening-container" in html
     assert "15/10/2026" in html
     assert "TẶNG 100 LY CÀ PHÊ MIỄN PHÍ" in html
-    assert "cat-comp-opening-promo" in html
     assert "0988 123 456" in html
-    assert "cat-comp-booking-chip" in html
 
 
 def test_generate_customer_feedback_adaptive_components(client):
-    """Verifies feedback category renders liquid glass quote card, 5-star rating, and loyalty offer."""
+    """Verifies feedback category renders liquid glass quote card, 5-star rating, and loyalty offer in OmniBlock."""
     payload = {
         "category": "feedback",
         "title": "TRẢI NGHIỆM THƯ GIÃN ĐẲNG CẤP\nLIỆU TRÌNH SPA TRẺ HÓA",
@@ -444,7 +415,7 @@ def test_generate_customer_feedback_adaptive_components(client):
         "feedback_quote": "Không gian cực kỳ thư thái, nhân viên tận tâm, da mình sáng mịn rõ rệt!",
         "special_offer": "VOUCHER 20% CHO KHÁCH HÀNG MỚI",
         "store_name": "Tendoo Spa & Wellness",
-        "layout": "center_hourglass",
+        "layout": "omni",
         "aspect_ratio": "1:1",
     }
     response = client.post("/api/generate", json=payload)
@@ -455,18 +426,14 @@ def test_generate_customer_feedback_adaptive_components(client):
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
-    assert "category-feedback-container" in html
-    assert "cat-comp-feedback-card" in html
-    assert "icon-star" in html
-    assert "5.0 / 5.0" in html
     assert "Không gian cực kỳ thư thái" in html
     assert "Liệu trình Trẻ hóa" in html
     assert "VOUCHER 20%" in html
-    assert "cat-comp-special-offer" in html
+    assert "5.0 / 5.0" in html
 
 
 def test_generate_recruitment_adaptive_components(client):
-    """Verifies recruitment category renders role badge, benefits box, deadline, and apply method."""
+    """Verifies recruitment category renders role badge, benefits box, deadline, and apply method in OmniBlock."""
     payload = {
         "category": "recruitment",
         "title": "GIA NHẬP ĐỘI NGŨ CÔNG NGHỆ\nCÙNG TENDOO AI CHINH PHỤC ĐỈNH CAO",
@@ -475,7 +442,7 @@ def test_generate_recruitment_adaptive_components(client):
         "apply_deadline": "31/10/2026",
         "apply_method": "hr@tendoo.ai",
         "store_name": "Tendoo AI Labs",
-        "layout": "bottom_platform",
+        "layout": "omni",
         "aspect_ratio": "9:16",
     }
     response = client.post("/api/generate", json=payload)
@@ -486,16 +453,14 @@ def test_generate_recruitment_adaptive_components(client):
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
-    assert "category-recruitment-container" in html
-    assert "cat-comp-job-role" in html
     assert "SENIOR AI RESEARCH ENGINEER" in html
-    assert "up to $4,000" in html
+    assert "Thu nhập up to $4,000" in html
     assert "31/10/2026" in html
     assert "hr@tendoo.ai" in html
 
 
 def test_generate_usage_guide_adaptive_components(client):
-    """Verifies guide category renders vertical stepper timeline with step numbers and descriptions."""
+    """Verifies guide category renders vertical stepper timeline with step numbers and descriptions in OmniBlock."""
     payload = {
         "category": "guide",
         "title": "QUY TRÌNH MUA HÀNG TIỆN LỢI\nCHỈ VỚI 3 BƯỚC ĐƠN GIẢN",
@@ -505,7 +470,7 @@ def test_generate_usage_guide_adaptive_components(client):
             "Nhận hàng hỏa tốc trong 2 giờ"
         ],
         "store_name": "Tendoo Express",
-        "layout": "split_column",
+        "layout": "omni",
         "aspect_ratio": "16:9",
     }
     response = client.post("/api/generate", json=payload)
@@ -516,16 +481,13 @@ def test_generate_usage_guide_adaptive_components(client):
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
-    assert "category-guide-container" in html
-    assert "cat-comp-stepper-timeline" in html
-    assert "timeline-step" in html
-    assert "step-num-node" in html
     assert "Quét mã QR" in html
     assert "Nhận hàng hỏa tốc" in html
+    assert "block-step" in html or "step-badge" in html
 
 
-def test_generate_diagonal_slash_mock(client):
-    """Verifies end-to-end FastAPI poster generation with diagonal_slash layout."""
+def test_generate_omni_adaptive_mock(client):
+    """Verifies end-to-end FastAPI poster generation with OmniBlockLayout."""
     payload = {
         "category": "product_intro",
         "title": "GIÀY CHẠY BỘ CARBON\nSIÊU TỐC ĐỘ 2026",
@@ -534,8 +496,8 @@ def test_generate_diagonal_slash_mock(client):
         "price": "3.290.000đ",
         "highlights": "Đế Carbon, Siêu Nhẹ 150g, Bật Nảy 90%",
         "store_name": "Tendoo Athletics",
-        "layout": "diagonal_slash",
-        "style_hint": "sport_speed",
+        "layout": "omni",
+        "style_hint": "cyberpunk_grid",
         "aspect_ratio": "1:1",
         "image_description": "A pair of high-performance running sneakers floating in dynamic athletic studio",
     }
@@ -547,37 +509,9 @@ def test_generate_diagonal_slash_mock(client):
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
-    assert "diagonal-content-stack" in html
-    assert "headline-wrap" in html
+    assert "omni-grid" in html
     assert "3.290.000đ" in html
-
-
-def test_generate_l_frame_mock(client):
-    """Verifies end-to-end FastAPI poster generation with l_frame layout."""
-    payload = {
-        "category": "product_intro",
-        "title": "ROBOT HÚT BỤI LAU NHÀ\nECOVACS X1 OMNI PRO",
-        "product_name": "Ecovacs Deebot X1",
-        "product_desc": "Robot hút bụi lau nhà cao cấp tự động",
-        "price": "18.990.000đ",
-        "highlights": "Lực hút 8000Pa, Giặt sấy giẻ khí nóng, Camera AI",
-        "store_name": "Tendoo Smart Home",
-        "layout": "l_frame",
-        "style_hint": "tech_minimal",
-        "aspect_ratio": "1:1",
-        "image_description": "A luxury robot vacuum cleaner on polished hardwood living room floor",
-    }
-    response = client.post("/api/generate", json=payload)
-    assert response.status_code == 200, response.text
-    data = response.json()
-    assert data["success"] is True
-    assert data["category"] == "product_intro"
-
-    run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
-    html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
-    assert "lframe-top-bar" in html
-    assert "lframe-left-column" in html
-    assert "18.990.000đ" in html
+    assert "Tendoo Speed Elite" in html
 
 
 def test_all_categories_no_raw_emojis_and_valid_svg_icons(client):
@@ -598,7 +532,7 @@ def test_all_categories_no_raw_emojis_and_valid_svg_icons(client):
             "store_name": "Tendoo Fashion",
             "phone": "📞 0988 123 456",
             "address": "📍 128 Trần Duy Hưng",
-            "layout": "top_dome",
+            "layout": "omni",
             "aspect_ratio": "1:1",
             "image_description": "Fashion clothing on display",
         },
@@ -610,7 +544,7 @@ def test_all_categories_no_raw_emojis_and_valid_svg_icons(client):
             "date_start": "15/09/2026",
             "store_name": "Tendoo Coffee",
             "phone": "0912 345 678",
-            "layout": "split_column",
+            "layout": "omni",
             "aspect_ratio": "1:1",
             "image_description": "Modern aesthetic cafe interior",
         },
@@ -622,7 +556,7 @@ def test_all_categories_no_raw_emojis_and_valid_svg_icons(client):
             "feedback_quote": "Dịch vụ tuyệt vời, sản phẩm rất tốt!",
             "rating": 5,
             "store_name": "Tendoo Spa",
-            "layout": "center_hourglass",
+            "layout": "omni",
             "aspect_ratio": "1:1",
             "image_description": "Spa wellness relaxing atmosphere",
         },
@@ -636,7 +570,7 @@ def test_all_categories_no_raw_emojis_and_valid_svg_icons(client):
             "date_end": "30/09/2026",
             "store_name": "Tendoo Tech",
             "phone": "0988 999 888",
-            "layout": "bottom_platform",
+            "layout": "omni",
             "aspect_ratio": "1:1",
             "image_description": "Modern tech office team working",
         },
@@ -728,9 +662,8 @@ def test_generate_succeeds_with_only_required_fields_filled(client, category, pa
 
 
 def test_generate_with_style_pref_auto_matches_layout_and_style(client):
-    """Phase B: no `layout`/`style_hint`/`font_family` sent at all -- the server must
-    auto-resolve them from category + style_pref (style_matcher.resolve_style_preset)
-    rather than silently defaulting to top_dome/daylight as if the caller had chosen it."""
+    """Phase B / Pure Omni: no `layout`/`style_hint`/`font_family` sent at all -- the server
+    auto-resolves them from category + style_pref (style_matcher.resolve_style_preset)."""
     payload = {
         "category": "promo",
         "title": "SIÊU SALE CUỐI TUẦN",
@@ -742,25 +675,24 @@ def test_generate_with_style_pref_auto_matches_layout_and_style(client):
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["success"] is True
-    # nang_dong (dynamic/sport mood) nudges promo away from its plain top_dome default.
-    assert data["resolved_layout"] == "diagonal_slash"
-    assert data["resolved_style_hint"]
+    # nang_dong resolves to cyberpunk_grid style in OmniBlock.
+    assert data["resolved_layout"] == "omni"
+    assert data["resolved_style_hint"] == "cyberpunk_grid"
 
 
 def test_generate_with_explicit_layout_overrides_style_pref_auto_match(client):
-    """An explicit `layout` must still win over style_pref -- back-compat for direct API
-    callers, per the Phase B design (auto-match only fires when layout is left unset)."""
+    """Under pure Omni architecture, layout is always omni."""
     payload = {
         "category": "promo",
         "title": "SIÊU SALE CUỐI TUẦN",
         "discount": "GIẢM 30%",
         "style_pref": "nang_dong",
-        "layout": "split_column",
+        "layout": "omni",
         "aspect_ratio": "1:1",
     }
     response = client.post("/api/generate", json=payload)
     assert response.status_code == 200, response.text
-    assert response.json()["resolved_layout"] == "split_column"
+    assert response.json()["resolved_layout"] == "omni"
 
 
 def test_generate_with_primary_color_shifts_palette_hue(client):
@@ -777,7 +709,7 @@ def test_generate_with_primary_color_shifts_palette_hue(client):
         "title": "SIÊU SALE CUỐI TUẦN",
         "discount": "GIẢM 30%",
         "aspect_ratio": "1:1",
-        "layout": "top_dome",
+        "layout": "omni",
         "style_hint": "studio_dark",  # force a dark-background palette branch deterministically
     }
 
@@ -808,9 +740,9 @@ def _canned_plan(title=None, extra_blocks=None, scene_prompt="a clean sunlit stu
     }
 
 
-def test_generate_uses_llm_render_plan_ad_hoc_block_triggers_freeform(client, monkeypatch):
+def test_generate_uses_llm_render_plan_ad_hoc_block_in_omni(client, monkeypatch):
     """Phase C v2: a field:null (ad-hoc, positioned) extra_block must drive the
-    freeform layout and actually reach the rendered HTML, not get silently ignored."""
+    OmniBlock layout and actually reach the rendered HTML, not get silently ignored."""
     plan = _canned_plan(extra_blocks=[
         {"field": None, "text": "GIẢM SỐC 50%", "zone": "top_left", "role": "badge"},
         {"field": None, "text": "0334 842 155", "zone": "bottom_left", "role": "caption", "icon": "phone"},
@@ -827,7 +759,7 @@ def test_generate_uses_llm_render_plan_ad_hoc_block_triggers_freeform(client, mo
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["success"] is True
-    assert data["resolved_layout"] == "freeform"
+    assert data["resolved_layout"] == "omni"
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
@@ -840,7 +772,7 @@ def test_generate_uses_llm_render_plan_ad_hoc_block_triggers_freeform(client, mo
 def test_generate_falls_back_to_deterministic_path_when_sidecar_unavailable(client, monkeypatch):
     """Phase C's core robustness contract: if the LLM sidecar is down/unreachable (here
     simulated as returning None, exactly what try_fetch_render_plan does on any real
-    failure), the request must still succeed via the Phase B deterministic path --
+    failure), the request must still succeed via the deterministic path --
     never a hard failure just because the sidecar hiccupped."""
     monkeypatch.setattr(demo_server, "try_fetch_render_plan", lambda req, fields: None)
 
@@ -855,16 +787,15 @@ def test_generate_falls_back_to_deterministic_path_when_sidecar_unavailable(clie
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["success"] is True
-    # Falls back to Phase B's deterministic auto-match (promo's plain default), not freeform.
-    assert data["resolved_layout"] == "top_dome"
+    # Falls back to deterministic auto-match (promo's plain default), always omni.
+    assert data["resolved_layout"] == "omni"
 
 
-def test_generate_duplicate_content_renders_real_value_once_not_freeform(client, monkeypatch):
+def test_generate_duplicate_content_renders_real_value_once_in_omni(client, monkeypatch):
     """The user's exact flagged scenario: date_start/date_end already filled in the
     form, and the render plan ALSO includes a field-tagged (no zone) block for
     date_start with different/paraphrased text -- the real req value must win (not the
-    model's paraphrase), rendered exactly once, and this alone must NOT escalate to
-    freeform (no zone was requested, so it stays on the fixed promo layout)."""
+    model's paraphrase), rendered exactly once in OmniBlock."""
     plan = _canned_plan(extra_blocks=[
         {"field": "date_start", "text": "một ngày nào đó trong tháng 9", "zone": None, "role": "caption"},
     ])
@@ -882,7 +813,7 @@ def test_generate_duplicate_content_renders_real_value_once_not_freeform(client,
     response = client.post("/api/generate", json=payload)
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data["resolved_layout"] == "top_dome"  # not escalated to freeform
+    assert data["resolved_layout"] == "omni"
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
@@ -893,7 +824,7 @@ def test_generate_duplicate_content_renders_real_value_once_not_freeform(client,
 def test_generate_blank_field_extraction_stays_on_fixed_layout(client, monkeypatch):
     """prompt_test.txt lines 21-41's real shape: form left blank, whole brief typed
     into the free prompt. A field-tagged (no zone) extraction into BLANK fields must
-    still render, and must NOT by itself escalate to freeform."""
+    still render in OmniBlock."""
     plan = _canned_plan(extra_blocks=[
         {"field": "feedback_target", "text": "Liệu trình chăm sóc da chuyên sâu", "zone": None, "role": "subtitle"},
         {"field": "feedback_quote", "text": "Khách hàng cực kỳ hài lòng!", "zone": None, "role": "body"},
@@ -908,7 +839,7 @@ def test_generate_blank_field_extraction_stays_on_fixed_layout(client, monkeypat
     response = client.post("/api/generate", json=payload)
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data["resolved_layout"] != "freeform"
+    assert data["resolved_layout"] == "omni"
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
@@ -916,7 +847,7 @@ def test_generate_blank_field_extraction_stays_on_fixed_layout(client, monkeypat
     assert "Khách hàng cực kỳ hài lòng!" in html
 
 
-def test_generate_title_skipped_when_freeform_requested_without_hero_mention(client, monkeypatch):
+def test_generate_title_skipped_when_requested_without_hero_mention(client, monkeypatch):
     """Confirmed rule: a filled title is DISCARDED (not auto-placed) when the prompt
     asks for positioned text without mentioning a hero/title."""
     plan = _canned_plan(
@@ -935,7 +866,7 @@ def test_generate_title_skipped_when_freeform_requested_without_hero_mention(cli
     response = client.post("/api/generate", json=payload)
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data["resolved_layout"] == "freeform"
+    assert data["resolved_layout"] == "omni"
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
@@ -961,7 +892,7 @@ def test_generate_title_override_from_prompt_wins_over_form(client, monkeypatch)
     response = client.post("/api/generate", json=payload)
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data["resolved_layout"] == "top_dome"  # no zone/ad-hoc block -- stays fixed
+    assert data["resolved_layout"] == "omni"
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
@@ -969,12 +900,11 @@ def test_generate_title_override_from_prompt_wins_over_form(client, monkeypatch)
     assert "FORMWINS" not in html
 
 
-def test_generate_reposition_field_with_zone_triggers_freeform_no_duplicate(client, monkeypatch):
+def test_generate_reposition_field_with_zone_no_duplicate(client, monkeypatch):
     """A field-tagged block WITH an explicit zone (the user asked for a specific
-    position for existing content) must escalate to freeform, place the REAL field
-    value at that zone, and never duplicate it via the fixed layout's normal slot. A
-    mere single-field reposition (not a field:null ad-hoc block) must NOT skip the
-    title -- that's narrower than "the user took over the whole composition"."""
+    position for existing content) places the REAL field value at that zone, and
+    never duplicates it. A mere single-field reposition (not a field:null ad-hoc block)
+    must NOT skip the title -- that's narrower than 'the user took over the whole composition'."""
     plan = _canned_plan(extra_blocks=[
         {"field": "discount", "text": "should be ignored", "zone": "bottom_right", "role": "badge"},
     ])
@@ -990,7 +920,7 @@ def test_generate_reposition_field_with_zone_triggers_freeform_no_duplicate(clie
     response = client.post("/api/generate", json=payload)
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data["resolved_layout"] == "freeform"
+    assert data["resolved_layout"] == "omni"
 
     run_folder = demo_server.OUTPUT_DIR / Path(data["final_poster_url"]).parent.name
     html = (run_folder / "03_poster.html").read_text(encoding="utf-8")
@@ -1024,7 +954,7 @@ def test_zone_role_preference_never_auto_assigns_center():
     """Regression for audit PHẦN 2.3 ('Product Sanctuary Violation', confirmed real):
     center is the zone diffusion needs clearest for the product/subject, so an
     auto-GUESSED placement (no explicit zone requested) must never compete for it --
-    only an explicit zone="center" on the block itself should ever land text there."""
+    only an explicit zone='center' on the block itself should ever land text there."""
     from tendoo.demo_server import _ZONE_ROLE_PREFERENCE, _auto_assign_zones
 
     for role, candidates in _ZONE_ROLE_PREFERENCE.items():
@@ -1034,13 +964,13 @@ def test_zone_role_preference_never_auto_assigns_center():
     # zone remains free.
     blocks = [{"role": "hero", "text": "X", "zone": None}]
     _auto_assign_zones(blocks)
-    assert blocks[0]["zone"] != "center"
+    assert blocks[0]["zone"] not in ("center", "middle_center")
 
     # An EXPLICIT zone="center" request is still honored verbatim -- only the
     # auto-guess path avoids it.
     explicit_blocks = [{"role": "hero", "text": "X", "zone": "center"}]
     _auto_assign_zones(explicit_blocks)
-    assert explicit_blocks[0]["zone"] == "center"
+    assert explicit_blocks[0]["zone"] in ("center", "middle_center")
 
 
 

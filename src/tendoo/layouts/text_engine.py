@@ -1,12 +1,35 @@
 """
-Vietnamese Typography & Adaptive Text Balancing Engine.
+src/tendoo/layouts/text_engine.py
 
-Features:
-1. Semantic Compound Word Protection: Preserves Vietnamese compounds (e.g. 'CHỐNG ỒN', 'CÔNG NGHỆ',
-   'THANH MÁT', 'ĐẶC BIỆT') from being broken across lines.
-2. Orphan Word Prevention: Guarantees line 2 doesn't end with a lone orphan word.
-3. Adaptive Font Sizing Ladder: Responsive type scale tailored for 1024x1024 canvas.
-4. Robust Newline Normalization.
+Vietnamese Typography & Adaptive Text Balancing Engine:
+======================================================
+- Semantic Compound Word Protection: Bảo vệ 37 cụm từ ghép thương mại/kỹ thuật tiếng Việt
+  (e.g. 'CHỐNG ỒN', 'CÔNG NGHỆ', 'THANH MÁT', 'ĐẶC BIỆT', 'MÙA HÈ') không bao giờ bị ngắt đôi qua 2 dòng.
+- Orphan Word Prevention: Triệt tiêu hiện tượng "mồ côi từ" (dòng 2 chỉ trơ trọi 1 từ ngắn <= 4 ký tự).
+- Tofu Glyph Eradication (strip_emojis): Xóa sạch emoji và symbol thiếu glyph gây ra ô vuông lỗi (□) trong Chromium.
+- Adaptive Font Sizing Ladder: Bậc thang tỷ lệ vàng kích thước chữ cho canvas 1024x1024.
+- 8 Rich Typography Effects (resolve_headline_effect): In nổi 3D gold, LED backlit, neon, chrome, khắc đá...
+
+TẠI SAO CẦN MODULE NÀY TRONG HỆ THỐNG TENDOO AI:
+1. TẠI SAO PHẢI BẢO VỆ TỪ GHÉP TIẾNG VIỆT BẰNG HÀM CHI PHÍ NĂNG LƯỢNG:
+   - Ngữ pháp tiếng Việt mang tính đơn lập, nghĩa của câu phụ thuộc vào các khối từ ghép 2 từ tố.
+     Nếu một tiêu đề như "ĐẠI TIỆC MÙA HÈ" bị ngắt thành "ĐẠI TIỆC MÙA" / "HÈ", từ "HÈ" bị bỏ rơi đơn độc,
+     làm mất đi tính trang trọng và mạch lạc của thương hiệu quảng cáo.
+   - Hàm `balance_vietnamese_headline` tính toán năng lượng thẩm mỹ:
+     Cost = |len(line1) - target| + |len(line2) - target| + Penalty(bẻ từ ghép: 60) + Penalty(mồ côi từ: 40).
+     Điểm ngắt tối ưu luôn giữ trọn vẹn cụm từ ghép ("ĐẠI TIỆC" / "MÙA HÈ"), tạo nên sự cân đối thị giác hoàn hảo.
+
+2. TẠI SAO PHẢI XÓA EMOJI BẰNG REGEX THAY VÌ ĐỂ TRÌNH DUYỆT TỰ XỬ LÝ:
+   - Môi trường Linux Docker / JupyterLab thường thiếu font màu emoji chuyên dụng (như Apple Color Emoji).
+   - Khi gặp emoji thô từ prompt của người dùng (🚀, 🔥, ✨), Chromium hiển thị ô vuông rác (tofu glyph □).
+   - `strip_emojis` thanh lọc 100% ký tự biểu cảm rác mà vẫn bảo toàn tuyệt đối toàn bộ dấu phụ tiếng Việt
+     (Á, Ệ, Ộ, Ứ, Ờ), dấu ngoặc kép và ký hiệu tiền tệ (₫, $).
+
+3. TẠI SAO CẦN 8 HIỆU ỨNG TEXT EFFECT PHÙ HỢP NGUYÊN LÝ NHỊ HỢP:
+   - Theo nguyên tắc Nhị hợp: VAE Glyph chịu trách nhiệm 100% về hình học chính tả, còn Qwen3 + DiT
+     chịu trách nhiệm về vật liệu và ánh sáng.
+   - Khi render HTML làm overlay cuối cùng, các hiệu ứng CSS (nhũ vàng, phản xạ kim loại, vầng sáng neon)
+     hòa trộn chính xác với hiệu ứng thị giác mà DiT đã sinh ra ở nền, tạo ra một tổng thể poster đồng nhất.
 """
 
 from __future__ import annotations
@@ -15,7 +38,8 @@ import re
 from typing import Any, Dict, List, Set, Tuple
 
 
-# Common commercial & technical Vietnamese 2-word compounds that MUST NOT be split across lines
+# Danh mục 37 cụm từ ghép tiếng Việt thương mại bắt buộc không được ngắt dòng đôi
+
 VIETNAMESE_COMPOUND_WORDS: Set[str] = {
     "chống ồn",
     "chủ động",
@@ -59,12 +83,13 @@ VIETNAMESE_COMPOUND_WORDS: Set[str] = {
 
 
 # Unicode Emoji, Pictograph, and Miscellaneous Symbols that lack glyphs in standard typography fonts
+# NOTE: Typographical star glyphs \u2605 (★) and \u2606 (☆) are explicitly EXCLUDED to allow star rating badges.
 EMOJI_PATTERN = re.compile(
     r"["
     r"\U0001F000-\U0001FAFF"  # Emojis & Pictographs (1F300-1F9FF, 1FA00-1FAFF, symbols, etc.)
-    r"\u2600-\u27BF"          # Misc symbols & Dingbats (weather, stars, checkmarks, arrows)
+    r"\u2600-\u2604\u2607-\u27BF"  # Misc symbols & Dingbats (weather, arrows) - EXCLUDES \u2605 (★) and \u2606 (☆)
     r"\u2300-\u23FF"          # Misc Technical
-    r"\u2B50-\u2B55"          # Stars, circles
+    r"\u2B51-\u2B55"          # Symbols - EXCLUDES \u2B50 (⭐) which is converted to ★
     r"\uFE00-\uFE0F"          # Variation Selectors
     r"\u200D"                  # Zero-width joiner
     r"]+",
@@ -77,10 +102,12 @@ def strip_emojis(text: str) -> str:
     Strips raw Unicode emojis and unrenderable pictographic symbols to prevent
     them from displaying as square missing-glyph tofu boxes (□) in headless Chromium / Playwright.
     Preserves 100% of Vietnamese diacritics, currency marks, dashes, quotes, and punctuation.
+    Preserves star rating glyphs (★, ☆) while converting emoji stars (⭐) to standard typographical stars (★).
     """
     if not text:
         return ""
-    cleaned = EMOJI_PATTERN.sub("", text)
+    cleaned = text.replace("⭐", "★")
+    cleaned = EMOJI_PATTERN.sub("", cleaned)
     cleaned = re.sub(r"[ \t]+", " ", cleaned)
     cleaned = re.sub(r" ?\n ?", "\n", cleaned)
     return cleaned.strip()
@@ -277,8 +304,15 @@ def resolve_headline_effect(
         "embossed": "embossed",
         "in_noi_3d_gold": "embossed",
         "in_noi_3d": "embossed",
+        "in_noi": "embossed",
         "3d_gold": "embossed",
         "gold": "embossed",
+        "ma_vang": "embossed",
+        "vang_kim": "embossed",
+        "vang_24k": "embossed",
+        "3d_embossed": "embossed",
+        "gold_metallic": "embossed",
+        "gold_foil": "embossed",
         "relief": "embossed",
         # LED Backlit
         "led": "led",
@@ -286,21 +320,30 @@ def resolve_headline_effect(
         "den_led": "led",
         "backlit": "led",
         "halo": "led",
+        "led_glow": "led",
+        "led_light": "led",
         # Neon
         "neon": "neon",
+        "neon_glow": "neon",
+        "neon_light": "neon",
+        "den_neon": "neon",
         "phat_quang_neon": "neon",
         "phat_quang": "neon",
+        "phat_sang": "neon",
         "glow": "neon",
         # Chrome
         "chrome": "chrome",
         "chrome_bach_kim": "chrome",
+        "chrome_bac": "chrome",
         "bach_kim": "chrome",
         "liquid_chrome": "chrome",
         "silver": "chrome",
+        "kim_loai": "chrome",
         # Engraved
         "engraved": "engraved",
         "khac_chim_sa_thach": "engraved",
         "khac_chim": "engraved",
+        "khac_da": "engraved",
         "debossed": "engraved",
         # Holographic
         "holographic": "holographic",
@@ -317,6 +360,9 @@ def resolve_headline_effect(
         # Studio Shadow
         "shadow": "shadow",
         "bong_do_studio_shadow": "shadow",
+        "bong_do_studio": "shadow",
+        "studio_shadow": "shadow",
+        "drop_shadow": "shadow",
         "bong_do": "shadow",
         "deep_shadow": "shadow",
     }
@@ -340,22 +386,6 @@ def resolve_headline_effect(
             clean_effect = "led"
         elif any(k in text_lower for k in ["hoàng gia", "thượng hạng", "vàng", "gold", "trung thu", "tết", "quà tặng", "xa xỉ", "dạ lông cừu", "atelier", "luxury"]):
             clean_effect = "embossed"
-        elif layout_name == "top_dome":
-            # Broad general-purpose dome: warm halo glow harmonizes with the extracted accent
-            # color on both light daylight skies and dark studio backdrops.
-            clean_effect = "led"
-        elif layout_name == "center_hourglass":
-            # Theatrical spotlight beam archetype -> halo/backlit glow, not a flat bevel.
-            clean_effect = "led"
-        elif layout_name == "bottom_platform":
-            clean_effect = "led" if ("hybrid" in text_lower or "công nghệ" in text_lower) else "chrome"
-        elif layout_name == "split_column":
-            clean_effect = "embossed"
-        elif layout_name == "diagonal_slash":
-            clean_effect = "outline" if ("sport" in text_lower or "thể thao" in text_lower) else "chrome"
-        elif layout_name == "l_frame":
-            # tech_minimal corridor archetype -> halo/backlit glow matches the tech aesthetic.
-            clean_effect = "led"
         else:
             clean_effect = "shadow"
 
@@ -508,4 +538,17 @@ def resolve_headline_effect(
             filter_css = "filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));"
 
     return clean_effect, fill_css, filter_css
+
+
+__all__ = [
+    "EMOJI_PATTERN",
+    "VIETNAMESE_COMPOUND_WORDS",
+    "balance_vietnamese_headline",
+    "compute_font_ladder",
+    "is_compound_pair",
+    "normalize_text",
+    "resolve_headline_effect",
+    "strip_emojis",
+]
+
 

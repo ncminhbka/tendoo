@@ -1512,6 +1512,16 @@
         firstEl.focus();
       }
     }
+
+    // Auto-clear invalid highlight as soon as the user starts typing
+    document.addEventListener('input', (e) => {
+      if (e.target && e.target.classList && e.target.classList.contains('field-invalid')) {
+        if ((e.target.value || '').trim()) {
+          e.target.classList.remove('field-invalid');
+        }
+      }
+    });
+
     let currentImages = {
       poster: null,
       bg: null,
@@ -1921,25 +1931,15 @@
       document.getElementById('form-workspace').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Layout is now 100% server auto-matched (Phase B, style_matcher.resolve_style_preset)
-    // -- this just displays whichever layout the last /api/generate response actually
-    // picked (or a neutral "auto" placeholder before the first request of a category).
+    // Pure OmniBlock Architecture: Layout is unconditionally adaptive Omni-Block
     const LAYOUT_DISPLAY_NAMES = {
-      top_dome: "Vòm Đỉnh",
-      split_column: "Dải Lụa Phân Cột",
-      bottom_platform: "Bệ Đáy Điện Ảnh",
-      center_hourglass: "Đồng Hồ Cát",
-      diagonal_slash: "Vát Chéo Năng Động",
-      l_frame: "Khung Góc L",
-      freeform: "Tự Do (Freeform)",
+      omni: "Đa Khối Toàn Năng (Omni-Block)",
     };
 
     function updateLayoutIndicator(layoutName) {
       const ind = document.getElementById('layout-indicator');
       if (!ind) return;
-      ind.textContent = layoutName
-        ? `Bố cục: ${LAYOUT_DISPLAY_NAMES[layoutName] || layoutName}`
-        : "Bố cục: Tự động thông minh";
+      ind.textContent = "Bố cục: Đa Khối Toàn Năng (Omni-Block)";
     }
 
     // 1-Click Preset Loader
@@ -2080,11 +2080,8 @@
     async function handleGenerate(e) {
       e.preventDefault();
 
-      // Required-field markers only apply to the no-prompt form flow -- a filled
-      // "prompt ảnh" lets the render-plan LLM supply that same content instead (mirrors
-      // the same bypass in api_generate's backend check).
-      const hasFreePrompt = !!(document.getElementById('inp-scene-desc')?.value || '').trim();
-      const missingFields = hasFreePrompt ? [] : getMissingRequiredFields(currentCategory);
+      // Trường bắt buộc LUÔN phải điền: Không điền UI tuyệt đối không cho ấn tạo poster
+      const missingFields = getMissingRequiredFields(currentCategory);
       if (missingFields.length) {
         highlightMissingFields(missingFields);
         alert("Vui lòng điền đầy đủ các trường bắt buộc (*) trước khi tạo ảnh.");

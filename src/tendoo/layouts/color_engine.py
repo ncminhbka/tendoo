@@ -1,8 +1,34 @@
 """
-Automated Color & Contrast Harmony Engine (WCAG 2.1 & ITU-R BT.601).
+src/tendoo/layouts/color_engine.py
 
-Calculates dynamic color tokens directly from the synthesized background image's safe zone.
-Guarantees WCAG 2.1 compliance for all text elements and CTA pill badges.
+Automated Color & Contrast Harmony Engine (WCAG 2.1 & ITU-R BT.601):
+====================================================================
+- Tự động phân tích độ chói cảm nhận (Perceived Luminance) và sắc tướng chủ đạo (Dominant Hue)
+  từ các pixel bối cảnh thực tế tại safe zone.
+- Đảm bảo 100% chuẩn tương phản WCAG 2.1 (AA / AAA) cho toàn bộ tiêu đề, phụ đề và thẻ CTA.
+- Tự động chuyển đổi giữa Palette A (Nền tối / Chữ phát quang ngọc trai) và Palette B (Nền sáng / Chữ trầm đậm).
+
+TẠI SAO CẦN MODULE NÀY TRONG HỆ THỐNG TENDOO AI:
+1. TẠI SAO BẮT BUỘC ĐO ĐỘ CHÓI ITU-R BT.601 (Y = 0.299R + 0.587G + 0.114B):
+   - Mắt người không nhạy cảm đều với các kênh màu: mắt phản ứng mạnh nhất với màu xanh lá lục (58.7%),
+     kế tiếp là đỏ (29.9%) và yếu nhất với xanh dương (11.4%).
+   - Nếu chỉ tính trung bình cộng đơn giản (R+G+B)/3, một bức ảnh có nền vàng chanh rực rỡ (rất chói mắt)
+     sẽ bị đánh giá sai là nền tối, dẫn đến sinh chữ trắng khiến người dùng không đọc được chữ.
+   - Công thức ITU-R BT.601 phản ánh chính xác quang sai sinh lý của mắt người. Khi Y < 128, hệ thống
+     tự động chuyển sang Palette A (chữ sáng trên nền tối); khi Y >= 128, kích hoạt Palette B (chữ trầm trên nền sáng).
+
+2. TẠI SAO DÙNG GÓC ĐỐI XỨNG (COMPLEMENTARY HUE = HUE + 180°) CHO THẺ CTA PILL:
+   - Theo định lý bánh xe màu sắc Itten, hai màu nằm đối diện nhau 180 độ mang lại độ tương phản cảm nhận
+     mạnh nhất (Visual Contrast Pop) mà không gây cảm giác xung đột thị giác (Color Clash).
+   - Nút hành động kêu gọi mua sắm (CTA / Promo Badge) cần nổi bật ngay trong 3 giây đầu tiên tiếp xúc
+     với khách hàng, và việc dùng Complementary Hue giúp nút CTA luôn nổi bật trên nền mà vẫn hòa quyện
+     tự nhiên vào tổng thể bố cục.
+
+3. TẠI SAO BẢO TOÀN LUMINANCE NỀN THẬT KHI NHẬN `user_hue` OVERRIDE:
+   - Khi khách hàng chỉ định "màu chủ đạo thương hiệu" (Brand Color, ví dụ: màu đỏ Viettel hay cam Shopee),
+     nếu ghi đè toàn bộ màu sắc mà bỏ qua nền ảnh thật thì chữ có nguy cơ bị chìm nghỉm vào bối cảnh.
+   - Thuật toán chỉ ghi đè tham số Hue (sắc thái), trong khi toàn bộ logic quyết định tương phản
+     (chữ trắng hay chữ đen, đổ bóng sáng hay tối) vẫn giữ nguyên theo độ chói thực tế của pixel ảnh nền.
 """
 
 from __future__ import annotations
@@ -12,11 +38,14 @@ from typing import Optional, Tuple
 
 import numpy as np
 
-from tendoo.layouts.base import ColorPalette
+from tendoo.core.base import ColorPalette
 
 
 def compute_relative_luminance(rgb_array: np.ndarray) -> float:
-    """ITU-R BT.601 Perceived Luminance: Y = 0.299R + 0.587G + 0.114B [0..255]."""
+    """
+    Tính độ chói cảm nhận theo chuẩn ITU-R BT.601:
+    Y = 0.299*R + 0.587*G + 0.114*B trong khoảng [0..255].
+    """
     if rgb_array.size == 0:
         return 128.0
     r = rgb_array[:, :, 0].astype(np.float32)
@@ -26,7 +55,10 @@ def compute_relative_luminance(rgb_array: np.ndarray) -> float:
 
 
 def extract_dominant_hsv(rgb_array: np.ndarray) -> Tuple[int, float, float]:
-    """Extracts dominant hue (degrees [0..359]), saturation [0..1], and value [0..1]."""
+    """
+    Trích xuất sắc tướng trung vị (dominant hue 0..359 độ), độ bão hòa sat [0..1]
+    và giá trị độ sáng val [0..1].
+    """
     if rgb_array.size == 0:
         return (0, 0.0, 0.5)
     med_rgb = np.median(rgb_array.reshape(-1, 3), axis=0).astype(float) / 255.0
@@ -35,17 +67,15 @@ def extract_dominant_hsv(rgb_array: np.ndarray) -> Tuple[int, float, float]:
 
 
 def hsl_to_rgb(h: float, s: float, l: float) -> Tuple[float, float, float]:
-    """Converts H [0..360], S [0..1], L [0..1] to RGB [0..255]."""
+    """Chuyển đổi H [0..360], S [0..1], L [0..1] sang RGB [0..255]."""
     r, g, b = colorsys.hls_to_rgb(h / 360.0, l, s)
     return (r * 255.0, g * 255.0, b * 255.0)
 
 
 def hex_to_hue(hex_str: str) -> Optional[int]:
     """
-    Converts a '#RRGGBB' (or '#RGB') hex color string to a hue in degrees [0..359], for
-    threading a user-picked "màu chủ đạo" (primary color) into analyze_color_harmony's
-    `user_hue` override. Returns None for anything that doesn't parse as a hex color
-    (blank string, malformed input) so callers can treat that as "no override".
+    Chuyển đổi chuỗi màu hex '#RRGGBB' hoặc '#RGB' thành góc Hue [0..359] độ.
+    Trả về None nếu chuỗi rỗng hoặc không hợp lệ.
     """
     if not hex_str:
         return None
@@ -72,19 +102,15 @@ def analyze_color_harmony(
     user_hue: Optional[int] = None,
 ) -> ColorPalette:
     """
-    Computes mathematically harmonious text, badge, shadow, and glassmorphic colors
-    tailored to the actual background pixels.
+    Tính toán bảng màu toán học hài hòa cho tiêu đề, thẻ CTA, đổ bóng và kính mờ (glassmorphism)
+    dựa trên pixel thực tế của nền ảnh.
 
     Args:
-        img_np: RGB image array [H, W, 3], uint8 in [0..255].
-        crop_zone: Normalized (y1, x1, y2, x2) defining the text safe zone to analyze.
-        color_mode: 'auto', 'dark', or 'light'.
-        font_style: 'modern_sans' or 'luxury_serif'.
-        user_hue: optional hue override in degrees [0..359] (from a user-picked "màu chủ
-            đạo" hex color, see hex_to_hue()). When set, replaces the pixel-extracted hue
-            for all palette-color math below; luminance/is_dark (the WCAG contrast
-            guarantee) still comes from the real background pixels, untouched -- only the
-            *hue* is overridden, so contrast safety is never compromised by the override.
+        img_np: Mảng ảnh RGB [H, W, 3], uint8 trong khoảng [0..255].
+        crop_zone: Tọa độ chuẩn hóa (y1, x1, y2, x2) định nghĩa safe zone cần phân tích màu.
+        color_mode: 'auto', 'dark', hoặc 'light'.
+        font_style: 'modern_sans' hoặc 'luxury_serif'.
+        user_hue: Góc Hue [0..359] độ ghi đè màu chủ đạo do người dùng chọn (xem hex_to_hue()).
     """
     h, w, _ = img_np.shape
     y1, x1, y2, x2 = crop_zone
@@ -99,44 +125,44 @@ def analyze_color_harmony(
     elif color_mode == "light":
         is_dark = False
     else:
-        # Standard WCAG threshold for dark vs light background
+        # Ngưỡng WCAG chuẩn phân biệt nền tối và sáng
         is_dark = (lum < 128.0)
 
-    # High-impact CTA badge uses Complementary Hue (180 deg opposite on the color wheel)
+    # Thẻ CTA tương phản cao sử dụng góc đối xứng (180 độ đối xứng trên bánh xe màu)
     comp_hue = (hue + 180) % 360
 
     if is_dark:
         # ==========================================
-        # PALETTE A: DARK BACKGROUND / LUMINOUS TEXT
+        # PALETTE A: NỀN TỐI / CHỮ SÁNG PHÁT QUANG
         # ==========================================
         if font_style == "luxury_serif":
-            # Gleaming 24K polished gold gradient (pure highlights, avoids dark muddy shadow)
+            # Gradient vàng 24K ánh kim cao cấp
             headline_color = (
                 "linear-gradient(180deg, #FFFDF2 0%, #F8DC88 35%, #DAA520 70%, #B8860B 100%)"
             )
             headline_is_gradient = True
         else:
-            # Luminous pearl white with gentle dominant hue tint
+            # Trắng ngọc trai pha sắc thái nhẹ của bối cảnh
             headline_color = f"hsl({hue}, 20%, 97%)"
             headline_is_gradient = False
 
-        # Secondary text: Crisp high-lightness silver/tint
+        # Phụ đề: Ánh bạc thanh lịch độ sáng cao
         sub_color = f"hsl({hue}, 18%, 88%)"
         
-        # Crisp, tight shadow for high legibility
+        # Đổ bóng kép sắc nét chống nhòe
         text_shadow = "0 1px 4px rgba(0, 0, 0, 0.95), 0 2px 10px rgba(0, 0, 0, 0.70)"
 
-        # CTA Badge Pill
+        # Thẻ CTA Pill Badge
         badge_bg = (
             f"linear-gradient(135deg, hsl({comp_hue}, 95%, 54%) 0%, "
             f"hsl({(comp_hue + 25) % 360}, 90%, 45%) 100%)"
         )
         
-        # Compute perceived luminance of the badge background to guarantee WCAG contrast
+        # Tính độ chói cảm nhận của nền badge để đảm bảo tương phản WCAG
         badge_rgb = hsl_to_rgb(comp_hue, 0.95, 0.54)
         badge_lum = 0.299 * badge_rgb[0] + 0.587 * badge_rgb[1] + 0.114 * badge_rgb[2]
         
-        # If badge is bright yellow/amber/lime/cyan -> dark carbon text. Else -> crisp white text
+        # Nếu badge thuộc dải màu sáng (vàng, cam sáng, xanh lá chanh) -> dùng chữ carbon đậm. Ngược lại -> chữ trắng tuyết
         if badge_lum > 135.0 or (30 <= comp_hue <= 95):
             badge_text = "#0D0D14"
             badge_border = "rgba(0, 0, 0, 0.20)"
@@ -148,13 +174,12 @@ def analyze_color_harmony(
         glass_bg = "rgba(255, 255, 255, 0.12)"
         glass_border = "rgba(255, 255, 255, 0.25)"
         
-        # High-contrast vibrant accent for pre-header kicker
         accent_color = f"hsl({comp_hue}, 95%, 72%)"
         footer_text = f"hsl({hue}, 15%, 82%)"
         footer_bg = "rgba(10, 10, 10, 0.65)"
     else:
         # ==========================================
-        # PALETTE B: LIGHT BACKGROUND / DEEP RICH TEXT
+        # PALETTE B: NỀN SÁNG / CHỮ TRẦM ĐẬM ĐẮC TẢ
         # ==========================================
         text_hue_sat = min(sat * 1.2, 0.75)
         headline_color = f"hsl({hue}, {int(text_hue_sat * 100)}%, 14%)"
@@ -194,3 +219,13 @@ def analyze_color_harmony(
         footer_text=footer_text,
         footer_bg=footer_bg,
     )
+
+
+__all__ = [
+    "analyze_color_harmony",
+    "compute_relative_luminance",
+    "extract_dominant_hsv",
+    "hex_to_hue",
+    "hsl_to_rgb",
+]
+

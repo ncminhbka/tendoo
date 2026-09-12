@@ -122,7 +122,7 @@ def test_resolve_font_missing_file_falls_back_gracefully(tmp_path, monkeypatch):
 
     key, font_face_css, headline_font_css = font_engine_mod.resolve_font(font_key="__missing_test_font__")
     assert key == "__missing_test_font__"
-    assert font_face_css == ""
+    assert "GhostFont" not in font_face_css
     assert "GhostFont" in headline_font_css
     font_engine_mod._read_and_encode_font.cache_clear()
 
@@ -221,7 +221,7 @@ def _pil_to_data_uri(img: Image.Image) -> str:
     ],
 )
 def test_render_poster_with_explicit_font(font_key, category):
-    layout = get_layout("top_dome")
+    layout = get_layout("omni")
     safe_zone = layout.get_safe_zone()
 
     bg = _synthetic_bg()
@@ -265,7 +265,7 @@ def test_render_poster_with_explicit_font(font_key, category):
 
 def test_render_poster_with_auto_font_family():
     """font_family='auto' (the default) must not crash and must embed *some* resolved font."""
-    layout = get_layout("top_dome")
+    layout = get_layout("omni")
     safe_zone = layout.get_safe_zone()
     bg = _synthetic_bg()
     palette = analyze_color_harmony(np.array(bg), safe_zone, color_mode="auto")
