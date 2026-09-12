@@ -251,6 +251,7 @@ VAI TRÒ CHỮ HỢP LỆ (role): {roles}
 ICON TÙY CHỌN HỢP LỆ (icon): {icons}
 FONT (font_key): "auto" là lựa chọn an toàn nhất trừ khi người dùng nêu rõ 1 font cụ thể trong danh sách: {fonts}.
 STYLE_HINT: "auto" là lựa chọn an toàn nhất trừ khi người dùng mô tả rõ ràng 1 tông màu/ánh sáng cụ thể.
+HEADLINE_EFFECT: "auto" là an toàn nhất hoặc chọn đúng 1 trong: auto, embossed, neon, chrome, shadow, led, engraved, holographic, outline (ví dụ: prompt yêu cầu "chữ in nổi 3D", "mạ vàng" -> "embossed"; "chữ neon phát quang", "đèn neon" -> "neon"; "chữ bóng đổ" -> "shadow"; "bạch kim", "kim loại sáng bóng" -> "chrome").
 
 QUAN TRỌNG -- scene_prompt (mô tả nền cho mô hình diffusion) TUYỆT ĐỐI KHÔNG được chứa bất kỳ chuỗi chữ nội dung nào
 (không trích dẫn tiêu đề, không viết chữ sẽ hiện trên poster) -- toàn bộ chữ được vẽ riêng bằng HTML/CSS, không phải
@@ -260,7 +261,7 @@ bởi mô hình diffusion. Viết scene_prompt bằng tiếng Anh, mô tả thu�
 CHỈ xuất ra DUY NHẤT một khối JSON hợp lệ, không kèm giải thích, đúng khuôn dạng sau:
 {{"title": {{"action": "use_prompt|generate|none", "text": "..."}}, \
 "extra_blocks": [{{"field": "ten_truong hoặc null", "text": "...", "zone": "ten_zone hoặc null", "role": "...", "icon": "..."}}], \
-"scene_prompt": "...", "style_hint": "...", "font_key": "..."}}
+"scene_prompt": "...", "style_hint": "...", "font_key": "...", "headline_effect": "..."}}
 """
 
 USER_PROMPT_TEMPLATE = """Danh mục (category): {category}
@@ -550,12 +551,23 @@ def validate_render_plan(
     # Style hint is passed through and re-validated downstream by detect_scene_lighting_tone
     # against the rich commercial styles supported by OmniBlockLayout.
 
+    raw_effect = plan.get("headline_effect")
+    headline_effect = "auto"
+    if isinstance(raw_effect, str) and raw_effect.strip():
+        try:
+            from tendoo.layouts.text_engine import resolve_headline_effect
+            resolved_effect, _, _ = resolve_headline_effect(effect=raw_effect.strip())
+            headline_effect = resolved_effect
+        except Exception:
+            headline_effect = "auto"
+
     cleaned = {
         "title": {"action": title_action, "text": title_text},
         "extra_blocks": deduped_blocks,
         "scene_prompt": scene_prompt,
         "style_hint": style_hint,
         "font_key": font_key,
+        "headline_effect": headline_effect,
     }
     return cleaned, errors
 
