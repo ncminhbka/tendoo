@@ -63,6 +63,7 @@ Output:
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -231,25 +232,47 @@ def main() -> None:
     from flux2 import util
     from flux2.sampling import get_schedule, prc_img, prc_txt
 
+    # Mirror demo_server.py's lifespan() model-loading EXACTLY (that is the proven,
+    # production-trusted way to find the right checkpoint -- see AGENTS.md's
+    # core-freeze rule note: don't independently reinvent this, copy it) --
+    # model_name is the DISTILLED "flux.2-klein-4b" (matches req.steps=8/
+    # req.guidance=1.5 defaults in demo_server.py's GenerateRequest, not the base
+    # variant's 50-step/guidance=4.0 design point), and it explicitly searches BOTH
+    # persistent-data/FLUX.2-klein-4B/ and .../FLUX.2-klein-base-4B/ for the
+    # distilled flux-2-klein-4b.safetensors file, setting KLEIN_4B_MODEL_PATH so
+    # load_flow_model() uses it directly instead of find_persistent_data_root()'s
+    # own (less targeted) auto-discovery, which is what silently picked up a
+    # mismatched Diffusers-format transformer/ file in an earlier run of this probe.
+    model_name = "flux.2-klein-4b"
+    pdata_candidates = [
+        Path(os.path.expanduser("~/persistent-data/FLUX.2-klein-4B")),
+        Path(os.path.expanduser("~/persistent-data/FLUX.2-klein-base-4B")),
+    ]
+    for pdata in pdata_candidates:
+        distill_cand = pdata / "flux-2-klein-4b.safetensors"
+        if distill_cand.exists() and "KLEIN_4B_MODEL_PATH" not in os.environ:
+            os.environ["KLEIN_4B_MODEL_PATH"] = str(distill_cand)
+            print(f"[Checkpoint] Found distilled DiT weights at: {distill_cand}")
+            break
+    else:
+        print(
+            "[Checkpoint] WARNING: flux-2-klein-4b.safetensors (distilled) not found in "
+            "either persistent-data candidate -- falling through to load_flow_model()'s "
+            "own auto-discovery, which may pick up a mismatched checkpoint. If the "
+            "resulting image still looks wrong, this is why -- report back what "
+            "load_flow_model() prints for the DiT missing/unexpected key count."
+        )
+
     t0 = time.time()
     print("Loading DiT 4B weights...")
-    # "flux.2-klein-base-4b" (NOT "flux.2-klein-4b", the distilled variant) --
-    # matches the real checkpoint's directory/filename on the server
-    # (persistent-data/FLUX.2-klein-base-4B/flux-2-klein-base-4b.safetensors, per
-    # AGENTS.md's documented layout). Using the wrong name here made
-    # find_persistent_data_root()'s primary candidate path
-    # (persistent-data/FLUX.2-klein-base-4B/flux-2-klein-4b.safetensors) not exist,
-    # silently falling through to the mismatched transformer/diffusion_pytorch_model
-    # .safetensors (Diffusers-format DiT) candidate instead -- confirmed 2026-09-15
-    # via a real-GPU run that produced garbage/streaked output with this bug.
-    dit_model = util.load_flow_model("flux.2-klein-base-4b", device=device_dit)
+    dit_model = util.load_flow_model(model_name, device=device_dit)
     dit_model.eval()
     print("Loading AutoEncoder...")
-    ae_model = util.load_ae("flux.2-klein-base-4b", device=device_aux)
+    ae_model = util.load_ae(model_name, device=device_aux)
     ae_model.eval()
     ae_dtype = next(ae_model.parameters()).dtype
     print("Loading Qwen3 text encoder...")
-    text_encoder = util.load_text_encoder("flux.2-klein-base-4b", device=device_aux)
+    text_encoder = util.load_text_encoder(model_name, device=device_aux)
     print(f"Models loaded in {time.time() - t0:.1f}s")
 
     # --- Build the REAL corridor mask + prompts, exactly as demo_server.py would ---
