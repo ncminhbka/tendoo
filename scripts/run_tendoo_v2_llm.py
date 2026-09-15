@@ -111,6 +111,57 @@ CASES: List[Dict[str, Any]] = [
         "fields": {**_STORE},
         "free_prompt": "",
     },
+    # --- 09-14: systematic coverage of all 9 nameable zones (2026-09-15) ---
+    # Added because case 05 was the ONLY prior case touching explicit zone
+    # extraction at all, and it only exercised 2 of 9 positions (top_left,
+    # bottom_right). "middle_center" (chính giữa) was never tested even once --
+    # it was also missing from llm_client.py's SYSTEM_PROMPT vocabulary entirely
+    # until this same round's fix, so the model had no way to name it correctly
+    # before now. Each case below names ONE explicit position with natural
+    # Vietnamese phrasing (not the raw zone string) -- the point is testing
+    # whether the hosted LLM's READING COMPREHENSION (schema.py's whole premise:
+    # extraction is easy, spatial invention is hard) actually holds up across all
+    # 9 real positions, not just the 2 already covered.
+    {
+        "id": "09_zone_top_center",
+        "desc": "Vi tri: chinh giua phia tren (top_center).",
+        "fields": {**_STORE, "discount": "Giảm 50%"},
+        "free_prompt": "Poster khuyến mãi, đặt dòng chữ giảm giá ngay chính giữa phía trên cùng.",
+    },
+    {
+        "id": "10_zone_middle_left",
+        "desc": "Vi tri: le trai, giua chieu doc (middle_left).",
+        "fields": {**_STORE, "product_name": "Đồng Hồ Thông Minh X1"},
+        "free_prompt": "Giới thiệu sản phẩm, đặt tên sản phẩm dọc theo mép trái, ngang tầm giữa ảnh.",
+    },
+    {
+        "id": "11_zone_middle_right",
+        "desc": "Vi tri: le phai, giua chieu doc (middle_right).",
+        "fields": {**_STORE, "price": "499.000đ"},
+        "free_prompt": "Đặt giá sản phẩm ở bên phải khung hình, ngang tầm giữa.",
+    },
+    {
+        "id": "12_zone_middle_center_true_center",
+        "desc": "Vi tri: chinh giua khung hinh (middle_center) -- zone duoc them moi round nay, chua tung test.",
+        "fields": {**_STORE, "opening_promotion": "ĐẠI TIỆC KHAI TRƯƠNG"},
+        "free_prompt": "Poster khai trương chỉ có chữ, không có ảnh sản phẩm, đặt dòng chữ chính ngay chính giữa khung hình.",
+    },
+    {
+        "id": "13_zone_bottom_left",
+        "desc": "Vi tri: goc duoi ben trai (bottom_left).",
+        "fields": {**_STORE, "feedback_content": "Dịch vụ tuyệt vời, nhân viên nhiệt tình"},
+        "free_prompt": "Đăng feedback khách hàng, đặt câu feedback ở góc dưới bên trái.",
+    },
+    {
+        "id": "14_zone_conflicting_multi_position",
+        "desc": "Nhieu vi tri trong 1 prompt cung luc (top_left + middle_center + bottom_right) -- kiem tra LLM khong lam lan/bo sot vi tri nao.",
+        "fields": {**_STORE, "job_position": "Quản Lý Cửa Hàng", "apply_deadline": "31/12/2026"},
+        "free_prompt": (
+            "Tuyển dụng, đặt tên vị trí tuyển ở góc trên bên trái, đặt dòng "
+            "'CHÚNG TÔI ĐANG TÌM BẠN' ngay chính giữa khung hình, và hạn nộp hồ "
+            "sơ ở góc dưới bên phải."
+        ),
+    },
 ]
 
 

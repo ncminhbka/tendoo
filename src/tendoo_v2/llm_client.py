@@ -47,7 +47,17 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
+from tendoo.engine.geometry import GRID_ZONE_NAMES
 from tendoo_v2.schema import Block, ROLE_VALUES
+
+# The 9 positions an LLM-extracted `zone` may legitimately name -- the 8 perimeter
+# grid cells (auto-assignable to floating blocks too) PLUS "middle_center" (the
+# true dead-center spot, deliberately excluded from GRID_ZONE_NAMES/auto-assignment
+# since it usually belongs to the product/subject -- reachable only via an
+# explicit pin, i.e. a real user request naming it). Single source of truth for
+# validating the LLM's raw `zone` string; matches tendoo.engine.geometry's own
+# canonical zone vocabulary instead of hand-duplicating it.
+VALID_LLM_ZONES = frozenset(GRID_ZONE_NAMES) | {"middle_center"}
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -99,10 +109,14 @@ QUY TẮC:
 2. "group": đặt CÙNG 1 tên group cho các block PHẢI đứng cạnh nhau thành 1 cụm (ví dụ 1 hero luôn đi \
    kèm 1 subhead của riêng nó, hoặc các bước hướng dẫn 1-2-3 đứng thành 1 cột). Để null nếu block đó \
    đứng độc lập.
-3. "zone" CHỈ điền khi prompt tự do nêu RÕ RÀNG 1 vị trí cụ thể (ví dụ "góc trên bên trái" ->  \
-   "top_left", "phía dưới cùng" -> "bottom_center"). Các zone hợp lệ: top_left, top_center, top_right, \
-   middle_left, middle_right, bottom_left, bottom_center, bottom_right. TUYỆT ĐỐI KHÔNG tự bịa 1 vị \
-   trí nếu prompt không nói -- để null, solver sẽ tự chọn chỗ hợp lý.
+3. "zone" CHỈ điền khi prompt tự do nêu RÕ RÀNG 1 vị trí cụ thể (ví dụ "góc trên bên trái" -> \
+   "top_left", "phía dưới cùng" -> "bottom_center", "chính giữa"/"ở giữa khung hình" -> \
+   "middle_center"). Các zone hợp lệ, PHẢI CHÉP Y NGUYÊN 1 trong 9 chuỗi sau (không tự bịa biến \
+   thể khác như "center"/"middle"/"giua"): top_left, top_center, top_right, middle_left, \
+   middle_center, middle_right, bottom_left, bottom_center, bottom_right. Riêng "middle_center" \
+   CHỈ dùng khi prompt yêu cầu rõ ràng đặt chữ ở NGAY GIỮA khung hình -- không tự chọn zone này khi \
+   prompt không nói vị trí, vì "chính giữa" thường là chỗ dành cho sản phẩm/chủ thể ảnh nền. TUYỆT \
+   ĐỐI KHÔNG tự bịa 1 vị trí nếu prompt không nói -- để null, solver sẽ tự chọn chỗ hợp lý.
 4. "field": nếu nội dung của block bắt nguồn từ 1 trường trong danh sách đã điền, ghi lại TÊN trường đó \
    (cho phép TÁCH 1 trường dài thành NHIỀU block ngắn hơn, mỗi block cùng field đó -- ví dụ trường \
    product_desc dài có thể tách thành 2 block "meta" ngắn). Nếu block là nội dung mới trích từ prompt \
@@ -239,13 +253,26 @@ def _to_blocks(raw_items: List[Dict[str, Any]]) -> Tuple[List[Block], List[str]]
         if role not in ROLE_VALUES:
             errors.append(f"item {idx}: invalid role={role!r}, defaulted to 'body'")
             role = "body"
+        zone = item.get("zone") or None
+        if zone is not None and zone not in VALID_LLM_ZONES:
+            # NEVER silently trust an unrecognized zone string through to the
+            # solver: get_zone_bounding_box() falls back to a top_left-shaped
+            # rect for any unknown name (geometry.py's defensive default), which
+            # would place content at the WRONG position with zero visible error
+            # -- e.g. the model writing "center" instead of "middle_center" would
+            # silently land the block at top-left instead of the user's actual
+            # "chính giữa" request. Drop to None instead (matches the "solver
+            # picks a sensible spot" fallback for a block with no real zone),
+            # and surface it so the caller/log can see the model hallucinated.
+            errors.append(f"item {idx}: invalid zone={zone!r} (not in VALID_LLM_ZONES), dropped to None")
+            zone = None
         try:
             blocks.append(Block(
                 text=str(item["text"]),
                 role=role,
                 field=item.get("field") or None,
                 group=item.get("group") or None,
-                zone=item.get("zone") or None,
+                zone=zone,
             ))
         except ValueError as e:
             errors.append(f"item {idx}: {e}, dropped")
