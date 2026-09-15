@@ -233,14 +233,23 @@ def main() -> None:
 
     t0 = time.time()
     print("Loading DiT 4B weights...")
-    dit_model = util.load_flow_model("flux.2-klein-4b", device=device_dit)
+    # "flux.2-klein-base-4b" (NOT "flux.2-klein-4b", the distilled variant) --
+    # matches the real checkpoint's directory/filename on the server
+    # (persistent-data/FLUX.2-klein-base-4B/flux-2-klein-base-4b.safetensors, per
+    # AGENTS.md's documented layout). Using the wrong name here made
+    # find_persistent_data_root()'s primary candidate path
+    # (persistent-data/FLUX.2-klein-base-4B/flux-2-klein-4b.safetensors) not exist,
+    # silently falling through to the mismatched transformer/diffusion_pytorch_model
+    # .safetensors (Diffusers-format DiT) candidate instead -- confirmed 2026-09-15
+    # via a real-GPU run that produced garbage/streaked output with this bug.
+    dit_model = util.load_flow_model("flux.2-klein-base-4b", device=device_dit)
     dit_model.eval()
     print("Loading AutoEncoder...")
-    ae_model = util.load_ae("flux.2-klein-4b", device=device_aux)
+    ae_model = util.load_ae("flux.2-klein-base-4b", device=device_aux)
     ae_model.eval()
     ae_dtype = next(ae_model.parameters()).dtype
     print("Loading Qwen3 text encoder...")
-    text_encoder = util.load_text_encoder("flux.2-klein-4b", device=device_aux)
+    text_encoder = util.load_text_encoder("flux.2-klein-base-4b", device=device_aux)
     print(f"Models loaded in {time.time() - t0:.1f}s")
 
     # --- Build the REAL corridor mask + prompts, exactly as demo_server.py would ---

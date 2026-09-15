@@ -120,16 +120,7 @@ class Flux2(nn.Module):
         ctx: Tensor,
         ctx_ids: Tensor,
         guidance: Tensor | None,
-        attn_bias: Tensor | None = None,
     ):
-        """
-        `attn_bias` (2026-09-15, probe-only, default None = exact prior behavior):
-        optional additive attention bias forwarded into every block's joint txt+img
-        attention -- see `causal_attn_fn`'s docstring for shape/ordering requirements
-        and scripts/probe_flux2_attn_region_suppress.py for how it's built from a
-        spatial corridor mask. Only meaningful here because this plain `forward()`
-        always calls blocks with `num_ref_tokens=0` (no reference-image tokens).
-        """
         num_txt_tokens = ctx.shape[1]
 
         timestep_emb = timestep_embedding(timesteps, 256)
@@ -157,7 +148,6 @@ class Flux2(nn.Module):
                 double_block_mod_img,
                 double_block_mod_txt,
                 num_ref_tokens=0,
-                attn_bias=attn_bias,
             )
 
         img = torch.cat((txt, img), dim=1)
@@ -170,7 +160,6 @@ class Flux2(nn.Module):
                 single_block_mod,
                 num_txt_tokens,
                 num_ref_tokens=0,
-                attn_bias=attn_bias,
             )
 
         img = img[:, num_txt_tokens:, ...]
@@ -501,7 +490,6 @@ class SingleStreamBlock(nn.Module):
         mod: tuple[Tensor, Tensor, Tensor],
         num_txt_tokens: int,
         num_ref_tokens: int,
-        attn_bias: Tensor | None = None,
     ) -> tuple[Tensor, dict]:
         """Forward with causal attention. Extracts and returns ref KV cache."""
         q, k, v, mlp, mod_gate = self._qkv(x, mod)
@@ -514,7 +502,7 @@ class SingleStreamBlock(nn.Module):
             "v_ref": v[:, :, ref_start:ref_end, :].clone(),
         }
 
-        attn = causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens, attn_bias=attn_bias)
+        attn = causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens)
         return self._out(x, attn, mlp, mod_gate), cache
 
     def forward_kv_cached(
@@ -655,7 +643,6 @@ class DoubleStreamBlock(nn.Module):
         mod_img: tuple[Tensor, Tensor],
         mod_txt: tuple[Tensor, Tensor],
         num_ref_tokens: int,
-        attn_bias: Tensor | None = None,
     ) -> tuple[Tensor, Tensor, dict]:
         """Forward with causal attention. img has layout [ref, img]. Extracts ref KV cache."""
         q, k, v, pe_full, num_txt_tokens, mods = self._prepare_qkv(img, txt, pe, pe_ctx, mod_img, mod_txt)
@@ -668,7 +655,7 @@ class DoubleStreamBlock(nn.Module):
             "v_ref": v[:, :, ref_start:ref_end, :].clone(),
         }
 
-        attn = causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens, attn_bias=attn_bias)
+        attn = causal_attn_fn(q, k, v, num_txt_tokens, num_ref_tokens)
         txt_attn, img_attn = attn[:, :num_txt_tokens], attn[:, num_txt_tokens:]
         img, txt = self._apply_residuals(img, txt, img_attn, txt_attn, mods)
         return img, txt, cache
@@ -775,24 +762,12 @@ def causal_attn_fn(
     num_txt_tokens: int,
     num_ref_tokens: int,
     kv_cache: dict | None = None,
-    attn_bias: Tensor | None = None,
 ) -> Tensor:
     """
     Causal attention where reference tokens only attend to themselves.
 
     Without cache: layout is [txt, ref, img]. txt+img attend to all, ref self-attends.
     With cache: layout is [txt, img]. Cached ref K/V injected into attention.
-
-    `attn_bias` (2026-09-15, probe-only -- see scripts/probe_flux2_attn_region_suppress.py):
-    optional additive bias passed straight through to `F.scaled_dot_product_attention`'s
-    `attn_mask` on the joint txt+img attention (the only attention this function computes
-    when `num_ref_tokens == 0`, the case this was built for -- with real reference-image
-    tokens present the k/q layout differs between the cached/uncached branches and a
-    bias built for one won't line up with the other, so this is NOT validated for
-    num_ref_tokens > 0). Shape must broadcast to (B, num_heads, L_q, L_k) where L_q ==
-    L_k == num_txt_tokens + num image tokens, ordered [txt, img] -- see the probe script
-    for how this is built from a spatial corridor mask. `None` (default) is a pure no-op:
-    identical to the pre-existing behavior, so every other call site is unaffected.
     """
     if kv_cache is not None:
         k_ref = kv_cache["k_ref"]
@@ -828,9 +803,7 @@ def causal_attn_fn(
         q_txt_img = torch.cat([q_txt, q_img], dim=2)
         k_all = torch.cat([k_txt, k_ref, k_img], dim=2)
         v_all = torch.cat([v_txt, v_ref, v_img], dim=2)
-        attn_txt_img = F.scaled_dot_product_attention(
-            q_txt_img, k_all, v_all, is_causal=False, attn_mask=attn_bias
-        )
+        attn_txt_img = F.scaled_dot_product_attention(q_txt_img, k_all, v_all, is_causal=False)
         attn_txt = attn_txt_img[:, :, :ref_start, :]
         attn_img = attn_txt_img[:, :, ref_start:, :]
 

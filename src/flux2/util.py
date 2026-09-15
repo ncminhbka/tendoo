@@ -156,131 +156,6 @@ def find_persistent_data_root() -> str | None:
     return None
 
 
-def convert_diffusers_dit_to_bfl(
-    sd: dict[str, torch.Tensor], depth: int, depth_single_blocks: int
-) -> dict[str, torch.Tensor]:
-    """
-    Convert a HuggingFace Diffusers-format FLUX.2 DiT checkpoint (`x_embedder`,
-    `context_embedder`, `transformer_blocks.*`, `single_transformer_blocks.*`, ...)
-    into this module's BFL-native `Flux2` key layout (`img_in`, `txt_in`,
-    `double_blocks.*`, `single_blocks.*`, ...).
-
-    Added 2026-09-15: a persistent-data checkpoint at
-    .../FLUX.2-klein-base-4B/transformer/diffusion_pytorch_model.safetensors turned
-    out to be Diffusers-format on real-GPU load, and load_flow_model() had no
-    conversion for the DiT (only load_ae() had one, for the VAE) -- every DiT weight
-    silently stayed on the meta device and `.to(device)` crashed with "Cannot copy
-    out of meta tensor; no data!". This mapping was derived key-by-key from that real
-    missing/unexpected-key dump (every key on both sides accounted for), NOT verified
-    end-to-end against the actual checkpoint yet (no GPU in this dev environment) --
-    re-run load_flow_model() after this change; `_load_state_dict_verbose` will print
-    the resulting missing/unexpected counts. If it isn't 0/0, report the exact
-    remaining keys back rather than assuming this mapping is complete -- the most
-    likely failure point is single_blocks' fused QKV+MLP layout (see note below).
-
-    Two real structural differences, not just renames:
-    1. DoubleStreamBlock's img_attn/txt_attn.qkv is ONE fused Linear(dim, 3*dim) in
-       BFL; Diffusers exposes it as 3 separate Linears (to_q/to_k/to_v for the image
-       stream, add_q_proj/add_k_proj/add_v_proj for the text/"added" stream) --
-       concatenated here along dim=0 in [Q, K, V] order to match model.py's
-       `rearrange(qkv, "B L (K H D) -> K B H L D", K=3, ...)` unpacking.
-    2. SingleStreamBlock's linear1 fuses QKV *and* the MLP's first projection into
-       ONE Linear in BFL; Diffusers' `to_qkv_mlp_proj` appears to already be fused
-       the same way (unlike the double-block case) -- ASSUMED here to need only a
-       rename, not a re-concatenation. This is the one part of this mapping most
-       likely to be wrong if Diffusers' internal layout differs -- a shape mismatch
-       here will surface as an explicit load_state_dict error, not silent corruption.
-    """
-    new_sd: dict[str, torch.Tensor] = {}
-
-    def pop(key: str) -> torch.Tensor | None:
-        return sd.pop(key, None)
-
-    # --- Top-level embedders ---
-    if (w := pop("x_embedder.weight")) is not None:
-        new_sd["img_in.weight"] = w
-    if (w := pop("context_embedder.weight")) is not None:
-        new_sd["txt_in.weight"] = w
-    if (w := pop("time_guidance_embed.timestep_embedder.linear_1.weight")) is not None:
-        new_sd["time_in.in_layer.weight"] = w
-    if (w := pop("time_guidance_embed.timestep_embedder.linear_2.weight")) is not None:
-        new_sd["time_in.out_layer.weight"] = w
-    # Guidance embedding only applies to non-distilled/guidance-embed variants;
-    # Klein 4B/9B set use_guidance_embed=False so these are expected absent here.
-    if (w := pop("time_guidance_embed.guidance_embedder.linear_1.weight")) is not None:
-        new_sd["guidance_in.in_layer.weight"] = w
-    if (w := pop("time_guidance_embed.guidance_embedder.linear_2.weight")) is not None:
-        new_sd["guidance_in.out_layer.weight"] = w
-
-    # --- Shared (NOT per-block) AdaLN modulation projections ---
-    for diff_name, bfl_name in [
-        ("double_stream_modulation_img.linear.weight", "double_stream_modulation_img.lin.weight"),
-        ("double_stream_modulation_txt.linear.weight", "double_stream_modulation_txt.lin.weight"),
-        ("single_stream_modulation.linear.weight", "single_stream_modulation.lin.weight"),
-    ]:
-        if (w := pop(diff_name)) is not None:
-            new_sd[bfl_name] = w
-
-    # --- Final layer ---
-    if (w := pop("norm_out.linear.weight")) is not None:
-        new_sd["final_layer.adaLN_modulation.1.weight"] = w
-    if (w := pop("proj_out.weight")) is not None:
-        new_sd["final_layer.linear.weight"] = w
-
-    # --- Double (joint img/txt) stream blocks ---
-    for i in range(depth):
-        p = f"transformer_blocks.{i}."
-        b = f"double_blocks.{i}."
-
-        q, k, v = pop(p + "attn.to_q.weight"), pop(p + "attn.to_k.weight"), pop(p + "attn.to_v.weight")
-        if q is not None and k is not None and v is not None:
-            new_sd[b + "img_attn.qkv.weight"] = torch.cat([q, k, v], dim=0)
-        if (w := pop(p + "attn.norm_q.weight")) is not None:
-            new_sd[b + "img_attn.norm.query_norm.scale"] = w
-        if (w := pop(p + "attn.norm_k.weight")) is not None:
-            new_sd[b + "img_attn.norm.key_norm.scale"] = w
-        if (w := pop(p + "attn.to_out.0.weight")) is not None:
-            new_sd[b + "img_attn.proj.weight"] = w
-        if (w := pop(p + "ff.linear_in.weight")) is not None:
-            new_sd[b + "img_mlp.0.weight"] = w
-        if (w := pop(p + "ff.linear_out.weight")) is not None:
-            new_sd[b + "img_mlp.2.weight"] = w
-
-        aq, ak, av = pop(p + "attn.add_q_proj.weight"), pop(p + "attn.add_k_proj.weight"), pop(p + "attn.add_v_proj.weight")
-        if aq is not None and ak is not None and av is not None:
-            new_sd[b + "txt_attn.qkv.weight"] = torch.cat([aq, ak, av], dim=0)
-        if (w := pop(p + "attn.norm_added_q.weight")) is not None:
-            new_sd[b + "txt_attn.norm.query_norm.scale"] = w
-        if (w := pop(p + "attn.norm_added_k.weight")) is not None:
-            new_sd[b + "txt_attn.norm.key_norm.scale"] = w
-        if (w := pop(p + "attn.to_add_out.weight")) is not None:
-            new_sd[b + "txt_attn.proj.weight"] = w
-        if (w := pop(p + "ff_context.linear_in.weight")) is not None:
-            new_sd[b + "txt_mlp.0.weight"] = w
-        if (w := pop(p + "ff_context.linear_out.weight")) is not None:
-            new_sd[b + "txt_mlp.2.weight"] = w
-
-    # --- Single stream blocks ---
-    for i in range(depth_single_blocks):
-        p = f"single_transformer_blocks.{i}."
-        b = f"single_blocks.{i}."
-
-        if (w := pop(p + "attn.to_qkv_mlp_proj.weight")) is not None:
-            new_sd[b + "linear1.weight"] = w
-        if (w := pop(p + "attn.to_out.weight")) is not None:
-            new_sd[b + "linear2.weight"] = w
-        if (w := pop(p + "attn.norm_q.weight")) is not None:
-            new_sd[b + "norm.query_norm.scale"] = w
-        if (w := pop(p + "attn.norm_k.weight")) is not None:
-            new_sd[b + "norm.key_norm.scale"] = w
-
-    # Anything left in `sd` wasn't recognized by this mapping -- keep it (already-
-    # renamed keys were popped out above) so _load_state_dict_verbose's report still
-    # surfaces it as "unexpected" instead of silently dropping it.
-    new_sd.update(sd)
-    return new_sd
-
-
 def load_flow_model(model_name: str, debug_mode: bool = False, device: str | torch.device = "cuda") -> Flux2:
     config = FLUX2_MODEL_INFO[model_name.lower()]
 
@@ -320,21 +195,10 @@ def load_flow_model(model_name: str, debug_mode: bool = False, device: str | tor
                 sys.exit(1)
 
     if not debug_mode:
-        params = FLUX2_MODEL_INFO[model_name.lower()]["params"]
         with torch.device("meta"):
-            model = Flux2(params).to(torch.bfloat16)
+            model = Flux2(FLUX2_MODEL_INFO[model_name.lower()]["params"]).to(torch.bfloat16)
         print(f"Loading {weight_path} for the FLUX.2 weights")
         sd = load_sft(weight_path, device=str(device))
-
-        # Auto-convert Diffusers-format DiT checkpoints to this module's BFL layout
-        # (mirrors load_ae()'s existing Diffusers-VAE auto-conversion below).
-        if any(
-            k.startswith("x_embedder.") or k.startswith("context_embedder.") or k.startswith("transformer_blocks.")
-            for k in sd.keys()
-        ):
-            print("  -> Detected Diffusers format DiT keys, converting to BFL Flux2 format...")
-            sd = convert_diffusers_dit_to_bfl(sd, depth=params.depth, depth_single_blocks=params.depth_single_blocks)
-
         _load_state_dict_verbose(model, sd, label=f"DiT:{model_name}")
         return model.to(device)
     else:
