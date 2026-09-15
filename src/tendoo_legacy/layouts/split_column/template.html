@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width={{width}}, height={{height}}, initial-scale=1.0">
+  <title>{{headline_plain}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Montserrat:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700&display=swap&subset=vietnamese" rel="stylesheet">
+  <style>
+    {{font_face_css}}
+    {{css_vars}}
+    {{component_css}}
+
+    :root {
+      --headline-font: {{headline_font_css}};
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: 'Montserrat', 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      background-color: #000;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+    }
+
+    /* Background image layer */
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    /* Vertical Editorial Column (Safe Zone: x in [0.045, 0.335], y in [0.04, 0.96]) */
+    .editorial-column {
+      position: absolute;
+      top: 4.5%;
+      bottom: 4.5%;
+      left: 4.5%;
+      width: 29%;
+      max-width: 30%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: left;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Top & Main Typography Stack */
+    .column-main-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+    }
+
+    .kicker-tag {
+      display: {{pre_header_display}};
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent-color);
+      margin-bottom: 12px;
+      text-shadow: var(--text-shadow);
+    }
+
+    .kicker-line {
+      width: 28px;
+      height: 2px;
+      background: var(--accent-color);
+      border-radius: 2px;
+    }
+
+    .title-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+      margin-bottom: 12px;
+      {{wrap_filter_css}}
+    }
+
+    .headline-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      width: 100%;
+    }
+
+    .headline-line {
+      font-family: var(--headline-font, 'Montserrat', 'Plus Jakarta Sans', sans-serif);
+      font-size: {{font_size}}px;
+      line-height: {{line_height}};
+      letter-spacing: {{letter_spacing}}px;
+      font-weight: 900;
+      text-transform: uppercase;
+      text-align: left;
+      text-wrap: balance;
+      {{headline_fill_css}}
+    }
+
+    .divider-rule {
+      width: 50px;
+      height: 1.5px;
+      background: var(--glass-border);
+      margin-bottom: 12px;
+    }
+
+    .slogan {
+      font-size: 19.5px;
+      font-weight: 600;
+      line-height: 1.45;
+      letter-spacing: 0.5px;
+      color: var(--sub-color);
+      text-shadow: var(--text-shadow);
+      margin-bottom: 20px;
+      width: 100%;
+      text-wrap: balance;
+      display: {{slogan_display}};
+    }
+
+    /* Promotional Offer Section */
+    .promo-section {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .badge-pill {
+      display: {{badge_display}};
+      align-items: center;
+      justify-content: center;
+      padding: 9px 28px;
+      border-radius: 9999px;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      box-shadow: var(--badge-shadow);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      border: 1px solid {{badge_border}};
+      white-space: nowrap;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge-pill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -50%;
+      width: 200%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: skewX(-20deg);
+      pointer-events: none;
+    }
+
+    .offer-sub {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--sub-color);
+      letter-spacing: 0.5px;
+      text-shadow: var(--text-shadow);
+      display: {{offer_sub_display}};
+    }
+
+    .dates-tag {
+      display: {{dates_display}};
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 6px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--sub-color);
+      letter-spacing: 0.5px;
+      text-shadow: var(--text-shadow);
+    }
+
+    /* Column Footer Section */
+    .column-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 7px;
+      width: 100%;
+      padding-top: 18px;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .brand-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--footer-text);
+      text-shadow: var(--text-shadow);
+      display: {{brand_display}};
+    }
+
+    .column-address {
+      font-size: 14.5px;
+      font-weight: 500;
+      color: var(--sub-color);
+      line-height: 1.35;
+      text-shadow: var(--text-shadow);
+      display: {{address_display}};
+    }
+
+    .footer-row-contact {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hotline-chip {
+      display: {{hotline_display}};
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 8px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 15.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: var(--footer-text);
+      text-shadow: var(--text-shadow);
+    }
+
+    .column-website {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--sub-color);
+      letter-spacing: 0.5px;
+      display: {{website_display}};
+    }
+
+    .column-qr {
+      display: {{qr_display}};
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      width: 82px;
+      box-sizing: border-box;
+      margin-top: 4px;
+    }
+
+    .column-qr img {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .column-qr-label {
+      font-size: 9.5px;
+      font-weight: 900;
+      color: #000;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .applicable-note {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sub-color);
+      line-height: 1.35;
+      display: {{applicable_display}};
+    }
+
+    @media (max-width: 680px) {
+      .editorial-column {
+        width: 36%;
+        left: 4%;
+        top: 3.5%;
+        bottom: 3.5%;
+      }
+      .headline-line {
+        font-size: calc({{font_size}}px * 0.85);
+      }
+      .slogan {
+        font-size: 13.5px;
+        margin-bottom: 12px;
+      }
+      .badge-pill {
+        font-size: 13.5px;
+        padding: 6px 16px;
+      }
+      .column-footer {
+        padding-top: 10px;
+        gap: 4px;
+      }
+    }
+
+    @media (max-height: 600px) {
+      .editorial-column {
+        top: 3%;
+        bottom: 3%;
+      }
+      .slogan {
+        margin-bottom: 8px;
+      }
+      .column-footer {
+        padding-top: 8px;
+        gap: 4px;
+      }
+    }
+
+    {{custom_css}}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <!-- Vertical Editorial Column -->
+    <div class="editorial-column">
+      
+      <!-- Upper & Center Text Hierarchy -->
+      <div class="column-main-stack">
+        <div class="kicker-tag">
+          <div class="kicker-line"></div>
+          <span>{{pre_header}}</span>
+        </div>
+
+        <div class="title-wrap">
+          <div class="headline-wrap">
+            {{headline_html}}
+          </div>
+        </div>
+
+        <div class="divider-rule"></div>
+
+        <div class="slogan">{{slogan}}</div>
+
+        {{category_body_html}}
+      </div>
+
+      <!-- Bottom Brand & Boutique Anchor -->
+      <div class="column-footer">
+        <div class="brand-title">{{brand}}</div>
+        <div class="column-address">{{address}}</div>
+        <div class="footer-row-contact">
+          <div class="hotline-chip">{{hotline}}</div>
+          <div class="column-website">{{website_link}}</div>
+        </div>
+        <div class="column-qr">
+          <img src="{{qr_data_uri}}" alt="QR">
+          <div class="column-qr-label">QUÉT MÃ</div>
+        </div>
+        <div class="applicable-note">{{applicable}}</div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
