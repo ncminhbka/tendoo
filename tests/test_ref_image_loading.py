@@ -119,3 +119,42 @@ def test_form_dict_excludes_large_base64():
     assert "image_base64" not in dumped
     assert "ref_image_b64" not in dumped
     assert dumped["has_product_image"] is True
+
+
+def test_rating_parsing_and_svg_render():
+    """Verify that rating strings with stars/emojis/floats do not cause TypeError."""
+    from tendoo_v3.icons import render_star_rating_svg
+    from tendoo_v3.schema import TendooCreativePlan
+    from tendoo_v3.renderer import build_template_html
+
+    # Test direct SVG rendering with various types
+    svg_emoji = render_star_rating_svg(count="⭐⭐⭐⭐⭐ 5.0 / 5.0")
+    assert svg_emoji.count("<svg") == 5
+
+    svg_str_num = render_star_rating_svg(count="4")
+    assert svg_str_num.count("<svg") == 4
+
+    svg_float_str = render_star_rating_svg(count="4.8")
+    assert svg_float_str.count("<svg") == 5
+
+    svg_int = render_star_rating_svg(count=3)
+    assert svg_int.count("<svg") == 3
+
+    # Test plan schema parsing
+    plan_dict = {
+        "template": "customer_feedback_card",
+        "hero": "Hảo Hảo dai ngon đậm vị",
+        "testimonial": "Chua cay ngon tuyệt",
+        "rating": "⭐⭐⭐⭐⭐ 5.0 / 5.0",
+    }
+    plan = TendooCreativePlan.from_dict(plan_dict)
+    assert plan.rating == 5
+
+    # Test HTML template compilation with rating
+    html = build_template_html(
+        plan=plan,
+        bg_data_uri="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        width=1024,
+        height=1024,
+    )
+    assert "stars-wrap" in html or "rating-stars" in html or "<svg" in html

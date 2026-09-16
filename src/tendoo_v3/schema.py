@@ -85,6 +85,27 @@ class TendooCreativePlan:
         else:
             steps = []
 
+        # Chuẩn hóa rating thành int (1-5) an toàn
+        raw_rating = data.get("rating")
+        parsed_rating: Optional[int] = None
+        if raw_rating is not None and str(raw_rating).strip():
+            if isinstance(raw_rating, (int, float)):
+                parsed_rating = max(1, min(5, int(round(raw_rating))))
+            elif isinstance(raw_rating, str):
+                star_count = raw_rating.count("⭐") + raw_rating.count("★")
+                if star_count > 0:
+                    parsed_rating = max(1, min(5, star_count))
+                else:
+                    import re
+                    m = re.search(r"(\d+(?:\.\d+)?)", raw_rating)
+                    if m:
+                        try:
+                            parsed_rating = max(1, min(5, int(round(float(m.group(1))))))
+                        except Exception:
+                            parsed_rating = 5
+                    else:
+                        parsed_rating = 5
+
         return cls(
             template=data.get("template", "sandwich_top_heavy"),
             hero=data.get("hero", ""),
@@ -92,7 +113,7 @@ class TendooCreativePlan:
             badge=data.get("badge"),
             tag_left=data.get("tag_left"),
             tag_right=data.get("tag_right"),
-            rating=data.get("rating"),
+            rating=parsed_rating,
             extra_texts=extra_texts,
             cta=data.get("cta"),
             store_info=data.get("store_info"),
