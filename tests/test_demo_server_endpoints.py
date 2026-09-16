@@ -24,16 +24,24 @@ def test_endpoints():
     print("--> Testing GET / (UI HTML)...")
     res = client.get("/")
     assert res.status_code == 200
-    assert "Tendoo AI v3" in res.text
+    assert "Tendoo" in res.text
     print("    ✓ UI served successfully!")
 
-    print("--> Testing GET /api/v3/health...")
-    res = client.get("/api/v3/health")
+    print("--> Testing GET /api/health...")
+    res = client.get("/api/health")
     assert res.status_code == 200
     data = res.json()
-    assert data["status"] == "healthy"
-    assert "active_llm" in data
-    print(f"    ✓ Health check OK! Active LLM: {data['active_llm']}, Mock: {data['mock_mode']}")
+    assert data["status"] == "online"
+    assert "gpus_available" in data
+    print(f"    ✓ Health check OK! Status: {data['status']}, GPUs: {data['gpus_available']}")
+
+    print("--> Testing GET /api/required-fields...")
+    res = client.get("/api/required-fields")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "success"
+    assert "promo" in data["fields"]
+    print(f"    ✓ Required fields OK! Categories: {list(data['fields'].keys())}")
 
     print("--> Testing GET /api/v3/templates...")
     res = client.get("/api/v3/templates")
@@ -43,30 +51,28 @@ def test_endpoints():
     assert len(data["templates"]) == 11
     print(f"    ✓ Templates catalog OK! Total: {len(data['templates'])} templates")
 
-    print("--> Testing POST /api/v3/plan-only (Fast Preview)...")
+    print("--> Testing POST /api/generate (Fast Preview / Mock)...")
     req_body = {
         "category": "promo",
-        "product_name": "Trà Đào Cam Sả Tươi Mát",
+        "title": "TRÀ ĐÀO CAM SẢ",
         "discount": "MUA 1 TẶNG 1",
-        "price": "45.000đ",
-        "highlights": "Trái cây tươi 100% • Giảm 50% topping",
-        "prompt": "Cốc trà đào thơm mát trên nền gỗ mộc, phong cách retro film grain, không vẽ hotline",
+        "applied_product": "Áp dụng toàn bộ menu",
+        "store_name": "Tendoo Tea",
+        "phone": "0988 123 456",
+        "image_description": "Ly trà đào thơm mát trên quầy bar gỗ tự nhiên, ánh sáng studio",
         "aspect_ratio": "1:1",
-        "template": "auto"
+        "fast_preview": True,
     }
-    res = client.post("/api/v3/plan-only", json=req_body)
+    res = client.post("/api/generate", json=req_body)
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "success"
-    assert "plan" in data
-    assert "palette" in data
-    assert "html" in data
-    assert "bg_data_uri" in data
-    
-    plan = data["plan"]
-    print(f"    ✓ Fast preview OK! Chosen template: {plan['template']}, VFX: {plan['style'].get('vfx')}")
-    print(f"    ✓ Palette Primary: {data['palette'].get('text_primary') if data['palette'] else 'N/A'}")
-    
+    assert "final_poster_url" in data
+    assert "blended_bg_url" in data
+    assert "mask_url" in data
+    assert "resolved_layout" in data
+    print(f"    ✓ Generate API OK! Resolved layout: {data['resolved_layout']}, Poster URL: {data['final_poster_url']}")
+
     print("\n=======================================================")
     print("🎉 ALL DEMO SERVER API ENDPOINTS VERIFIED SUCCESSFULLY!")
     print("=======================================================\n")

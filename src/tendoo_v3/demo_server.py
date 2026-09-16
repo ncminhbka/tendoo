@@ -254,48 +254,82 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Tendoo AI v3 Studio", version="3.0.0", lifespan=lifespan)
+app.mount("/outputs", StaticFiles(directory=str(OUTPUT_RUNS_DIR)), name="outputs")
+
+# Per-category required fields (matching business specification)
+CATEGORY_REQUIRED_FIELDS: Dict[str, List[str]] = {
+    "promo": ["discount"],
+    "product_intro": ["product_name", "product_desc"],
+    "opening": ["opening_date"],
+    "feedback": ["feedback_target", "feedback_quote"],
+    "recruitment": ["job_position", "apply_deadline", "apply_method"],
+    "guide": [],
+}
 
 
 class GenerateRequest(BaseModel):
     category: str = "promo"
-    # Form fields
-    product_name: Optional[str] = None
-    discount: Optional[str] = None
-    price: Optional[str] = None
-    product_desc: Optional[str] = None
-    highlights: Optional[str] = None
-    opening_date: Optional[str] = None
-    opening_promo: Optional[str] = None
-    booking_contact: Optional[str] = None
-    feedback_target: Optional[str] = None
-    feedback_quote: Optional[str] = None
-    feedback_rating: Optional[int] = None
+
+    # Common Store / Brand Info
+    store_name: Optional[str] = ""
+    phone: Optional[str] = ""
+    address: Optional[str] = ""
+    website_link: Optional[str] = ""
+    enable_qr: bool = False
+
+    # Promo Category Fields
+    title: Optional[str] = ""
+    image_base64: Optional[str] = None
+    ref_image_b64: Optional[str] = None
+    discount: Optional[str] = ""
+    applied_product: Optional[str] = ""
+    date_start: Optional[str] = ""
+    date_end: Optional[str] = ""
+    image_description: Optional[str] = ""
+
+    # Product Intro
+    product_name: Optional[str] = ""
+    price: Optional[str] = ""
+    product_desc: Optional[str] = ""
+    highlights: Optional[str] = ""
+
+    # Grand Opening
+    opening_date: Optional[str] = ""
+    opening_promo: Optional[str] = ""
+    booking_contact: Optional[str] = ""
+
+    # Customer Feedback
+    feedback_target: Optional[str] = ""
+    feedback_quote: Optional[str] = ""
+    feedback_rating: Optional[Any] = ""
+    special_offer: Optional[str] = ""
     customer_name: Optional[str] = None
-    job_position: Optional[str] = None
-    job_desc: Optional[str] = None
-    apply_deadline: Optional[str] = None
-    apply_method: Optional[str] = None
+
+    # Recruitment
+    job_position: Optional[str] = ""
+    job_desc: Optional[str] = ""
+    apply_deadline: Optional[str] = ""
+    apply_method: Optional[str] = ""
+
+    # Usage Guide
     guide_steps: Optional[List[str]] = None
-    store_name: Optional[str] = None
-    phone: Optional[str] = None
-    address: Optional[str] = None
-    qr_data: Optional[str] = None
+
+    # Visual / Design Controls
+    style_pref: Optional[str] = "auto"
+    primary_color: Optional[str] = None
+    aspect_ratio: str = "1:1"
+    num_images: int = 1
+    seed: int = 42
+    steps: Optional[int] = None
+    num_steps: Optional[int] = 50
+    guidance: float = 4.0
 
     # Freeform Prompt
     prompt: Optional[str] = None
 
-    # Template selection ("auto" or specific template name)
+    # Template selection ("auto" - user does not pick template on UI; backend chooses best)
     template: str = "auto"
-
-    # Settings
-    aspect_ratio: str = "1:1"
-    num_steps: int = 50
-    guidance: float = 4.0
-    seed: int = 42
-
-    # Uploaded image (optional Base64 data)
-    ref_image_b64: Optional[str] = None
-    image_base64: Optional[str] = None
+    qr_data: Optional[str] = None
 
     # Fast Preview mode (skip diffusion, generate plan & layout HTML only in 1s)
     fast_preview: bool = False
@@ -309,6 +343,13 @@ async def serve_ui():
     return HTMLResponse(content=UI_HTML_PATH.read_text(encoding="utf-8"))
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Silences browser favicon 404 probes."""
+    return Response(content=b"", media_type="image/x-icon")
+
+
+@app.get("/api/health")
 @app.get("/api/v3/health")
 async def health_check():
     """Kiểm tra tình trạng hoạt động của hệ thống, GPU và LLM."""
@@ -316,9 +357,11 @@ async def health_check():
     gpu_count = torch.cuda.device_count() if gpu_available else 0
     gpu_names = [torch.cuda.get_device_name(i) for i in range(gpu_count)] if gpu_available else []
     return {
-        "status": "healthy",
+        "status": "online",
+        "gpus_available": gpu_count,
         "mock_mode": IS_MOCK_MODE or DIT_MODEL is None,
         "models_loaded": DIT_MODEL is not None,
+        "model": "FLUX.2-klein-base-4B",
         "model_name": "FLUX.2-klein-base-4B",
         "gpu_available": gpu_available,
         "gpu_count": gpu_count,
@@ -328,6 +371,26 @@ async def health_check():
         "active_llm": LLM_MODEL,
         "version": "3.0.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@app.get("/api/required-fields")
+async def get_required_fields():
+    """Trả về danh sách các trường bắt buộc theo nghiệp vụ."""
+    return {
+        "status": "success",
+        "fields": CATEGORY_REQUIRED_FIELDS,
+        "guide_first_step": True,
+    }
+
+
+@app.get("/api/fonts")
+async def get_fonts():
+    """Trả về danh sách 19 phông chữ tiếng Việt chuẩn hóa."""
+    from tendoo.core.fonts import list_font_options
+    return {
+        "status": "success",
+        "groups": list_font_options(),
     }
 
 
@@ -419,27 +482,47 @@ async def plan_only(req: GenerateRequest):
     }
 
 
+@app.post("/api/generate")
 @app.post("/api/v3/generate")
 async def generate_poster(req: GenerateRequest):
     """Sinh poster hoàn chỉnh qua toàn bộ pipeline Tendoo v3."""
     start_time = time.time()
     width, height = ASPECT_RATIOS.get(req.aspect_ratio, (1024, 1024))
-    
+    raw_prompt = (req.prompt or req.image_description or "").strip()
+    num_steps = req.steps or req.num_steps or 50
+
     # 1. Thu thập dữ liệu form
     form_dict = req.model_dump(exclude={"prompt", "template", "aspect_ratio", "ref_image_b64", "fast_preview"})
-    
-    # 2. Bước Lập Kế Hoạch Sáng Tạo (LLM Creative Director)
+
+    # 2. Bước Lập Kế Hoạch Sáng Tạo (LLM Creative Director tự chọn Template tối ưu)
     logger.info(f"Generating creative plan for category: {req.category}...")
     plan = generate_creative_plan(
         form_data=form_dict,
-        prompt=req.prompt or "",
+        prompt=raw_prompt,
         aspect_ratio=req.aspect_ratio,
     )
     if req.template != "auto" and req.template in TEMPLATE_CATALOG:
         plan.template = req.template
     plan.template = _ensure_aspect_compatible(plan.template, req.aspect_ratio)
 
-    if req.qr_data:
+    run_id = f"run_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')[:19]}"
+    run_dir = OUTPUT_RUNS_DIR / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    qr_url = None
+    if req.enable_qr and req.website_link and req.website_link.strip():
+        from tendoo_v3.qr import generate_qr_base64
+        qr_b64 = generate_qr_base64(req.website_link.strip())
+        if qr_b64 and "," in qr_b64:
+            try:
+                qr_raw = base64.b64decode(qr_b64.split(",")[1])
+                qr_file = run_dir / "00_qr_code.png"
+                qr_file.write_bytes(qr_raw)
+                qr_url = f"outputs/{run_id}/00_qr_code.png"
+            except Exception as e:
+                logger.warning(f"Failed to save QR file: {e}")
+        plan.qr_code = req.website_link.strip()
+    elif req.qr_data:
         plan.qr_code = req.qr_data
 
     # 3. Bước Tính Toán Continuous Mask -- đọc thẳng hình học theo TÊN TEMPLATE
@@ -453,9 +536,6 @@ async def generate_poster(req: GenerateRequest):
     mask_img = Image.fromarray((mask_np * 255).astype(np.uint8), mode="L")
 
     # 4. Bước Sinh Nền Hình Ảnh (Diffusion hoặc Mock)
-    run_id = f"run_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')[:19]}"
-    run_dir = OUTPUT_RUNS_DIR / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
 
     if req.fast_preview or IS_MOCK_MODE or DIT_MODEL is None or not torch.cuda.is_available():
         logger.info("[Mock Mode] Generating aesthetic mock backdrop...")
@@ -542,7 +622,7 @@ async def generate_poster(req: GenerateRequest):
                         img_total = img_tokens
                         img_ids_total = img_ids
 
-                    timesteps = get_schedule(num_steps=req.num_steps, image_seq_len=img_tokens.shape[1])
+                    timesteps = get_schedule(num_steps=num_steps, image_seq_len=img_tokens.shape[1])
 
                     t0_dit = time.time()
                     out_blended = denoise_regional_velocity_blended(
@@ -559,7 +639,7 @@ async def generate_poster(req: GenerateRequest):
                         num_canvas_tokens=img_tokens.shape[1],
                     )
                     dur_dit = time.time() - t0_dit
-                    logger.info(f"  [DiT Finished] Euler ODE {req.num_steps} steps in {dur_dit:.2f}s")
+                    logger.info(f"  [DiT Finished] Euler ODE {num_steps} steps in {dur_dit:.2f}s")
 
                     # 5. Giải mã VAE Decoder trên DEVICE_AUX
                     target_ae_dtype = AE_DTYPE if AE_DTYPE is not None else torch.bfloat16
@@ -627,12 +707,32 @@ async def generate_poster(req: GenerateRequest):
 
     elapsed = round(time.time() - start_time, 2)
     logger.info(f"✅ Finished request in {elapsed}s -> {poster_path.name}")
+    final_poster_rel = f"outputs/{run_id}/poster.png"
+    bg_rel = f"outputs/{run_id}/background.png"
+    mask_rel = f"outputs/{run_id}/mask.png"
+
+    posters_list = [
+        {
+            "index": 0,
+            "seed": req.seed,
+            "final_poster_url": final_poster_rel,
+            "blended_bg_url": bg_rel,
+        }
+    ]
+
     _prune_old_runs()
 
     return {
         "status": "success",
         "run_id": run_id,
         "elapsed_seconds": elapsed,
+        "latency_s": str(elapsed),
+        "resolved_layout": plan.template,
+        "final_poster_url": final_poster_rel,
+        "blended_bg_url": bg_rel,
+        "mask_url": mask_rel,
+        "qr_url": qr_url,
+        "posters": posters_list,
         "plan": plan.to_dict(),
         "palette": palette_override,
         "poster_uri": poster_uri,
