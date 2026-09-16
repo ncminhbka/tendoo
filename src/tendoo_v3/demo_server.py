@@ -49,8 +49,16 @@ from fastapi.staticfiles import StaticFiles
 from tendoo.core.colors import analyze_color_harmony
 from tendoo_v3.catalog import TEMPLATE_CATALOG
 from tendoo_v3.geometry import get_zones
-from tendoo_v3.llm_planner import generate_creative_plan, LLM_MODEL, LLM_BASE_URL, LLM_API_KEY
 from tendoo_v3.mask_engine import generate_template_mask
+from tendoo_v3.llm_planner import (
+    generate_creative_plan,
+    free_local_qwen3,
+    load_local_qwen3,
+    LLM_MODEL,
+    LLM_BASE_URL,
+    LLM_API_KEY,
+    LLM_BACKEND,
+)
 from tendoo_v3.qr import generate_qr_base64
 from tendoo_v3.renderer import build_template_html, pil_to_base64_data_uri, render_plan_to_poster
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
@@ -103,6 +111,7 @@ def free_all_gpu_memory():
     AE_MODEL = None
     TEXT_ENCODER = None
     AE_DTYPE = None
+    free_local_qwen3()
 
     gc.collect()
     if torch.cuda.is_available():
@@ -188,13 +197,18 @@ async def lifespan(app: FastAPI):
     """Quản lý vòng đời khởi động và dọn dẹp bộ nhớ server."""
     global DIT_MODEL, AE_MODEL, TEXT_ENCODER, AE_DTYPE, DEVICE_DIT, DEVICE_AUX, IS_MOCK_MODE, ACTIVE_MODEL_NAME
 
+    active_backend = os.environ.get("TENDOO_V3_LLM_BACKEND", LLM_BACKEND).lower()
     logger.info("=" * 70)
     logger.info("🚀 STARTING TENDOO v3 STUDIO DEMO SERVER")
     logger.info(f"   Mock Mode: {IS_MOCK_MODE} | CUDA Available: {torch.cuda.is_available()}")
-    logger.info(f"   Active LLM Model: {LLM_MODEL}")
-    logger.info(f"   LLM Base URL:     {LLM_BASE_URL}")
-    key_status = f"CONFIGURED (***{LLM_API_KEY[-4:]})" if LLM_API_KEY else "NOT SET (Fallback Heuristic active)"
-    logger.info(f"   LLM API Key:      {key_status}")
+    logger.info(f"   LLM Backend:      {active_backend.upper()}")
+    if active_backend in ["api", "auto"]:
+        logger.info(f"   Active LLM Model: {LLM_MODEL}")
+        logger.info(f"   LLM Base URL:     {LLM_BASE_URL}")
+        key_status = f"CONFIGURED (***{LLM_API_KEY[-4:]})" if LLM_API_KEY else "NOT SET (Failover to Local Qwen3 / Heuristic)"
+        logger.info(f"   LLM API Key:      {key_status}")
+    if active_backend in ["local", "auto"]:
+        logger.info(f"   Local LLM:        Qwen3-4B on GPU (persistent-data)")
     logger.info("=" * 70)
 
     if not IS_MOCK_MODE and torch.cuda.is_available():
@@ -280,7 +294,14 @@ async def lifespan(app: FastAPI):
             TEXT_ENCODER = util.load_text_encoder(ACTIVE_MODEL_NAME, device=DEVICE_AUX)
 
             dur_init = time.time() - t0
-            logger.info(f"✅ All models loaded and warm in VRAM in {dur_init:.1f}s!")
+            logger.info(f"✅ All Diffusion models loaded and warm in VRAM in {dur_init:.1f}s!")
+
+            if active_backend == "local":
+                logger.info(f"⏳ Pre-loading Local Qwen3-4B CausalLM into VRAM on {DEVICE_AUX}...")
+                try:
+                    load_local_qwen3(device=DEVICE_AUX)
+                except Exception as e:
+                    logger.warning(f"Could not preload local Qwen3: {e}")
             for dev_id in range(num_gpus):
                 alloc = torch.cuda.memory_allocated(dev_id) / (1024 ** 2)
                 res = torch.cuda.memory_reserved(dev_id) / (1024 ** 2)

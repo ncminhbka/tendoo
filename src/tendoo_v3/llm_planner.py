@@ -47,11 +47,185 @@ _root_dir = _v3_dir.parent.parent
 load_dotenv(_v3_dir / ".env", override=False)
 load_dotenv(_root_dir / ".env", override=False)
 
-# Cấu hình môi trường OpenAI-compatible
+# Cấu hình Backend & Môi trường OpenAI-compatible / Local
+LLM_BACKEND = os.environ.get("TENDOO_V3_LLM_BACKEND", "auto").lower()  # "auto", "local", "api"
 LLM_BASE_URL = os.environ.get("TENDOO_V3_LLM_BASE_URL", "http://10.221.155.3:8004/v1")
 LLM_API_KEY = os.environ.get("TENDOO_V3_LLM_API_KEY", "")
 LLM_MODEL = os.environ.get("TENDOO_V3_LLM_MODEL", "Qwen/Qwen3.6-35B-A3B")
 LLM_TIMEOUT_S = float(os.environ.get("TENDOO_V3_LLM_TIMEOUT_S", "60"))
+LLM_CONNECT_TIMEOUT_S = float(os.environ.get("TENDOO_V3_LLM_CONNECT_TIMEOUT_S", "3.0"))
+
+# ==============================================================================
+# Local Qwen3-4B Checkpoint Resolution & In-Process Generation
+# (Học tập từ Phase C src/tendoo/llm_render_plan_server.py)
+# ==============================================================================
+
+LOCAL_QWEN_MODEL: Any = None
+LOCAL_QWEN_TOKENIZER: Any = None
+
+QWEN_CHATML_FALLBACK_TEMPLATE = (
+    "{%- for message in messages %}"
+    "{{- '<|im_start|>' + message['role'] + '\\n' + message['content'] + '<|im_end|>' + '\\n' }}"
+    "{%- endfor %}"
+    "{%- if add_generation_prompt %}"
+    "{{- '<|im_start|>assistant\\n' }}"
+    "{%- endif %}"
+)
+
+
+def resolve_qwen3_checkpoint_path(variant: str = "4B") -> str:
+    """Tự động tìm đường dẫn checkpoint Qwen3 có sẵn trên máy chủ:
+    1. Biến môi trường QWEN3_4B_MODEL_PATH hoặc TEXT_ENCODER_PATH
+    2. Thư mục persistent-data/FLUX.2-klein-base-4B/text_encoder
+    3. Hugging Face hub id 'Qwen/Qwen3-{variant}-FP8'
+    """
+    env_key = f"QWEN3_{variant.upper()}_MODEL_PATH"
+    if env_key in os.environ and os.path.exists(os.environ[env_key]):
+        return os.environ[env_key]
+    if "TEXT_ENCODER_PATH" in os.environ and os.path.exists(os.environ["TEXT_ENCODER_PATH"]):
+        return os.environ["TEXT_ENCODER_PATH"]
+
+    try:
+        from flux2.util import find_persistent_data_root
+        p_root = find_persistent_data_root()
+        if p_root:
+            for cp in (os.path.join(p_root, "text_encoder"), p_root):
+                if os.path.exists(cp) and (
+                    os.path.exists(os.path.join(cp, "config.json"))
+                    or os.path.exists(os.path.join(cp, "model.safetensors.index.json"))
+                ):
+                    return cp
+    except Exception:
+        pass
+
+    candidates = [
+        Path(os.path.expanduser("~/persistent-data/FLUX.2-klein-base-4B")),
+        Path("/home/jovyan/persistent-data/FLUX.2-klein-base-4B"),
+        Path("/persistent-data/FLUX.2-klein-base-4B"),
+        Path(os.path.expanduser("~/persistent-data/FLUX.2-klein-4B")),
+        Path("/home/jovyan/persistent-data/FLUX.2-klein-4B"),
+        Path("/persistent-data/FLUX.2-klein-4B"),
+    ]
+    for c in candidates:
+        te = c / "text_encoder"
+        if te.exists() and ((te / "config.json").exists() or (te / "model.safetensors.index.json").exists()):
+            return str(te)
+
+    return f"Qwen/Qwen3-{variant}-FP8"
+
+
+def resolve_tokenizer_path(model_path: str) -> str:
+    """Trên máy chủ FLUX.2, weights nằm ở 'text_encoder' nhưng tokenizer đầy đủ
+    thường nằm ở thư mục ngang hàng 'tokenizer'.
+    """
+    if os.path.exists(model_path):
+        parent_dir = os.path.dirname(os.path.abspath(model_path))
+        sibling_tokenizer = os.path.join(parent_dir, "tokenizer")
+        if os.path.exists(sibling_tokenizer):
+            return sibling_tokenizer
+    return model_path
+
+
+def load_local_qwen3(
+    model_path: Optional[str] = None,
+    device: Optional[str] = None,
+) -> Tuple[Any, Any]:
+    """Nạp Qwen3-4B CausalLM + Tokenizer cục bộ vào GPU để suy luận in-process."""
+    global LOCAL_QWEN_MODEL, LOCAL_QWEN_TOKENIZER
+    if LOCAL_QWEN_MODEL is not None and LOCAL_QWEN_TOKENIZER is not None:
+        return LOCAL_QWEN_MODEL, LOCAL_QWEN_TOKENIZER
+
+    import torch
+    if not torch.cuda.is_available():
+        raise RuntimeError("CUDA is not available on this machine. Local Qwen3 requires an NVIDIA GPU.")
+
+    m_path = model_path or resolve_qwen3_checkpoint_path("4B")
+    if not m_path or not os.path.exists(m_path):
+        raise FileNotFoundError(f"Local Qwen3 weights not found on disk: '{m_path}'. Bypassing remote download.")
+
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    target_device = device or os.environ.get("TENDOO_V3_DEVICE_AUX", "cuda:1" if torch.cuda.device_count() > 1 else "cuda:0")
+    t_path = resolve_tokenizer_path(m_path)
+
+    logger.info(f"[Local Qwen3] Khởi tạo mô hình Qwen3-4B cục bộ:")
+    logger.info(f"   Model Weights: {m_path}")
+    logger.info(f"   Tokenizer:     {t_path}")
+    logger.info(f"   Target Device: {target_device}")
+
+    LOCAL_QWEN_TOKENIZER = AutoTokenizer.from_pretrained(t_path, trust_remote_code=True)
+    if getattr(LOCAL_QWEN_TOKENIZER, "chat_template", None) is None:
+        logger.warning("[Local Qwen3] Tokenizer thiếu chat_template -> Cài đặt ChatML fallback.")
+        LOCAL_QWEN_TOKENIZER.chat_template = QWEN_CHATML_FALLBACK_TEMPLATE
+
+    dtype = torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else torch.float16
+    if not torch.cuda.is_available():
+        dtype = torch.float32
+
+    LOCAL_QWEN_MODEL = AutoModelForCausalLM.from_pretrained(
+        m_path,
+        torch_dtype=dtype,
+        device_map=target_device,
+        trust_remote_code=True,
+    ).eval()
+
+    logger.info(f"[Local Qwen3] ✅ Đã nạp thành công Qwen3-4B CausalLM lên {target_device}!")
+    return LOCAL_QWEN_MODEL, LOCAL_QWEN_TOKENIZER
+
+
+def free_local_qwen3():
+    """Giải phóng bộ nhớ VRAM của Qwen3 local."""
+    global LOCAL_QWEN_MODEL, LOCAL_QWEN_TOKENIZER
+    import gc
+    try:
+        import torch
+        if LOCAL_QWEN_MODEL is not None:
+            del LOCAL_QWEN_MODEL
+            LOCAL_QWEN_MODEL = None
+        if LOCAL_QWEN_TOKENIZER is not None:
+            del LOCAL_QWEN_TOKENIZER
+            LOCAL_QWEN_TOKENIZER = None
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        logger.info("[Local Qwen3] Đã giải phóng bộ nhớ VRAM của Qwen3 local.")
+    except Exception as e:
+        logger.warning(f"[Local Qwen3] Notice freeing VRAM: {e}")
+
+
+def generate_local_qwen_response(
+    model: Any,
+    tokenizer: Any,
+    messages: list,
+    max_new_tokens: int = 1536,
+) -> str:
+    """Thực hiện suy luận .generate() cục bộ với enable_thinking=False."""
+    import torch
+
+    device = next(model.parameters()).device
+    try:
+        text = tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True, enable_thinking=False
+        )
+    except Exception:
+        if getattr(tokenizer, "chat_template", None) is None:
+            tokenizer.chat_template = QWEN_CHATML_FALLBACK_TEMPLATE
+        text = tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
+
+    inputs = tokenizer(text, return_tensors="pt").to(device)
+    with torch.no_grad():
+        generated = model.generate(
+            **inputs,
+            max_new_tokens=max_new_tokens,
+            temperature=0.3,
+            do_sample=True,
+            top_p=0.9,
+            pad_token_id=tokenizer.eos_token_id,
+        )
+    raw = tokenizer.decode(generated[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+    return raw
 
 SYSTEM_PROMPT = f"""Bạn là Giám đốc Nghệ thuật & Sáng tạo (Creative Director) hàng đầu của Tendoo AI Studio.
 Nhiệm vụ của bạn là tiếp nhận thông tin từ form người dùng + câu lệnh tự do (freeform prompt) để tạo nên một kế hoạch sáng tạo poster hoàn hảo.
@@ -625,6 +799,60 @@ def _save_debug_trace(debug_trace: Dict[str, Any], custom_path: Optional[Path | 
         logger.warning(f"[LLM Planner] Không thể ghi file debug LLM: {e}")
 
 
+def _finalize_plan_from_dict(extracted_dict: Dict[str, Any], form_data: Dict[str, Any]) -> TendooCreativePlan:
+    """Chuẩn hóa template và làm sạch 100% Zero-Text Background cho DiT Base 4B."""
+    tpl_raw = str(extracted_dict.get("template") or "")
+    tpl_norm = tpl_raw.strip().lower().replace(" ", "_").replace("-", "_")
+    if tpl_norm in TEMPLATE_CATALOG:
+        extracted_dict["template"] = tpl_norm
+    else:
+        logger.warning(f"[LLM Planner] Template lạ '{tpl_raw}' không có trong catalog -> dùng mặc định sandwich_top_heavy.")
+        extracted_dict["template"] = "sandwich_top_heavy"
+
+    raw_sc = str(extracted_dict.get("scene_prompt") or "")
+    extracted_dict["scene_prompt"] = sanitize_scene_prompt(
+        raw_sc,
+        subject_hint=str(extracted_dict.get("hero") or form_data.get("title") or "")
+    )
+    raw_cor = str(extracted_dict.get("corridor_prompt") or "")
+    extracted_dict["corridor_prompt"] = sanitize_corridor_prompt(
+        raw_cor,
+        scene_prompt=extracted_dict["scene_prompt"]
+    )
+    return TendooCreativePlan.from_dict(extracted_dict)
+
+
+def _try_run_local_qwen(
+    messages: list,
+    form_data: Dict[str, Any],
+    debug_trace: Dict[str, Any],
+    t_start: float,
+) -> Optional[TendooCreativePlan]:
+    """Thực thi suy luận thông qua mô hình Qwen3-4B cục bộ trên GPU (in-process)."""
+    try:
+        logger.info("[LLM Planner] 🚀 Khởi chạy suy luận qua Local Qwen3-4B trên GPU...")
+        model, tokenizer = load_local_qwen3()
+        raw_content = generate_local_qwen_response(model, tokenizer, messages)
+        debug_trace["mode"] = "local_qwen3_4b"
+        debug_trace["output"]["raw_text_response"] = raw_content
+
+        extracted_dict = extract_balanced_json(raw_content)
+        debug_trace["output"]["extracted_json"] = extracted_dict
+        if not extracted_dict:
+            logger.warning("[LLM Planner] Local Qwen3 không sinh được JSON hợp lệ.")
+            return None
+
+        plan = _finalize_plan_from_dict(extracted_dict, form_data)
+        debug_trace["status"] = "success"
+        debug_trace["output"]["final_plan"] = plan.to_dict()
+        debug_trace["latency_seconds"] = round(time.time() - t_start, 4)
+        logger.info(f"[LLM Planner] ✅ Local Qwen3-4B thành công (Template: {plan.template}, Latency: {debug_trace['latency_seconds']}s)")
+        return plan
+    except Exception as e:
+        logger.warning(f"[LLM Planner] Không thể chạy Local Qwen3 ({e})")
+        return None
+
+
 def generate_creative_plan(
     form_data: Dict[str, Any],
     prompt: str = "",
@@ -633,11 +861,14 @@ def generate_creative_plan(
     debug_save_path: Optional[Path | str] = None,
     return_debug: bool = False,
 ) -> Union[TendooCreativePlan, Tuple[TendooCreativePlan, Dict[str, Any]]]:
-    """Gọi LLM (Qwen3.8-27B) để phân tích form + prompt và sinh TendooCreativePlan.
-    Nếu không có API key hoặc lỗi mạng -> tự động kích hoạt Fallback Heuristic.
-    Toàn bộ input, output thô và kết quả parse đều được lưu lại để phục vụ debug.
+    """Tạo TendooCreativePlan từ form + prompt:
+    Hỗ trợ 3 tầng kiến trúc:
+      1. API (OpenAI-compatible vLLM endpoint) nếu cấu hình và khả dụng.
+      2. Local Qwen3-4B CausalLM (chạy trực tiếp trên GPU in-process) không cần mạng ngoài.
+      3. Fallback Heuristic (quy tắc xác định thông minh) bảo đảm 100% không bao giờ crash.
     """
     t_start = time.time()
+    backend = os.environ.get("TENDOO_V3_LLM_BACKEND", LLM_BACKEND).lower()
     model_name = model_override or LLM_MODEL
     url = f"{LLM_BASE_URL.rstrip('/')}/chat/completions"
 
@@ -647,25 +878,26 @@ def generate_creative_plan(
         "aspect_ratio": aspect_ratio,
     }
     user_message = f"Dữ liệu người dùng nhập:\n```json\n{json.dumps(user_payload, ensure_ascii=False, indent=2)}\n```"
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_message},
+    ]
 
     request_body = {
         "model": model_name,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_message},
-        ],
+        "messages": messages,
         "temperature": 0.3,
         "max_tokens": 2048,
-        # Tắt thinking mode để không nuốt token (hỗ trợ cả root kwarg và OpenAI extra_body)
         "chat_template_kwargs": {"enable_thinking": False},
         "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
     }
 
     debug_trace: Dict[str, Any] = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "mode": "llm_api",
+        "mode": "llm_api" if backend != "local" else "local_qwen3_4b",
         "status": "pending",
         "input": {
+            "backend": backend,
             "form_data": form_data,
             "user_prompt": prompt,
             "aspect_ratio": aspect_ratio,
@@ -688,11 +920,44 @@ def generate_creative_plan(
         "error": None,
     }
 
-    # Lấy API Key từ biến môi trường
+    # =========================================================================
+    # NHÁNH 1: Chế độ THUẦN LOCAL (chạy trực tiếp Qwen 4B có sẵn trên GPU)
+    # =========================================================================
+    if backend == "local":
+        plan = _try_run_local_qwen(messages, form_data, debug_trace, t_start)
+        if plan:
+            _save_debug_trace(debug_trace, debug_save_path)
+            if return_debug:
+                return plan, debug_trace
+            return plan
+
+        logger.warning("[LLM Planner] Local Qwen3 không khả dụng -> Chuyển sang Fallback Heuristic.")
+        plan = fallback_heuristic_planner(form_data, prompt, aspect_ratio)
+        debug_trace["mode"] = "fallback_heuristic"
+        debug_trace["status"] = "fallback_local_unavailable"
+        debug_trace["output"]["final_plan"] = plan.to_dict()
+        debug_trace["latency_seconds"] = round(time.time() - t_start, 4)
+        _save_debug_trace(debug_trace, debug_save_path)
+        if return_debug:
+            return plan, debug_trace
+        return plan
+
+    # =========================================================================
+    # NHÁNH 2: Chế độ API hoặc AUTO (ưu tiên API, tự động failover sang Local)
+    # =========================================================================
     api_key = os.environ.get("TENDOO_V3_LLM_API_KEY") or LLM_API_KEY
 
-    # Nếu không có API KEY hoặc chưa cho phép chế độ không key -> chuyển sang Fallback Heuristic
+    # Nếu chưa có API key và không cho phép chế độ no-key:
     if not api_key and not os.environ.get("TENDOO_V3_LLM_ALLOW_NO_KEY"):
+        if backend == "auto":
+            # Tự động chuyển ngay sang Local Qwen3
+            plan = _try_run_local_qwen(messages, form_data, debug_trace, t_start)
+            if plan:
+                _save_debug_trace(debug_trace, debug_save_path)
+                if return_debug:
+                    return plan, debug_trace
+                return plan
+
         logger.info("[LLM Planner] Chưa cấu hình TENDOO_V3_LLM_API_KEY -> Sử dụng Fallback Heuristic.")
         plan = fallback_heuristic_planner(form_data, prompt, aspect_ratio)
         debug_trace["mode"] = "fallback_heuristic"
@@ -713,7 +978,12 @@ def generate_creative_plan(
 
     try:
         logger.info(f"[LLM Planner] Gọi {model_name} tại {url}...")
-        resp = requests.post(url, json=request_body, headers=headers, timeout=LLM_TIMEOUT_S)
+        resp = requests.post(
+            url,
+            json=request_body,
+            headers=headers,
+            timeout=(LLM_CONNECT_TIMEOUT_S, LLM_TIMEOUT_S),
+        )
         debug_trace["output"]["http_status_code"] = resp.status_code
         resp.raise_for_status()
         resp_data = resp.json()
@@ -726,51 +996,32 @@ def generate_creative_plan(
         debug_trace["output"]["extracted_json"] = extracted_dict
 
         if not extracted_dict:
-            logger.warning("[LLM Planner] Không parse được JSON từ phản hồi LLM -> Kích hoạt Fallback.")
-            plan = fallback_heuristic_planner(form_data, prompt, aspect_ratio)
-            debug_trace["mode"] = "fallback_heuristic"
-            debug_trace["status"] = "fallback_unparseable_json"
-            debug_trace["error"] = f"Phản hồi từ LLM không chứa JSON hợp lệ. Raw content: {content[:500]}"
-            debug_trace["output"]["final_plan"] = plan.to_dict()
-            debug_trace["latency_seconds"] = round(time.time() - t_start, 4)
-            _save_debug_trace(debug_trace, debug_save_path)
-            if return_debug:
-                return plan, debug_trace
-            return plan
+            raise ValueError(f"Phản hồi từ LLM không chứa JSON hợp lệ. Raw content: {content[:400]}")
 
-        # Validate template -- chuẩn hoá trước khi so khớp
-        tpl_raw = str(extracted_dict.get("template") or "")
-        tpl_norm = tpl_raw.strip().lower().replace(" ", "_").replace("-", "_")
-        if tpl_norm in TEMPLATE_CATALOG:
-            extracted_dict["template"] = tpl_norm
-        else:
-            logger.warning(f"[LLM Planner] Template lạ '{tpl_raw}' không có trong catalog -> dùng mặc định sandwich_top_heavy.")
-            extracted_dict["template"] = "sandwich_top_heavy"
-
-        # Bảo đảm tuyệt đối 100% Zero-Text Background cho DiT Base 4B
-        raw_sc = str(extracted_dict.get("scene_prompt") or "")
-        extracted_dict["scene_prompt"] = sanitize_scene_prompt(
-            raw_sc,
-            subject_hint=str(extracted_dict.get("hero") or form_data.get("title") or "")
-        )
-        raw_cor = str(extracted_dict.get("corridor_prompt") or "")
-        extracted_dict["corridor_prompt"] = sanitize_corridor_prompt(
-            raw_cor,
-            scene_prompt=extracted_dict["scene_prompt"]
-        )
-
-        plan = TendooCreativePlan.from_dict(extracted_dict)
+        plan = _finalize_plan_from_dict(extracted_dict, form_data)
         debug_trace["status"] = "success"
         debug_trace["output"]["final_plan"] = plan.to_dict()
         debug_trace["latency_seconds"] = round(time.time() - t_start, 4)
         _save_debug_trace(debug_trace, debug_save_path)
-        logger.info(f"[LLM Planner] ✅ Kế hoạch sáng tạo thành công (Template: {plan.template}, Latency: {debug_trace['latency_seconds']}s)")
+        logger.info(f"[LLM Planner] ✅ Kế hoạch sáng tạo API thành công (Template: {plan.template}, Latency: {debug_trace['latency_seconds']}s)")
         if return_debug:
             return plan, debug_trace
         return plan
 
     except Exception as e:
-        logger.warning(f"[LLM Planner] Lỗi khi kết nối tới LLM ({e}) -> Kích hoạt Fallback Heuristic.")
+        logger.warning(f"[LLM Planner] Lỗi kết nối tới LLM API ({e}).")
+        # Failover tự động sang Local Qwen3 nếu ở chế độ auto
+        if backend == "auto":
+            logger.info("[LLM Planner] 🔄 Tự động chuyển vùng sang Local Qwen3-4B trên GPU...")
+            plan = _try_run_local_qwen(messages, form_data, debug_trace, t_start)
+            if plan:
+                _save_debug_trace(debug_trace, debug_save_path)
+                if return_debug:
+                    return plan, debug_trace
+                return plan
+
+        # Fallback Heuristic nếu cả API lẫn Local đều không chạy được
+        logger.warning("[LLM Planner] Kích hoạt Fallback Heuristic.")
         plan = fallback_heuristic_planner(form_data, prompt, aspect_ratio)
         debug_trace["mode"] = "fallback_heuristic"
         debug_trace["status"] = "fallback_exception"
@@ -787,21 +1038,45 @@ __all__ = [
     "_save_debug_trace",
     "extract_balanced_json",
     "fallback_heuristic_planner",
+    "free_local_qwen3",
     "generate_creative_plan",
+    "generate_local_qwen_response",
+    "load_local_qwen3",
     "parse_user_prompt_intents",
+    "resolve_qwen3_checkpoint_path",
+    "resolve_tokenizer_path",
     "sanitize_corridor_prompt",
     "sanitize_scene_prompt",
+    "LLM_BACKEND",
+    "LLM_BASE_URL",
+    "LLM_API_KEY",
+    "LLM_MODEL",
 ]
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Tendoo v3 LLM Planner Test")
+    parser.add_argument("--backend", type=str, default=None, choices=["local", "api", "auto"], help="Override LLM backend")
+    args = parser.parse_args()
+
+    if args.backend:
+        os.environ["TENDOO_V3_LLM_BACKEND"] = args.backend
+
+    active_backend = os.environ.get("TENDOO_V3_LLM_BACKEND", LLM_BACKEND).lower()
+
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     print("=" * 70)
     print("🔍 TENDOO v3 LLM PLANNER - CONNECTION & INFERENCE TEST")
-    print(f"   Base URL: {LLM_BASE_URL}")
-    print(f"   Model:    {LLM_MODEL}")
-    key_disp = f"CONFIGURED (***{LLM_API_KEY[-4:]})" if LLM_API_KEY else "NOT SET"
-    print(f"   API Key:  {key_disp}")
+    print(f"   Active Backend: {active_backend.upper()}")
+    if active_backend in ["api", "auto"]:
+        print(f"   API Base URL:   {LLM_BASE_URL}")
+        print(f"   API Model:      {LLM_MODEL}")
+        key_disp = f"CONFIGURED (***{LLM_API_KEY[-4:]})" if LLM_API_KEY else "NOT SET"
+        print(f"   API Key:        {key_disp}")
+    if active_backend in ["local", "auto"]:
+        resolved_cp = resolve_qwen3_checkpoint_path("4B")
+        print(f"   Local Qwen3:    {resolved_cp}")
     print("=" * 70)
 
     test_form = {
@@ -811,18 +1086,20 @@ if __name__ == "__main__":
         "applied_product": "Thùng 30 gói",
         "store_name": "Acecook Mart",
     }
-    test_prompt = "Poster phong cách điện ảnh ấm cúng, chữ đặt ở góc trên"
+    test_prompt = "Poster phong cách điện ảnh ấm cúng, chữ đặt ở góc trên bên trái"
     print("\n👉 Gửi request thử nghiệm tới LLM Planner...")
     plan, debug_info = generate_creative_plan(test_form, prompt=test_prompt, return_debug=True)
 
     print(f"\n📊 KẾT QUẢ KIỂM TRA:")
-    print(f"   Mode:    {debug_info.get('mode')}")
-    print(f"   Status:  {debug_info.get('status')}")
-    print(f"   Latency: {debug_info.get('latency_seconds')}s")
+    print(f"   Mode:               {debug_info.get('mode')}")
+    print(f"   Status:             {debug_info.get('status')}")
+    print(f"   Latency:            {debug_info.get('latency_seconds')}s")
     if debug_info.get("error"):
-        print(f"   Error:   {debug_info.get('error')}")
+        print(f"   Notice/Error:       {debug_info.get('error')}")
     print(f"   Template được chọn: {plan.template}")
+    print(f"   Orientation:        {plan.orientation}")
     print(f"   Hero text:          {plan.hero}")
     print(f"   Scene Prompt:       {plan.scene_prompt[:120]}...")
     print("=" * 70)
+
 
