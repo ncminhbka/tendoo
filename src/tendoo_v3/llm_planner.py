@@ -50,7 +50,7 @@ load_dotenv(_root_dir / ".env", override=False)
 # Cấu hình môi trường OpenAI-compatible
 LLM_BASE_URL = os.environ.get("TENDOO_V3_LLM_BASE_URL", "http://10.221.155.3:8004/v1")
 LLM_API_KEY = os.environ.get("TENDOO_V3_LLM_API_KEY", "")
-LLM_MODEL = os.environ.get("TENDOO_V3_LLM_MODEL", "Qwen/Qwen3.8-27B")
+LLM_MODEL = os.environ.get("TENDOO_V3_LLM_MODEL", "Qwen/Qwen3.6-35B-A3B")
 LLM_TIMEOUT_S = float(os.environ.get("TENDOO_V3_LLM_TIMEOUT_S", "60"))
 
 SYSTEM_PROMPT = f"""Bạn là Giám đốc Nghệ thuật & Sáng tạo (Creative Director) hàng đầu của Tendoo AI Studio.
@@ -656,8 +656,9 @@ def generate_creative_plan(
         ],
         "temperature": 0.3,
         "max_tokens": 2048,
-        # Tắt thinking mode để không bị nuốt token
+        # Tắt thinking mode để không nuốt token (hỗ trợ cả root kwarg và OpenAI extra_body)
         "chat_template_kwargs": {"enable_thinking": False},
+        "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
     }
 
     debug_trace: Dict[str, Any] = {
@@ -791,3 +792,37 @@ __all__ = [
     "sanitize_corridor_prompt",
     "sanitize_scene_prompt",
 ]
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+    print("=" * 70)
+    print("🔍 TENDOO v3 LLM PLANNER - CONNECTION & INFERENCE TEST")
+    print(f"   Base URL: {LLM_BASE_URL}")
+    print(f"   Model:    {LLM_MODEL}")
+    key_disp = f"CONFIGURED (***{LLM_API_KEY[-4:]})" if LLM_API_KEY else "NOT SET"
+    print(f"   API Key:  {key_disp}")
+    print("=" * 70)
+
+    test_form = {
+        "category": "promo",
+        "title": "Mì Hảo Hảo Tôm Chua Cay",
+        "discount": "GIẢM 50%",
+        "applied_product": "Thùng 30 gói",
+        "store_name": "Acecook Mart",
+    }
+    test_prompt = "Poster phong cách điện ảnh ấm cúng, chữ đặt ở góc trên"
+    print("\n👉 Gửi request thử nghiệm tới LLM Planner...")
+    plan, debug_info = generate_creative_plan(test_form, prompt=test_prompt, return_debug=True)
+
+    print(f"\n📊 KẾT QUẢ KIỂM TRA:")
+    print(f"   Mode:    {debug_info.get('mode')}")
+    print(f"   Status:  {debug_info.get('status')}")
+    print(f"   Latency: {debug_info.get('latency_seconds')}s")
+    if debug_info.get("error"):
+        print(f"   Error:   {debug_info.get('error')}")
+    print(f"   Template được chọn: {plan.template}")
+    print(f"   Hero text:          {plan.hero}")
+    print(f"   Scene Prompt:       {plan.scene_prompt[:120]}...")
+    print("=" * 70)
+
