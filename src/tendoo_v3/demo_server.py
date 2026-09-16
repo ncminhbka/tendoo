@@ -68,6 +68,7 @@ logger = logging.getLogger("TendooV3.Server")
 DIT_MODEL: Any = None
 AE_MODEL: Any = None
 TEXT_ENCODER: Any = None
+AE_DTYPE: Any = None
 DEVICE_DIT: str = os.environ.get("TENDOO_V3_DEVICE_DIT", "cuda:0")
 DEVICE_AUX: str = os.environ.get("TENDOO_V3_DEVICE_AUX", "cuda:1")
 INFER_LOCK = asyncio.Lock()
@@ -92,7 +93,7 @@ ASPECT_RATIOS = {
 
 def free_all_gpu_memory():
     """Giải phóng triệt để VRAM trên toàn bộ GPU CUDA."""
-    global DIT_MODEL, AE_MODEL, TEXT_ENCODER
+    global DIT_MODEL, AE_MODEL, TEXT_ENCODER, AE_DTYPE
     logger.info("Releasing GPU memory...")
     del DIT_MODEL
     del AE_MODEL
@@ -100,6 +101,7 @@ def free_all_gpu_memory():
     DIT_MODEL = None
     AE_MODEL = None
     TEXT_ENCODER = None
+    AE_DTYPE = None
 
     gc.collect()
     if torch.cuda.is_available():
@@ -183,7 +185,7 @@ def _prune_old_runs():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Quản lý vòng đời khởi động và dọn dẹp bộ nhớ server."""
-    global DIT_MODEL, AE_MODEL, TEXT_ENCODER, DEVICE_DIT, DEVICE_AUX, IS_MOCK_MODE
+    global DIT_MODEL, AE_MODEL, TEXT_ENCODER, AE_DTYPE, DEVICE_DIT, DEVICE_AUX, IS_MOCK_MODE
 
     logger.info("=" * 70)
     logger.info("🚀 STARTING TENDOO v3 STUDIO DEMO SERVER")
@@ -192,17 +194,59 @@ async def lifespan(app: FastAPI):
     logger.info("=" * 70)
 
     if not IS_MOCK_MODE and torch.cuda.is_available():
+        logger.info("=" * 80)
+        logger.info("🚀 INITIALIZING FLUX.2 KLEIN BASE 4B FOR TENDOO V3 DEMO SERVER")
+        logger.info("=" * 80)
+
+        num_gpus = torch.cuda.device_count()
+        if num_gpus > 1:
+            DEVICE_DIT = os.environ.get("TENDOO_V3_DEVICE_DIT", "cuda:0")
+            DEVICE_AUX = os.environ.get("TENDOO_V3_DEVICE_AUX", "cuda:1")
+            logger.info(f"  [Device Setup] Multi-GPU: DiT on {DEVICE_DIT}, AE & Qwen3 on {DEVICE_AUX}")
+        else:
+            DEVICE_DIT = DEVICE_AUX = os.environ.get("TENDOO_V3_DEVICE_DIT", "cuda:0")
+            logger.info(f"  [Device Setup] Single GPU: All models on {DEVICE_DIT}")
+
+        from flux2 import util
+
+        model_name = "flux.2-klein-base-4b"
+        pdata_candidates = [
+            Path(os.path.expanduser("~/persistent-data/FLUX.2-klein-base-4B")),
+            Path("/home/jovyan/persistent-data/FLUX.2-klein-base-4B"),
+            Path("/persistent-data/FLUX.2-klein-base-4B"),
+        ]
+        for pdata in pdata_candidates:
+            cand = pdata / "flux-2-klein-base-4b.safetensors"
+            if cand.exists() and "KLEIN_4B_BASE_MODEL_PATH" not in os.environ:
+                os.environ["KLEIN_4B_BASE_MODEL_PATH"] = str(cand)
+                logger.info(f"Found local DiT weights: {cand}")
+                break
+
+        t0 = time.time()
         try:
-            num_gpus = torch.cuda.device_count()
-            if num_gpus > 1:
-                DEVICE_DIT = "cuda:0"
-                DEVICE_AUX = "cuda:1"
-                logger.info(f"Multi-GPU Mode: DiT on {DEVICE_DIT}, Auxiliary on {DEVICE_AUX}")
-            else:
-                DEVICE_DIT = DEVICE_AUX = "cuda:0"
-                logger.info(f"Single-GPU Mode: All on {DEVICE_DIT}")
+            logger.info("⏳ Loading DiT 4B Base weights into VRAM...")
+            DIT_MODEL = util.load_flow_model(model_name, device=DEVICE_DIT)
+            DIT_MODEL.eval()
+
+            logger.info("⏳ Loading AutoEncoder (VAE) weights...")
+            AE_MODEL = util.load_ae(model_name, device=DEVICE_AUX)
+            AE_MODEL.eval()
+            AE_DTYPE = next(AE_MODEL.parameters()).dtype
+
+            logger.info("⏳ Loading Qwen3 TextEncoder weights...")
+            TEXT_ENCODER = util.load_text_encoder(model_name, device=DEVICE_AUX)
+
+            dur_init = time.time() - t0
+            logger.info(f"✅ All models loaded and warm in VRAM in {dur_init:.1f}s!")
+            for dev_id in range(num_gpus):
+                alloc = torch.cuda.memory_allocated(dev_id) / (1024 ** 2)
+                res = torch.cuda.memory_reserved(dev_id) / (1024 ** 2)
+                logger.info(f"  [GPU {dev_id}] Occupied: {alloc:.1f} MB (Reserved: {res:.1f} MB)")
+            logger.info("=" * 80)
         except Exception as e:
-            logger.warning(f"GPU initialization notice: {e}")
+            logger.error(f"❌ Failed to load GPU models ({e}). Falling back to Mock Mode.", exc_info=True)
+            free_all_gpu_memory()
+            IS_MOCK_MODE = True
 
     yield
 
@@ -251,6 +295,7 @@ class GenerateRequest(BaseModel):
 
     # Uploaded image (optional Base64 data)
     ref_image_b64: Optional[str] = None
+    image_base64: Optional[str] = None
 
     # Fast Preview mode (skip diffusion, generate plan & layout HTML only in 1s)
     fast_preview: bool = False
@@ -272,10 +317,14 @@ async def health_check():
     gpu_names = [torch.cuda.get_device_name(i) for i in range(gpu_count)] if gpu_available else []
     return {
         "status": "healthy",
-        "mock_mode": IS_MOCK_MODE,
+        "mock_mode": IS_MOCK_MODE or DIT_MODEL is None,
+        "models_loaded": DIT_MODEL is not None,
+        "model_name": "FLUX.2-klein-base-4B",
         "gpu_available": gpu_available,
         "gpu_count": gpu_count,
         "gpu_names": gpu_names,
+        "device_dit": DEVICE_DIT,
+        "device_aux": DEVICE_AUX,
         "active_llm": LLM_MODEL,
         "version": "3.0.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -408,8 +457,8 @@ async def generate_poster(req: GenerateRequest):
     run_dir = OUTPUT_RUNS_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    if req.fast_preview or IS_MOCK_MODE or DIT_MODEL is None:
-        logger.info("[Diffusion Phase] Sinh ảnh nền Mock Backdrop theo bảng màu và prompt...")
+    if req.fast_preview or IS_MOCK_MODE or DIT_MODEL is None or not torch.cuda.is_available():
+        logger.info("[Mock Mode] Generating aesthetic mock backdrop...")
         bg_img = generate_mock_backdrop(
             width=width,
             height=height,
@@ -421,16 +470,117 @@ async def generate_poster(req: GenerateRequest):
     else:
         # Chạy suy luận DiT trên GPU với Khóa bảo vệ Async Lock
         async with INFER_LOCK:
-            logger.info("[Diffusion Phase] Chạy Single-Pass Regional Velocity Blending trên GPU...")
-            # TODO: Khi model checkpoint được nạp vào VRAM, denoise_regional_velocity_blended sẽ được gọi trực tiếp tại đây
-            bg_img = generate_mock_backdrop(
-                width=width,
-                height=height,
-                theme_color=plan.style.theme_color,
-                background_tone=plan.style.background_tone,
-                scene_prompt=plan.scene_prompt,
-                spatial_mask=mask_np,
+            logger.info("[Diffusion Phase] Running Single-Pass Regional Velocity Blending on GPU...")
+            from flux2.sampling import get_schedule, prc_img, prc_txt
+
+            prompt_scene = plan.scene_prompt or req.prompt or "Studio product photography, high-end commercial aesthetic, beautiful lighting"
+            prompt_corr = plan.corridor_prompt or (
+                "Smooth background surface in soft focus, gentle bokeh, clean negative space without objects, "
+                "matching scene color and lighting"
             )
+
+            try:
+                with torch.no_grad():
+                    # 1. Mã hóa prompt bằng Qwen3 FP8 trên DEVICE_AUX, đẩy sang DEVICE_DIT
+                    ctx_scene = TEXT_ENCODER([prompt_scene]).to(torch.bfloat16)
+                    ctx_scene, ctx_scene_ids = prc_txt(ctx_scene[0])
+                    ctx_scene = ctx_scene.unsqueeze(0).to(DEVICE_DIT)
+                    ctx_scene_ids = ctx_scene_ids.unsqueeze(0).to(DEVICE_DIT)
+
+                    ctx_corridor = TEXT_ENCODER([prompt_corr]).to(torch.bfloat16)
+                    ctx_corridor, ctx_corridor_ids = prc_txt(ctx_corridor[0])
+                    ctx_corridor = ctx_corridor.unsqueeze(0).to(DEVICE_DIT)
+                    ctx_corridor_ids = ctx_corridor_ids.unsqueeze(0).to(DEVICE_DIT)
+
+                    # 2. Downsample mặt nạ Gaussian sang latent space (1/16 độ phân giải)
+                    w_lat, h_lat = width // 16, height // 16
+                    mask_scaled = Image.fromarray((mask_np * 255).astype(np.uint8)).resize(
+                        (w_lat, h_lat), Image.Resampling.BICUBIC
+                    )
+                    mask_flat = torch.from_numpy(
+                        np.array(mask_scaled, dtype=np.float32) / 255.0
+                    ).reshape(1, -1, 1).to(DEVICE_DIT)
+
+                    # 3. Mã hóa ảnh sản phẩm tham chiếu (nếu có tải lên) tại RoPE t=10.0
+                    ref_toks = None
+                    ref_ids = None
+                    raw_b64 = req.ref_image_b64 or req.image_base64
+                    if raw_b64:
+                        try:
+                            logger.info("  [Ref Product] Encoding uploaded product into VAE latents at RoPE t=10.0...")
+                            if "," in raw_b64:
+                                raw_b64 = raw_b64.split(",")[1]
+                            ref_raw = base64.b64decode(raw_b64)
+                            ref_file = run_dir / "00_uploaded_product.png"
+                            ref_file.write_bytes(ref_raw)
+
+                            r_toks, r_ids = load_and_encode_ref_image(
+                                ref_image_path=ref_file,
+                                ae=AE_MODEL,
+                                device=DEVICE_DIT,
+                                ae_device=DEVICE_AUX,
+                                target_dim=512,
+                                time_offset=10.0,
+                            )
+                            ref_toks = r_toks.to(dtype=torch.bfloat16)
+                            ref_ids = r_ids
+                            logger.info(f"  [✓] In-Context Product Reference attached (shape: {ref_toks.shape})")
+                        except Exception as e:
+                            logger.warning(f"  [!] Failed to encode reference product image: {e}")
+
+                    # 4. Tạo nhiễu hạt khởi tạo canvas và lịch trình Euler ODE
+                    torch.manual_seed(req.seed)
+                    z_init = torch.randn(1, 128, h_lat, w_lat, device=DEVICE_DIT, dtype=torch.bfloat16)
+                    img_tokens, img_ids = prc_img(z_init[0])
+                    img_tokens = img_tokens.unsqueeze(0).to(DEVICE_DIT)
+                    img_ids = img_ids.unsqueeze(0).to(DEVICE_DIT)
+
+                    if ref_toks is not None and ref_ids is not None:
+                        img_total = torch.cat([img_tokens, ref_toks], dim=1)
+                        img_ids_total = torch.cat([img_ids, ref_ids], dim=1)
+                    else:
+                        img_total = img_tokens
+                        img_ids_total = img_ids
+
+                    timesteps = get_schedule(num_steps=req.num_steps, image_seq_len=img_tokens.shape[1])
+
+                    t0_dit = time.time()
+                    out_blended = denoise_regional_velocity_blended(
+                        model=DIT_MODEL,
+                        img=img_total,
+                        img_ids=img_ids_total,
+                        txt_scene=ctx_scene,
+                        txt_scene_ids=ctx_scene_ids,
+                        txt_corridor=ctx_corridor,
+                        txt_corridor_ids=ctx_corridor_ids,
+                        spatial_mask=mask_flat,
+                        timesteps=timesteps,
+                        guidance=req.guidance,
+                        num_canvas_tokens=img_tokens.shape[1],
+                    )
+                    dur_dit = time.time() - t0_dit
+                    logger.info(f"  [DiT Finished] Euler ODE {req.num_steps} steps in {dur_dit:.2f}s")
+
+                    # 5. Giải mã VAE Decoder trên DEVICE_AUX
+                    target_ae_dtype = AE_DTYPE if AE_DTYPE is not None else torch.bfloat16
+                    z_dec = out_blended[0].transpose(0, 1).reshape(1, 128, h_lat, w_lat).to(
+                        device=DEVICE_AUX, dtype=target_ae_dtype
+                    )
+                    with torch.inference_mode():
+                        x_dec = AE_MODEL.decode(z_dec).float()
+                    x_arr = ((x_dec[0].clamp(-1, 1) + 1) * 127.5).byte().permute(1, 2, 0).cpu().numpy()
+                    bg_img = Image.fromarray(x_arr)
+
+            except Exception as e:
+                logger.error(f"❌ Lỗi trong quá trình GPU Diffusion ({e}) -> Tự động chuyển sang Mock Backdrop.", exc_info=True)
+                bg_img = generate_mock_backdrop(
+                    width=width,
+                    height=height,
+                    theme_color=plan.style.theme_color,
+                    background_tone=plan.style.background_tone,
+                    scene_prompt=plan.scene_prompt,
+                    spatial_mask=mask_np,
+                )
 
     # Lưu ảnh nền và mask vào đĩa
     bg_path = run_dir / "background.png"
@@ -499,10 +649,29 @@ def main():
     parser.add_argument("--host", type=str, default="0.0.0.0", help="Host address to bind")
     parser.add_argument("--port", type=int, default=8088, help="Port to listen on")
     parser.add_argument("--mock", action="store_true", help="Force mock mode without loading GPU weights")
+    parser.add_argument("--device_dit", type=str, default=None, help="CUDA device for DiT model (default: cuda:0)")
+    parser.add_argument("--device_aux", type=str, default=None, help="CUDA device for VAE & Qwen3 (default: cuda:1)")
+    parser.add_argument("--model_path", type=str, default=None, help="Path to FLUX.2-klein-base-4B directory or checkpoint")
     args = parser.parse_args()
 
     if args.mock:
         os.environ["MOCK_MODE"] = "1"
+    if args.device_dit:
+        os.environ["TENDOO_V3_DEVICE_DIT"] = args.device_dit
+    if args.device_aux:
+        os.environ["TENDOO_V3_DEVICE_AUX"] = args.device_aux
+    if args.model_path:
+        os.environ["FLUX_CHECKPOINT_DIR"] = args.model_path
+        p = Path(args.model_path)
+        if p.is_dir():
+            cand = p / "flux-2-klein-base-4b.safetensors"
+            if cand.exists():
+                os.environ["KLEIN_4B_BASE_MODEL_PATH"] = str(cand)
+            cand_ae = p / "vae" / "diffusion_pytorch_model.safetensors"
+            if cand_ae.exists():
+                os.environ["AE_MODEL_PATH"] = str(cand_ae)
+        elif p.is_file():
+            os.environ["KLEIN_4B_BASE_MODEL_PATH"] = str(p)
 
     uvicorn.run(app, host=args.host, port=args.port)
 
