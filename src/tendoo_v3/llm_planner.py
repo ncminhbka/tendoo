@@ -576,6 +576,11 @@ def fallback_heuristic_planner(
         badge = form_data.get("special_offer") or form_data.get("discount")
         testimonial = form_data.get("feedback_quote") or "Trải nghiệm dịch vụ tuyệt vời, chất lượng vượt trội ngoài mong đợi!"
         reviewer_name = form_data.get("customer_name") or "Khách hàng thân thiết"
+        raw_hl = form_data.get("feedback_highlights") or form_data.get("highlights")
+        if raw_hl:
+            for item in str(raw_hl).split(","):
+                if item.strip():
+                    extra_texts.append(item.strip())
         raw_r = str(form_data.get("feedback_rating", "5"))
         rating = 5
         for ch in raw_r:

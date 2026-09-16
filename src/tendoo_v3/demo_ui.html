@@ -150,82 +150,149 @@
       margin-bottom: 22px;
     }
 
-    /* 6 Intent Cards Grid */
+    /* 6 Intent Buttons Grid (100% Theo Yêu Cầu Tendoo) */
     .intent-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
-      margin-bottom: 32px;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 1200px) {
+      .intent-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 680px) {
+      .intent-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     .intent-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius-lg);
-      padding: 18px 16px;
+      background: linear-gradient(180deg, #111A2E 0%, #0A101D 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px 14px;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      transition: all 0.22s ease;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
       position: relative;
       cursor: pointer;
       user-select: none;
+      overflow: hidden;
+    }
+
+    .intent-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: transparent;
+      transition: background 0.22s ease;
     }
 
     .intent-card:hover {
-      border-color: rgba(56, 189, 248, 0.4);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      border-color: rgba(56, 189, 248, 0.45);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4), 0 0 12px rgba(56, 189, 248, 0.15);
     }
 
     .intent-card.active {
       border-color: #38BDF8;
-      background: linear-gradient(180deg, #14213B 0%, #101827 100%);
-      box-shadow: 0 8px 24px rgba(6, 182, 212, 0.22);
+      background: linear-gradient(180deg, rgba(37, 99, 235, 0.22) 0%, rgba(13, 20, 36, 0.95) 100%);
+      box-shadow: 0 8px 28px rgba(6, 182, 212, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .intent-card.active::before {
+      background: linear-gradient(90deg, #38BDF8, #818CF8);
+    }
+
+    .card-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
     }
 
     .card-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
-      height: 32px;
-      margin-bottom: 4px;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.22s ease;
+    }
+
+    .intent-card.active .card-icon {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .card-step-num {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      font-family: monospace;
+    }
+
+    .intent-card.active .card-step-num {
+      color: #38BDF8;
     }
 
     .card-title {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
-      color: #fff;
-      line-height: 1.3;
+      color: #F8FAFC;
+      line-height: 1.35;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
     }
 
     .card-desc {
       font-size: 12px;
       color: var(--text-muted);
       line-height: 1.4;
+      min-height: 34px;
     }
 
-    .card-badge {
-      align-self: flex-start;
+    .card-status-bar {
       margin-top: auto;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 10.5px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      padding-top: 8px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.07);
     }
 
-    .badge-live {
-      background: rgba(6, 182, 212, 0.2);
+    .intent-card.active .card-status-bar {
       color: #38BDF8;
-      border: 1px solid rgba(6, 182, 212, 0.4);
+      border-top-color: rgba(56, 189, 248, 0.3);
     }
 
-    .badge-ready {
-      background: rgba(16, 185, 129, 0.18);
-      color: #34D399;
-      border: 1px solid rgba(16, 185, 129, 0.35);
+    .status-dot-sm {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      transition: all 0.22s ease;
+    }
+
+    .intent-card.active .status-dot-sm {
+      background: #38BDF8;
+      box-shadow: 0 0 8px #38BDF8;
     }
 
     /* Workspace 2-Column Grid */
@@ -939,62 +1006,98 @@
     <div class="intent-grid">
       <!-- 1. Promo Poster -->
       <div class="intent-card active" id="btn-cat-promo" onclick="switchCategory('promo')">
-        <div class="card-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+        <div class="card-header-row">
+          <div class="card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+          </div>
+          <span class="card-step-num">01</span>
         </div>
-        <div class="card-title">Poster Khuyến Mại / Ưu Đãi</div>
-        <div class="card-desc">Thiết kế poster bán hàng, flash sale, voucher giảm giá đa tầng.</div>
-        <span class="card-badge badge-live">Đang hoạt động</span>
+        <div class="card-title">Poster khuyến mại/ quảng cáo</div>
+        <div class="card-desc">Flash sale, voucher giảm giá, mức ưu đãi & thời gian áp dụng</div>
+        <div class="card-status-bar">
+          <div class="status-dot-sm"></div>
+          <span class="status-txt">Đang chọn</span>
+        </div>
       </div>
 
       <!-- 2. Product Intro -->
       <div class="intent-card" id="btn-cat-product_intro" onclick="switchCategory('product_intro')">
-        <div class="card-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        <div class="card-header-row">
+          <div class="card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </div>
+          <span class="card-step-num">02</span>
         </div>
-        <div class="card-title">Giới Thiệu Sản Phẩm / Dịch Vụ</div>
-        <div class="card-desc">Làm nổi bật chất liệu, tính năng cao cấp trên bục studio sang trọng.</div>
-        <span class="card-badge badge-ready">Sẵn sàng</span>
+        <div class="card-title">Ảnh giới thiệu sản phẩm</div>
+        <div class="card-desc">Trưng bày sản phẩm, nổi bật tính năng, giá bán & bối cảnh studio</div>
+        <div class="card-status-bar">
+          <div class="status-dot-sm"></div>
+          <span class="status-txt">Chọn mẫu</span>
+        </div>
       </div>
 
       <!-- 3. Opening Banner -->
       <div class="intent-card" id="btn-cat-opening" onclick="switchCategory('opening')">
-        <div class="card-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+        <div class="card-header-row">
+          <div class="card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+          </div>
+          <span class="card-step-num">03</span>
         </div>
-        <div class="card-title">Khai Trương Chi Nhánh</div>
-        <div class="card-desc">Banner khánh thành, ngày giờ khai trương và quà tặng chào mừng.</div>
-        <span class="card-badge badge-ready">Sẵn sàng</span>
+        <div class="card-title">Banner khai trương</div>
+        <div class="card-desc">Khai trương chi nhánh, ngày giờ sự kiện, ưu đãi & liên hệ đặt bàn</div>
+        <div class="card-status-bar">
+          <div class="status-dot-sm"></div>
+          <span class="status-txt">Chọn mẫu</span>
+        </div>
       </div>
 
       <!-- 4. Customer Feedback -->
       <div class="intent-card" id="btn-cat-feedback" onclick="switchCategory('feedback')">
-        <div class="card-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        <div class="card-header-row">
+          <div class="card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+          </div>
+          <span class="card-step-num">04</span>
         </div>
-        <div class="card-title">Feedback & Đánh Giá</div>
-        <div class="card-desc">Trích dẫn phản hồi thực tế, 5 sao chất lượng, tăng độ uy tín.</div>
-        <span class="card-badge badge-ready">Sẵn sàng</span>
+        <div class="card-title">Feedback khách hàng</div>
+        <div class="card-desc">Đánh giá thực tế, điểm nổi bật sản phẩm & ưu đãi tri ân</div>
+        <div class="card-status-bar">
+          <div class="status-dot-sm"></div>
+          <span class="status-txt">Chọn mẫu</span>
+        </div>
       </div>
 
       <!-- 5. Recruitment -->
       <div class="intent-card" id="btn-cat-recruitment" onclick="switchCategory('recruitment')">
-        <div class="card-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <div class="card-header-row">
+          <div class="card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </div>
+          <span class="card-step-num">05</span>
         </div>
-        <div class="card-title">Tuyển Dụng Nhân Tài</div>
-        <div class="card-desc">Thông báo vị trí tuyển dụng, mức thu nhập hấp dẫn, văn hóa team.</div>
-        <span class="card-badge badge-ready">Sẵn sàng</span>
+        <div class="card-title">Tuyển dụng</div>
+        <div class="card-desc">Vị trí tuyển dụng, mô tả công việc, thời hạn & cách thức ứng tuyển</div>
+        <div class="card-status-bar">
+          <div class="status-dot-sm"></div>
+          <span class="status-txt">Chọn mẫu</span>
+        </div>
       </div>
 
       <!-- 6. Usage Guide -->
       <div class="intent-card" id="btn-cat-guide" onclick="switchCategory('guide')">
-        <div class="card-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        <div class="card-header-row">
+          <div class="card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          </div>
+          <span class="card-step-num">06</span>
         </div>
-        <div class="card-title">Quy Trình & Hướng Dẫn</div>
-        <div class="card-desc">Infographic các bước sử dụng sản phẩm hoặc hướng dẫn đặt mua.</div>
-        <span class="card-badge badge-ready">Sẵn sàng</span>
+        <div class="card-title">Quy trình, hướng dẫn</div>
+        <div class="card-desc">Infographic từng bước thực hiện quy trình hoặc hướng dẫn đặt mua</div>
+        <div class="card-status-bar">
+          <div class="status-dot-sm"></div>
+          <span class="status-txt">Chọn mẫu</span>
+        </div>
       </div>
     </div>
 
@@ -1066,7 +1169,7 @@
             <div id="cat-fields-promo" class="cat-fields-block">
               <div class="form-row-2">
                 <div class="form-group">
-                  <label class="form-label" id="lbl-discount">Mức ưu đãi nổi bật:<span class="hint">Nút Badge chính</span></label>
+                  <label class="form-label" id="lbl-discount">Mức ưu đãi:<span class="hint">Ví dụ: GIẢM 50%, MUA 1 TẶNG 1</span></label>
                   <input type="text" id="inp-discount" class="form-input" placeholder="MUA 2 TẶNG 1 hoặc GIẢM 50%">
                 </div>
                 <div class="form-group">
@@ -1090,20 +1193,20 @@
             <div id="cat-fields-product_intro" class="cat-fields-block" style="display: none;">
               <div class="form-row-2">
                 <div class="form-group">
-                  <label class="form-label" id="lbl-product-name">Tên sản phẩm / Dòng máy:</label>
+                  <label class="form-label" id="lbl-product-name">Tên sp:</label>
                   <input type="text" id="inp-product-name" class="form-input" placeholder="Tai Nghe Wireless Sonic Pro">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Giá bán niêm yết:<span class="hint">Badge nổi bật</span></label>
+                  <label class="form-label">Giá bán:<span class="hint">Badge nổi bật</span></label>
                   <input type="text" id="inp-price" class="form-input" placeholder="1.290.000đ hoặc 199k">
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label" id="lbl-product-desc">Mô tả ngắn về sản phẩm:</label>
+                <label class="form-label" id="lbl-product-desc">Mô tả ngắn:</label>
                 <input type="text" id="inp-product-desc" class="form-input" placeholder="Chất âm Hi-Res chuẩn phòng thu, công nghệ khử ồn tân tiến">
               </div>
               <div class="form-group">
-                <label class="form-label">Điểm nổi bật / Thông số chính:<span class="hint">Cách nhau bằng dấu phẩy</span></label>
+                <label class="form-label">Điểm nổi bật:<span class="hint">Cách nhau bằng dấu phẩy</span></label>
                 <input type="text" id="inp-highlights" class="form-input" placeholder="Chống ồn ANC, Pin 40 giờ, Bluetooth 5.3, Trọng lượng 180g">
               </div>
             </div>
@@ -1116,12 +1219,12 @@
                   <input type="text" id="inp-opening-date" class="form-input" placeholder="15/10/2026 hoặc Thứ Bảy, 15.10">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Ưu đãi ngày mở bán:<span class="hint">Quà tặng / Voucher</span></label>
+                  <label class="form-label">Ưu đãi khai trương:<span class="hint">Quà tặng / Voucher</span></label>
                   <input type="text" id="inp-opening-promo" class="form-input" placeholder="TẶNG 100 PHẦN QUÀ ĐẦU TIÊN">
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Liên hệ đặt bàn / Đặt chỗ trước:</label>
+                <label class="form-label">Liên hệ đặt bàn:</label>
                 <input type="text" id="inp-booking-contact" class="form-input" placeholder="Hotline đặt bàn: 0988 123 456">
               </div>
             </div>
@@ -1130,7 +1233,7 @@
             <div id="cat-fields-feedback" class="cat-fields-block" style="display: none;">
               <div class="form-row-2">
                 <div class="form-group">
-                  <label class="form-label" id="lbl-feedback-target">Sản phẩm / Dịch vụ nhận feedback:</label>
+                  <label class="form-label" id="lbl-feedback-target">Tên sp/dịch vụ nhận feedback:</label>
                   <input type="text" id="inp-feedback-target" class="form-input" placeholder="Liệu trình Spa trẻ hóa da chuyên sâu">
                 </div>
                 <div class="form-group">
@@ -1139,11 +1242,15 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label" id="lbl-feedback-quote">Mô tả feedback / Trích dẫn cảm nhận:</label>
+                <label class="form-label" id="lbl-feedback-quote">Mô tả ngắn feedback:</label>
                 <textarea id="inp-feedback-quote" class="form-textarea" rows="2" placeholder="“Không gian cực kỳ thư thái, nhân viên chu đáo, da mình căng bóng sau buổi đầu tiên!”"></textarea>
               </div>
               <div class="form-group">
-                <label class="form-label">Ưu đãi tri ân đặc biệt:</label>
+                <label class="form-label">Điểm nổi bật của sp/dịch vụ:<span class="hint">Đặc tính chính</span></label>
+                <input type="text" id="inp-feedback-highlights" class="form-input" placeholder="Sử dụng sữa tắm hữu cơ, chuẩn form Hàn Quốc, không lồng kính">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ưu đãi đặc biệt:</label>
                 <input type="text" id="inp-special-offer" class="form-input" placeholder="TẶNG VOUCHER 20% CHO KHÁCH HÀNG MỚI">
               </div>
             </div>
@@ -1161,7 +1268,7 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Mô tả ngắn công việc & Quyền lợi / Thu nhập:</label>
+                <label class="form-label">Mô tả ngắn công việc:<span class="hint">Quyền lợi / Thu nhập</span></label>
                 <textarea id="inp-job-desc" class="form-textarea" rows="2" placeholder="Thu nhập up to $3,000 / Chế độ bảo hiểm quốc tế, làm việc Hybrid linh hoạt..."></textarea>
               </div>
               <div class="form-group">
@@ -1431,7 +1538,14 @@
       apply_deadline: { input: 'inp-apply-deadline', label: 'lbl-apply-deadline' },
       apply_method: { input: 'inp-apply-method', label: 'lbl-apply-method' },
     };
-    let REQUIRED_FIELDS = {};        // {category: [fieldName, ...]}, fetched from backend
+    let REQUIRED_FIELDS = {
+      promo: ["discount"],
+      product_intro: ["product_name", "product_desc"],
+      opening: ["opening_date"],
+      feedback: ["feedback_target", "feedback_quote"],
+      recruitment: ["job_position", "apply_deadline", "apply_method"],
+      guide: []
+    };
     let REQUIRED_GUIDE_FIRST_STEP = true;
 
     async function loadRequiredFieldsConfig() {
@@ -1439,12 +1553,10 @@
         const url = BASE_URL ? `${BASE_URL}/api/required-fields` : '/api/required-fields';
         const res = await fetch(url);
         const data = await res.json();
-        REQUIRED_FIELDS = data.fields || {};
-        REQUIRED_GUIDE_FIRST_STEP = !!data.guide_first_step;
+        if (data && data.fields) REQUIRED_FIELDS = data.fields;
+        if (data && typeof data.guide_first_step !== 'undefined') REQUIRED_GUIDE_FIRST_STEP = !!data.guide_first_step;
       } catch (e) {
-        // Network hiccup: fail open on the *markers* (no stars shown) rather than block
-        // the form -- the backend's validate_required_fields() stays authoritative either way.
-        REQUIRED_FIELDS = {};
+        // Keep default REQUIRED_FIELDS from yeu_cau.txt
       }
       applyRequiredMarkers(currentCategory);
     }
@@ -1532,87 +1644,87 @@
     // Category Configuration Metadata
     const CATEGORIES = {
       promo: {
-        title: "PHẦN 1: THÔNG TIN KHUYẾN MẠI / ƯU ĐÃI",
-        panelTitle: "Thông tin Poster Khuyến Mại",
-        lblTitle: "Tiêu đề ảnh (Headline):",
+        title: "PHẦN 1: THÔNG TIN CHUNG (POSTER KHUYẾN MẠI/ QUẢNG CÁO)",
+        panelTitle: "Poster khuyến mại/ quảng cáo",
+        lblTitle: "Tiêu đề ảnh:",
         titlePlaceholder: "TRÀ ĐÀO CAM SẢ\nTHANH MÁT TỰ NHIÊN",
-        lblDiscount: "Mức ưu đãi nổi bật:",
+        lblDiscount: "Mức ưu đãi:",
         discountPlaceholder: "MUA 2 TẶNG 1 hoặc GIẢM 50%",
         lblApplied: "Sản phẩm áp dụng:",
         appliedPlaceholder: "Áp dụng cho toàn bộ trà trái cây & sinh tố",
         lblDateStart: "Từ ngày:",
         lblDateEnd: "Đến ngày:",
-        lblSceneDesc: "Mô tả bối cảnh ảnh (Prompt DiT sinh nền):",
+        lblSceneDesc: "Mô tả bối cảnh ảnh (Prompt ảnh):",
         scenePlaceholder: "Ly trà đào cam sả mát lạnh trên bàn gỗ sồi, lát cam tươi mọng nước, tép sả thơm, studio lighting..."
       },
       product_intro: {
-        title: "PHẦN 1: THÔNG TIN GIỚI THIỆU SẢN PHẨM",
-        panelTitle: "Giới Thiệu Sản Phẩm / Dịch Vụ",
-        lblTitle: "Tên sản phẩm & Định vị:",
+        title: "PHẦN 1: THÔNG TIN CHUNG (ẢNH GIỚI THIỆU SẢN PHẨM)",
+        panelTitle: "Ảnh giới thiệu sản phẩm",
+        lblTitle: "Tiêu đề ảnh:",
         titlePlaceholder: "TAI NGHE KHÔNG DÂY\nHI-RES AUDIO CHỐNG ỒN",
-        lblDiscount: "Điểm nhấn công nghệ / Giá bán:",
+        lblDiscount: "Điểm nổi bật / Giá bán:",
         discountPlaceholder: "CHỐNG ỒN CHỦ ĐỘNG HYBRID ANC",
-        lblApplied: "Đối tượng / Phân khúc phù hợp:",
+        lblApplied: "Mô tả sản phẩm:",
         appliedPlaceholder: "Dành riêng cho tín đồ âm nhạc & làm việc chuyên nghiệp",
         lblDateStart: "Ngày mở bán:",
         lblDateEnd: "Thời gian bảo hành:",
-        lblSceneDesc: "Bối cảnh trình diễn sản phẩm (Studio Concept):",
+        lblSceneDesc: "Mô tả bối cảnh ảnh (Prompt ảnh):",
         scenePlaceholder: "Sleek wireless headphones on dark slate pedestal, cinematic blue rim lighting, premium reflection..."
       },
       opening: {
-        title: "PHẦN 1: THÔNG TIN KHAI TRƯƠNG CHI NHÁNH",
-        panelTitle: "Banner Khai Trương Chi Nhánh",
-        lblTitle: "Tiêu đề sự kiện khai trương:",
+        title: "PHẦN 1: THÔNG TIN CHUNG (BANNER KHAI TRƯƠNG)",
+        panelTitle: "Banner khai trương",
+        lblTitle: "Tiêu đề ảnh:",
         titlePlaceholder: "TƯNG BỪNG KHAI TRƯƠNG\nCHI NHÁNH THỨ 10",
-        lblDiscount: "Quà tặng / Ưu đãi ngày mở bán:",
+        lblDiscount: "Ưu đãi khai trương:",
         discountPlaceholder: "TẶNG 100 PHẦN QUÀ ĐẦU TIÊN",
-        lblApplied: "Điều kiện tham gia:",
-        appliedPlaceholder: "Áp dụng cho tất cả khách hàng check-in tại cửa hàng",
+        lblApplied: "Liên hệ đặt bàn:",
+        appliedPlaceholder: "Hotline đặt bàn: 0988 123 456",
         lblDateStart: "Ngày bắt đầu:",
         lblDateEnd: "Ngày kết thúc:",
-        lblSceneDesc: "Bối cảnh lễ hội khai trương:",
+        lblSceneDesc: "Mô tả bối cảnh ảnh (Prompt ảnh):",
         scenePlaceholder: "Grand opening modern storefront, golden confetti celebration, ribbon cutting ceremony atmosphere..."
       },
       feedback: {
-        title: "PHẦN 1: THÔNG TIN FEEDBACK & ĐÁNH GIÁ",
-        panelTitle: "Feedback & Đánh Giá Khách Hàng",
-        lblTitle: "Tiêu đề phản hồi (Headline):",
+        title: "PHẦN 1: THÔNG TIN CHUNG (FEEDBACK KHÁCH HÀNG)",
+        panelTitle: "Feedback khách hàng",
+        lblTitle: "Tiêu đề ảnh:",
         titlePlaceholder: "KHÁCH HÀNG NÓI GÌ\nVỀ CHẤT LƯỢNG TENDOO?",
         lblDiscount: "Điểm đánh giá / Xếp hạng:",
         discountPlaceholder: "5.0 / 5.0 SAO",
-        lblApplied: "Trích dẫn cảm nhận khách hàng:",
+        lblApplied: "Mô tả ngắn feedback:",
         appliedPlaceholder: "\"Hương vị đậm đà thơm ngon, không gian quán cực kỳ thư giãn!\"",
         lblDateStart: "Tên khách hàng:",
         lblDateEnd: "Nghề nghiệp / Vị trí:",
-        lblSceneDesc: "Bối cảnh ấm cúng gần gũi:",
+        lblSceneDesc: "Mô tả bối cảnh ảnh (Prompt ảnh):",
         scenePlaceholder: "Warm cozy cafe ambiance, happy customer testimonial portrait setup, soft depth of field..."
       },
       recruitment: {
-        title: "PHẦN 1: THÔNG TIN TUYỂN DỤNG NHÂN TÀI",
-        panelTitle: "Poster Tuyển Dụng Nhân Tài",
-        lblTitle: "Vị trí tuyển dụng chính:",
+        title: "PHẦN 1: THÔNG TIN CHUNG (TUYỂN DỤNG)",
+        panelTitle: "Tuyển dụng",
+        lblTitle: "Tiêu đề ảnh:",
         titlePlaceholder: "TENDOO TÌM ĐỒNG ĐỘI\nSENIOR AI ENGINEER",
-        lblDiscount: "Mức thu nhập / Quyền lợi nổi bật:",
-        discountPlaceholder: "THU NHẬP UP TO $3,000",
-        lblApplied: "Địa điểm làm việc & Hình thức:",
-        appliedPlaceholder: "Hà Nội / Hybrid - Chế độ đãi ngộ chuẩn quốc tế",
-        lblDateStart: "Hạn nộp hồ sơ:",
+        lblDiscount: "Vị trí tuyển dụng:",
+        discountPlaceholder: "SENIOR AI ENGINEER (COMPUTER VISION)",
+        lblApplied: "Mô tả ngắn công việc:",
+        appliedPlaceholder: "Thu nhập up to $3,000 / Chế độ bảo hiểm quốc tế, làm việc Hybrid linh hoạt",
+        lblDateStart: "Thời hạn ứng tuyển:",
         lblDateEnd: "Ngày bắt đầu đi làm:",
-        lblSceneDesc: "Bối cảnh văn phòng công nghệ sáng tạo:",
+        lblSceneDesc: "Mô tả bối cảnh ảnh (Prompt ảnh):",
         scenePlaceholder: "High-tech innovative workspace, glass meeting room, modern collaborative work environment..."
       },
       guide: {
-        title: "PHẦN 1: THÔNG TIN QUY TRÌNH & HƯỚNG DẪN",
-        panelTitle: "Quy Trình & Hướng Dẫn Sử Dụng",
-        lblTitle: "Tên quy trình / Hướng dẫn:",
+        title: "PHẦN 1: THÔNG TIN CHUNG (QUY TRÌNH, HƯỚNG DẪN)",
+        panelTitle: "Quy trình, hướng dẫn",
+        lblTitle: "Tiêu đề ảnh:",
         titlePlaceholder: "3 BƯỚC ĐẶT HÀNG NHANH\nTIẾT KIỆM TỚI 30%",
         lblDiscount: "Cam kết / Lợi ích đạt được:",
         discountPlaceholder: "GIAO NHANH TRONG 2 GIỜ",
-        lblApplied: "Các bước thực hiện tóm tắt:",
+        lblApplied: "Các bước thực hiện:",
         appliedPlaceholder: "Bước 1: Quét mã QR -> Bước 2: Chọn món -> Bước 3: Nhận hàng",
         lblDateStart: "Phiên bản tài liệu:",
         lblDateEnd: "Hỗ trợ khách hàng:",
-        lblSceneDesc: "Bối cảnh quy trình trực quan:",
+        lblSceneDesc: "Mô tả bối cảnh ảnh (Prompt ảnh):",
         scenePlaceholder: "Minimalist infographic studio setting, clean pastel background, neat product placement..."
       }
     };
@@ -1752,6 +1864,7 @@
         feedback_target: "Liệu trình trẻ hóa da chuyên sâu Collagen",
         feedback_rating: "⭐⭐⭐⭐⭐ 5.0 / 5.0",
         feedback_quote: "Không gian cực kỳ thư thái, nhân viên chu đáo, da mình căng bóng mịn màng sau buổi đầu tiên!",
+        feedback_highlights: "Sử dụng tinh chất thảo mộc hữu cơ, chuyên viên chuẩn Hàn Quốc",
         special_offer: "TẶNG VOUCHER 20% CHO KHÁCH HÀNG MỚI",
         store_name: "Tendoo Beauty & Spa",
         phone: "1900 6868",
@@ -1893,9 +2006,17 @@
     // Category Switching Handler
     function switchCategory(catKey) {
       currentCategory = catKey;
-      document.querySelectorAll('.intent-card').forEach(card => card.classList.remove('active'));
+      document.querySelectorAll('.intent-card').forEach(card => {
+        card.classList.remove('active');
+        const st = card.querySelector('.status-txt');
+        if (st) st.textContent = 'Chọn mẫu';
+      });
       const activeBtn = document.getElementById(`btn-cat-${catKey}`);
-      if (activeBtn) activeBtn.classList.add('active');
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+        const st = activeBtn.querySelector('.status-txt');
+        if (st) st.textContent = 'Đang chọn';
+      }
 
       // Toggle dynamic category form blocks
       document.querySelectorAll('.cat-fields-block').forEach(b => b.style.display = 'none');
@@ -1981,6 +2102,7 @@
       if (document.getElementById('inp-feedback-target')) document.getElementById('inp-feedback-target').value = p.feedback_target || '';
       if (document.getElementById('inp-feedback-rating')) document.getElementById('inp-feedback-rating').value = p.feedback_rating || '';
       if (document.getElementById('inp-feedback-quote')) document.getElementById('inp-feedback-quote').value = p.feedback_quote || '';
+      if (document.getElementById('inp-feedback-highlights')) document.getElementById('inp-feedback-highlights').value = p.feedback_highlights || '';
       if (document.getElementById('inp-special-offer')) document.getElementById('inp-special-offer').value = p.special_offer || '';
 
       // Populate Recruitment fields
@@ -2137,6 +2259,7 @@
         feedback_target: document.getElementById('inp-feedback-target')?.value || '',
         feedback_quote: document.getElementById('inp-feedback-quote')?.value || '',
         feedback_rating: document.getElementById('inp-feedback-rating')?.value || '',
+        feedback_highlights: document.getElementById('inp-feedback-highlights')?.value || '',
         special_offer: document.getElementById('inp-special-offer')?.value || '',
 
         // Recruitment

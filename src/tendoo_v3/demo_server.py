@@ -365,6 +365,7 @@ class GenerateRequest(BaseModel):
     # Customer Feedback
     feedback_target: Optional[str] = ""
     feedback_quote: Optional[str] = ""
+    feedback_highlights: Optional[str] = ""
     feedback_rating: Optional[Any] = ""
     special_offer: Optional[str] = ""
     customer_name: Optional[str] = None

@@ -1,0 +1,14 @@
+Tài liệu này cần xem khi tinh chỉnh bất kỳ template nào
+- Để ý trong yeu_cau.txt, các form đều có trường thông tin cửa hàng.
+-> Mọi template BẮT BUỘC có chỗ cho thông tin cửa hàng + QR
+- Người dùng có thể chọn bất kỳ kích cỡ output nào trong 4 kích thước
+-> Mọi template đều phải adapt được 4 kích thước
+
+Chia các template theo các button yêu cầu (một template có thể phục vụ nhiều yêu cầu, hoặc có thể chỉ chuyên biệt một loại yêu cầu):
+- Poster KM/Ưu đãi: template a b c
+- GTSP/DVU: template xyz
+- Before/after
+- Full text: Thanks Card, feedback card
+
+
+

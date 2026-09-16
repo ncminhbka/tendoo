@@ -115,6 +115,37 @@ def test_endpoints():
     assert "discount" in err["detail"]["fields"]
     print(f"    ✓ Pre-flight 422 validation OK! Missing fields caught: {err['detail']['fields']}")
 
+    print("--> Testing UI Buttons & Fields match yeu_cau.txt 100%...")
+    res_ui = client.get("/")
+    assert res_ui.status_code == 200
+    html_text = res_ui.text
+
+    # 6 Intent buttons matching yeu_cau.txt exact naming
+    expected_buttons = [
+        "Poster khuyến mại/ quảng cáo",
+        "Ảnh giới thiệu sản phẩm",
+        "Banner khai trương",
+        "Feedback khách hàng",
+        "Tuyển dụng",
+        "Quy trình, hướng dẫn",
+    ]
+    for btn_name in expected_buttons:
+        assert btn_name in html_text, f"Missing button '{btn_name}' in demo_ui.html"
+
+    # Feedback highlights field matching yeu_cau.txt
+    assert "inp-feedback-highlights" in html_text, "Missing inp-feedback-highlights in demo_ui.html"
+    assert "Điểm nổi bật của sp/dịch vụ" in html_text, "Missing 'Điểm nổi bật của sp/dịch vụ' in demo_ui.html"
+
+    # Required fields endpoint matches yeu_cau.txt
+    from tendoo_v3.demo_server import CATEGORY_REQUIRED_FIELDS
+    assert CATEGORY_REQUIRED_FIELDS["promo"] == ["discount"]
+    assert CATEGORY_REQUIRED_FIELDS["product_intro"] == ["product_name", "product_desc"]
+    assert CATEGORY_REQUIRED_FIELDS["opening"] == ["opening_date"]
+    assert CATEGORY_REQUIRED_FIELDS["feedback"] == ["feedback_target", "feedback_quote"]
+    assert CATEGORY_REQUIRED_FIELDS["recruitment"] == ["job_position", "apply_deadline", "apply_method"]
+    assert CATEGORY_REQUIRED_FIELDS["guide"] == []
+    print("    ✓ All 6 buttons and required fields match yeu_cau.txt 100%!")
+
     print("\n=======================================================")
     print("🎉 ALL DEMO SERVER API ENDPOINTS VERIFIED SUCCESSFULLY!")
     print("=======================================================\n")
