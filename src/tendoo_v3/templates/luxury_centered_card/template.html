@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {{font_face_css}}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: {{headline_font_css}};
+      background-color: #000;
+    }
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+    /* Thẻ Kính Mờ Sang Trọng Ở Trung Tâm (Zero-Mask) */
+    .centered-glass-card {
+      position: relative;
+      z-index: 10;
+      width: 82%;
+      max-height: 84%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 44px 40px;
+      background: rgba(14, 15, 20, 0.76);
+      backdrop-filter: blur(28px);
+      border: 1.5px solid rgba(255, 215, 0, 0.35);
+      border-radius: 32px;
+      box-shadow:
+        0 24px 64px rgba(0, 0, 0, 0.85),
+        0 0 30px rgba(212, 175, 55, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      text-align: center;
+      color: #fff;
+      overflow: hidden;
+    }
+    .badge-capsule {
+      padding: 6px 18px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: {{theme_color}};
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid {{theme_color}};
+      border-radius: 9999px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 12px {{theme_color}}44;
+    }
+    .rating-stars {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .hero-title {
+      font-size: 44px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      max-width: 95%;
+      margin-bottom: 10px;
+      {{effect_css}}
+    }
+    .subhead-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.4;
+      max-width: 88%;
+      margin-bottom: 18px;
+    }
+    /* Vùng Nhồi Nội Dung / Lời Cảm Ơn / Quotes */
+    .message-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 88%;
+      max-height: 40%;
+      overflow: hidden;
+      margin: 10px 0 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed rgba(255, 215, 0, 0.4);
+      border-radius: 16px;
+      padding: 16px 22px;
+      /* font-size ở ĐÂY để autofit (data-autofit trên chính .message-container) co
+         được -- .message-line kế thừa, không tự khai font-size cố định nữa. */
+      font-size: 15px;
+    }
+    .message-line {
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.92);
+      line-height: 1.5;
+    }
+    .footer-action {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+    .cta-btn {
+      padding: 13px 32px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #000;
+      background: {{theme_color}};
+      border: none;
+      border-radius: 9999px;
+      box-shadow: 0 6px 24px {{theme_color}}66;
+    }
+    .store-info {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.7);
+      letter-spacing: 0.2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    {{ vfx_html }}
+
+    <div class="centered-glass-card" style="max-height:85%; overflow:hidden;">
+      {% if badge %}
+      <div class="badge-capsule">{{ badge }}</div>
+      {% endif %}
+
+      {% if stars_svg %}
+      <div class="rating-stars">{{ stars_svg | safe }}</div>
+      {% endif %}
+
+      <div class="hero-title" data-autofit data-min-font="24" data-max-height="120">{{ hero }}</div>
+
+      {% if subhead %}
+      <div class="subhead-title" data-autofit data-min-font="11" data-max-height="60">{{ subhead }}</div>
+      {% endif %}
+
+      {% if extra_texts %}
+      <div class="message-container" data-autofit data-min-font="11">
+        {% for item in extra_texts %}
+        <div class="message-line">{{ item }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="footer-action" style="max-height:25%; overflow:hidden;">
+        {% if qr_svg %}
+        <div class="qr-col" style="margin-bottom: 8px;">{{ qr_svg }}</div>
+        {% endif %}
+        {% if cta %}
+        <div class="cta-btn">{{ cta }}</div>
+        {% endif %}
+        {% if store_items %}
+        <div class="store-info-col" style="display:flex; flex-direction:column; gap:3px; margin-top:6px;">
+          {% for item in store_items %}
+          <span style="display:inline-flex; align-items:center; gap:4px; font-size:11.5px; color:rgba(255,255,255,0.75);">
+            {{ item.icon_svg }}
+            <span>{{ item.text }}</span>
+          </span>
+          {% endfor %}
+        </div>
+        {% elif store_info %}
+        <div class="store-info">{{ store_info }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {{autofit_js}}
+</body>
+</html>

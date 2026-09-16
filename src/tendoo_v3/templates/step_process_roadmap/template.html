@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {{font_face_css}}
+    :root {
+      --headline-font: {{headline_font_css}};
+      --theme-color: {{theme_color}};
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: var(--headline-font), 'Inter', 'Be Vietnam Pro', sans-serif;
+      background: #000;
+    }
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+    }
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+    /* Top Header Bar */
+    .top-header {
+      position: absolute;
+      top: 16px;
+      left: 36px;
+      right: 36px;
+      z-index: 10;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 7px;
+    }
+    .badge-pill {
+      padding: 5px 16px;
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: {{theme_color}};
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      border: 1px solid {{theme_color}};
+      border-radius: 9999px;
+      box-shadow: 0 0 12px {{theme_color}}44;
+    }
+    .hero-title {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      max-width: 90%;
+      {{effect_css}}
+    }
+    .subhead-title {
+      font-size: 16.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{palette.text_secondary}};
+      text-shadow: {{palette.text_shadow}};
+    }
+    /* Bệ Quy Trình Ở Đáy (Bottom Roadmap Platform: Kính mờ siêu nhẹ, gọn gàng) */
+    .roadmap-platform {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px 36px;
+      background: {{palette.glass_bg}};
+      backdrop-filter: blur(18px);
+      border-top: 1px solid {{palette.glass_border}};
+      box-shadow: {{palette.glass_shadow}};
+      color: {{palette.text_primary}};
+    }
+    /* Dãy các bước quy trình (Step Chain) */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      width: 100%;
+      overflow: hidden;
+      font-size: 13.5px;
+    }
+    .step-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: {{palette.pill_bg}};
+      border: 1px solid {{palette.pill_border}};
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      flex-shrink: 0;
+    }
+    .step-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 900;
+      color: #000;
+      background: {{theme_color}};
+      flex-shrink: 0;
+    }
+    .step-text {
+      font-weight: 700;
+      line-height: 1.28;
+      color: {{palette.pill_text}};
+    }
+    /* Bottom conversion bar */
+    .conversion-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 11px 26px;
+      font-size: 13.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{palette.cta_text}};
+      background: {{palette.cta_bg}};
+      border: none;
+      border-radius: 9999px;
+      box-shadow: 0 4px 14px {{theme_color}}66;
+    }
+    .store-text {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: {{palette.text_secondary}};
+    }
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    {{ vfx_html }}
+
+    <div class="top-header" style="max-height:{{ zones.header.height - 16 }}px; overflow:hidden;">
+      {% if badge %}
+      <div class="badge-pill">{{ badge }}</div>
+      {% endif %}
+      <div class="hero-title" data-autofit data-min-font="24" data-max-width="{{ (zones.header.width - 72) * 0.92 }}" data-max-height="{{ zones.header.height * 0.65 }}">{{ hero }}</div>
+      {% if subhead %}
+      <div class="subhead-title" data-autofit data-min-font="12" data-max-width="{{ (zones.header.width - 72) * 0.92 }}" data-max-height="{{ zones.header.height * 0.28 }}">{{ subhead }}</div>
+      {% endif %}
+    </div>
+
+    <div class="roadmap-platform" style="height:{{ zones.platform.height }}px; max-height:{{ zones.platform.height }}px; overflow:hidden;">
+      {% if steps %}
+      <div class="steps-grid" data-autofit data-min-font="11.5" data-max-height="{{ zones.platform.height * 0.58 }}">
+        {% for step in steps %}
+        <div class="step-card">
+          <div class="step-number">{{ "%02d" % loop.index }}</div>
+          <div class="step-text">{{ step }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% elif extra_pills %}
+      <div class="steps-grid" data-autofit data-min-font="11.5" data-max-height="{{ zones.platform.height * 0.58 }}">
+        {% for pill in extra_pills %}
+        <div class="step-card">
+          <div class="step-number">{{ "%02d" % loop.index }}</div>
+          <div class="step-text">{{ pill.text }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="conversion-bar" style="max-height:{{ zones.platform.height * 0.28 }}px; overflow:hidden;">
+        {% if qr_svg %}
+        <div>{{ qr_svg }}</div>
+        {% endif %}
+        {% if cta %}
+        <div class="cta-btn">
+          <span>{{ cta }}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+        {% else %}
+        <div></div>
+        {% endif %}
+        {% if store_items %}
+        <div class="store-text" style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+          {% for item in store_items %}
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:{{palette.text_secondary}};">
+            {{ item.icon_svg }}
+            <span>{{ item.text }}</span>
+          </span>
+          {% endfor %}
+        </div>
+        {% elif store_info %}
+        <div class="store-text">{{ store_info }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {{autofit_js}}
+</body>
+</html>

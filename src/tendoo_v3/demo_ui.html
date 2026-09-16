@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tendoo AI v3 - Commercial Poster Studio</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2306B6D4'/><text y='.74em' x='50%' text-anchor='middle' font-size='68' font-weight='900' fill='white'>T</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap&subset=vietnamese" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090D16;
+      --card-bg: #111827;
+      --card-inner: #162032;
+      --card-border: #1E293B;
+      --card-border-focus: #38BDF8;
+      --accent-blue: #2563EB;
+      --accent-cyan: #06B6D4;
+      --accent-amber: #F59E0B;
+      --accent-emerald: #10B981;
+      --accent-pink: #EC4899;
+      --accent-indigo: #6366F1;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --input-bg: #0F172A;
+      --input-border: #26354D;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+      --glow-cyan: rgba(6, 182, 212, 0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 80px;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background gradient glow */
+    .ambient-glow {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100vw;
+      height: 480px;
+      background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6, 182, 212, 0.16), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Navbar */
+    .navbar {
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .logo-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #06B6D4 0%, #2563EB 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 20px;
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
+    }
+
+    .logo-text {
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-text span {
+      background: linear-gradient(90deg, #38BDF8, #818CF8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .version-tag {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 7px;
+      background: rgba(6, 182, 212, 0.2);
+      border: 1px solid var(--accent-cyan);
+      border-radius: 9999px;
+      color: var(--accent-cyan);
+      margin-left: 6px;
+    }
+
+    .nav-status-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-size: 13px;
+      font-weight: 600;
+      color: #34D399;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    .status-chip.mock {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #FBBF24;
+    }
+
+    .status-chip.mock .status-dot {
+      background: #F59E0B;
+      box-shadow: 0 0 8px #F59E0B;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 28px 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Section Header */
+    .section-title {
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 14.5px;
+      margin-bottom: 22px;
+    }
+
+    /* 6 Intent Cards */
+    .intent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .intent-card {
+      background: var(--card-bg);
+      border: 1.5px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.22s ease;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .intent-card:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
+    }
+
+    .intent-card.active {
+      border-color: var(--accent-cyan);
+      background: linear-gradient(180deg, rgba(6, 182, 212, 0.14) 0%, rgba(17, 24, 39, 0.95) 100%);
+      box-shadow: 0 0 0 1px var(--accent-cyan), 0 8px 26px rgba(6, 182, 212, 0.22);
+    }
+
+    .card-icon {
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .card-badge {
+      align-self: flex-start;
+      margin-top: 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+    }
+
+    .badge-live {
+      background: rgba(6, 182, 212, 0.18);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+    }
+
+    .badge-ready {
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--text-muted);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    /* Workspace 2-Column Grid */
+    .workspace {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 1080px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--card-border);
+      font-size: 16.5px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    /* Form Section Block */
+    .form-section-block {
+      background: var(--card-inner);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .section-block-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #38BDF8;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.2px;
+    }
+
+    /* 1-Click Presets */
+    .presets-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .preset-chip {
+      padding: 5px 12px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .preset-chip:hover {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: var(--accent-cyan);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .form-label .hint {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-dim);
+      margin-left: 6px;
+    }
+
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 13.5px;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--card-border-focus);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 64px;
+      line-height: 1.4;
+    }
+
+    /* Star Rating Clickable */
+    .star-rating-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+    }
+
+    .star-btn {
+      font-size: 22px;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .star-btn.active {
+      color: #F59E0B;
+      text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    }
+
+    .star-rating-label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-left: 8px;
+    }
+
+    /* Dropzone */
+    .upload-zone {
+      border: 1.5px dashed var(--input-border);
+      border-radius: var(--radius-sm);
+      background: rgba(15, 23, 42, 0.5);
+      padding: 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .upload-zone:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.05);
+    }
+
+    .upload-zone-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: #E2E8F0;
+      margin-top: 6px;
+    }
+
+    .upload-zone-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .upload-preview-wrap {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: var(--input-bg);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      border: 1px solid var(--input-border);
+    }
+
+    .upload-thumb {
+      width: 46px;
+      height: 46px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid var(--card-border);
+    }
+
+    .upload-meta {
+      flex: 1;
+      text-align: left;
+    }
+
+    .upload-filename {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .upload-filesize {
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    .btn-remove-file {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      color: #FB7185;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* iOS Style Switch */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      margin-top: 6px;
+    }
+
+    .toggle-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toggle-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #334155;
+      transition: .25s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .25s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider { background-color: #10B981; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Aspect Ratio Chips */
+    .ratio-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+
+    .ratio-btn {
+      padding: 8px 4px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .ratio-btn:hover {
+      border-color: #38BDF8;
+      color: #fff;
+    }
+
+    .ratio-btn.active {
+      background: rgba(6, 182, 212, 0.2);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+    }
+
+    /* Template Cards Grid */
+    .template-grid-scroll {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .tpl-chip-card {
+      padding: 10px 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.18s;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .tpl-chip-card:hover {
+      border-color: #38BDF8;
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .tpl-chip-card.active {
+      border-color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.15);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+    }
+
+    .tpl-chip-title {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tpl-chip-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    /* Action Buttons Row */
+    .btn-action-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .btn-submit {
+      flex: 1.3;
+      background: linear-gradient(135deg, #06B6D4 0%, #2563EB 100%);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+      transition: all 0.22s ease;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 26px rgba(6, 182, 212, 0.5);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+    }
+
+    .btn-preview {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      color: #E2E8F0;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-preview:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: #38BDF8;
+      color: #fff;
+    }
+
+    /* Right Preview Area */
+    .preview-box {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #070B14;
+      border: 2px dashed var(--card-border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .preview-box.has-content {
+      border-style: solid;
+      border-color: var(--card-border);
+      background: #000;
+    }
+
+    .preview-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .preview-placeholder {
+      text-align: center;
+      color: var(--text-dim);
+      padding: 24px;
+    }
+
+    .preview-placeholder .icon {
+      font-size: 46px;
+      margin-bottom: 12px;
+      opacity: 0.8;
+    }
+
+    /* Progress Overlay */
+    .progress-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 15, 25, 0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(6, 182, 212, 0.2);
+      border-top-color: var(--accent-cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .progress-sub {
+      font-size: 12px;
+      color: var(--accent-cyan);
+    }
+
+    /* Tabs row */
+    .tabs-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+      border: 1px solid var(--card-border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab-btn:hover {
+      border-color: #38BDF8;
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      background: #1E293B;
+      color: var(--accent-cyan);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+    }
+
+    /* Chameleon Palette Inspector Pill */
+    .palette-inspector-pill {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 9999px;
+      padding: 4px 12px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .palette-color-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      display: inline-block;
+    }
+
+    /* Result Action Buttons */
+    .result-actions {
+      display: none;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid var(--card-border);
+      background: var(--input-bg);
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background: #1E293B;
+      border-color: var(--accent-cyan);
+      transform: translateY(-1px);
+    }
+
+    .btn-download {
+      background: #059669;
+      border-color: #10B981;
+    }
+
+    .btn-download:hover {
+      background: #10B981;
+    }
+
+    /* Raw HTML Frame & JSON Viewer */
+    .raw-html-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+
+    .json-viewer {
+      width: 100%;
+      height: 100%;
+      padding: 16px;
+      background: #0B0F19;
+      color: #38BDF8;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      animation: toastIn 0.25s ease forwards;
+    }
+
+    @keyframes toastIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow"></div>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <a href="#" class="brand-logo">
+      <div class="logo-badge">T</div>
+      <div class="logo-text">TENDOO <span>AI</span> <span class="version-tag">v3 Studio</span></div>
+    </a>
+    <div class="nav-status-group">
+      <div class="status-chip" id="server-status-chip">
+        <div class="status-dot"></div>
+        <span id="server-status-text">Đang kết nối Server...</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Section 1: Intent Selection (6 Category Buttons) -->
+    <h2 class="section-title">Bạn muốn tạo poster nội dung gì?</h2>
+    <p class="section-desc">Chọn đúng mục đích thương mại để hệ thống tự động tối ưu hóa trường thông tin, phông chữ và bố cục template.</p>
+
+    <div class="intent-grid">
+      <!-- 1. Promo Poster -->
+      <div class="intent-card active" id="btn-cat-promo" onclick="switchCategory('promo')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+        </div>
+        <div class="card-title">Poster Khuyến Mại / Ưu Đãi</div>
+        <div class="card-desc">Thiết kế poster bán hàng, flash sale, voucher giảm giá đa tầng.</div>
+        <span class="card-badge badge-live">Đang hoạt động</span>
+      </div>
+
+      <!-- 2. Product Intro -->
+      <div class="intent-card" id="btn-cat-product_intro" onclick="switchCategory('product_intro')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        </div>
+        <div class="card-title">Giới Thiệu Sản Phẩm / Dịch Vụ</div>
+        <div class="card-desc">Làm nổi bật chất liệu, tính năng cao cấp trên bục studio sang trọng.</div>
+        <span class="card-badge badge-ready">Sẵn sàng</span>
+      </div>
+
+      <!-- 3. Opening Banner -->
+      <div class="intent-card" id="btn-cat-opening" onclick="switchCategory('opening')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+        </div>
+        <div class="card-title">Khai Trương Chi Nhánh</div>
+        <div class="card-desc">Banner khánh thành, ngày giờ khai trương và quà tặng chào mừng.</div>
+        <span class="card-badge badge-ready">Sẵn sàng</span>
+      </div>
+
+      <!-- 4. Customer Feedback -->
+      <div class="intent-card" id="btn-cat-feedback" onclick="switchCategory('feedback')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        </div>
+        <div class="card-title">Feedback & Đánh Giá</div>
+        <div class="card-desc">Trích dẫn phản hồi thực tế, 5 sao chất lượng, tăng độ uy tín.</div>
+        <span class="card-badge badge-ready">Sẵn sàng</span>
+      </div>
+
+      <!-- 5. Recruitment -->
+      <div class="intent-card" id="btn-cat-recruitment" onclick="switchCategory('recruitment')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <div class="card-title">Tuyển Dụng Nhân Tài</div>
+        <div class="card-desc">Thông báo vị trí tuyển dụng, mức thu nhập hấp dẫn, văn hóa team.</div>
+        <span class="card-badge badge-ready">Sẵn sàng</span>
+      </div>
+
+      <!-- 6. Usage Guide -->
+      <div class="intent-card" id="btn-cat-guide" onclick="switchCategory('guide')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        </div>
+        <div class="card-title">Quy Trình & Hướng Dẫn</div>
+        <div class="card-desc">Infographic các bước sử dụng sản phẩm hoặc hướng dẫn đặt mua.</div>
+        <span class="card-badge badge-ready">Sẵn sàng</span>
+      </div>
+    </div>
+
+    <!-- Section 2: Workspace -->
+    <div class="workspace" id="form-workspace">
+      
+      <!-- Left Panel: Form Sections -->
+      <div class="panel">
+        <div class="panel-header">
+          <span id="panel-category-title">Thông tin Poster Khuyến Mại</span>
+          <span id="layout-indicator" style="font-size: 13px; color: var(--accent-cyan);">Bố cục: Tự động thông minh</span>
+        </div>
+
+        <form id="poster-form" onsubmit="event.preventDefault();">
+
+          <!-- PHẦN 1: THÔNG TIN NỘI DUNG (Biến đổi theo category) -->
+          <div class="form-section-block" id="section-general">
+            <div class="section-block-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+              <span id="section-general-title">PHẦN 1: THÔNG TIN NỘI DUNG CHÍNH</span>
+            </div>
+
+            <!-- Quick Presets -->
+            <label class="form-label">Chọn mẫu nhanh (1-Click Presets):</label>
+            <div class="presets-row" id="presets-container">
+              <div class="preset-chip" onclick="loadPreset('beverage')">Trà Đào Cam Sả</div>
+              <div class="preset-chip" onclick="loadPreset('coffee')">Cà Phê Phin Mộc</div>
+              <div class="preset-chip" onclick="loadPreset('watch')">Đồng Hồ Thể Thao</div>
+              <div class="preset-chip" onclick="loadPreset('perfume')">Nước Hoa Pháp</div>
+              <div class="preset-chip" onclick="loadPreset('spa_review')">Feedback Spa 5★</div>
+              <div class="preset-chip" onclick="loadPreset('gym_step')">Quy Trình Gym 3 Bước</div>
+            </div>
+
+            <!-- Dynamic Category Fields Container -->
+            <div id="dynamic-fields-container">
+              <!-- Populated dynamically via renderCategoryFields() -->
+            </div>
+
+            <!-- Reference Image Dropzone -->
+            <div class="form-group" style="margin-top: 14px;">
+              <label class="form-label">Tải ảnh mẫu / sản phẩm (Tùy chọn):<span class="hint">Ảnh sản phẩm hoặc nhân vật thật</span></label>
+              <div class="upload-zone" id="upload-dropzone" onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelected(event)">
+                <div class="upload-zone-content" id="upload-prompt">
+                  <div class="upload-zone-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="1.8">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                      <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div class="upload-zone-text">Nhấp để chọn ảnh hoặc kéo thả file ảnh vào đây</div>
+                  <div class="upload-zone-sub">Hỗ trợ PNG, JPG, WEBP</div>
+                </div>
+              </div>
+              <div class="upload-preview-wrap" id="upload-preview-wrap">
+                <img id="upload-thumb" class="upload-thumb" src="" alt="Thumbnail">
+                <div class="upload-meta">
+                  <div id="upload-filename" class="upload-filename">photo.jpg</div>
+                  <div id="upload-filesize" class="upload-filesize">2.4 MB</div>
+                </div>
+                <button type="button" class="btn-remove-file" onclick="removeUploadedImage()">Xóa</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PHẦN 2: Ý TƯỞNG SÁNG TẠO & PROMPT TỰ DO -->
+          <div class="form-section-block">
+            <div class="section-block-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+              <span>PHẦN 2: Ý TƯỞNG & PHONG CÁCH (PROMPT TỰ DO)</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mô tả bối cảnh / Yêu cầu sáng tạo:<span class="hint">Prompt có quyền ưu tiên cao nhất</span></label>
+              <textarea id="inp-prompt" class="form-textarea" placeholder="Ví dụ: Bối cảnh studio tối giản ánh sáng vàng ấm le lói, phong cách bìa tạp chí retro film grain, đặt chữ mạ vàng dập nổi ở giữa, không vẽ thông tin cửa hàng..."></textarea>
+            </div>
+          </div>
+
+          <!-- PHẦN 3: THÔNG TIN DOANH NGHIỆP & MÃ QR -->
+          <div class="form-section-block">
+            <div class="section-block-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              <span>PHẦN 3: THÔNG TIN DOANH NGHIỆP & CHUYỂN ĐỔI</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tên thương hiệu / Cửa hàng:</label>
+              <input type="text" id="inp-store-name" class="form-input" placeholder="Tendoo AI Coffee & Lounge">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Hotline tư vấn:</label>
+                <input type="text" id="inp-phone" class="form-input" placeholder="1900 6868">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Địa chỉ hiển thị:</label>
+                <input type="text" id="inp-address" class="form-input" placeholder="88 Phố Huế, Hoàn Kiếm, Hà Nội">
+              </div>
+            </div>
+
+            <!-- QR Switch -->
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <div class="toggle-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                  <span>Mã QR Đặt Hàng / Quét Nhanh</span>
+                </div>
+                <div class="toggle-desc">Tự động sinh mã QR vector thực tế quét được trên điện thoại</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="chk-qr-toggle" onchange="toggleQrField(this.checked)">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="form-group" id="qr-input-group" style="display: none; margin-top: 10px;">
+              <label class="form-label">Link hoặc nội dung mã QR:</label>
+              <input type="text" id="inp-qr-data" class="form-input" placeholder="https://tendoo.ai/dat-ban">
+            </div>
+          </div>
+
+          <!-- PHẦN 4: BỐ CỤC & TỈ LỆ KHUNG HÌNH -->
+          <div class="form-section-block">
+            <div class="section-block-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+              <span>PHẦN 4: BỐ CỤC TEMPLATE & TỈ LỆ KHUNG HÌNH</span>
+            </div>
+
+            <!-- Aspect Ratios -->
+            <div class="form-group">
+              <label class="form-label">Tỉ lệ khung hình (Aspect Ratio):</label>
+              <div class="ratio-grid" id="ratio-grid">
+                <div class="ratio-btn active" data-ratio="1:1" onclick="setAspectRatio('1:1')">1:1</div>
+                <div class="ratio-btn" data-ratio="9:16" onclick="setAspectRatio('9:16')">9:16</div>
+                <div class="ratio-btn" data-ratio="16:9" onclick="setAspectRatio('16:9')">16:9</div>
+                <div class="ratio-btn" data-ratio="4:5" onclick="setAspectRatio('4:5')">4:5</div>
+                <div class="ratio-btn" data-ratio="2:3" onclick="setAspectRatio('2:3')">2:3</div>
+                <div class="ratio-btn" data-ratio="4:3" onclick="setAspectRatio('4:3')">4:3</div>
+              </div>
+            </div>
+
+            <!-- Template Selector -->
+            <div class="form-group" style="margin-top: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label class="form-label" style="margin-bottom:0;">Chọn Template thiết kế:</label>
+                <span style="font-size:11px; color:var(--accent-cyan); cursor:pointer; font-weight:700;" onclick="resetAutoTemplate()">Khôi phục AI Auto</span>
+              </div>
+              <div class="template-grid-scroll" id="template-cards-container">
+                <div class="tpl-chip-card active" data-tpl="auto" onclick="selectTemplate('auto')">
+                  <div class="tpl-chip-title">🤖 AI Tự Chọn <span style="color:var(--accent-cyan); font-size:10px;">Khuyến nghị</span></div>
+                  <div class="tpl-chip-desc">LLM Creative Director tự phân tích ý đồ và chọn template tối ưu</div>
+                </div>
+                <!-- Dynamic template cards loaded from /api/v3/templates -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="btn-action-row">
+            <button type="button" class="btn-submit" id="btn-generate" onclick="triggerExecution(false)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              <span>Khởi Tạo Poster AI (Full Pipeline)</span>
+            </button>
+            <button type="button" class="btn-preview" id="btn-preview" onclick="triggerExecution(true)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>Duyệt Nhanh 1s</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- Right Panel: High-Res Preview & Inspection -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>Khung Xem Trước & Phân Tích Kỹ Thuật</span>
+          <span id="badge-dimensions" style="font-size: 12px; color: var(--text-muted); font-weight:600;">1024 × 1024 px</span>
+        </div>
+
+        <!-- Tabs Row -->
+        <div class="tabs-row">
+          <button type="button" class="tab-btn active" data-view="poster" onclick="switchViewTab('poster')">🖼️ Poster Cuối</button>
+          <button type="button" class="tab-btn" data-view="backdrop" onclick="switchViewTab('backdrop')">🌄 Ảnh Nền DiT</button>
+          <button type="button" class="tab-btn" data-view="mask" onclick="switchViewTab('mask')">🎭 Continuous Mask</button>
+          <button type="button" class="tab-btn" data-view="html" onclick="switchViewTab('html')">🌐 HTML Live</button>
+          <button type="button" class="tab-btn" data-view="json" onclick="switchViewTab('json')">📋 Kế Hoạch JSON</button>
+        </div>
+
+        <!-- Chameleon Palette Inspector Pill -->
+        <div class="palette-inspector-pill" id="palette-pill">
+          <span>Màu Tắc Kè Hoa Thích Ứng:</span>
+          <span class="palette-color-dot" id="dot-primary" title="Text Primary"></span>
+          <span class="palette-color-dot" id="dot-secondary" title="Text Secondary"></span>
+          <span class="palette-color-dot" id="dot-cta" title="CTA Accent"></span>
+          <span class="palette-color-dot" id="dot-glass" title="Glass BG"></span>
+        </div>
+
+        <!-- Preview Stage Box -->
+        <div class="preview-box" id="preview-box">
+          <!-- Progress Overlay -->
+          <div class="progress-overlay" id="progress-overlay">
+            <div class="spinner"></div>
+            <div class="progress-text" id="progress-status-text">Đang gọi Giám đốc Sáng tạo Qwen3.8-27B...</div>
+            <div class="progress-sub" id="progress-sub-text">Khởi tạo Continuous Mask và Flow Matching ODE</div>
+          </div>
+
+          <!-- Empty Placeholder -->
+          <div class="preview-placeholder" id="preview-placeholder">
+            <div class="icon">🎨</div>
+            <div style="font-size:15px; font-weight:700; color:#E2E8F0; margin-bottom:6px;">Chưa Có Poster Nào</div>
+            <div style="font-size:12.5px; color:var(--text-dim); max-width:280px; line-height:1.4;">
+              Điền thông tin và nhấp "Khởi Tạo Poster AI" hoặc "Duyệt Nhanh 1s" để thấy kết quả.
+            </div>
+          </div>
+
+          <!-- Main Image -->
+          <img id="main-preview-img" class="preview-img" src="" alt="Poster Preview" style="display: none;" />
+          
+          <!-- Live HTML Iframe -->
+          <iframe id="main-preview-frame" class="raw-html-frame" style="display: none;"></iframe>
+
+          <!-- JSON Viewer -->
+          <pre id="main-preview-json" class="json-viewer" style="display: none;"></pre>
+        </div>
+
+        <!-- Action Bar Below Preview -->
+        <div class="result-actions" id="result-actions">
+          <button type="button" class="btn-action btn-download" id="btn-download-img" onclick="downloadPoster()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>Tải Ảnh Lossless HD</span>
+          </button>
+          <button type="button" class="btn-action" onclick="copyActiveContent()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span id="btn-copy-label">Sao Chép HTML</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Toast notifications container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    // State
+    const state = {
+      category: 'promo',
+      aspectRatio: '1:1',
+      template: 'auto',
+      activeView: 'poster',
+      uploadedImageB64: null,
+      rating: 5,
+      currentResult: null,
+    };
+
+    // Category field definitions
+    const CATEGORY_CONFIG = {
+      promo: {
+        title: 'PHẦN 1: THÔNG TIN KHUYẾN MẠI / ƯU ĐÃI',
+        panelTitle: 'Thông tin Poster Khuyến Mại',
+        fields: [
+          { id: 'f-headline', key: 'headline', label: 'Tên chương trình / Sản phẩm', placeholder: 'TRÀ ĐÀO CAM SẢ THANH MÁT' },
+          { id: 'f-discount', key: 'discount', label: 'Mức ưu đãi / Badge', placeholder: 'GIẢM 50% HÔM NAY' },
+          { id: 'f-price', key: 'price', label: 'Giá niêm yết', placeholder: '45.000đ' },
+          { id: 'f-desc', key: 'product_desc', label: 'Mô tả ngắn hấp dẫn', placeholder: 'Thức uống mùa hè thanh nhiệt mát lạnh sảng khoái từng giọt' },
+          { id: 'f-highlights', key: 'highlights', label: 'Điểm nổi bật (Pills)', placeholder: 'Trái cây tươi tự nhiên • Không chất bảo quản • Giao nhanh 15p' },
+          { id: 'f-cta', key: 'cta', label: 'Nút hành động (CTA)', placeholder: 'ĐẶT MUA NGAY' },
+        ]
+      },
+      product_intro: {
+        title: 'PHẦN 1: GIỚI THIỆU SẢN PHẨM / DỊCH VỤ',
+        panelTitle: 'Thông tin Giới Thiệu Sản Phẩm',
+        fields: [
+          { id: 'f-product-name', key: 'product_name', label: 'Tên sản phẩm', placeholder: 'Đồng Hồ Nam Thể Thao Tendoo Ultra' },
+          { id: 'f-desc', key: 'product_desc', label: 'Mô tả chi tiết', placeholder: 'Vỏ Titanium siêu nhẹ, mặt kính sapphire chống trầy xước chuẩn Thụy Sĩ' },
+          { id: 'f-price', key: 'price', label: 'Giá bán chính hãng', placeholder: '12.800.000đ' },
+          { id: 'f-highlights', key: 'highlights', label: 'Thông số kỹ thuật', placeholder: 'Chống nước 10 ATM • Pin 14 ngày • Cảm biến nhịp tim ECG' },
+          { id: 'f-cta', key: 'cta', label: 'Nút hành động', placeholder: 'KHÁM PHÁ NGAY' },
+        ]
+      },
+      opening: {
+        title: 'PHẦN 1: THÔNG TIN KHAI TRƯƠNG',
+        panelTitle: 'Thông tin Khai Trương Chi Nhánh',
+        fields: [
+          { id: 'f-headline', key: 'headline', label: 'Tiêu đề khai trương', placeholder: 'TƯNG BỪNG KHAI TRƯƠNG CƠ SỞ 5' },
+          { id: 'f-opening-date', key: 'opening_date', label: 'Ngày giờ khai trương', placeholder: '08:30 - Ngày 28/09/2026' },
+          { id: 'f-opening-promo', key: 'opening_promo', label: 'Quà tặng / Ưu đãi mừng khai trương', placeholder: 'TẶNG NGAY VOUCHER 200K CHO 100 KHÁCH ĐẦU TIÊN' },
+          { id: 'f-booking-contact', key: 'booking_contact', label: 'Liên hệ đặt chỗ', placeholder: 'Hotline: 0988 123 456' },
+          { id: 'f-cta', key: 'cta', label: 'Nút hành động', placeholder: 'ĐẶT BÀN NGAY' },
+        ]
+      },
+      feedback: {
+        title: 'PHẦN 1: FEEDBACK & ĐÁNH GIÁ CỦA KHÁCH HÀNG',
+        panelTitle: 'Thông tin Feedback & Đánh Giá',
+        fields: [
+          { id: 'f-target', key: 'feedback_target', label: 'Tên sản phẩm / Dịch vụ được đánh giá', placeholder: 'Combo Spa Trị Mụn Chuyên Sâu 90 Ngày' },
+          { id: 'f-quote', key: 'feedback_quote', label: 'Lời nhận xét của khách hàng (Testimonial)', placeholder: 'Da mình đỡ mụn hẳn sau 2 tuần, chuyên viên rất chu đáo và nhẹ nhàng!' },
+          { id: 'f-customer', key: 'customer_name', label: 'Tên & chức danh khách hàng', placeholder: 'Chị Mai Lan - Hội viên VIP' },
+          { id: 'f-highlights', key: 'highlights', label: 'Huy hiệu cam kết / Điểm uy tín', placeholder: '98% khách hàng hài lòng • Cam kết hoàn tiền 100%' },
+          { id: 'f-cta', key: 'cta', label: 'Nút hành động', placeholder: 'ĐẶT LỊCH TƯ VẤN' },
+        ],
+        hasRating: true,
+      },
+      recruitment: {
+        title: 'PHẦN 1: THÔNG TIN TUYỂN DỤNG NHÂN TÀI',
+        panelTitle: 'Thông tin Tuyển Dụng',
+        fields: [
+          { id: 'f-job-pos', key: 'job_position', label: 'Vị trí tuyển dụng', placeholder: 'SENIOR AI ENGINEER (COMPUTER VISION)' },
+          { id: 'f-salary', key: 'discount', label: 'Mức thu nhập / Quyền lợi', placeholder: 'Thu nhập $2,500 - $4,500 + Thưởng dự án' },
+          { id: 'f-job-desc', key: 'job_desc', label: 'Mô tả ngắn & Yêu cầu', placeholder: 'Kinh nghiệm PyTorch, Diffusion DiT, Flow Matching. Làm việc hybrid linh hoạt' },
+          { id: 'f-deadline', key: 'apply_deadline', label: 'Hạn nộp hồ sơ', placeholder: 'Hạn chót: 15/10/2026' },
+          { id: 'f-apply-method', key: 'apply_method', label: 'Cách thức ứng tuyển', placeholder: 'Gửi CV về: hr@tendoo.ai' },
+          { id: 'f-cta', key: 'cta', label: 'Nút hành động', placeholder: 'ỨNG TUYỂN NGAY' },
+        ]
+      },
+      guide: {
+        title: 'PHẦN 1: QUY TRÌNH & HƯỚNG DẪN CÁC BƯỚC',
+        panelTitle: 'Thông tin Quy Trình Hướng Dẫn',
+        fields: [
+          { id: 'f-headline', key: 'headline', label: 'Tiêu đề quy trình', placeholder: 'QUY TRÌNH CHĂM SÓC XE 3 BƯỚC CHUẨN ĐỨC' },
+          { id: 'f-desc', key: 'product_desc', label: 'Mục đích quy trình', placeholder: 'Đảm bảo xế yêu luôn sáng bóng như mới và vận hành bền bỉ' },
+          { id: 'f-cta', key: 'cta', label: 'Nút hành động', placeholder: 'ĐẶT LỊCH DỊCH VỤ' },
+        ],
+        hasSteps: true,
+      }
+    };
+
+    // 1-Click Presets Library
+    const PRESETS = {
+      beverage: {
+        category: 'promo',
+        prompt: 'Cốc trà đào cam sả tươi mát với lát đào vàng ươm, đá tuyết mát lạnh, ánh nắng ban mai xuyên qua giọt nước ngưng tụ, chụp cận cảnh studio đồ uống cao cấp, màu sắc rực rỡ nhiệt đới.',
+        fields: {
+          headline: 'TRÀ ĐÀO CAM SẢ TƯƠI MÁT',
+          discount: 'MUA 1 TẶNG 1',
+          price: '45.000đ',
+          product_desc: 'Thanh nhiệt tức thì với trà Oolong tuyển chọn và đào giòn thơm ngọt tự nhiên',
+          highlights: 'Trái cây tươi 100% • Giảm 50% topping • Giao tận nơi 15p',
+          cta: 'ĐẶT GIAO NGAY'
+        },
+        store: { name: 'Tendoo Tea & Coffee', phone: '1900 8888', address: '12 Hàng Buồm, Hoàn Kiếm, Hà Nội' }
+      },
+      coffee: {
+        category: 'product_intro',
+        prompt: 'Phin cà phê nhôm truyền thống Việt Nam đang nhỏ từng giọt nâu đậm sánh quyện trên bàn gỗ sồi mộc mạc, khói sương mờ ảo dưới nắng sớm vàng ấm, phong cách điện ảnh retro film grain.',
+        fields: {
+          product_name: 'CÀ PHÊ PHIN NGUYÊN BẢN',
+          product_desc: 'Hạt Robusta Đắk Lắk rang mộc thủ công, đượm hương khói củi và vị đậm đà truyền thống',
+          price: '180.000đ / túi 500g',
+          highlights: '100% Robusta Đắk Lắk • Không phụ gia hương liệu • Rang mộc tươi mới',
+          cta: 'THƯỞNG THỨC NGAY'
+        },
+        store: { name: 'Buôn Ma Thuột Heritage Coffee', phone: '0912 345 678', address: '45 Lê Duẩn, Buôn Ma Thuột' }
+      },
+      watch: {
+        category: 'product_intro',
+        prompt: 'Đồng hồ thể thao nam viền titanium xước mờ đặt trên bục đá granite đen thô ráp, tia sáng xanh cyan neon lướt ngang tinh xảo, phản chiếu sắc nét phong cách Cyberpunk hiện đại sang trọng.',
+        fields: {
+          product_name: 'TENDOO CHRONO TITANIUM',
+          product_desc: 'Kiệt tác cơ khí thể thao chuẩn kháng nước 100M với mặt kính Sapphire nguyên khối',
+          price: '8.990.000đ',
+          highlights: 'Vỏ Titanium Cấp 5 • Kính Sapphire Phủ AR • Bảo hành quốc tế 5 năm',
+          cta: 'XEM BỘ SƯU TẬP'
+        },
+        store: { name: 'Tendoo Timepieces Luxury', phone: '1900 6868', address: 'Tràng Tiền Plaza, Hà Nội' }
+      },
+      perfume: {
+        category: 'promo',
+        prompt: 'Chai nước hoa thủy tinh đa giác sang trọng lấp lánh phản quang hạt bụi vàng kim tuyến lơ lửng, làn khói sương nước hoa mờ ảo huyền bí, phong cách mỹ phẩm Haute Parfumerie nước Pháp.',
+        fields: {
+          headline: 'NƯỚC HOA MAJESTIC GOLD',
+          discount: 'ƯU ĐÃI KHỦNG 30%',
+          price: '3.450.000đ',
+          product_desc: 'Hương gỗ đàn hương và hoa hồng Damask quyến rũ vương vấn suốt 24 giờ',
+          highlights: 'Chiết xuất tự nhiên 100% • Lưu hương 24h • Nhập khẩu từ Grasse, Pháp',
+          cta: 'SỞ HỮU NGAY'
+        },
+        store: { name: 'Maison de Parfum Paris', phone: '0909 999 888', address: 'Vincom Đồng Khởi, Q.1, TP.HCM' }
+      },
+      spa_review: {
+        category: 'feedback',
+        prompt: 'Không gian spa Zen tĩnh lặng với bồn thảo mộc ngát hương hoa sen trắng, nến thơm lung linh, ánh sáng khuếch tán êm dịu phong cách nghỉ dưỡng luxury.',
+        fields: {
+          feedback_target: 'Liệu Trình Trẻ Hóa Da 90 Phút',
+          feedback_quote: 'Dịch vụ chuẩn 5 sao, làn da mình căng bóng mịn màng ngay sau buổi đầu tiên, rất hài lòng!',
+          customer_name: 'Bảo Trân - Khách hàng VIP',
+          highlights: '100% mỹ phẩm hữu cơ • Chuyên viên 10 năm kinh nghiệm • Đạt chuẩn ISO',
+          cta: 'ĐẶT LỊCH TRẢI NGHIỆM'
+        },
+        rating: 5,
+        store: { name: 'An Nhiên Wellness Spa', phone: '1800 6677', address: 'Thảo Điền, TP. Thủ Đức, TP.HCM' }
+      },
+      gym_step: {
+        category: 'guide',
+        prompt: 'Phòng tập thể hình hiện đại ánh sáng đèn LED thể thao mạnh mẽ tương phản cao, tạ ấm và trang thiết bị chuyên nghiệp bốc lửa năng động.',
+        fields: {
+          headline: '3 BƯỚC KHỞI ĐẦU HÀNH TRÌNH FIT',
+          product_desc: 'Phác đồ tập luyện khoa học được thiết kế riêng bởi chuyên gia thể hình quốc tế',
+          cta: 'NHẬN TƯ VẤN MIỄN PHÍ'
+        },
+        steps: [
+          'Đo chỉ số InBody & Kiểm tra thể lực chuyên sâu',
+          'Thiết kế thực đơn dinh dưỡng cá nhân hóa 1:1',
+          'Tập luyện cùng HLV cá nhân đạt mục tiêu sau 30 ngày'
+        ],
+        store: { name: 'Titan Fitness Center', phone: '1900 9999', address: 'Landmark 81, TP.HCM' }
+      }
+    };
+
+    // Render Dynamic Form Fields based on state.category
+    function renderCategoryFields() {
+      const config = CATEGORY_CONFIG[state.category] || CATEGORY_CONFIG.promo;
+      document.getElementById('section-general-title').textContent = config.title;
+      document.getElementById('panel-category-title').textContent = config.panelTitle;
+
+      const container = document.getElementById('dynamic-fields-container');
+      let html = '';
+
+      config.fields.forEach(f => {
+        html += `
+          <div class="form-group">
+            <label class="form-label" for="${f.id}">${f.label}:</label>
+            <input type="text" id="${f.id}" data-key="${f.key}" class="form-input dynamic-input" placeholder="${f.placeholder}">
+          </div>
+        `;
+      });
+
+      // Special handling: Rating stars for feedback
+      if (config.hasRating) {
+        html += `
+          <div class="form-group">
+            <label class="form-label">Đánh giá sao của khách hàng:</label>
+            <div class="star-rating-box">
+              <span class="star-btn active" data-v="1" onclick="setStarRating(1)">★</span>
+              <span class="star-btn active" data-v="2" onclick="setStarRating(2)">★</span>
+              <span class="star-btn active" data-v="3" onclick="setStarRating(3)">★</span>
+              <span class="star-btn active" data-v="4" onclick="setStarRating(4)">★</span>
+              <span class="star-btn active" data-v="5" onclick="setStarRating(5)">★</span>
+              <span class="star-rating-label" id="star-rating-text">5/5 Sao Hoàn Hảo</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // Special handling: Steps list for guide
+      if (config.hasSteps) {
+        html += `
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label class="form-label" style="margin-bottom:0;">Các bước quy trình:</label>
+              <button type="button" class="btn-action" style="padding:4px 10px; font-size:11px;" onclick="addGuideStepRow()">+ Thêm bước</button>
+            </div>
+            <div id="guide-steps-list" style="display:flex; flex-direction:column; gap:8px;">
+              <input type="text" class="form-input guide-step-item" placeholder="Bước 1: Tiếp nhận yêu cầu & thăm khám">
+              <input type="text" class="form-input guide-step-item" placeholder="Bước 2: Lên phác đồ trị liệu cá nhân">
+              <input type="text" class="form-input guide-step-item" placeholder="Bước 3: Thực hiện & cam kết bảo hành">
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function setStarRating(val) {
+      state.rating = val;
+      document.querySelectorAll('.star-btn').forEach(btn => {
+        const v = parseInt(btn.dataset.v);
+        btn.classList.toggle('active', v <= val);
+      });
+      const text = val === 5 ? '5/5 Sao Hoàn Hảo' : `${val}/5 Sao Uy Tín`;
+      const el = document.getElementById('star-rating-text');
+      if (el) el.textContent = text;
+    }
+
+    function addGuideStepRow(text = '') {
+      const list = document.getElementById('guide-steps-list');
+      if (!list) return;
+      const idx = list.children.length + 1;
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'form-input guide-step-item';
+      inp.placeholder = `Bước ${idx}: mô tả ngắn gọn`;
+      inp.value = text;
+      list.appendChild(inp);
+    }
+
+    // Switch Category
+    function switchCategory(cat) {
+      state.category = cat;
+      document.querySelectorAll('.intent-card').forEach(c => c.classList.remove('active'));
+      const activeCard = document.getElementById(`btn-cat-${cat}`);
+      if (activeCard) activeCard.classList.add('active');
+      renderCategoryFields();
+      showToast(`Đã chuyển sang mẫu: ${cat.toUpperCase()}`);
+    }
+
+    // Load 1-Click Preset
+    function loadPreset(name) {
+      const p = PRESETS[name];
+      if (!p) return;
+      switchCategory(p.category);
+
+      // Fill prompt
+      document.getElementById('inp-prompt').value = p.prompt;
+
+      // Fill dynamic fields
+      Object.keys(p.fields).forEach(key => {
+        const inp = document.querySelector(`.dynamic-input[data-key="${key}"]`);
+        if (inp) inp.value = p.fields[key];
+      });
+
+      // Fill store info
+      if (p.store) {
+        document.getElementById('inp-store-name').value = p.store.name || '';
+        document.getElementById('inp-phone').value = p.store.phone || '';
+        document.getElementById('inp-address').value = p.store.address || '';
+      }
+
+      // Steps if any
+      if (p.steps && document.getElementById('guide-steps-list')) {
+        const list = document.getElementById('guide-steps-list');
+        list.innerHTML = '';
+        p.steps.forEach(s => addGuideStepRow(s));
+      }
+
+      if (p.rating) {
+        setStarRating(p.rating);
+      }
+
+      showToast(`Đã nạp mẫu: ${name.replace('_', ' ').toUpperCase()}`);
+    }
+
+    // Aspect Ratio & Templates
+    function setAspectRatio(ratio) {
+      state.aspectRatio = ratio;
+      document.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
+      const btn = document.querySelector(`.ratio-btn[data-ratio="${ratio}"]`);
+      if (btn) btn.classList.add('active');
+
+      const dimensionsMap = {
+        '1:1': '1024 × 1024 px',
+        '9:16': '576 × 1024 px',
+        '16:9': '1024 × 576 px',
+        '4:5': '816 × 1024 px',
+        '2:3': '680 × 1024 px',
+        '4:3': '1024 × 768 px',
+      };
+      document.getElementById('badge-dimensions').textContent = dimensionsMap[ratio] || '1024 × 1024 px';
+    }
+
+    function selectTemplate(tpl) {
+      state.template = tpl;
+      document.querySelectorAll('.tpl-chip-card').forEach(c => c.classList.remove('active'));
+      const card = document.querySelector(`.tpl-chip-card[data-tpl="${tpl}"]`);
+      if (card) card.classList.add('active');
+      document.getElementById('layout-indicator').textContent = tpl === 'auto' 
+        ? 'Bố cục: Tự động thông minh' 
+        : `Bố cục: ${tpl}`;
+    }
+
+    function resetAutoTemplate() {
+      selectTemplate('auto');
+    }
+
+    function toggleQrField(checked) {
+      const g = document.getElementById('qr-input-group');
+      if (g) g.style.display = checked ? 'block' : 'none';
+    }
+
+    // File Upload handling
+    function handleFileSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        state.uploadedImageB64 = e.target.result;
+        document.getElementById('upload-thumb').src = state.uploadedImageB64;
+        document.getElementById('upload-filename').textContent = file.name;
+        document.getElementById('upload-filesize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+        document.getElementById('upload-dropzone').style.display = 'none';
+        document.getElementById('upload-preview-wrap').style.display = 'flex';
+        showToast('Đã tải ảnh mẫu lên thành công!');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeUploadedImage() {
+      state.uploadedImageB64 = null;
+      document.getElementById('file-input').value = '';
+      document.getElementById('upload-dropzone').style.display = 'block';
+      document.getElementById('upload-preview-wrap').style.display = 'none';
+      showToast('Đã xóa ảnh mẫu');
+    }
+
+    // Collect Data Payload
+    function collectPayload(fastPreview = false) {
+      const payload = {
+        category: state.category,
+        aspect_ratio: state.aspectRatio,
+        template: state.template,
+        fast_preview: fastPreview,
+        prompt: document.getElementById('inp-prompt').value.trim() || undefined,
+        store_name: document.getElementById('inp-store-name').value.trim() || undefined,
+        phone: document.getElementById('inp-phone').value.trim() || undefined,
+        address: document.getElementById('inp-address').value.trim() || undefined,
+      };
+
+      // QR
+      const isQr = document.getElementById('chk-qr-toggle').checked;
+      if (isQr) {
+        payload.qr_data = document.getElementById('inp-qr-data').value.trim() || 'https://tendoo.ai';
+      }
+
+      // Dynamic inputs
+      document.querySelectorAll('.dynamic-input').forEach(inp => {
+        const key = inp.dataset.key;
+        const val = inp.value.trim();
+        if (key && val) {
+          payload[key] = val;
+        }
+      });
+
+      // Rating for feedback
+      if (state.category === 'feedback') {
+        payload.feedback_rating = state.rating;
+      }
+
+      // Steps for guide
+      if (state.category === 'guide') {
+        const steps = Array.from(document.querySelectorAll('.guide-step-item'))
+          .map(inp => inp.value.trim())
+          .filter(Boolean);
+        if (steps.length) payload.guide_steps = steps;
+      }
+
+      // Uploaded ref image
+      if (state.uploadedImageB64) {
+        payload.ref_image_b64 = state.uploadedImageB64;
+      }
+
+      return payload;
+    }
+
+    // Execute API
+    async function triggerExecution(fastPreview = false) {
+      const payload = collectPayload(fastPreview);
+      const endpoint = fastPreview ? '/api/v3/plan-only' : '/api/v3/generate';
+
+      const progressOverlay = document.getElementById('progress-overlay');
+      const progressText = document.getElementById('progress-status-text');
+      const progressSub = document.getElementById('progress-sub-text');
+      const btnGen = document.getElementById('btn-generate');
+      const btnPrev = document.getElementById('btn-preview');
+
+      progressOverlay.style.display = 'flex';
+      btnGen.disabled = true;
+      btnPrev.disabled = true;
+
+      if (fastPreview) {
+        progressText.textContent = 'Duyệt Bố Cục Thần Tốc (1s Fast Preview)...';
+        progressSub.textContent = 'LLM Qwen3.8-27B chọn template & biên tập nội dung HTML';
+      } else {
+        progressText.textContent = 'Đang Khởi Tạo Poster AI Hoàn Chỉnh...';
+        progressSub.textContent = 'Regional Velocity Blending ODE & Playwright Chromium';
+      }
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          state.currentResult = data;
+          renderResult();
+          showToast(fastPreview ? '⚡ Đã duyệt nhanh bố cục thành công!' : '🚀 Poster AI đã sẵn sàng!');
+        } else {
+          alert('Lỗi từ Server: ' + (data.detail || 'Không thể tạo poster'));
+        }
+      } catch (err) {
+        alert('Lỗi kết nối Server: ' + err.message);
+      } finally {
+        progressOverlay.style.display = 'none';
+        btnGen.disabled = false;
+        btnPrev.disabled = false;
+      }
+    }
+
+    // Render Results & Views
+    function renderResult() {
+      const res = state.currentResult;
+      if (!res) return;
+
+      document.getElementById('preview-placeholder').style.display = 'none';
+      document.getElementById('preview-box').classList.add('has-content');
+      document.getElementById('result-actions').style.display = 'flex';
+
+      // Inspect chameleon palette
+      const pill = document.getElementById('palette-pill');
+      if (res.palette) {
+        pill.style.display = 'flex';
+        document.getElementById('dot-primary').style.backgroundColor = res.palette.text_primary || '#fff';
+        document.getElementById('dot-secondary').style.backgroundColor = res.palette.text_secondary || '#aaa';
+        document.getElementById('dot-cta').style.backgroundColor = res.palette.cta_bg || '#06B6D4';
+        document.getElementById('dot-glass').style.backgroundColor = res.palette.glass_bg || 'rgba(0,0,0,0.5)';
+      } else {
+        pill.style.display = 'none';
+      }
+
+      updateActiveView();
+    }
+
+    function switchViewTab(viewName) {
+      state.activeView = viewName;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === viewName);
+      });
+      updateActiveView();
+    }
+
+    function updateActiveView() {
+      const res = state.currentResult;
+      if (!res) return;
+
+      const img = document.getElementById('main-preview-img');
+      const frame = document.getElementById('main-preview-frame');
+      const jsonPre = document.getElementById('main-preview-json');
+      const copyBtn = document.getElementById('btn-copy-label');
+
+      img.style.display = 'none';
+      frame.style.display = 'none';
+      jsonPre.style.display = 'none';
+
+      if (state.activeView === 'poster') {
+        img.src = res.poster_uri || res.bg_data_uri;
+        img.style.display = 'block';
+        copyBtn.textContent = 'Sao Chép Base64';
+      } else if (state.activeView === 'backdrop') {
+        img.src = res.bg_uri || res.bg_data_uri;
+        img.style.display = 'block';
+        copyBtn.textContent = 'Sao Chép Backdrop';
+      } else if (state.activeView === 'mask') {
+        img.src = res.mask_uri || '';
+        img.style.display = 'block';
+        copyBtn.textContent = 'Sao Chép Mask';
+      } else if (state.activeView === 'html') {
+        frame.srcdoc = res.html;
+        frame.style.display = 'block';
+        copyBtn.textContent = 'Sao Chép Mã HTML';
+      } else if (state.activeView === 'json') {
+        jsonPre.textContent = JSON.stringify(res.plan, null, 2);
+        jsonPre.style.display = 'block';
+        copyBtn.textContent = 'Sao Chép JSON Plan';
+      }
+    }
+
+    function downloadPoster() {
+      if (!state.currentResult || !state.currentResult.poster_uri) {
+        showToast('Chưa có ảnh poster để tải về!');
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = state.currentResult.poster_uri;
+      a.download = `tendoo_poster_${Date.now()}.png`;
+      a.click();
+      showToast('Đang tải file ảnh về máy...');
+    }
+
+    function copyActiveContent() {
+      if (!state.currentResult) return;
+      let text = '';
+      if (state.activeView === 'html') {
+        text = state.currentResult.html;
+      } else if (state.activeView === 'json') {
+        text = JSON.stringify(state.currentResult.plan, null, 2);
+      } else if (state.activeView === 'poster') {
+        text = state.currentResult.poster_uri || '';
+      }
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Đã sao chép nội dung vào Clipboard!');
+      });
+    }
+
+    function showToast(msg) {
+      const box = document.getElementById('toast-container');
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = msg;
+      box.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transition = 'opacity 0.3s';
+        setTimeout(() => t.remove(), 300);
+      }, 2600);
+    }
+
+    // Health & Catalog Loading
+    async function checkHealth() {
+      try {
+        const res = await fetch('/api/v3/health');
+        const data = await res.json();
+        const chip = document.getElementById('server-status-chip');
+        const text = document.getElementById('server-status-text');
+
+        if (data.gpu_available) {
+          chip.className = 'status-chip';
+          text.textContent = `2x A30 Sẵn Sàng (${data.active_llm})`;
+        } else {
+          chip.className = 'status-chip mock';
+          text.textContent = `Mock Mode CPU (${data.active_llm})`;
+        }
+      } catch (err) {
+        document.getElementById('server-status-text').textContent = 'Server Offline';
+      }
+    }
+
+    async function loadCatalog() {
+      try {
+        const res = await fetch('/api/v3/templates');
+        const data = await res.json();
+        if (data.status === 'success') {
+          const container = document.getElementById('template-cards-container');
+          data.templates.forEach(tpl => {
+            const card = document.createElement('div');
+            card.className = 'tpl-chip-card';
+            card.dataset.tpl = tpl.name;
+            card.innerHTML = `
+              <div class="tpl-chip-title">${tpl.label}</div>
+              <div class="tpl-chip-desc">${tpl.best_for}</div>
+            `;
+            card.onclick = () => selectTemplate(tpl.name);
+            container.appendChild(card);
+          });
+        }
+      } catch (err) {
+        console.warn('Cannot fetch templates:', err);
+      }
+    }
+
+    // Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCategoryFields();
+      checkHealth();
+      loadCatalog();
+      // Load beverage preset as handsome initial showcase
+      setTimeout(() => loadPreset('beverage'), 300);
+    });
+  </script>
+</body>
+</html>
