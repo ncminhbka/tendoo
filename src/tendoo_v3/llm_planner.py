@@ -41,13 +41,11 @@ from tendoo_v3.schema import StyleConfig, TendooCreativePlan
 
 logger = logging.getLogger("TendooV3.LLMPlanner")
 
-# Nạp src/tendoo_v3/.env NGAY TẠI ĐÂY (không chỉ ở demo_server.py) -- các hằng số
-# LLM_BASE_URL/LLM_API_KEY/LLM_MODEL bên dưới đọc os.environ NGAY LÚC IMPORT MODULE
-# này, nên nếu chỉ load .env ở demo_server.py sau khi module này đã được import (hoặc
-# khi 1 script khác import thẳng llm_planner mà không qua demo_server.py), các giá trị
-# thật trong .env sẽ không bao giờ có hiệu lực. override=False: biến môi trường đã
-# export sẵn ngoài shell luôn thắng .env, không bị ghi đè âm thầm.
-load_dotenv(Path(__file__).resolve().parent / ".env", override=False)
+# Nạp .env từ cả thư mục src/tendoo_v3/.env lẫn thư mục gốc của repo
+_v3_dir = Path(__file__).resolve().parent
+_root_dir = _v3_dir.parent.parent
+load_dotenv(_v3_dir / ".env", override=False)
+load_dotenv(_root_dir / ".env", override=False)
 
 # Cấu hình môi trường OpenAI-compatible
 LLM_BASE_URL = os.environ.get("TENDOO_V3_LLM_BASE_URL", "http://10.221.155.3:8004/v1")

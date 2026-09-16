@@ -49,7 +49,7 @@ from fastapi.staticfiles import StaticFiles
 from tendoo.core.colors import analyze_color_harmony
 from tendoo_v3.catalog import TEMPLATE_CATALOG
 from tendoo_v3.geometry import get_zones
-from tendoo_v3.llm_planner import generate_creative_plan, LLM_MODEL
+from tendoo_v3.llm_planner import generate_creative_plan, LLM_MODEL, LLM_BASE_URL, LLM_API_KEY
 from tendoo_v3.mask_engine import generate_template_mask
 from tendoo_v3.qr import generate_qr_base64
 from tendoo_v3.renderer import build_template_html, pil_to_base64_data_uri, render_plan_to_poster
@@ -191,7 +191,10 @@ async def lifespan(app: FastAPI):
     logger.info("=" * 70)
     logger.info("🚀 STARTING TENDOO v3 STUDIO DEMO SERVER")
     logger.info(f"   Mock Mode: {IS_MOCK_MODE} | CUDA Available: {torch.cuda.is_available()}")
-    logger.info(f"   Active LLM: {LLM_MODEL}")
+    logger.info(f"   Active LLM Model: {LLM_MODEL}")
+    logger.info(f"   LLM Base URL:     {LLM_BASE_URL}")
+    key_status = f"CONFIGURED (***{LLM_API_KEY[-4:]})" if LLM_API_KEY else "NOT SET (Fallback Heuristic active)"
+    logger.info(f"   LLM API Key:      {key_status}")
     logger.info("=" * 70)
 
     if not IS_MOCK_MODE and torch.cuda.is_available():
