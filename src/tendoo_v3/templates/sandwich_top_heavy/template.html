@@ -22,6 +22,7 @@
       width: {{width}}px;
       height: {{height}}px;
       overflow: hidden;
+      background-color: transparent;
     }
     .bg-layer {
       position: absolute;
@@ -31,9 +32,9 @@
       background-position: center;
       z-index: 1;
     }
-    /* Dải Băng Ngang Trên Đỉnh -- chiều cao THẬT lấy từ zones.top (geometry.py, dùng
-       chung với mask_engine.py) qua inline style, không còn hard-code % rời rạc dễ
-       lệch với mask. overflow:hidden làm lưới an toàn cuối nếu autofit vẫn chưa đủ co. */
+
+    /* Dải Băng Ngang Trên Đỉnh -- Hoàn toàn transparent, không dùng scrim mờ che ảnh.
+       Từng thành phần (pill, badge, text-shadow) tự đảm bảo tương phản. */
     .sandwich-top-band {
       position: absolute;
       top: 0;
@@ -46,78 +47,86 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      padding: 16px 32px 10px;
-      background: {{palette.gradient_overlay}};
-      backdrop-filter: blur(14px);
+      gap: 5px;
+      padding: 10px 24px 6px;
+      background: transparent;
       text-align: center;
       color: {{palette.text_primary}};
     }
+
     .badge-pill {
-      padding: 4px 12px;
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 14px;
       font-size: 11px;
       font-weight: 800;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
-      color: {{theme_color}};
-      background: {{palette.pill_bg}};
-      border: 1px solid {{theme_color}};
+      color: #fff;
+      background: {{theme_color}};
+      border: 1px solid rgba(255, 255, 255, 0.4);
       border-radius: 9999px;
-      box-shadow: 0 0 10px {{theme_color}}44;
-      margin-bottom: 6px;
+      box-shadow: 0 3px 12px {{theme_color}}66, 0 1px 3px rgba(0, 0, 0, 0.4);
+      margin-bottom: 2px;
+      flex-shrink: 0;
     }
+
     .hero-title {
-      font-size: 42px;
+      font-size: 40px;
       font-weight: 900;
       line-height: 1.15;
       letter-spacing: -0.5px;
       word-break: keep-all;
-      max-width: 90%;
+      max-width: 92%;
+      color: {{palette.text_primary}};
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.92), 0 0 4px rgba(0, 0, 0, 0.95);
       {{effect_css}}
     }
+
     .subhead-title {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 600;
       line-height: 1.35;
       color: {{palette.text_secondary}};
-      text-shadow: {{palette.text_shadow}};
-      margin-top: 4px;
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.9);
+      max-width: 88%;
     }
-    /* Dải Nhồi Text Linh Hoạt (Semantic Pills) -- giờ là con thường bên trong
-       .sandwich-top-band (KHÔNG còn position:absolute độc lập, vốn là nguyên nhân
-       khiến pill-row từng nằm hẳn ngoài mask: DOM-parent của nó cũ là toàn bộ canvas
-       nên script autofit không có trần thật nào để so sánh). */
+
+    /* Dải Nhồi Text Tự Do (FreeText / Semantic Pills / Tags) */
     .extra-tag-row {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 8px;
-      max-width: 88%;
+      gap: 6px;
+      max-width: 90%;
       overflow: hidden;
-      /* font-size ở ĐÂY để autofit (data-autofit trên chính .extra-tag-row) co được
-         -- .extra-pill kế thừa, không tự khai font-size cố định nữa. */
-      font-size: 12.5px;
+      font-size: 12px;
+      margin-top: 2px;
     }
+
     .extra-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      background: {{palette.pill_bg}};
-      border: 1px solid {{palette.pill_border}};
+      gap: 5px;
+      padding: 4px 12px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 9999px;
       font-weight: 600;
-      color: {{palette.pill_text}};
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      color: #fff;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+      white-space: nowrap;
     }
+
     .extra-pill svg {
-      width: 14px;
-      height: 14px;
+      width: 13px;
+      height: 13px;
       color: {{theme_color}};
       flex-shrink: 0;
     }
-    /* Dải Băng Ngang Ở Đáy (Bottom-Band: Kính mờ siêu nhẹ, không vệt đen) */
+
+    /* Dải Băng Ngang Ở Đáy (Bottom-Band) -- Hoàn toàn transparent, không scrim mờ */
     .sandwich-bottom-band {
       position: absolute;
       bottom: 0;
@@ -129,34 +138,80 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 36px;
-      background: linear-gradient(to top, {{palette.glass_bg}} 0%, rgba(255, 255, 255, 0.01) 100%);
-      backdrop-filter: blur(14px);
-      border-top: 1px solid {{palette.glass_border}};
+      padding: 8px 28px;
+      background: transparent;
       color: {{palette.text_primary}};
+      gap: 12px;
     }
+
+    /* Cột Thông Tin Cửa Hàng (Left) */
+    .store-info-col {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-start;
+      max-width: 48%;
+      flex-shrink: 1;
+    }
+
+    .store-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      background: rgba(10, 15, 28, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 9999px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #E2E8F0;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      white-space: nowrap;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .store-item svg {
+      width: 13px;
+      height: 13px;
+      color: {{theme_color}};
+      flex-shrink: 0;
+    }
+
+    /* Nút Kêu Gọi Hành Động (CTA Center) */
+    .cta-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+
     .cta-btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 11px 26px;
-      font-size: 13.5px;
+      padding: 9px 22px;
+      font-size: 13px;
       font-weight: 800;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       text-transform: uppercase;
       color: {{palette.cta_text}};
       background: {{palette.cta_bg}};
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 9999px;
-      box-shadow: 0 4px 18px {{theme_color}}66;
+      box-shadow: 0 4px 18px {{theme_color}}77, 0 2px 6px rgba(0, 0, 0, 0.4);
+      white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
-    .store-info {
-      font-size: 12.5px;
-      font-weight: 500;
-      color: {{palette.text_secondary}};
-      letter-spacing: 0.2px;
-      text-align: right;
-      line-height: 1.4;
+
+    /* Cột QR Code (Right) */
+    .qr-col {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-shrink: 0;
     }
   </style>
 </head>
@@ -165,16 +220,17 @@
     <div class="bg-layer"></div>
     {{ vfx_html }}
 
+    <!-- Cụm Đỉnh (Top Band): Badge + Hero + Subhead + FreeText Tags -->
     <div class="sandwich-top-band" style="height:{{ zones.top.height }}px; max-height:{{ zones.top.height }}px; overflow:hidden;">
       {% if badge %}
       <div class="badge-pill">{{ badge }}</div>
       {% endif %}
-      <div class="hero-title" data-autofit data-min-font="22" data-max-width="{{ zones.top.width * 0.9 }}" data-max-height="{{ zones.top.height * 0.42 }}">{{ hero }}</div>
+      <div class="hero-title" data-autofit data-min-font="20" data-max-width="{{ zones.top.width * 0.92 }}" data-max-height="{{ zones.top.height * 0.44 }}">{{ hero }}</div>
       {% if subhead %}
-      <div class="subhead-title" data-autofit data-min-font="11" data-max-width="{{ zones.top.width * 0.9 }}" data-max-height="{{ zones.top.height * 0.20 }}">{{ subhead }}</div>
+      <div class="subhead-title" data-autofit data-min-font="11" data-max-width="{{ zones.top.width * 0.88 }}" data-max-height="{{ zones.top.height * 0.22 }}">{{ subhead }}</div>
       {% endif %}
       {% if extra_pills %}
-      <div class="extra-tag-row" data-autofit data-min-font="10" data-max-width="{{ zones.top.width * 0.88 }}" data-max-height="{{ zones.top.height * 0.32 }}">
+      <div class="extra-tag-row" data-autofit data-min-font="9.5" data-max-width="{{ zones.top.width * 0.90 }}" data-max-height="{{ zones.top.height * 0.28 }}">
         {% for pill in extra_pills %}
         <div class="extra-pill">
           {{ pill.icon_svg }}
@@ -185,30 +241,46 @@
       {% endif %}
     </div>
 
+    <!-- Cụm Đáy (Bottom Band): Thông tin cửa hàng (Trái) + CTA (Giữa) + QR Code (Phải) -->
     <div class="sandwich-bottom-band" style="height:{{ zones.bottom.height }}px; max-height:{{ zones.bottom.height }}px; overflow:hidden;">
+      
+      <!-- Cột Trái: Thông tin cửa hàng -->
+      <div class="store-info-col">
+        {% if store_items %}
+          {% for item in store_items %}
+          <div class="store-item">
+            {{ item.icon_svg }}
+            <span>{{ item.text }}</span>
+          </div>
+          {% endfor %}
+        {% elif store_info %}
+          <div class="store-item">
+            <span>{{ store_info }}</span>
+          </div>
+        {% else %}
+          <div></div>
+        {% endif %}
+      </div>
+
+      <!-- Cột Giữa: CTA Button -->
+      {% if cta %}
+      <div class="cta-container">
+        <div class="cta-btn">
+          <span>{{ cta }}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Cột Phải: QR Code Quét Được -->
       {% if qr_svg %}
-      <div class="qr-col">{{ qr_svg }}</div>
+      <div class="qr-col">
+        {{ qr_svg }}
+      </div>
       {% else %}
       <div></div>
       {% endif %}
-      {% if cta %}
-      <div class="cta-btn">
-        <span>{{ cta }}</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </div>
-      {% endif %}
-      {% if store_items %}
-      <div class="store-info-col" style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
-        {% for item in store_items %}
-        <span class="store-item" style="display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:{{palette.text_secondary}};">
-          {{ item.icon_svg }}
-          <span>{{ item.text }}</span>
-        </span>
-        {% endfor %}
-      </div>
-      {% elif store_info %}
-      <div class="store-info">{{ store_info }}</div>
-      {% endif %}
+
     </div>
   </div>
   {{autofit_js}}

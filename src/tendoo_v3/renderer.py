@@ -114,10 +114,13 @@ def build_template_html(
     # 3. Rating Star SVG & QR Code Component (Thực tế quét được)
     stars_svg = render_star_rating_svg(count=plan.rating or 5, fill_color=plan.style.theme_color) if plan.rating else ""
     from tendoo_v3.qr import render_scannable_qr_component
+    # Tự động scale QR size theo tỷ lệ khung hình để không bao giờ bị cắt ở 16:9
+    qr_size = 64 if (width / height >= 1.5) else 82
     qr_svg = render_scannable_qr_component(
         data=plan.qr_code,
         label=plan.qr_label or "QUÉT MÃ NGAY",
         theme_color=plan.style.theme_color,
+        size_px=qr_size,
     ) if plan.qr_code else ""
 
     # 4. Semantic Pills & Tags (tự động gắn icon theo ngữ nghĩa câu từ tiếng Việt) --

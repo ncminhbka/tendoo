@@ -45,11 +45,20 @@ def _split_right(w: float, h: float) -> Dict[str, Rect]:
 
 
 def _sandwich_top_heavy(w: float, h: float) -> Dict[str, Rect]:
-    # Dải trên gọn gàng: 0 -> 28% (badge + hero 1-2 dòng + subhead + 1 hàng pill).
-    # Dải đáy: 86% -> 100% (cao 14%). Khoảng giữa (28% đến 86% = 58% canvas) mở cho DiT.
+    # Tự động điều chỉnh dẻo dai theo 4 tỉ lệ khung hình (1:1, 9:16, 16:9, 4:5):
+    # - 16:9 (Landscape rộng hẹp h=576): Top 24% (138px), Bottom 20% (115px), Giữa 56% (323px)
+    # - 1:1 / 4:5 / 9:16: Top 24% (246px), Bottom 16% (164px), Giữa 60% (614px)
+    # Tổng diện tích mask luôn dao động 40% - 44% (hoàn toàn <= 50% theo yêu cầu).
+    if w / h >= 1.5:  # 16:9 Landscape
+        top_frac = 0.24
+        bottom_start = 0.80
+    else:  # 1:1, 4:5, 9:16
+        top_frac = 0.24
+        bottom_start = 0.84
+
     return {
-        "top": _frac(0.0, 0.0, 1.0, 0.28, w, h),
-        "bottom": _frac(0.0, 0.86, 1.0, 1.0, w, h),
+        "top": _frac(0.0, 0.0, 1.0, top_frac, w, h),
+        "bottom": _frac(0.0, bottom_start, 1.0, 1.0, w, h),
     }
 
 

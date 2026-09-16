@@ -31,7 +31,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "hint": "Tiêu đề lớn trên đỉnh, nút CTA & hotline ở đáy, sản phẩm nằm trọn ở giữa. Rất hợp cho Khai trương, Khuyến mại, Flash Sale, hoặc khi prompt yêu cầu 'ở giữa', 'chính giữa', 'ở trên... ở dưới...'.",
         "has_mask": True,
         "mask_preset": "sandwich_standard",
-        "aspect_ratios": ["1:1", "9:16", "4:5"],
+        "aspect_ratios": ["1:1", "9:16", "16:9", "4:5"],
     },
     "sandwich_bottom_heavy": {
         "name": "Băng Kẹp Trên - Dưới (Tiêu Đề Đáy - Bản Gương)",
