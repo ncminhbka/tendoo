@@ -73,6 +73,20 @@ def test_endpoints():
     assert "resolved_layout" in data
     print(f"    ✓ Generate API OK! Resolved layout: {data['resolved_layout']}, Poster URL: {data['final_poster_url']}")
 
+    print("--> Testing POST /api/generate (Pre-flight 422 validation on missing required field)...")
+    req_missing = {
+        "category": "promo",
+        "title": "TRÀ ĐÀO CAM SẢ",
+        "discount": "",  # missing required field
+        "fast_preview": True,
+    }
+    res = client.post("/api/generate", json=req_missing)
+    assert res.status_code == 422
+    err = res.json()
+    assert err["detail"]["error"] == "missing_required_fields"
+    assert "discount" in err["detail"]["fields"]
+    print(f"    ✓ Pre-flight 422 validation OK! Missing fields caught: {err['detail']['fields']}")
+
     print("\n=======================================================")
     print("🎉 ALL DEMO SERVER API ENDPOINTS VERIFIED SUCCESSFULLY!")
     print("=======================================================\n")

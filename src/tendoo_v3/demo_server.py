@@ -335,6 +335,23 @@ class GenerateRequest(BaseModel):
     fast_preview: bool = False
 
 
+def validate_required_fields(req: GenerateRequest) -> List[str]:
+    """Kiểm tra các trường bắt buộc theo nghiệp vụ của category.
+    Trả về danh sách các trường còn thiếu (danh sách rỗng = hợp lệ).
+    """
+    missing: List[str] = []
+    if req.category == "guide":
+        if not req.guide_steps or not req.guide_steps[0].strip():
+            missing.append("guide_steps[0]")
+        return missing
+
+    for field_name in CATEGORY_REQUIRED_FIELDS.get(req.category, []):
+        value = getattr(req, field_name, None)
+        if value is None or not str(value).strip():
+            missing.append(field_name)
+    return missing
+
+
 @app.get("/", response_class=HTMLResponse)
 async def serve_ui():
     """Phục vụ giao diện người dùng Studio Web."""
@@ -489,6 +506,18 @@ async def generate_poster(req: GenerateRequest):
     start_time = time.time()
     width, height = ASPECT_RATIOS.get(req.aspect_ratio, (1024, 1024))
     raw_prompt = (req.prompt or req.image_description or "").strip()
+    # Pre-flight required-field gate: áp dụng khi không có prompt tự do
+    if not raw_prompt:
+        missing = validate_required_fields(req)
+        if missing:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": "missing_required_fields",
+                    "category": req.category,
+                    "fields": missing,
+                },
+            )
     num_steps = req.steps or req.num_steps or 50
 
     # 1. Thu thập dữ liệu form

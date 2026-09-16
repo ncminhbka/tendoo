@@ -187,6 +187,8 @@ def fallback_heuristic_planner(
         template = "step_process_roadmap"
     elif "feedback" in prompt_lower or "đánh giá" in prompt_lower or category == "feedback":
         template = "customer_feedback_card"
+    elif "recruitment" in prompt_lower or "tuyển dụng" in prompt_lower or category == "recruitment":
+        template = "recruitment_board"
     elif "before" in prompt_lower or ("trước" in prompt_lower and "sau" in prompt_lower):
         template = "before_after_split"
     elif "góc" in prompt_lower or "capsule" in prompt_lower:
@@ -239,7 +241,7 @@ def fallback_heuristic_planner(
     if category == "feedback":
         hero = form_data.get("feedback_target") or form_data.get("title") or "KHÁCH HÀNG NÓI GÌ VỀ TENDOO"
         subhead = form_data.get("subhead")
-        badge = form_data.get("special_offer") or form_data.get("discount") or "ĐÁNH GIÁ 5 SAO"
+        badge = form_data.get("special_offer") or form_data.get("discount")
         testimonial = form_data.get("feedback_quote") or "Trải nghiệm dịch vụ tuyệt vời, chất lượng vượt trội ngoài mong đợi!"
         reviewer_name = form_data.get("customer_name") or "Khách hàng thân thiết"
         # Parse rating
@@ -265,7 +267,7 @@ def fallback_heuristic_planner(
     elif category == "recruitment":
         hero = form_data.get("job_position") or form_data.get("title") or "TENDOO TÌM ĐỒNG ĐỘI"
         subhead = form_data.get("job_desc") or form_data.get("subhead")
-        badge = form_data.get("discount") or "TUYỂN DỤNG"
+        badge = form_data.get("discount")
         if form_data.get("apply_deadline"):
             extra_texts.append(f"Hạn nộp: {form_data['apply_deadline']}")
         if form_data.get("apply_method"):
@@ -275,7 +277,7 @@ def fallback_heuristic_planner(
     elif category == "opening":
         hero = form_data.get("title") or "TƯNG BỪNG KHAI TRƯƠNG"
         subhead = form_data.get("booking_contact") or form_data.get("subhead")
-        badge = form_data.get("opening_promo") or form_data.get("discount") or "TẶNG QUÀ KHAI TRƯƠNG"
+        badge = form_data.get("opening_promo") or form_data.get("discount")
         if form_data.get("opening_date"):
             extra_texts.append(f"Ngày mở bán: {form_data['opening_date']}")
         cta = form_data.get("cta") or "ĐẾN NGAY"
@@ -292,7 +294,7 @@ def fallback_heuristic_planner(
     else:  # promo
         hero = form_data.get("title") or form_data.get("product_name") or "ƯU ĐÃI ĐẶC BIỆT"
         subhead = form_data.get("applied_product") or form_data.get("product_desc") or form_data.get("subhead")
-        badge = form_data.get("discount") or "ƯU ĐÃI ĐẶC BIỆT"
+        badge = form_data.get("discount")
         dates = []
         if form_data.get("date_start"):
             dates.append(f"Từ {form_data['date_start']}")
