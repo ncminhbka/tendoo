@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {{font_face_css}}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: {{headline_font_css}};
+      background-color: #000;
+    }
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 44px 40px;
+    }
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+    /* Khối Header Trên Cùng */
+    .recruitment-header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      max-width: 85%;
+    }
+    .badge-capsule {
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: {{theme_color}};
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid {{theme_color}};
+      border-radius: 9999px;
+      box-shadow: 0 0 12px {{theme_color}}44;
+    }
+    .hero-title {
+      font-size: 48px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      {{effect_css}}
+    }
+    .subhead-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.4;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    }
+    /* Thẻ Bảng Tin 2 Cột Phong Cách Báo Chí */
+    .board-card {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      gap: 20px;
+      padding: 18px 24px;
+      background: rgba(12, 14, 20, 0.78);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+      color: #fff;
+      overflow: hidden;
+    }
+    .board-col-left {
+      flex: 1.2;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-right: 1px solid rgba(255, 255, 255, 0.12);
+      padding-right: 16px;
+      overflow: hidden;
+      font-size: 12.5px;
+    }
+    .col-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: {{theme_color}};
+      margin-bottom: 4px;
+    }
+    .extra-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.4;
+    }
+    .check-icon {
+      color: {{theme_color}};
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+    .board-col-right {
+      flex: 0.8;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .cta-btn {
+      align-self: flex-start;
+      padding: 12px 28px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #000;
+      background: {{theme_color}};
+      border: none;
+      border-radius: 9999px;
+      box-shadow: 0 4px 18px {{theme_color}}66;
+    }
+    .store-info {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    {{ vfx_html }}
+
+    <div class="recruitment-header" style="max-height:{{ zones.header.height }}px; overflow:hidden;">
+      {% if badge %}
+      <div class="badge-capsule">{{ badge }}</div>
+      {% endif %}
+      <div class="hero-title" data-autofit data-min-font="26" data-max-width="{{ zones.header.width }}" data-max-height="{{ zones.header.height * 0.62 }}">{{ hero }}</div>
+      {% if subhead %}
+      <div class="subhead-title" data-autofit data-min-font="11" data-max-width="{{ zones.header.width }}" data-max-height="{{ zones.header.height * 0.22 }}">{{ subhead }}</div>
+      {% endif %}
+    </div>
+
+    <div class="board-card" style="height:{{ zones.board.height - 20 }}px; max-height:{{ zones.board.height - 20 }}px; overflow:hidden;">
+      <div class="board-col-left" data-autofit data-min-font="11" data-max-height="{{ (zones.board.height - 20) * 0.82 }}">
+        <div class="col-title">Quyền Lợi & Thông Tin</div>
+        {% if extra_texts %}
+        {% for item in extra_texts %}
+        <div class="extra-item">
+          <span class="check-icon">✓</span>
+          <span>{{ item }}</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="extra-item">✓ Cơ hội phát triển vượt bậc trong môi trường chuyên nghiệp</div>
+        {% endif %}
+      </div>
+
+      <div class="board-col-right" style="max-height:100%; overflow:hidden;">
+        {% if qr_svg %}
+        <div class="qr-col" style="margin-bottom: 6px;">{{ qr_svg }}</div>
+        {% endif %}
+        <div>
+          <div class="col-title">Ứng Tuyển & Liên Hệ</div>
+          {% if store_items %}
+          <div class="store-info-col" style="display:flex; flex-direction:column; gap:4px; margin-top:6px;">
+            {% for item in store_items %}
+            <span style="display:inline-flex; align-items:center; gap:5px; font-size:11.5px; color:rgba(255,255,255,0.75);">
+              {{ item.icon_svg }}
+              <span>{{ item.text }}</span>
+            </span>
+            {% endfor %}
+          </div>
+          {% elif store_info %}
+          <div class="store-info" style="margin-top: 6px;">{{ store_info }}</div>
+          {% endif %}
+        </div>
+        {% if cta %}
+        <div class="cta-btn">{{ cta }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {{autofit_js}}
+</body>
+</html>

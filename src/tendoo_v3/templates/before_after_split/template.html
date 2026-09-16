@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {{font_face_css}}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: {{headline_font_css}};
+      background-color: #000;
+    }
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+    }
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+    /* Đường phân cách Before / After ở giữa */
+    .split-divider {
+      position: absolute;
+      top: 0;
+      bottom: 24%;
+      left: 50%;
+      width: 2px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, {{theme_color}} 30%, {{theme_color}} 70%, rgba(255,255,255,0) 100%);
+      box-shadow: 0 0 10px {{theme_color}};
+      z-index: 5;
+    }
+    /* Nhãn BEFORE bên trái */
+    .label-before {
+      position: absolute;
+      top: 28px;
+      left: 28px;
+      z-index: 10;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 9999px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+    /* Nhãn AFTER bên phải */
+    .label-after {
+      position: absolute;
+      top: 28px;
+      right: 28px;
+      z-index: 10;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #000;
+      background: {{theme_color}};
+      border: 1px solid {{theme_color}};
+      border-radius: 9999px;
+      box-shadow: 0 0 18px {{theme_color}}88;
+    }
+    /* Dải Thông Tin & Ưu Đãi Ở Đáy (Bottom Pod: 24% Height) */
+    .bottom-info-pod {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 25%;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 36px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.96) 0%, rgba(0, 0, 0, 0.8) 75%, rgba(0, 0, 0, 0) 100%);
+      backdrop-filter: blur(12px);
+      text-align: center;
+      color: #fff;
+      gap: 8px;
+    }
+    .rating-stars {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 2px;
+    }
+    .hero-title {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      max-width: 90%;
+      {{effect_css}}
+    }
+    .subhead-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.35;
+    }
+    .extra-tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+      overflow: hidden;
+      /* font-size ở ĐÂY để autofit (data-autofit trên chính .extra-tag-row) co được
+         -- .extra-pill kế thừa, không tự khai font-size cố định nữa. */
+      font-size: 12px;
+    }
+    .extra-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 9999px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .extra-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: {{theme_color}};
+    }
+    .footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 90%;
+      margin-top: 6px;
+    }
+    .cta-btn {
+      padding: 10px 24px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #000;
+      background: {{theme_color}};
+      border: none;
+      border-radius: 9999px;
+      box-shadow: 0 4px 16px {{theme_color}}66;
+    }
+    .store-info {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    {{ vfx_html }}
+    <div class="split-divider"></div>
+
+    <div class="label-before">{{ tag_left or "TRƯỚC / BEFORE" }}</div>
+    <div class="label-after">{{ tag_right or "SAU / AFTER" }}</div>
+
+    <div class="bottom-info-pod" style="height:{{ zones.bottom.height }}px; max-height:{{ zones.bottom.height }}px; overflow:hidden;">
+      {% if stars_svg %}
+      <div class="rating-stars">{{ stars_svg | safe }}</div>
+      {% endif %}
+
+      <div class="hero-title" data-autofit data-min-font="22" data-max-width="{{ zones.bottom.width * 0.9 }}" data-max-height="{{ zones.bottom.height * 0.38 }}">{{ hero }}</div>
+
+      {% if subhead %}
+      <div class="subhead-title" data-autofit data-min-font="11" data-max-width="{{ zones.bottom.width * 0.9 }}" data-max-height="{{ zones.bottom.height * 0.18 }}">{{ subhead }}</div>
+      {% endif %}
+
+      {% if extra_texts %}
+      <div class="extra-tag-row" data-autofit data-min-font="10" data-max-width="{{ zones.bottom.width * 0.9 }}" data-max-height="{{ zones.bottom.height * 0.24 }}">
+        {% for item in extra_texts %}
+        <div class="extra-pill">
+          <span class="extra-dot"></span>
+          <span>{{ item }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="footer-row" style="max-height:{{ zones.bottom.height * 0.26 }}px; overflow:hidden;">
+        {% if qr_svg %}
+        <div class="qr-col">{{ qr_svg }}</div>
+        {% endif %}
+        {% if cta %}
+        <div class="cta-btn">{{ cta }}</div>
+        {% else %}
+        <div></div>
+        {% endif %}
+        {% if store_items %}
+        <div class="store-info-col" style="display:flex; flex-direction:column; gap:3px; align-items:flex-end;">
+          {% for item in store_items %}
+          <span style="display:inline-flex; align-items:center; gap:4px; font-size:11.5px; color:rgba(255,255,255,0.75);">
+            {{ item.icon_svg }}
+            <span>{{ item.text }}</span>
+          </span>
+          {% endfor %}
+        </div>
+        {% elif store_info %}
+        <div class="store-info">{{ store_info }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {{autofit_js}}
+</body>
+</html>

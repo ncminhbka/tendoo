@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {{font_face_css}}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: {{headline_font_css}};
+      background-color: #000;
+    }
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+    }
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+    /* Hộp Bo Góc Capsule Ở Góc Dưới Trái (Corner Pod) */
+    .corner-pod {
+      position: absolute;
+      {% if orientation == 'bottom_right' or orientation == 'right' %}
+      bottom: 28px;
+      right: 28px;
+      {% elif orientation == 'top_left' %}
+      top: 28px;
+      left: 28px;
+      {% elif orientation == 'top_right' %}
+      top: 28px;
+      right: 28px;
+      {% else %}
+      bottom: 28px;
+      left: 28px;
+      {% endif %}
+      width: min(480px, 46%);
+      max-height: calc(100% - 56px);
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 22px 24px;
+      background: {{palette.glass_bg}};
+      backdrop-filter: blur(18px);
+      border: 1px solid {{palette.glass_border}};
+      border-radius: 22px;
+      box-shadow: {{palette.glass_shadow}};
+      color: {{palette.text_primary}};
+    }
+    .badge-pill {
+      align-self: flex-start;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: {{theme_color}};
+      background: {{palette.pill_bg}};
+      border: 1px solid {{theme_color}};
+      border-radius: 9999px;
+      margin-bottom: 6px;
+    }
+    .hero-title {
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      {{effect_css}}
+    }
+    .subhead-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{palette.text_secondary}};
+      text-shadow: {{palette.text_shadow}};
+      margin-top: 4px;
+    }
+    .extra-tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 4px 0;
+      overflow: hidden;
+      /* font-size ở ĐÂY để autofit (data-autofit trên chính .extra-tag-row) co được
+         -- .extra-pill kế thừa, không tự khai font-size cố định nữa. */
+      font-size: 11px;
+    }
+    .extra-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: {{palette.pill_bg}};
+      border: 1px solid {{palette.pill_border}};
+      border-radius: 9999px;
+      font-weight: 600;
+      color: {{palette.pill_text}};
+    }
+    .extra-pill svg {
+      width: 13px;
+      height: 13px;
+      color: {{theme_color}};
+      flex-shrink: 0;
+    }
+    .footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 4px;
+    }
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 9px 20px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: {{palette.cta_text}};
+      background: {{palette.cta_bg}};
+      border: none;
+      border-radius: 9999px;
+      box-shadow: 0 4px 14px {{theme_color}}66;
+    }
+    .store-info {
+      font-size: 11px;
+      font-weight: 500;
+      color: {{palette.text_secondary}};
+    }
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    {{ vfx_html }}
+
+    <div class="corner-pod">
+      <div>
+        {% if badge %}
+        <div class="badge-pill">{{ badge }}</div>
+        {% endif %}
+        <div class="hero-title" data-autofit data-min-font="20" data-max-width="{{ zones.pod.width - 48 }}" data-max-height="{{ zones.pod.height * 0.4 }}">{{ hero }}</div>
+        {% if subhead %}
+        <div class="subhead-title" data-autofit data-min-font="11" data-max-width="{{ zones.pod.width - 48 }}" data-max-height="{{ zones.pod.height * 0.18 }}">{{ subhead }}</div>
+        {% endif %}
+      </div>
+
+      {% if extra_pills %}
+      <div class="extra-tag-row" data-autofit data-min-font="10" data-max-width="{{ zones.pod.width - 48 }}" data-max-height="{{ zones.pod.height * 0.3 }}">
+        {% for pill in extra_pills %}
+        <div class="extra-pill">
+          {{ pill.icon_svg }}
+          <span>{{ pill.text }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="footer-row" style="max-height:{{ zones.pod.height * 0.26 }}px; overflow:hidden;">
+        {% if qr_svg %}
+        <div class="qr-col" style="margin-right: 4px;">{{ qr_svg }}</div>
+        {% endif %}
+        {% if cta %}
+        <div class="cta-btn">
+          <span>{{ cta }}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+        {% else %}
+        <div></div>
+        {% endif %}
+        {% if store_items %}
+        <div class="store-info-col" style="display:flex; flex-direction:column; gap:3px; align-items:flex-end;">
+          {% for item in store_items %}
+          <span class="store-item" style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:{{palette.text_secondary}};">
+            {{ item.icon_svg }}
+            <span>{{ item.text }}</span>
+          </span>
+          {% endfor %}
+        </div>
+        {% elif store_info %}
+        <div class="store-info">{{ store_info }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {{autofit_js}}
+</body>
+</html>

@@ -1,0 +1,279 @@
+[
+  {
+    "id": "prompt_21_fitness_gym_feedback_card",
+    "prompt_line": 21,
+    "title": "Prompt 21: Gym 90 ngày (customer_feedback_card 1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "customer_feedback_card",
+      "style": {
+        "font": "days",
+        "theme_color": "#FF3333",
+        "text_effect": "fire",
+        "background_tone": "cinema_red"
+      },
+      "hero": "LỘT XÁC SAU 90 NGÀY",
+      "subhead": "Khách hàng nói gì sau 90 ngày thay đổi?",
+      "badge": "FITNESS TRANSFORMATION",
+      "testimonial": "97% khách hàng hài lòng với kết quả tăng cơ, cải thiện vóc dáng và sức khỏe chỉ sau 3 tháng tập luyện cùng PT riêng.",
+      "reviewer_name": "Private Coaching Transformation",
+      "rating": 5,
+      "extra_texts": [
+        "PT 1:1 riêng tư",
+        "Giáo án cá nhân hóa",
+        "Theo dõi dinh dưỡng & form tập"
+      ],
+      "cta": "GIẢM 20% THÁNG ĐẦU",
+      "store_info": "Tendoo Elite Fitness Center",
+      "scene_prompt": "Cinematic fitness gym background, athletic transformation photography, bold red and black lighting, ultra realistic 8k",
+      "corridor_prompt": "Clean studio gym lighting, smooth ambient floor gradient"
+    }
+  },
+  {
+    "id": "prompt_23_pet_spa_steps_roadmap",
+    "prompt_line": 23,
+    "title": "Prompt 23: Pet Spa 7 bước (step_process_roadmap 1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "step_process_roadmap",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#FF69B4",
+        "text_effect": "plain_elegant",
+        "background_tone": "pastel"
+      },
+      "hero": "BOSS LỘT XÁC SAU 2 GIỜ",
+      "subhead": "Premium Pet Grooming & Spa Combo",
+      "badge": "QUY TRÌNH 7 BƯỚC",
+      "steps": [
+        "Sữa tắm hữu cơ dịu nhẹ",
+        "Cắt tỉa chuẩn form Hàn Quốc",
+        "Ngâm sục Ozon giảm stress",
+        "Sấy bồng & xịt dưỡng hương hoa"
+      ],
+      "extra_texts": [
+        "100% các bé thơm tho thư giãn",
+        "Không gian mở không lồng kính",
+        "Tặng ngâm Ozon 200k"
+      ],
+      "cta": "ĐẶT LỊCH NGAY",
+      "store_info": "Hotline Spa: 1800 6868",
+      "scene_prompt": "Adorable groomed poodle dog in luxury pastel pink and mint pet salon, soft bright studio lighting 8k",
+      "corridor_prompt": "Pastel gradient clean space"
+    }
+  },
+  {
+    "id": "prompt_25_glamping_retreat_feedback",
+    "prompt_line": 25,
+    "title": "Prompt 25: Glamping nghỉ dưỡng (customer_feedback_card 1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "customer_feedback_card",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#E67E22",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "hero": "TRẢI NGHIỆM CHỮA LÀNH",
+      "subhead": "Cloud Retreat Glamping Đà Lạt",
+      "badge": "GLAMPING 5 SAO",
+      "testimonial": "98% khách hàng đánh giá đây là điểm đến lý tưởng để tái tạo năng lượng, rời xa khói bụi thành phố dịp cuối tuần.",
+      "reviewer_name": "Cặp đôi Minh & Lan (Hà Nội)",
+      "rating": 5,
+      "extra_texts": [
+        "Lều Dome săn mây 360 độ",
+        "Tiệc BBQ riêng tư tại lều",
+        "Rạp phim ngoài trời & lửa trại"
+      ],
+      "cta": "GIẢM 30% ĐẶT SỚM",
+      "store_info": "Hotline: 0988 123 456",
+      "scene_prompt": "Luxury glowing glamping dome tent in pine forest sunset, cozy campfire and wine glasses, warm cinematic 8k",
+      "corridor_prompt": "Sunset golden mist gradient, warm timber wood tone"
+    }
+  },
+  {
+    "id": "prompt_27_sofa_zen_split_right_16_9",
+    "prompt_line": 27,
+    "title": "Prompt 27: Sofa Chỉnh Điện Smart Zen (split_right 16:9)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_right",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "ĐỊNH NGHĨA LẠI SỰ THƯ GIÃN",
+      "subhead": "Sofa Chỉnh Điện Smart Zen",
+      "badge": "ITALIAN LEATHER",
+      "extra_texts": [
+        "Da bò Ý thật 100%",
+        "Ngả lưng không trọng lực 170°",
+        "Tích hợp sạc không dây & loa Bluetooth",
+        "Tặng bàn trà mặt đá cao cấp"
+      ],
+      "cta": "XEM SHOWROOM",
+      "store_info": "Penthouse Showroom Hà Nội",
+      "scene_prompt": "Luxury European penthouse living room night view, elegant man relaxing on brown leather power reclining sofa, softbox lighting 8k",
+      "corridor_prompt": "Sophisticated slate and dark leather ambient gradient on right"
+    }
+  },
+  {
+    "id": "prompt_29_kombucha_before_after",
+    "prompt_line": 29,
+    "title": "Prompt 29: Detox Kombucha 14 ngày (before_after_split 1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "before_after_split",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#10B981",
+        "text_effect": "plain_elegant",
+        "background_tone": "pastel"
+      },
+      "hero": "VÒNG EO THON GỌN SAU 14 NGÀY",
+      "subhead": "Detox Kombucha Premium Tươi",
+      "badge": "HEALTHY & FRESH",
+      "tag_left": "NGÀY 01",
+      "tag_right": "NGÀY 14",
+      "extra_texts": [
+        "Lên men tự nhiên 30 ngày",
+        "0 đường tinh luyện",
+        "Bổ sung 1 tỷ lợi khuẩn Probiotics"
+      ],
+      "cta": "MUA LIỆU TRÌNH 14 NGÀY",
+      "store_info": "Tặng bình giữ nhiệt cao cấp",
+      "scene_prompt": "Fresh fruits, mint leaves, water splash, smiling athletic woman holding kombucha bottle with slim waist before after inset, natural sunlight 8k",
+      "corridor_prompt": "Fresh green and peach watercolor gradient"
+    }
+  },
+  {
+    "id": "prompt_31_english_course_recruitment_qr",
+    "prompt_line": 31,
+    "title": "Prompt 31: Khóa học tiếng Anh (recruitment_board kèm QR 1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "recruitment_board",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#00E5FF",
+        "text_effect": "chrome",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "ĐẬP TAN RÀO CẢN TIẾNG ANH",
+      "subhead": "Tự tin đàm phán & thăng tiến sự nghiệp",
+      "badge": "CAMBRIDGE STANDARD",
+      "extra_texts": [
+        "Học 1 kèm 1 với giáo viên bản xứ",
+        "Lộ trình cá nhân hóa theo ngành nghề",
+        "Phương pháp ám thị ngôn ngữ",
+        "Tặng test năng lực & Voucher 1 triệu"
+      ],
+      "cta": "ĐĂNG KÝ HỌC THỬ",
+      "store_info": "Học viện Ngôn ngữ Quốc tế",
+      "qr_code": "https://tendoo.ai/english",
+      "qr_label": "QUÉT NHẬN VOUCHER",
+      "scene_prompt": "Modern international office corporate environment, professional student shaking hand with foreign partner, studio crisp lighting 8k",
+      "corridor_prompt": "Deep navy corporate slate gradient"
+    }
+  },
+  {
+    "id": "prompt_33_deep_cleaning_before_after",
+    "prompt_line": 33,
+    "title": "Prompt 33: Dọn nhà Deep Cleaning (before_after_split 1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "before_after_split",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#0284C7",
+        "text_effect": "plain_elegant",
+        "background_tone": "light_clean"
+      },
+      "hero": "TRẢ LẠI KHÔNG GIAN SẠCH BONG",
+      "subhead": "Deep Cleaning Home Service",
+      "badge": "CHUẨN KHÁCH SẠN 5 SAO",
+      "tag_left": "TRƯỚC KHI DỌN",
+      "tag_right": "SAU KHI DỌN",
+      "extra_texts": [
+        "Nhân viên chuẩn khách sạn 5 sao",
+        "Hóa chất sinh học an toàn cho trẻ",
+        "Diệt khuẩn 99% mọi ngóc ngách"
+      ],
+      "cta": "GIẢM 20% CUỐI TUẦN",
+      "store_info": "Hotline: 1900 8899",
+      "scene_prompt": "Split screen room before messy dusty and after sparkling clean with smiling uniformed cleaning staff holding modern equipment 8k",
+      "corridor_prompt": "Fresh airy white and cyan clean light gradient"
+    }
+  },
+  {
+    "id": "prompt_35_fintech_wealthmaster_diagonal_qr",
+    "prompt_line": 35,
+    "title": "Prompt 35: App Tài chính WealthMaster (diagonal_slash kèm QR 9:16)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "diagonal_slash",
+      "style": {
+        "font": "days",
+        "theme_color": "#00E5FF",
+        "text_effect": "neon",
+        "background_tone": "cyber_neon"
+      },
+      "hero": "TIỀN ĐẺ RA TIỀN CÙNG AI",
+      "subhead": "Quản lý chi tiêu & đầu tư tự động",
+      "badge": "FINTECH APP 2026",
+      "extra_texts": [
+        "Đồng bộ tự động 50+ ngân hàng",
+        "Lập ngân sách chi tiêu bằng AI",
+        "Bảo mật chuẩn quân đội 256-bit",
+        "Tiết kiệm 30% thu nhập mỗi tháng"
+      ],
+      "cta": "TẢI APP NGAY",
+      "store_info": "Tặng 6 tháng Premium VIP",
+      "qr_code": "https://wealthmaster.app/download",
+      "qr_label": "QUÉT MÃ TẢI APP",
+      "scene_prompt": "Futuristic 3D iPhone mockup floating showing stock growth chart in glowing green, successful young tech investor smiling, neon ambient 8k",
+      "corridor_prompt": "Deep cyber navy gradient with subtle tech grid"
+    }
+  },
+  {
+    "id": "prompt_43_grand_opening_cafe_16_9",
+    "prompt_line": 43,
+    "title": "Prompt 43: Khai trương Cafe Mua 1 Tặng 1 (sandwich_top_heavy kèm QR 16:9)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#FFB300",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "hero": "GRAND OPENING - MUA 1 TẶNG 1",
+      "subhead": "Áp dụng từ 14/05 đến 30/05",
+      "badge": "HOT DEAL CAFE",
+      "extra_texts": [
+        "Coffee rang mộc chuẩn vị",
+        "Không gian chill check-in cực chất",
+        "Rủ bạn thân đi coffee ngay!"
+      ],
+      "cta": "GHÉ NGAY HÔM NAY",
+      "store_info": "Tendoo Cafe - 88 Phố Huế, Hà Nội",
+      "qr_code": "https://tendoo.cafe/voucher",
+      "qr_label": "QUÉT MÃ NHẬN DEAL",
+      "scene_prompt": "Steaming hot coffee cup in center with flying roasted beans, warm rustic cafe ambience with cinematic golden lighting 8k",
+      "corridor_prompt": "Warm espresso brown and golden bokeh mist gradient"
+    }
+  }
+]

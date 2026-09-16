@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face {
+    font-family: 'BeVietnamPro';
+    src: url('__FONT_DATA_URI__') format('truetype');
+    font-weight: 900;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    width: __WIDTH__px;
+    height: __HEIGHT__px;
+    position: relative;
+    overflow: hidden;
+    font-family: 'BeVietnamPro', sans-serif;
+  }
+  .bg-layer {
+    position: absolute;
+    inset: 0;
+    background-image: url('__BG_DATA_URI__');
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* --- placement units (solver-computed absolute boxes) --- */
+  .unit {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: visible; /* decorative treatments (arc/seal) may slightly exceed the box */
+    padding: 4px;
+  }
+  .unit.align-left { align-items: flex-start; text-align: left; }
+  .unit.align-center { align-items: center; text-align: center; }
+  .unit.align-right { align-items: flex-end; text-align: right; }
+
+  /* --- base role looks (used when Block.treatment is unset) --- */
+  .block-plain {
+    color: #fff;
+    font-weight: 900;
+    white-space: pre-line;
+    text-shadow: 0 3px 10px rgba(0, 0, 0, 0.65), 0 1px 3px rgba(0, 0, 0, 0.5);
+    margin: 2px 0;
+    line-height: 1.08;
+  }
+  .block-card {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+    padding: 10px 18px;
+    color: #f1f5f9;
+    font-weight: 500;
+    white-space: pre-line;
+    margin: 4px 0;
+    line-height: 1.4;
+  }
+  /* (2026-09-14: padding widened to the values verified this session --
+     .block-pill/.block-button previously shrank toward the runtime autofit
+     floor at EVERY font size because their old padding (24px/28px) was
+     smaller than the anti-overflow script's own required clearance. Ported
+     the fix directly instead of reintroducing the same bug in v2.) */
+  .block-pill {
+    background: #f5b942;
+    color: #1a1108;
+    border-radius: 9999px;
+    padding: 8px 38px;
+    font-weight: 800;
+    white-space: nowrap;
+    margin: 4px 0;
+  }
+  .block-button {
+    background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+    color: #fff;
+    border-radius: 9999px;
+    padding: 10px 40px;
+    font-weight: 800;
+    white-space: nowrap;
+    margin: 4px 0;
+    box-shadow: 0 4px 18px rgba(6, 182, 212, 0.35);
+  }
+
+  /* --- VFX treatments (verified via a standalone Playwright render earlier
+     this session before being ported here) --- */
+  .impact-wrap { display: flex; justify-content: center; }
+  .impact-stack { position: relative; display: inline-block; transform: rotate(-6deg); }
+  .impact-layer {
+    font-weight: 900;
+    letter-spacing: 2px;
+    white-space: pre-line;
+  }
+  .impact-layer.l1 { position: absolute; top: 0; left: 0; color: #000; transform: translate(6px, 6px); opacity: 0.35; }
+  .impact-layer.l2 { position: absolute; top: 0; left: 0; color: #ffb703; transform: translate(3px, 3px); opacity: 0.55; }
+  .impact-layer.l3 {
+    position: relative;
+    background: linear-gradient(135deg, #fff8ec 20%, #ffd77a 55%, #fff8ec 80%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+  }
+
+  .treatment-ribbon {
+    display: inline-block;
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    color: #fff;
+    font-weight: 800;
+    padding: 14px 44px;
+    clip-path: polygon(3% 0%, 97% 0%, 100% 50%, 97% 100%, 3% 100%, 0% 50%);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    white-space: nowrap;
+    transform: rotate(-2deg);
+    margin: 6px 0;
+  }
+
+  .treatment-script-accent {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    color: #ffe3b3;
+    transform: rotate(-2deg);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    margin: 4px 0;
+  }
+
+  .treatment-arc-svg, .treatment-seal-svg { display: block; }
+
+  /* --- Step 5 safety net: last-resort shrink-to-fit, only fires if the
+     solver's own pre-computed size (Step 4) somehow still overflows its unit
+     box -- ported from engine/templates/master.html's existing runtime pass,
+     trimmed to what this prototype needs. --- */
+  script { display: none; }
+</style>
+</head>
+<body>
+  <div class="bg-layer"></div>
+  __UNITS_HTML__
+
+  <script>
+    (async function () {
+      // Wait for the custom @font-face (base64 data-uri) to actually apply --
+      // otherwise scrollWidth/scrollHeight below would be measured against a
+      // fallback font's metrics, not BeVietnamPro, giving a wrong overflow
+      // signal (PosterRenderer.render() itself already awaits
+      // document.fonts.ready separately before screenshotting, but this
+      // script runs earlier, during initial parse, so it needs its own wait).
+      try { await document.fonts.ready; } catch (e) {}
+
+      var MIN_FONT_PX = 8;
+      var SHRINK_STEP = 0.94;
+      var MAX_ITERATIONS = 30;
+
+      function overflows(unitEl) {
+        if (unitEl.scrollWidth > unitEl.clientWidth + 0.5) return true;
+        if (unitEl.scrollHeight > unitEl.clientHeight + 0.5) return true;
+        return false;
+      }
+
+      function shrinkUnit(unitEl) {
+        var targets = unitEl.querySelectorAll('[style*="font-size"]');
+        for (var i = 0; i < MAX_ITERATIONS && overflows(unitEl); i++) {
+          var reachedFloor = true;
+          for (var j = 0; j < targets.length; j++) {
+            var el = targets[j];
+            var current = parseFloat(getComputedStyle(el).fontSize) || 0;
+            if (current <= MIN_FONT_PX) continue;
+            el.style.fontSize = Math.max(MIN_FONT_PX, current * SHRINK_STEP) + 'px';
+            reachedFloor = false;
+          }
+          if (reachedFloor) break;
+        }
+      }
+
+      var units = document.querySelectorAll('.unit');
+      units.forEach(shrinkUnit);
+
+      // Expose a simple diagnostic hook for the verification script (mirrors
+      // the DOM-probe technique used earlier this session to catch the real
+      // pill-padding bug) -- lists every scalable element's final computed
+      // font-size and whether its unit still overflows after the safety net.
+      window.__tendooV2Diagnostics = Array.prototype.map.call(units, function (u) {
+        var fontEls = u.querySelectorAll('[style*="font-size"]');
+        return {
+          zone: u.getAttribute('data-zone'),
+          overflow: overflows(u),
+          fontSizes: Array.prototype.map.call(fontEls, function (el) {
+            return parseFloat(getComputedStyle(el).fontSize);
+          }),
+        };
+      });
+
+      // Signals PosterRenderer._set_content_and_wait_ready() (see
+      // "__tendooAutofitDone" in poster_renderer.py) to hold the screenshot
+      // until this safety net has actually finished running.
+      window.__tendooAutofitDone = true;
+    })();
+  </script>
+</body>
+</html>

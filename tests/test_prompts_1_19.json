@@ -1,0 +1,282 @@
+[
+  {
+    "id": "prompt_01_coffee_lifestyle_4_5",
+    "prompt_line": 1,
+    "title": "Prompt 1: Đồng hồ trên bàn cà phê gỗ mộc (4:5)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#D4AF37",
+        "text_effect": "plain_elegant",
+        "background_tone": "warm_rustic"
+      },
+      "hero": "NÂNG TẦM PHONG CÁCH ĐỜI SỐNG",
+      "subhead": "THỜI GIAN LÀ CỦA BẠN",
+      "badge": "PREMIUM LIFESTYLE",
+      "extra_texts": [
+        "Dây kim loại màu bạc bóng bẩy",
+        "Tách latte art & Bàn gỗ mộc",
+        "Cảm hứng ban mai ấm áp"
+      ],
+      "cta": "KHÁM PHÁ NGAY",
+      "store_info": "Tendoo Smart Lifestyle",
+      "scene_prompt": "A modern luxury smartwatch with sleek silver metal strap on rustic wooden coffee table beside latte art coffee and sunglasses, morning window light, warm tone, 35mm lens, 8k",
+      "corridor_prompt": "Warm rustic wood texture blur gradient on left, morning sunbeam haze, clean empty space"
+    }
+  },
+  {
+    "id": "prompt_03_sport_wrist_neon_9_16",
+    "prompt_line": 3,
+    "title": "Prompt 3: Đồng hồ thể thao cổ tay cơ bắp (9:16)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "days",
+        "theme_color": "#00E5FF",
+        "text_effect": "neon",
+        "background_tone": "cyber_neon"
+      },
+      "hero": "CHINH PHỤC MỌI GIỚI HẠN",
+      "subhead": "DÒNG ĐỒNG HỒ THỂ THAO CAO CẤP",
+      "badge": "SPORT PRO",
+      "extra_texts": [
+        "Màn hình nhịp tim neon rực rỡ",
+        "Chống sốc tiêu chuẩn quân đội",
+        "Pin thể thao bền bỉ 14 ngày"
+      ],
+      "cta": "MUA NGAY",
+      "store_info": "Tendoo Performance Lab",
+      "scene_prompt": "Close-up muscular wrist wearing black futuristic sport smartwatch with glowing cyan neon heart-rate display, blurred golden hour urban runner street background, motion blur, cinematic 8k",
+      "corridor_prompt": "Deep cinematic dark navy gradient with cyan neon street light bokeh, clean top and bottom space"
+    }
+  },
+  {
+    "id": "prompt_05_family_park_1_1",
+    "prompt_line": 5,
+    "title": "Prompt 5: Kết nối gia đình công viên ngập nắng (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#C89666",
+        "text_effect": "plain_elegant",
+        "background_tone": "pastel"
+      },
+      "hero": "KẾT NỐI YÊU THƯƠNG",
+      "subhead": "NGƯỜI BẠN ĐỒNG HÀNH CỦA GIA ĐÌNH",
+      "badge": "FAMILY EDITION",
+      "extra_texts": [
+        "Định vị GPS thời gian thực",
+        "Cuộc gọi thoại 2 chiều siêu rõ",
+        "Cảnh báo vùng an toàn cho bé"
+      ],
+      "cta": "ĐẶT MUA CHO BÉ",
+      "store_info": "Hotline: 1800 6868",
+      "scene_prompt": "Young smiling father wearing stylish navy blue smartwatch playing with child in sunny green park, sharp focus on watch wrist, family soft blur background, joyful natural lifestyle photography 8k",
+      "corridor_prompt": "Soft sunny park green and warm golden backlight gradient, serene airy space"
+    }
+  },
+  {
+    "id": "prompt_07_magazine_rose_gold_2_3",
+    "prompt_line": 7,
+    "title": "Prompt 7: Tạp chí thời trang vàng hồng (2:3)",
+    "width": 680,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#E5A99B",
+        "text_effect": "3d_gold",
+        "background_tone": "pastel"
+      },
+      "hero": "ĐẲNG CẤP & SANG TRỌNG",
+      "subhead": "BIỂU TƯỢNG THỜI TRANG MỚI",
+      "badge": "HAUTE COUTURE",
+      "extra_texts": [
+        "Mạ vàng hồng 18K tinh xảo",
+        "Dây lưới Milanese siêu mềm",
+        "Mặt kính cong Sapphire chống xước"
+      ],
+      "cta": "BỘ SƯU TẬP MỚI",
+      "store_info": "Tendoo Boutique Hà Nội",
+      "scene_prompt": "Elegant fashion magazine photo of stylish woman wearing luxury rose gold smartwatch with fine mesh strap, minimal gold jewelry, pastel pink and beige backdrop, soft studio lighting 8k",
+      "corridor_prompt": "Champagne rose gold soft studio light gradient, clean elegant editorial space"
+    }
+  },
+  {
+    "id": "prompt_09_cyberpunk_hologram_9_16",
+    "prompt_line": 9,
+    "title": "Prompt 9: Cyberpunk Hologram lơ lửng (9:16)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "days",
+        "theme_color": "#FF007F",
+        "text_effect": "neon",
+        "background_tone": "cyber_neon"
+      },
+      "hero": "TƯƠNG LAI TRONG TẦM TAY",
+      "subhead": "KHÁM PHÁ CÔNG NGHỆ ĐỘT PHÁ",
+      "badge": "CYBER TECH",
+      "extra_texts": [
+        "Màn hình 3D Hologram",
+        "Vi xử lý nơ-ron thế hệ mới",
+        "Giao diện vị lai độc quyền"
+      ],
+      "cta": "TRẢI NGHIỆM NGAY",
+      "store_info": "CyberStore 2026",
+      "scene_prompt": "Sleek smartwatch levitating in mid-air over dark background with vivid neon cyan and pink rim lights, 3D holographic data projection, cyberpunk futuristic aesthetic 8k",
+      "corridor_prompt": "Deep cyber dark blue gradient with subtle neon haze, clean empty space"
+    }
+  },
+  {
+    "id": "prompt_11_executive_titanium_4_3",
+    "prompt_line": 11,
+    "title": "Prompt 11: Doanh nhân bàn kính titan (4:3)",
+    "width": 1024,
+    "height": 768,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#D8D8D8",
+        "text_effect": "chrome",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SỰ LỰA CHỌN CỦA NHÀ LÃNH ĐẠO",
+      "subhead": "NÂNG TẦM THÀNH CÔNG",
+      "badge": "EXECUTIVE EDITION",
+      "extra_texts": [
+        "Vỏ hợp kim Titanium hàng không",
+        "Mặt số Chronograph cổ điển",
+        "Trợ lý AI quản lý lịch trình"
+      ],
+      "cta": "TƯ VẤN DOANH NGHIỆP",
+      "store_info": "Tendoo Executive Club",
+      "scene_prompt": "Close-up businessman hand on glass meeting table wearing premium titanium smartwatch with classic analog dial, blurred laptop and coffee cup background, corporate cool lighting 8k",
+      "corridor_prompt": "Executive cool grey slate and glass reflection gradient on left column, clean corporate space"
+    }
+  },
+  {
+    "id": "prompt_13_minimal_black_pedestal_16_9",
+    "prompt_line": 13,
+    "title": "Prompt 13: Đồng hồ đen tối giản trên bục (16:9)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFFFFF",
+        "text_effect": "chrome",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SỰ TINH TẾ CỦA SỨC MẠNH",
+      "subhead": "CHỈ CÓ TẠI TENDOO BLACK SERIES",
+      "badge": "MINIMALIST MONOLITH",
+      "extra_texts": [
+        "Lớp phủ gốm Ceramic đen tuyền",
+        "Đèn chiếu điểm Spotlight độc bản",
+        "Thiết kế nguyên khối không viền"
+      ],
+      "cta": "ĐẶT TRƯỚC",
+      "store_info": "Showroom Toàn Quốc",
+      "scene_prompt": "Minimalist product photo of sleek all-black smartwatch on glossy black pedestal, dramatic pure white overhead spotlight, deep black background with subtle depth 8k",
+      "corridor_prompt": "Deep obsidian black backdrop with soft top center spotlight glow, empty studio space"
+    }
+  },
+  {
+    "id": "prompt_15_waterproof_macro_1_1",
+    "prompt_line": 15,
+    "title": "Prompt 15: Chống nước 50M Macro bọt khí (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "lifestyle_corner_pod",
+      "style": {
+        "font": "days",
+        "theme_color": "#00E5FF",
+        "text_effect": "neon",
+        "background_tone": "cyber_neon"
+      },
+      "hero": "CHỐNG NƯỚC 50M",
+      "subhead": "SẴN SÀNG CHO MỌI CUỘC PHIÊU LƯU",
+      "badge": "DURABILITY MAX",
+      "extra_texts": [
+        "Chịu áp lực nước 5 ATM",
+        "Khung thép không gỉ 316L",
+        "Mặt số dạ quang Super-LumiNova"
+      ],
+      "cta": "MUA NGAY",
+      "store_info": "Hotline: 1800 6868",
+      "scene_prompt": "Macro photo of rugged sport smartwatch submerged in crystal clear water with bubbles around glowing dial, dynamic water splash, vivid cyan blue lighting, durability theme 8k",
+      "corridor_prompt": "Deep aqua blue water gradient, soft underwater light refraction, clean corner space"
+    }
+  },
+  {
+    "id": "prompt_17_flatlay_pastel_organize_2_3",
+    "prompt_line": 17,
+    "title": "Prompt 17: Flatlay đồ đạc ngăn nắp Pastel (2:3)",
+    "width": 680,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#5A8F7B",
+        "text_effect": "plain_elegant",
+        "background_tone": "pastel"
+      },
+      "hero": "NGĂN NẮP & HIỆN ĐẠI",
+      "subhead": "NHỮNG VẬT BẤT LY THÂN CỦA BẠN",
+      "badge": "EDC ESSENTIALS",
+      "extra_texts": [
+        "Bố cục Flatlay tối giản",
+        "Màu xanh pastel trang nhã",
+        "Đồng bộ hệ sinh thái thông minh"
+      ],
+      "cta": "XEM TRỌN BỘ",
+      "store_info": "Tendoo Design Studio",
+      "scene_prompt": "Top-down flatlay organized everyday carry items on pastel blue background, modern silver smartwatch in center surrounded by wireless earbuds, leather wallet, keys, phone, soft diffused aesthetic light 8k",
+      "corridor_prompt": "Clean muted pastel blue backdrop with soft matte shadow gradient, spacious margins"
+    }
+  },
+  {
+    "id": "prompt_19_outdoor_mountain_sunrise_16_9",
+    "prompt_line": 19,
+    "title": "Prompt 19: Leo núi bình minh ngoài trời (16:9 - Fixed No Clipping)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "lifestyle_corner_pod",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFB300",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "hero": "KHÁM PHÁ THẾ GIỚI",
+      "subhead": "NGƯỜI BẠN ĐỒNG HÀNH TRÊN MỌI NẺO ĐƯỜNG",
+      "badge": "ADVENTURE PRO",
+      "extra_texts": [
+        "Bản đồ cao độ vệ tinh",
+        "Đo nồng độ oxy SpO2",
+        "Pin năng lượng mặt trời"
+      ],
+      "cta": "MUA NGAY",
+      "store_info": "Tendoo Outdoor Gear",
+      "scene_prompt": "Dedicated outdoor smartwatch on hiker wrist facing breathtaking mountain range at sunrise, watch screen shows altitude map, golden solar flare, epic majestic landscape 8k",
+      "corridor_prompt": "Golden sunrise mountain mist gradient, cinematic warm light, clean corner space"
+    }
+  }
+]

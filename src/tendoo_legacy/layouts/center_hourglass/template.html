@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width={{width}}, height={{height}}, initial-scale=1.0">
+  <title>{{headline_plain}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Montserrat:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap&subset=vietnamese" rel="stylesheet">
+  <style>
+    {{font_face_css}}
+    {{css_vars}}
+    {{component_css}}
+
+    :root {
+      --headline-font: {{headline_font_css}};
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: 'Montserrat', 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      background-color: #000;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+    }
+
+    /* Background image layer */
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+
+    /* ==========================================================================
+       1. UPPER FUNNEL STREAM (Safe Zone: y in [0.03, 0.38])
+       Theatrical Headline, Kicker & Slogan flowing downward into the waist
+       ========================================================================== */
+    .top-stream {
+      position: absolute;
+      top: 3.5%;
+      left: 5%;
+      right: 5%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .pre-header {
+      font-size: 14.5px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--accent-color);
+      margin-bottom: 8px;
+      text-shadow: var(--text-shadow);
+      display: {{pre_header_display}};
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 6px;
+      {{wrap_filter_css}}
+    }
+
+    .headline-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      max-width: 95%;
+    }
+
+    .headline-line {
+      font-family: var(--headline-font, 'Montserrat', 'Plus Jakarta Sans', sans-serif);
+      font-size: {{font_size}}px;
+      line-height: {{line_height}};
+      letter-spacing: {{letter_spacing}}px;
+      font-weight: 900;
+      text-transform: uppercase;
+      text-wrap: balance;
+      {{headline_fill_css}}
+    }
+
+    .slogan {
+      font-size: 19.5px;
+      font-weight: 600;
+      line-height: 1.4;
+      letter-spacing: 0.6px;
+      color: var(--sub-color);
+      text-shadow: var(--text-shadow);
+      margin-top: 6px;
+      max-width: 86%;
+      text-wrap: balance;
+      display: {{slogan_display}};
+    }
+
+    /* ==========================================================================
+       2. LOWER FUNNEL & PERSPECTIVE FLOOR DECK (Safe Zone: y in [0.65, 0.98])
+       Promotional Offer Capsule flowing into the Floorboard Console
+       ========================================================================== */
+    .lower-hourglass-deck {
+      position: absolute;
+      bottom: 2.8%;
+      left: 5%;
+      right: 5%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+      gap: 14px;
+    }
+
+    /* Centered Floating Promotional Offer Stream */
+    .promo-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 7px;
+      width: 100%;
+    }
+
+    .badge-pill {
+      display: {{badge_display}};
+      align-items: center;
+      justify-content: center;
+      padding: 10px 36px;
+      border-radius: 9999px;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      box-shadow: var(--badge-shadow);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 21px;
+      font-weight: 900;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      border: 1px solid {{badge_border}};
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge-pill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -50%;
+      width: 200%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.35) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: skewX(-20deg);
+      pointer-events: none;
+    }
+
+    .offer-sub {
+      font-size: 17.5px;
+      font-weight: 700;
+      color: var(--sub-color);
+      letter-spacing: 0.5px;
+      text-shadow: var(--text-shadow);
+      display: {{offer_sub_display}};
+      max-width: 90%;
+      text-wrap: balance;
+    }
+
+    .dates-chip {
+      display: {{dates_display}};
+      align-items: center;
+      gap: 6px;
+      padding: 6px 18px;
+      border-radius: 9999px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--sub-color);
+      letter-spacing: 0.6px;
+      text-shadow: var(--text-shadow);
+    }
+
+    /* Bottom Architectural Floor Console */
+    .floor-console {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+      padding: 12px 18px;
+      border-radius: 12px;
+      background: var(--footer-bg);
+      border-top: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.40);
+    }
+
+    .floor-left {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-width: 52%;
+      text-align: left;
+    }
+
+    .floor-brand {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--footer-text);
+      text-shadow: var(--text-shadow);
+      display: {{brand_display}};
+    }
+
+    .floor-address {
+      font-size: 14.5px;
+      font-weight: 500;
+      color: var(--footer-text);
+      line-height: 1.35;
+      text-shadow: var(--text-shadow);
+      display: {{address_display}};
+    }
+
+    .floor-applicable {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--footer-text);
+      line-height: 1.35;
+      text-shadow: var(--text-shadow);
+      display: {{applicable_display}};
+    }
+
+    .floor-right {
+      display: flex;
+      align-items: flex-end;
+      gap: 14px;
+    }
+
+    .floor-right-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+    }
+
+    .floor-hotline {
+      display: {{hotline_display}};
+      align-items: center;
+      gap: 6px;
+      padding: 7px 18px;
+      border-radius: 9999px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 15.5px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--footer-text);
+      text-shadow: var(--text-shadow);
+      white-space: nowrap;
+    }
+
+    .floor-website {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--sub-color);
+      letter-spacing: 0.5px;
+      text-shadow: var(--text-shadow);
+      display: {{website_display}};
+    }
+
+    .floor-qr {
+      display: {{qr_display}};
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      width: 82px;
+      box-sizing: border-box;
+    }
+
+    .floor-qr img {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .floor-qr-label {
+      font-size: 9.5px;
+      font-weight: 900;
+      color: #000;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    /* Responsive adjustments for narrow vertical (9:16) */
+    @media (max-width: 680px) {
+      .lower-hourglass-deck {
+        left: 4%;
+        right: 4%;
+        gap: 10px;
+      }
+      .badge-pill {
+        font-size: 15px;
+        padding: 7px 22px;
+      }
+      .offer-sub {
+        font-size: 13.5px;
+      }
+      .floor-brand {
+        font-size: 16px;
+      }
+      .floor-left {
+        max-width: 58%;
+      }
+      .floor-hotline {
+        font-size: 12px;
+        padding: 5px 12px;
+      }
+    }
+
+    /* Responsive adjustments for landscape banner (16:9) */
+    @media (max-height: 600px) {
+      .top-stream {
+        top: 2%;
+      }
+      .slogan {
+        margin-top: 2px;
+        font-size: 15px;
+      }
+      .lower-hourglass-deck {
+        bottom: 2%;
+        gap: 6px;
+      }
+      .badge-pill {
+        font-size: 15px;
+        padding: 6px 20px;
+      }
+      .offer-sub {
+        font-size: 12.5px;
+      }
+      .dates-chip {
+        display: none; /* Hide date chip on short banner to preserve space */
+      }
+      .floor-console {
+        padding-top: 6px;
+      }
+    }
+
+    {{custom_css}}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <!-- 1. Upper Funnel Stream (Headline & Hook) -->
+    <div class="top-stream">
+      <div class="pre-header">{{pre_header}}</div>
+      <div class="title-wrap">
+        <div class="headline-wrap">
+          {{headline_html}}
+        </div>
+      </div>
+      <div class="slogan">{{slogan}}</div>
+    </div>
+
+    <!-- 2. Lower Funnel & Perspective Floor Deck (Promo Offer & Console) -->
+    <div class="lower-hourglass-deck">
+      <div class="promo-stage">
+        {{category_body_html}}
+      </div>
+
+      <div class="floor-console">
+        <div class="floor-left">
+          <div class="floor-brand">{{brand}}</div>
+          <div class="floor-address">{{address}}</div>
+          <div class="floor-applicable">{{applicable}}</div>
+        </div>
+        <div class="floor-right">
+          <div class="floor-right-col">
+            <div class="floor-hotline">{{hotline}}</div>
+            <div class="floor-website">{{website_link}}</div>
+          </div>
+          <div class="floor-qr">
+            <img src="{{qr_data_uri}}" alt="QR">
+            <div class="floor-qr-label">QUÉT MÃ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

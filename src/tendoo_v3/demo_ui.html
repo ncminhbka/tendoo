@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tendoo AI Studio - Commercial Poster Studio</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232563EB'/><text y='.74em' x='50%' text-anchor='middle' font-size='68' font-weight='900' fill='white'>T</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap&subset=vietnamese" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090D16;
+      --card-bg: #111827;
+      --card-inner: #162032;
+      --card-border: #1E293B;
+      --card-border-focus: #38BDF8;
+      --accent-blue: #2563EB;
+      --accent-cyan: #06B6D4;
+      --accent-amber: #F59E0B;
+      --accent-emerald: #10B981;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --input-bg: #0F172A;
+      --input-border: #26354D;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+      --glow-cyan: rgba(6, 182, 212, 0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 80px;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background gradient glow */
+    .ambient-glow {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100vw;
+      height: 480px;
+      background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37, 99, 235, 0.18), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Navbar */
+    .navbar {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .logo-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2563EB 0%, #06B6D4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 20px;
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
+    }
+
+    .logo-text {
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-text span {
+      background: linear-gradient(90deg, #38BDF8, #818CF8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-size: 13px;
+      font-weight: 600;
+      color: #34D399;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1340px;
+      margin: 0 auto;
+      padding: 28px 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Section Header */
+    .section-title {
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 14.5px;
+      margin-bottom: 22px;
+    }
+
+    /* 6 Intent Cards Grid */
+    .intent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .intent-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.22s ease;
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .intent-card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .intent-card.active {
+      border-color: #38BDF8;
+      background: linear-gradient(180deg, #14213B 0%, #101827 100%);
+      box-shadow: 0 8px 24px rgba(6, 182, 212, 0.22);
+    }
+
+    .card-icon {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      height: 32px;
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .card-badge {
+      align-self: flex-start;
+      margin-top: auto;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-live {
+      background: rgba(6, 182, 212, 0.2);
+      color: #38BDF8;
+      border: 1px solid rgba(6, 182, 212, 0.4);
+    }
+
+    .badge-ready {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+
+    /* Workspace 2-Column Grid */
+    .workspace {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 28px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 1024px) {
+      .workspace { grid-template-columns: 1fr; }
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .panel-header {
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 12px;
+    }
+
+    /* Form Subsection Blocks */
+    .form-section-block {
+      background: var(--card-inner);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .form-section-block:focus-within {
+      border-color: rgba(56, 189, 248, 0.45);
+    }
+
+    .section-block-title {
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #38BDF8;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-block-title.store-title {
+      color: #F59E0B;
+    }
+
+    .section-block-title.design-title {
+      color: #A78BFA;
+    }
+
+    /* Preset Chips */
+    .presets-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .preset-chip {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 9999px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #E2E8F0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .preset-chip:hover {
+      border-color: #38BDF8;
+      background: #1E293B;
+      transform: translateY(-1px);
+    }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+      color: #E2E8F0;
+    }
+
+    .form-label span.req {
+      color: #F43F5E;
+      margin-left: 3px;
+    }
+
+    .field-invalid {
+      border-color: #F43F5E !important;
+      box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.25);
+    }
+
+    .form-label span.hint {
+      font-weight: 500;
+      color: var(--text-dim);
+      font-size: 11px;
+      margin-left: 6px;
+    }
+
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-md);
+      padding: 9px 12px;
+      font-size: 13.5px;
+      color: #fff;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--card-border-focus);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 60px;
+      line-height: 1.45;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 640px) {
+      .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
+    }
+
+    /* Dynamic Category Specific Form Blocks */
+    .cat-fields-block {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step-input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .step-row-num {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      border-radius: 50%;
+      background: #38BDF8;
+      color: #0F172A;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-remove-step {
+      background: rgba(244, 63, 94, 0.15);
+      color: #FB7185;
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-remove-step:hover {
+      background: #F43F5E;
+      color: #fff;
+    }
+
+    .btn-add-step {
+      background: rgba(56, 189, 248, 0.12);
+      color: #38BDF8;
+      border: 1px dashed #38BDF8;
+      border-radius: 8px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .btn-add-step:hover {
+      background: rgba(56, 189, 248, 0.22);
+    }
+
+    /* Drag and Drop File Upload Area */
+    .upload-zone {
+      border: 2px dashed var(--input-border);
+      border-radius: var(--radius-md);
+      background: rgba(15, 23, 42, 0.6);
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #38BDF8;
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .upload-zone-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .upload-zone-icon {
+      font-size: 26px;
+    }
+
+    .upload-zone-text {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #E2E8F0;
+    }
+
+    .upload-zone-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .upload-preview-wrap {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: var(--input-bg);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      border: 1px solid var(--input-border);
+    }
+
+    .upload-thumb {
+      width: 46px;
+      height: 46px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid var(--card-border);
+    }
+
+    .upload-meta {
+      flex: 1;
+      text-align: left;
+    }
+
+    .upload-filename {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .upload-filesize {
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    .btn-remove-file {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      color: #FB7185;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-remove-file:hover {
+      background: rgba(244, 63, 94, 0.25);
+    }
+
+    /* iOS Style Switch */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-md);
+      margin-top: 6px;
+    }
+
+    .toggle-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .toggle-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toggle-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .25s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .25s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #10B981;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Collapsible Advanced Settings */
+    .advanced-toggle {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      user-select: none;
+    }
+
+    .advanced-toggle:hover {
+      color: #38BDF8;
+    }
+
+    .advanced-content {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--input-border);
+    }
+
+    /* Submit Button */
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #2563EB 0%, #06B6D4 100%);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      font-size: 15.5px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+      transition: all 0.22s ease;
+      margin-top: 18px;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 26px rgba(6, 182, 212, 0.45);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+    }
+
+    /* Right Preview Area */
+    .preview-box {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #090E17;
+      border: 2px dashed var(--card-border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .preview-box.has-image {
+      border-style: solid;
+      border-color: var(--card-border);
+      background: #000;
+    }
+
+    .preview-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .preview-placeholder {
+      text-align: center;
+      color: var(--text-dim);
+      padding: 24px;
+    }
+
+    .preview-placeholder .icon {
+      font-size: 44px;
+      margin-bottom: 12px;
+      opacity: 0.8;
+    }
+
+    /* Progress Overlay */
+    .progress-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 15, 25, 0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(56, 189, 248, 0.2);
+      border-top-color: #38BDF8;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .progress-text {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .progress-sub {
+      font-size: 12px;
+      color: #38BDF8;
+    }
+
+    /* Tabs row */
+    .tabs-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--card-border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab-btn:hover {
+      border-color: #38BDF8;
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      background: #1E293B;
+      color: #38BDF8;
+      border-color: #38BDF8;
+    }
+
+    /* Multi-Image Gallery Strip */
+    .gallery-container {
+      display: none;
+      margin-top: 14px;
+      padding: 12px;
+      background: var(--card-inner);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+    }
+
+    .gallery-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .gallery-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+    }
+
+    .gallery-card {
+      position: relative;
+      border: 2px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      cursor: pointer;
+      background: #000;
+      transition: all 0.2s ease;
+      aspect-ratio: 1 / 1;
+    }
+
+    .gallery-card:hover {
+      border-color: #38BDF8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+    }
+
+    .gallery-card.active {
+      border-color: #38BDF8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4), 0 4px 14px rgba(56, 189, 248, 0.35);
+    }
+
+    .gallery-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gallery-card-badge {
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      color: #38BDF8;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      pointer-events: none;
+    }
+
+    .gallery-card.active .gallery-card-badge {
+      background: #2563EB;
+      color: #fff;
+      border-color: #38BDF8;
+    }
+
+    /* Result Action Buttons */
+    .result-actions {
+      display: none;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid var(--card-border);
+      background: var(--input-bg);
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background: #1E293B;
+      border-color: #38BDF8;
+      transform: translateY(-1px);
+    }
+
+    .btn-download {
+      background: #059669;
+      border-color: #10B981;
+    }
+
+    .btn-download:hover {
+      background: #10B981;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow"></div>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <a href="#" class="brand-logo">
+      <div class="logo-badge">T</div>
+      <div class="logo-text">TENDOO <span>AI</span></div>
+    </a>
+    <div class="status-chip">
+      <div class="status-dot"></div>
+      <span id="server-status-text">FLUX.2 Klein 4B Online (2x A30 Ready)</span>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Section 1: Intent Selection (6 Category Buttons) -->
+    <h2 class="section-title">Bạn muốn tạo ảnh nội dung gì?</h2>
+    <p class="section-desc">Chọn đúng mục đích thương mại để hệ thống tự động tối ưu hóa trường thông tin và typography nhận diện.</p>
+
+    <div class="intent-grid">
+      <!-- 1. Promo Poster -->
+      <div class="intent-card active" id="btn-cat-promo" onclick="switchCategory('promo')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+        </div>
+        <div class="card-title">Poster Khuyến Mại / Ưu Đãi</div>
+        <div class="card-desc">Thiết kế poster bán hàng, flash sale, voucher giảm giá đa tầng.</div>
+        <span class="card-badge badge-live">Đang hoạt động</span>
+      </div>
+
+      <!-- 2. Product Intro -->
+      <div class="intent-card" id="btn-cat-product_intro" onclick="switchCategory('product_intro')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        </div>
+        <div class="card-title">Giới Thiệu Sản Phẩm / Dịch Vụ</div>
+        <div class="card-desc">Làm nổi bật chất liệu, tính năng cao cấp trên bục studio sang trọng.</div>
+        <span class="card-badge badge-ready">Sẵn sàng</span>
+      </div>
+
+      <!-- 3. Opening Banner -->
+      <div class="intent-card" id="btn-cat-opening" onclick="switchCategory('opening')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+        </div>
+        <div class="card-title">Khai Trương Chi Nhánh</div>
+        <div class="card-desc">Banner khánh thành, ngày giờ khai trương và quà tặng chào mừng.</div>
+        <span class="card-badge badge-ready">Sẵn sàng</span>
+      </div>
+
+      <!-- 4. Customer Feedback -->
+      <div class="intent-card" id="btn-cat-feedback" onclick="switchCategory('feedback')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        </div>
+        <div class="card-title">Feedback & Đánh Giá</div>
+        <div class="card-desc">Trích dẫn phản hồi thực tế, 5 sao chất lượng, tăng độ uy tín.</div>
+        <span class="card-badge badge-ready">Sẵn sàng</span>
+      </div>
+
+      <!-- 5. Recruitment -->
+      <div class="intent-card" id="btn-cat-recruitment" onclick="switchCategory('recruitment')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <div class="card-title">Tuyển Dụng Nhân Tài</div>
+        <div class="card-desc">Thông báo vị trí tuyển dụng, mức thu nhập hấp dẫn, văn hóa team.</div>
+        <span class="card-badge badge-ready">Sẵn sàng</span>
+      </div>
+
+      <!-- 6. Usage Guide -->
+      <div class="intent-card" id="btn-cat-guide" onclick="switchCategory('guide')">
+        <div class="card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        </div>
+        <div class="card-title">Quy Trình & Hướng Dẫn</div>
+        <div class="card-desc">Infographic các bước sử dụng sản phẩm hoặc hướng dẫn đặt mua.</div>
+        <span class="card-badge badge-ready">Sẵn sàng</span>
+      </div>
+    </div>
+
+    <!-- Section 2: Workspace -->
+    <div class="workspace" id="form-workspace">
+      
+      <!-- Left Panel: 3 Form Sections -->
+      <div class="panel">
+        <div class="panel-header">
+          <span id="panel-category-title">Thông tin Poster Khuyến Mại</span>
+          <span id="layout-indicator" style="font-size: 13px; color: var(--accent-cyan);">Bố cục: Tự động thông minh</span>
+        </div>
+
+        <form id="poster-form" onsubmit="handleGenerate(event)">
+
+          <!-- PHẦN 1: THÔNG TIN CHUNG (Biến đổi theo category) -->
+          <div class="form-section-block" id="section-general">
+            <div class="section-block-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:-2px; margin-right:6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span id="section-general-title">PHẦN 1: THÔNG TIN KHUYẾN MẠI / ƯU ĐÃI</span>
+            </div>
+
+            <!-- Quick Presets -->
+            <label class="form-label">Chọn mẫu nhanh (1-Click Presets):</label>
+            <div class="presets-row" id="presets-container">
+              <div class="preset-chip" onclick="loadPreset('beverage')">Trà Đào Cam Sả</div>
+              <div class="preset-chip" onclick="loadPreset('headphones')">Tai Nghe Hi-Res</div>
+              <div class="preset-chip" onclick="loadPreset('perfume')">Nước Hoa Pháp</div>
+              <div class="preset-chip" onclick="loadPreset('midautumn')">Bánh Trung Thu</div>
+              <div class="preset-chip" onclick="loadPreset('suv')">SUV Điện Ảnh</div>
+              <div class="preset-chip" onclick="loadPreset('lookbook')">Lookbook Thời Trang</div>
+            </div>
+
+            <!-- 1. Tiêu đề ảnh (Title / Headline) -->
+            <div class="form-group">
+              <label class="form-label" id="lbl-title">Tiêu đề ảnh (Headline):</label>
+              <textarea id="inp-title" class="form-textarea" placeholder="TRÀ ĐÀO CAM SẢ&#10;THANH MÁT TỰ NHIÊN"></textarea>
+            </div>
+
+            <!-- 2. Tải ảnh lên (Product Reference Image) -->
+            <div class="form-group">
+              <label class="form-label">Tải ảnh sản phẩm lên (Tùy chọn):<span class="hint">Kéo thả ảnh mẫu thực tế</span></label>
+              <div class="upload-zone" id="upload-dropzone" onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelected(event)">
+                <div class="upload-zone-content" id="upload-prompt">
+                  <div class="upload-zone-icon">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                      <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div class="upload-zone-text">Nhấp để chọn ảnh hoặc kéo thả file ảnh vào đây</div>
+                  <div class="upload-zone-sub">Hỗ trợ PNG, JPG, WEBP (Tự động nén tối ưu)</div>
+                </div>
+              </div>
+
+              <!-- File Preview Bar -->
+              <div class="upload-preview-wrap" id="upload-preview-bar">
+                <img id="upload-preview-img" class="upload-thumb" src="" alt="Thumbnail">
+                <div class="upload-meta">
+                  <div class="upload-filename" id="upload-filename">anh_san_pham.png</div>
+                  <div class="upload-filesize" id="upload-filesize">1.2 MB</div>
+                </div>
+                <button type="button" class="btn-remove-file" onclick="removeUploadedFile()">✕ Xóa</button>
+              </div>
+            </div>
+
+            <!-- 3. Dynamic Category Specific Fields -->
+            <!-- 3A. Promo Category Fields -->
+            <div id="cat-fields-promo" class="cat-fields-block">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label" id="lbl-discount">Mức ưu đãi nổi bật:<span class="hint">Nút Badge chính</span></label>
+                  <input type="text" id="inp-discount" class="form-input" placeholder="MUA 2 TẶNG 1 hoặc GIẢM 50%">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Sản phẩm áp dụng:<span class="hint">Điều kiện</span></label>
+                  <input type="text" id="inp-applied" class="form-input" placeholder="Áp dụng cho toàn bộ trà trái cây">
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Từ ngày:</label>
+                  <input type="date" id="inp-date-start" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Đến ngày:</label>
+                  <input type="date" id="inp-date-end" class="form-input">
+                </div>
+              </div>
+            </div>
+
+            <!-- 3B. Product Intro Category Fields -->
+            <div id="cat-fields-product_intro" class="cat-fields-block" style="display: none;">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label" id="lbl-product-name">Tên sản phẩm / Dòng máy:</label>
+                  <input type="text" id="inp-product-name" class="form-input" placeholder="Tai Nghe Wireless Sonic Pro">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Giá bán niêm yết:<span class="hint">Badge nổi bật</span></label>
+                  <input type="text" id="inp-price" class="form-input" placeholder="1.290.000đ hoặc 199k">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" id="lbl-product-desc">Mô tả ngắn về sản phẩm:</label>
+                <input type="text" id="inp-product-desc" class="form-input" placeholder="Chất âm Hi-Res chuẩn phòng thu, công nghệ khử ồn tân tiến">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Điểm nổi bật / Thông số chính:<span class="hint">Cách nhau bằng dấu phẩy</span></label>
+                <input type="text" id="inp-highlights" class="form-input" placeholder="Chống ồn ANC, Pin 40 giờ, Bluetooth 5.3, Trọng lượng 180g">
+              </div>
+            </div>
+
+            <!-- 3C. Grand Opening Category Fields -->
+            <div id="cat-fields-opening" class="cat-fields-block" style="display: none;">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label" id="lbl-opening-date">Ngày khai trương:</label>
+                  <input type="text" id="inp-opening-date" class="form-input" placeholder="15/10/2026 hoặc Thứ Bảy, 15.10">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Ưu đãi ngày mở bán:<span class="hint">Quà tặng / Voucher</span></label>
+                  <input type="text" id="inp-opening-promo" class="form-input" placeholder="TẶNG 100 PHẦN QUÀ ĐẦU TIÊN">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Liên hệ đặt bàn / Đặt chỗ trước:</label>
+                <input type="text" id="inp-booking-contact" class="form-input" placeholder="Hotline đặt bàn: 0988 123 456">
+              </div>
+            </div>
+
+            <!-- 3D. Customer Feedback Category Fields -->
+            <div id="cat-fields-feedback" class="cat-fields-block" style="display: none;">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label" id="lbl-feedback-target">Sản phẩm / Dịch vụ nhận feedback:</label>
+                  <input type="text" id="inp-feedback-target" class="form-input" placeholder="Liệu trình Spa trẻ hóa da chuyên sâu">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Điểm đánh giá / Xếp hạng:<span class="hint">Số sao</span></label>
+                  <input type="text" id="inp-feedback-rating" class="form-input" placeholder="⭐⭐⭐⭐⭐ 5.0 / 5.0">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" id="lbl-feedback-quote">Mô tả feedback / Trích dẫn cảm nhận:</label>
+                <textarea id="inp-feedback-quote" class="form-textarea" rows="2" placeholder="“Không gian cực kỳ thư thái, nhân viên chu đáo, da mình căng bóng sau buổi đầu tiên!”"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ưu đãi tri ân đặc biệt:</label>
+                <input type="text" id="inp-special-offer" class="form-input" placeholder="TẶNG VOUCHER 20% CHO KHÁCH HÀNG MỚI">
+              </div>
+            </div>
+
+            <!-- 3E. Recruitment Category Fields -->
+            <div id="cat-fields-recruitment" class="cat-fields-block" style="display: none;">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label" id="lbl-job-position">Vị trí tuyển dụng:</label>
+                  <input type="text" id="inp-job-position" class="form-input" placeholder="SENIOR AI ENGINEER (COMPUTER VISION)">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" id="lbl-apply-deadline">Thời hạn ứng tuyển:</label>
+                  <input type="text" id="inp-apply-deadline" class="form-input" placeholder="Hạn nộp: 30/10/2026">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mô tả ngắn công việc & Quyền lợi / Thu nhập:</label>
+                <textarea id="inp-job-desc" class="form-textarea" rows="2" placeholder="Thu nhập up to $3,000 / Chế độ bảo hiểm quốc tế, làm việc Hybrid linh hoạt..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label" id="lbl-apply-method">Cách thức ứng tuyển:</label>
+                <input type="text" id="inp-apply-method" class="form-input" placeholder="Gửi CV về hr@tendoo.ai hoặc quét mã QR bên dưới">
+              </div>
+            </div>
+
+            <!-- 3F. Usage Guide Category Fields -->
+            <div id="cat-fields-guide" class="cat-fields-block" style="display: none;">
+              <label class="form-label" id="lbl-guide-steps">Các bước thực hiện quy trình:<span class="req">*</span><span class="hint">Tối đa 5 bước (bước 1 bắt buộc)</span></label>
+              <div id="steps-container">
+                <div class="step-input-row" data-step-idx="1">
+                  <span class="step-row-num">1</span>
+                  <input type="text" class="form-input inp-step-val" placeholder="Bước 1..." value="Chọn sản phẩm yêu thích hoặc quét mã QR">
+                  <button type="button" class="btn-remove-step" onclick="removeStepInput(this)">✕ Xóa</button>
+                </div>
+                <div class="step-input-row" data-step-idx="2">
+                  <span class="step-row-num">2</span>
+                  <input type="text" class="form-input inp-step-val" placeholder="Bước 2..." value="Xác nhận thông tin giao hàng & thanh toán">
+                  <button type="button" class="btn-remove-step" onclick="removeStepInput(this)">✕ Xóa</button>
+                </div>
+                <div class="step-input-row" data-step-idx="3">
+                  <span class="step-row-num">3</span>
+                  <input type="text" class="form-input inp-step-val" placeholder="Bước 3..." value="Nhận hàng nhanh chóng tận nhà trong 2 giờ">
+                  <button type="button" class="btn-remove-step" onclick="removeStepInput(this)">✕ Xóa</button>
+                </div>
+              </div>
+              <button type="button" class="btn-add-step" onclick="addStepInput()">+ Thêm bước tiếp theo</button>
+            </div>
+
+            <!-- 5. Mô tả bối cảnh ảnh (AI Scene Prompt) -->
+            <div class="form-group">
+              <label class="form-label" id="lbl-scene-desc">Mô tả bối cảnh ảnh (Prompt DiT sinh nền):</label>
+              <textarea id="inp-scene-desc" class="form-textarea" rows="2" placeholder="Ly trà đào cam sả mát lạnh trên bàn gỗ sồi, lát cam tươi mọng nước, tép sả thơm..."></textarea>
+            </div>
+          </div>
+
+          <!-- PHẦN 2: THÔNG TIN CỬA HÀNG (Dùng chung & cố định cho mọi category) -->
+          <div class="form-section-block">
+            <div class="section-block-title store-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:-2px; margin-right:6px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg><span>PHẦN 2: THÔNG TIN CỬA HÀNG / THƯƠNG HIỆU</span>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">Tên cửa hàng / Thương hiệu:</label>
+                <input type="text" id="inp-store-name" class="form-input" placeholder="Tendoo Beverage Co.">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Số điện thoại / Hotline:</label>
+                <input type="text" id="inp-phone" class="form-input" placeholder="1900 8888 hoặc 0988 123 456">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Địa chỉ cửa hàng:</label>
+              <input type="text" id="inp-address" class="form-input" placeholder="123 Hoàng Hoa Thám, Ba Đình, Hà Nội">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Đường link Website / Fanpage:</label>
+              <input type="url" id="inp-website" class="form-input" placeholder="https://tendoo.ai/summer-sale">
+            </div>
+
+            <!-- QR Code Toggle -->
+            <div class="toggle-wrap">
+              <div class="toggle-info">
+                <div class="toggle-title">Chuyển đường link thành mã QR</div>
+                <div class="toggle-desc">Tự động tạo mã QR từ link trên và nhúng vào góc poster để khách quét trực tiếp</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="inp-enable-qr" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- PHẦN 3: HIỂN THỊ & THIẾT KẾ (Dùng chung cho mọi category) -->
+          <div class="form-section-block">
+            <div class="section-block-title design-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:-2px; margin-right:6px;"><circle cx="12" cy="12" r="10"></circle><polygon points="12 8 8 12 12 16 16 12 12 8"></polygon></svg><span>PHẦN 3: HIỂN THỊ & THIẾT KẾ POSTER</span>
+            </div>
+
+            <!-- Row 1: Style Suggestion & Primary Color -->
+            <!-- Per yeu_cau.txt: layout/font/corridor-material are no longer raw pickers
+                 here -- the server auto-matches all three from category + phong cách
+                 (style_matcher.resolve_style_preset). Only a coarse business-mood hint
+                 and an optional primary-color override remain user-facing. -->
+            <div class="form-row-2">
+              <!-- Phong cách (style suggestion) -->
+              <div class="form-group">
+                <label class="form-label">Phong cách:<span class="hint">Gợi ý, hệ thống tự chọn bố cục & phông chữ phù hợp</span></label>
+                <select id="sel-style-pref" class="form-select">
+                  <option value="auto" selected>⚡ Tự động theo ngành hàng (Smart Auto)</option>
+                  <option value="hien_dai">Hiện đại / Tối giản</option>
+                  <option value="sang_trong">Sang trọng / Cao cấp</option>
+                  <option value="nang_dong">Năng động / Thể thao</option>
+                  <option value="am_cung">Ấm cúng / Gần gũi</option>
+                  <option value="le_hoi">Lễ hội / Rực rỡ</option>
+                </select>
+              </div>
+
+              <!-- Màu chủ đạo (primary color) -->
+              <div class="form-group">
+                <label class="form-label">Màu chủ đạo:<span class="hint">Tùy chọn, mặc định tự nhận diện từ ảnh nền</span></label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <input type="color" id="inp-primary-color" class="form-input" value="#FF5722" style="width: 52px; height: 38px; padding: 3px; flex: 0 0 auto;" disabled>
+                  <label style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #94A3B8; cursor: pointer; user-select: none;">
+                    <input type="checkbox" id="inp-color-auto" checked onchange="document.getElementById('inp-primary-color').disabled = this.checked;">
+                    Tự động theo ảnh nền
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3: Aspect Ratio & Number of Images -->
+            <div class="form-row-2">
+              <!-- Aspect Ratio -->
+              <div class="form-group">
+                <label class="form-label">Tỷ lệ ảnh đầu ra:</label>
+                <select id="sel-aspect-ratio" class="form-select">
+                  <option value="1:1" selected>1:1 Vuông (1024x1024 - Post, Feed)</option>
+                  <option value="9:16">9:16 Dọc (576x1024 - TikTok, Story, Reel)</option>
+                  <option value="16:9">16:9 Ngang (1024x576 - Web Banner, Cover)</option>
+                  <option value="4:5">4:5 Dọc (816x1024 - Facebook Feed chuẩn)</option>
+                </select>
+              </div>
+
+              <!-- Number of Images -->
+              <div class="form-group">
+                <label class="form-label">Số lượng ảnh muốn tạo:</label>
+                <select id="sel-num-images" class="form-select">
+                  <option value="1" selected>1 ảnh (Tốc độ tối đa ~3.5s)</option>
+                  <option value="2">2 ảnh (Đa dạng lựa chọn)</option>
+                  <option value="4">4 ảnh (Bộ sưu tập)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Advanced Settings Dropdown -->
+            <div class="advanced-toggle" onclick="toggleAdvancedSettings()">
+              <span id="adv-arrow">▶</span> <span>Tùy chọn kỹ thuật nâng cao (Seed, Steps, Guidance)</span>
+            </div>
+            <div class="advanced-content" id="advanced-settings-box">
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label class="form-label">Seed ngẫu nhiên:</label>
+                  <div style="display: flex; gap: 4px;">
+                    <input type="number" id="inp-seed" class="form-input" value="42">
+                    <button type="button" class="btn-action" style="flex:0; padding: 0 10px;" onclick="randomizeSeed()" title="Đổi seed ngẫu nhiên">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:-2px;"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"></circle><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"></circle><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"></circle><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor"></circle></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Số bước (Steps):</label>
+                  <input type="number" id="inp-steps" class="form-input" value="8">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">CFG Guidance:</label>
+                  <input type="number" step="0.1" id="inp-guidance" class="form-input" value="1.5">
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Main Submit Button -->
+          <button type="submit" id="btn-generate" class="btn-submit">
+            <span style="display:inline-flex; align-items:center; justify-content:center; gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>Tạo Poster Thương Mại Ngay (~3.5s)</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Right Panel: Live Output & Previews -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>Kết quả Poster Hoàn Thiện</span>
+          <span id="timing-badge" style="font-size: 13px; color: #10B981; display: none;">3.48s</span>
+        </div>
+
+        <!-- View Switcher Tabs -->
+        <div class="tabs-row" id="view-tabs" style="display: none;">
+          <button class="tab-btn active" onclick="switchViewTab('poster')">Poster Hoàn Thiện</button>
+          <button class="tab-btn" onclick="switchViewTab('bg')">Background Sạch (DiT)</button>
+          <button class="tab-btn" onclick="switchViewTab('mask')">Mặt Nạ An Toàn (Mask)</button>
+          <button class="tab-btn" id="tab-qr" style="display: none;" onclick="switchViewTab('qr')">Mã QR</button>
+        </div>
+
+        <div class="preview-box" id="preview-container">
+          <img id="preview-image" class="preview-img" style="display: none;" alt="Rendered Poster">
+          
+          <div class="preview-placeholder" id="placeholder-box">
+            <div class="icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
+              </svg>
+            </div>
+            <div style="font-weight: 700; margin-bottom: 6px; color: #fff;">Chưa có ảnh nào được tạo</div>
+            <div style="font-size: 13px; max-width: 320px; line-height: 1.4;">
+              Điền các thông tin ở form bên trái hoặc chọn 1-Click Preset, sau đó nhấn "Tạo Poster Thương Mại".
+            </div>
+          </div>
+
+          <!-- Progress Overlay -->
+          <div class="progress-overlay" id="progress-box">
+            <div class="spinner"></div>
+            <div class="progress-text" id="progress-title">Đang kết nối tới server FLUX.2...</div>
+            <div class="progress-sub" id="progress-desc">Single-pass Regional Velocity Blending trên 2x A30...</div>
+          </div>
+        </div>
+
+        <!-- Multi-Image Gallery Strip (when num_images > 1) -->
+        <div class="gallery-container" id="gallery-container">
+          <div class="gallery-label">
+            <span>Bộ ảnh đã tạo (<span id="gallery-count">1</span> phiên bản):</span>
+            <span style="font-size: 11px; color: var(--text-dim);">Nhấp vào ảnh để xem & tải</span>
+          </div>
+          <div class="gallery-cards" id="gallery-cards">
+            <!-- Dynamically populated thumbnail cards -->
+          </div>
+        </div>
+
+        <!-- Result Action Buttons -->
+        <div class="result-actions" id="result-actions">
+          <a id="btn-download" href="#" download="tendoo_poster.png" class="btn-action btn-download">
+            <span style="display:inline-flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Tải Poster HD (PNG)</span>
+          </a>
+          <button class="btn-action" onclick="copyImageLink()">
+            <span style="display:inline-flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Copy Link</span>
+          </button>
+          <button class="btn-action" onclick="openFullscreen()">
+            <span style="display:inline-flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>Xem Lớn</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    // State management
+    let currentCategory = "promo";
+    let uploadedImageBase64 = null;
+    let currentPostersList = [];
+    let activePosterIdx = 0;
+
+    // Required-field validation -- single source of truth is the backend's
+    // CATEGORY_REQUIRED_FIELDS (see /api/required-fields), fetched once on load so the
+    // frontend's * markers and the backend's authoritative check can never drift apart.
+    // Maps a GenerateRequest field name to its <input>/<label> DOM ids (this mapping
+    // itself is stable -- only the per-category required-ness list is fetched).
+    const FIELD_ID_MAP = {
+      discount: { input: 'inp-discount', label: 'lbl-discount' },
+      product_name: { input: 'inp-product-name', label: 'lbl-product-name' },
+      product_desc: { input: 'inp-product-desc', label: 'lbl-product-desc' },
+      opening_date: { input: 'inp-opening-date', label: 'lbl-opening-date' },
+      feedback_target: { input: 'inp-feedback-target', label: 'lbl-feedback-target' },
+      feedback_quote: { input: 'inp-feedback-quote', label: 'lbl-feedback-quote' },
+      job_position: { input: 'inp-job-position', label: 'lbl-job-position' },
+      apply_deadline: { input: 'inp-apply-deadline', label: 'lbl-apply-deadline' },
+      apply_method: { input: 'inp-apply-method', label: 'lbl-apply-method' },
+    };
+    let REQUIRED_FIELDS = {};        // {category: [fieldName, ...]}, fetched from backend
+    let REQUIRED_GUIDE_FIRST_STEP = true;
+
+    async function loadRequiredFieldsConfig() {
+      try {
+        const url = BASE_URL ? `${BASE_URL}/api/required-fields` : '/api/required-fields';
+        const res = await fetch(url);
+        const data = await res.json();
+        REQUIRED_FIELDS = data.fields || {};
+        REQUIRED_GUIDE_FIRST_STEP = !!data.guide_first_step;
+      } catch (e) {
+        // Network hiccup: fail open on the *markers* (no stars shown) rather than block
+        // the form -- the backend's validate_required_fields() stays authoritative either way.
+        REQUIRED_FIELDS = {};
+      }
+      applyRequiredMarkers(currentCategory);
+    }
+
+    // Renders '*' markers + native `required` only on the fields that are actually
+    // required for `catKey`, per REQUIRED_FIELDS -- called on load and every category switch.
+    function applyRequiredMarkers(catKey) {
+      Object.values(FIELD_ID_MAP).forEach(({ input, label }) => {
+        const inputEl = document.getElementById(input);
+        const labelEl = document.getElementById(label);
+        if (inputEl) inputEl.required = false;
+        if (labelEl) labelEl.querySelector('span.req')?.remove();
+      });
+
+      const requiredNames = REQUIRED_FIELDS[catKey] || [];
+      requiredNames.forEach(name => {
+        const ids = FIELD_ID_MAP[name];
+        if (!ids) return;
+        const inputEl = document.getElementById(ids.input);
+        const labelEl = document.getElementById(ids.label);
+        if (inputEl) inputEl.required = true;
+        if (labelEl && !labelEl.querySelector('span.req')) {
+          labelEl.insertAdjacentHTML('beforeend', '<span class="req">*</span>');
+        }
+      });
+    }
+
+    // Client-side mirror of the backend's validate_required_fields() -- gives immediate
+    // feedback before the network round-trip. The backend check remains authoritative
+    // (e.g. for direct API callers bypassing this UI).
+    function getMissingRequiredFields(catKey) {
+      if (catKey === 'guide') {
+        if (!REQUIRED_GUIDE_FIRST_STEP) return [];
+        const steps = getGuideSteps();
+        return (!steps.length || !steps[0]) ? ['guide_steps[0]'] : [];
+      }
+      const missing = [];
+      (REQUIRED_FIELDS[catKey] || []).forEach(name => {
+        const ids = FIELD_ID_MAP[name];
+        const el = ids ? document.getElementById(ids.input) : null;
+        const val = el ? (el.value || '').trim() : '';
+        if (!val) missing.push(name);
+      });
+      return missing;
+    }
+
+    // Focuses + highlights the first missing required field so the user can find it fast.
+    function highlightMissingFields(missing) {
+      document.querySelectorAll('.field-invalid').forEach(el => el.classList.remove('field-invalid'));
+      let firstEl = null;
+      missing.forEach(name => {
+        let el;
+        if (name === 'guide_steps[0]') {
+          el = document.querySelector('#steps-container .step-input-row .inp-step-val');
+        } else {
+          el = document.getElementById(FIELD_ID_MAP[name]?.input);
+        }
+        if (el) {
+          el.classList.add('field-invalid');
+          if (!firstEl) firstEl = el;
+        }
+      });
+      if (firstEl) {
+        firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstEl.focus();
+      }
+    }
+
+    // Auto-clear invalid highlight as soon as the user starts typing
+    document.addEventListener('input', (e) => {
+      if (e.target && e.target.classList && e.target.classList.contains('field-invalid')) {
+        if ((e.target.value || '').trim()) {
+          e.target.classList.remove('field-invalid');
+        }
+      }
+    });
+
+    let currentImages = {
+      poster: null,
+      bg: null,
+      mask: null,
+      qr: null
+    };
+
+    // Category Configuration Metadata
+    const CATEGORIES = {
+      promo: {
+        title: "PHẦN 1: THÔNG TIN KHUYẾN MẠI / ƯU ĐÃI",
+        panelTitle: "Thông tin Poster Khuyến Mại",
+        lblTitle: "Tiêu đề ảnh (Headline):",
+        titlePlaceholder: "TRÀ ĐÀO CAM SẢ\nTHANH MÁT TỰ NHIÊN",
+        lblDiscount: "Mức ưu đãi nổi bật:",
+        discountPlaceholder: "MUA 2 TẶNG 1 hoặc GIẢM 50%",
+        lblApplied: "Sản phẩm áp dụng:",
+        appliedPlaceholder: "Áp dụng cho toàn bộ trà trái cây & sinh tố",
+        lblDateStart: "Từ ngày:",
+        lblDateEnd: "Đến ngày:",
+        lblSceneDesc: "Mô tả bối cảnh ảnh (Prompt DiT sinh nền):",
+        scenePlaceholder: "Ly trà đào cam sả mát lạnh trên bàn gỗ sồi, lát cam tươi mọng nước, tép sả thơm, studio lighting..."
+      },
+      product_intro: {
+        title: "PHẦN 1: THÔNG TIN GIỚI THIỆU SẢN PHẨM",
+        panelTitle: "Giới Thiệu Sản Phẩm / Dịch Vụ",
+        lblTitle: "Tên sản phẩm & Định vị:",
+        titlePlaceholder: "TAI NGHE KHÔNG DÂY\nHI-RES AUDIO CHỐNG ỒN",
+        lblDiscount: "Điểm nhấn công nghệ / Giá bán:",
+        discountPlaceholder: "CHỐNG ỒN CHỦ ĐỘNG HYBRID ANC",
+        lblApplied: "Đối tượng / Phân khúc phù hợp:",
+        appliedPlaceholder: "Dành riêng cho tín đồ âm nhạc & làm việc chuyên nghiệp",
+        lblDateStart: "Ngày mở bán:",
+        lblDateEnd: "Thời gian bảo hành:",
+        lblSceneDesc: "Bối cảnh trình diễn sản phẩm (Studio Concept):",
+        scenePlaceholder: "Sleek wireless headphones on dark slate pedestal, cinematic blue rim lighting, premium reflection..."
+      },
+      opening: {
+        title: "PHẦN 1: THÔNG TIN KHAI TRƯƠNG CHI NHÁNH",
+        panelTitle: "Banner Khai Trương Chi Nhánh",
+        lblTitle: "Tiêu đề sự kiện khai trương:",
+        titlePlaceholder: "TƯNG BỪNG KHAI TRƯƠNG\nCHI NHÁNH THỨ 10",
+        lblDiscount: "Quà tặng / Ưu đãi ngày mở bán:",
+        discountPlaceholder: "TẶNG 100 PHẦN QUÀ ĐẦU TIÊN",
+        lblApplied: "Điều kiện tham gia:",
+        appliedPlaceholder: "Áp dụng cho tất cả khách hàng check-in tại cửa hàng",
+        lblDateStart: "Ngày bắt đầu:",
+        lblDateEnd: "Ngày kết thúc:",
+        lblSceneDesc: "Bối cảnh lễ hội khai trương:",
+        scenePlaceholder: "Grand opening modern storefront, golden confetti celebration, ribbon cutting ceremony atmosphere..."
+      },
+      feedback: {
+        title: "PHẦN 1: THÔNG TIN FEEDBACK & ĐÁNH GIÁ",
+        panelTitle: "Feedback & Đánh Giá Khách Hàng",
+        lblTitle: "Tiêu đề phản hồi (Headline):",
+        titlePlaceholder: "KHÁCH HÀNG NÓI GÌ\nVỀ CHẤT LƯỢNG TENDOO?",
+        lblDiscount: "Điểm đánh giá / Xếp hạng:",
+        discountPlaceholder: "5.0 / 5.0 SAO",
+        lblApplied: "Trích dẫn cảm nhận khách hàng:",
+        appliedPlaceholder: "\"Hương vị đậm đà thơm ngon, không gian quán cực kỳ thư giãn!\"",
+        lblDateStart: "Tên khách hàng:",
+        lblDateEnd: "Nghề nghiệp / Vị trí:",
+        lblSceneDesc: "Bối cảnh ấm cúng gần gũi:",
+        scenePlaceholder: "Warm cozy cafe ambiance, happy customer testimonial portrait setup, soft depth of field..."
+      },
+      recruitment: {
+        title: "PHẦN 1: THÔNG TIN TUYỂN DỤNG NHÂN TÀI",
+        panelTitle: "Poster Tuyển Dụng Nhân Tài",
+        lblTitle: "Vị trí tuyển dụng chính:",
+        titlePlaceholder: "TENDOO TÌM ĐỒNG ĐỘI\nSENIOR AI ENGINEER",
+        lblDiscount: "Mức thu nhập / Quyền lợi nổi bật:",
+        discountPlaceholder: "THU NHẬP UP TO $3,000",
+        lblApplied: "Địa điểm làm việc & Hình thức:",
+        appliedPlaceholder: "Hà Nội / Hybrid - Chế độ đãi ngộ chuẩn quốc tế",
+        lblDateStart: "Hạn nộp hồ sơ:",
+        lblDateEnd: "Ngày bắt đầu đi làm:",
+        lblSceneDesc: "Bối cảnh văn phòng công nghệ sáng tạo:",
+        scenePlaceholder: "High-tech innovative workspace, glass meeting room, modern collaborative work environment..."
+      },
+      guide: {
+        title: "PHẦN 1: THÔNG TIN QUY TRÌNH & HƯỚNG DẪN",
+        panelTitle: "Quy Trình & Hướng Dẫn Sử Dụng",
+        lblTitle: "Tên quy trình / Hướng dẫn:",
+        titlePlaceholder: "3 BƯỚC ĐẶT HÀNG NHANH\nTIẾT KIỆM TỚI 30%",
+        lblDiscount: "Cam kết / Lợi ích đạt được:",
+        discountPlaceholder: "GIAO NHANH TRONG 2 GIỜ",
+        lblApplied: "Các bước thực hiện tóm tắt:",
+        appliedPlaceholder: "Bước 1: Quét mã QR -> Bước 2: Chọn món -> Bước 3: Nhận hàng",
+        lblDateStart: "Phiên bản tài liệu:",
+        lblDateEnd: "Hỗ trợ khách hàng:",
+        lblSceneDesc: "Bối cảnh quy trình trực quan:",
+        scenePlaceholder: "Minimalist infographic studio setting, clean pastel background, neat product placement..."
+      }
+    };
+
+    // 1-Click Preset Catalog for all 6 Categories
+    const PRESETS = {
+      // 1. Promo Presets
+      beverage: {
+        category: "promo",
+        style_pref: "hien_dai",
+        title: "TRÀ ĐÀO CAM SẢ\nTHANH MÁT TỰ NHIÊN",
+        discount: "MUA 2 TẶNG 1",
+        applied_product: "Áp dụng cho toàn bộ trà trái cây & macchiato",
+        date_start: "2026-09-01",
+        date_end: "2026-09-15",
+        store_name: "Tendoo Beverage Co.",
+        phone: "1900 8888",
+        address: "123 Hoàng Hoa Thám, Ba Đình, Hà Nội",
+        website_link: "https://tendoo.ai/summer-sale",
+        enable_qr: true,
+        image_description: "Commercial beverage advertisement photo of a tall elegant glass of iced peach tea with fresh sliced oranges, lemongrass stalks, floating mint leaves, crystalline water splash, sunlight studio lighting, unbranded, zero text"
+      },
+      perfume: {
+        category: "promo",
+        style_pref: "sang_trong",
+        title: "HƯƠNG NƯỚC HOA PHÁP\nĐẲNG CẤP HOÀNG GIA",
+        discount: "ƯU ĐÃI 25%",
+        applied_product: "Tặng mini vial 10ml cho đơn hàng đầu tiên",
+        date_start: "2026-09-05",
+        date_end: "2026-09-20",
+        store_name: "Tendoo Parfums",
+        phone: "1800 6688",
+        address: "Vincom Center, Đồng Khởi, Quận 1, TP. HCM",
+        website_link: "https://tendoo.ai/parfums",
+        enable_qr: true,
+        image_description: "Luxury French perfume glass bottle on an elegant marble pedestal, soft pastel pink silk fabric drapery, floating rose petals, soft golden morning light, high-end commercial cosmetic advertisement, unbranded, zero text"
+      },
+      midautumn: {
+        category: "promo",
+        style_pref: "le_hoi",
+        title: "HỘP BÁNH TRUNG THU\nHOÀNG GIA THƯỢNG HẠNG",
+        discount: "CHIẾT KHẤU ĐẾN 20%",
+        applied_product: "Tặng kèm hộp trà sen Tây Hồ thượng hạng",
+        date_start: "2026-09-15",
+        date_end: "2026-10-01",
+        store_name: "Tendoo Mooncake",
+        phone: "0988 123 456",
+        address: "Phố Cổ Hàng Buồm, Hoàn Kiếm, Hà Nội",
+        website_link: "https://tendoo.ai/mooncake",
+        enable_qr: true,
+        image_description: "Traditional Mid-Autumn festival scene with traditional wooden street stalls, glowing lanterns, golden full moon light beam shining down, wooden floorboards, festive atmosphere, unbranded, zero text"
+      },
+      suv: {
+        category: "promo",
+        style_pref: "nang_dong",
+        title: "KHÁM PHÁ ĐẲNG CẤP\nSUV THẾ HỆ MỚI 2026",
+        discount: "ƯU ĐÃI 100 TRIỆU",
+        applied_product: "Tặng gói bảo hiểm thân vỏ & 3 năm bảo dưỡng miễn phí",
+        date_start: "2026-09-01",
+        date_end: "2026-09-30",
+        store_name: "Tendoo Motors",
+        phone: "1900 8888",
+        address: "Showroom Phú Mỹ Hưng, Quận 7, TP. HCM",
+        website_link: "https://tendoo.ai/suv-2026",
+        enable_qr: true,
+        image_description: "Commercial automobile advertising photography of a sleek luxury metallic dark grey SUV driving on a winding mountain road at golden hour twilight, motion blur wheels, sharp car body reflection, dramatic sky, unbranded, zero text"
+      },
+      lookbook: {
+        category: "promo",
+        style_pref: "sang_trong",
+        title: "ÁO KHOÁC MĂNG TÔ\nDẠ LÔNG CỪU Ý",
+        discount: "ƯU ĐÃI ĐẾN 25%",
+        applied_product: "Tặng khăn choàng lụa tơ tằm cao cấp cho hóa đơn từ 3 triệu",
+        date_start: "2026-09-01",
+        date_end: "2026-09-25",
+        store_name: "Tendoo Atelier",
+        phone: "1900 6868",
+        address: "Tràng Tiền Plaza, Hoàn Kiếm, Hà Nội",
+        website_link: "https://tendoo.ai/lookbook-2026",
+        enable_qr: true,
+        image_description: "Editorial high fashion photography of an elegant Asian female model wearing a tailored luxury wool coat, studio portrait, soft warm rim lighting, dramatic pose, high-end lookbook magazine, unbranded, zero text"
+      },
+
+      // 2. Product Intro Presets
+      headphones: {
+        category: "product_intro",
+        style_pref: "hien_dai",
+        title: "TAI NGHE KHÔNG DÂY\nHI-RES AUDIO CHỐNG ỒN",
+        product_name: "Tendoo Sonic Pro Wireless",
+        price: "1.290.000đ",
+        product_desc: "Chất âm phòng thu đỉnh cao, màng loa Beryllium 40mm cao cấp",
+        highlights: "Chống ồn ANC, Pin 40 giờ, Bluetooth 5.3, Trọng lượng 180g",
+        store_name: "Tendoo Audio Lab",
+        phone: "0334 842 155",
+        address: "Tầng 5, Tòa nhà Công Nghệ, Cầu Giấy, Hà Nội",
+        website_link: "https://tendoo.ai/headphones",
+        enable_qr: true,
+        image_description: "Commercial product photography of sleek matte black premium wireless over-ear headphones on a dark polished slate pedestal, dramatic studio rim light, moody neon blue atmospheric glow, hyper-detailed, clean backdrop, unbranded, zero text"
+      },
+      watch: {
+        category: "product_intro",
+        style_pref: "sang_trong",
+        title: "ĐỒNG HỒ THỤY SĨ\nCHRONOGRAPH TOURBILLON",
+        product_name: "Tendoo Chrono Master",
+        price: "18.500.000đ",
+        product_desc: "Bộ chuyển động cơ khí tự động chế tác thủ công tinh xảo",
+        highlights: "Mặt kính Sapphire nguyên khối, Chống nước 10ATM, Thép không gỉ 316L",
+        store_name: "Tendoo Horology",
+        phone: "1800 8899",
+        address: "Tràng Tiền Plaza, Hoàn Kiếm, Hà Nội",
+        website_link: "https://tendoo.ai/chrono",
+        enable_qr: true,
+        image_description: "Luxury Swiss automatic wristwatch on a dark polished obsidian stone pedestal, dramatic golden rim light, floating dust motes, studio advertising macro photography, unbranded, zero text"
+      },
+
+      // 3. Opening Banner Presets
+      grand_opening: {
+        category: "opening",
+        style_pref: "le_hoi",
+        title: "TƯNG BỪNG KHAI TRƯƠNG\nCHI NHÁNH THỨ 10",
+        opening_date: "15/10/2026",
+        opening_promo: "TẶNG 100 PHẦN QUÀ ĐẦU TIÊN",
+        booking_contact: "0988 123 456",
+        store_name: "Tendoo Flagship Store",
+        phone: "0988 123 456",
+        address: "45 Phố Huế, Hai Bà Trưng, Hà Nội",
+        website_link: "https://tendoo.ai/opening",
+        enable_qr: true,
+        image_description: "Grand opening modern glass storefront decorated with festive golden balloons, elegant ribbon cutting ceremony atmosphere, soft warm morning daylight, luxury commercial photography, unbranded, zero text"
+      },
+
+      // 4. Feedback Presets
+      spa_review: {
+        category: "feedback",
+        style_pref: "am_cung",
+        title: "KHÁCH HÀNG NÓI GÌ\nVỀ DỊCH VỤ TENDOO?",
+        feedback_target: "Liệu trình trẻ hóa da chuyên sâu Collagen",
+        feedback_rating: "⭐⭐⭐⭐⭐ 5.0 / 5.0",
+        feedback_quote: "Không gian cực kỳ thư thái, nhân viên chu đáo, da mình căng bóng mịn màng sau buổi đầu tiên!",
+        special_offer: "TẶNG VOUCHER 20% CHO KHÁCH HÀNG MỚI",
+        store_name: "Tendoo Beauty & Spa",
+        phone: "1900 6868",
+        address: "22 Nguyễn Du, Hai Bà Trưng, Hà Nội",
+        website_link: "https://tendoo.ai/spa-feedback",
+        enable_qr: true,
+        image_description: "Serene luxury spa aesthetic environment, smooth river stones, delicate white lotus flower floating in water, soft natural morning sunlight, clean ethereal atmosphere, unbranded, zero text"
+      },
+
+      // 5. Recruitment Presets
+      ai_engineer: {
+        category: "recruitment",
+        style_pref: "hien_dai",
+        title: "TENDOO TÌM ĐỒNG ĐỘI\nWE ARE HIRING",
+        job_position: "SENIOR AI RESEARCH ENGINEER",
+        job_desc: "Thu nhập up to $3,500 / Thưởng cổ phần ESOP, chế độ bảo hiểm quốc tế, làm việc Hybrid linh hoạt",
+        apply_deadline: "30/10/2026",
+        apply_method: "Gửi CV về careers@tendoo.ai hoặc quét mã QR",
+        store_name: "Tendoo AI Labs",
+        phone: "024 7300 8888",
+        address: "Keangnam Landmark 72, Nam Từ Liêm, Hà Nội",
+        website_link: "https://tendoo.ai/careers",
+        enable_qr: true,
+        image_description: "Futuristic high-tech research laboratory workspace, glowing holographic data interfaces, sleek modern dark aesthetics, professional commercial studio atmosphere, unbranded, zero text"
+      },
+
+      // 6. Guide Presets
+      order_guide: {
+        category: "guide",
+        style_pref: "hien_dai",
+        title: "3 BƯỚC ĐẶT HÀNG NHANH\nNHẬN TRONG 2 GIỜ",
+        guide_steps: [
+          "Chọn món đồ uống yêu thích trên menu",
+          "Điền địa chỉ giao hàng và xác nhận",
+          "Nhận đồ uống mát lạnh tận tay sau 2 giờ"
+        ],
+        store_name: "Tendoo Delivery",
+        phone: "1900 8888",
+        address: "Hệ thống 20 chi nhánh toàn quốc",
+        website_link: "https://tendoo.ai/order",
+        enable_qr: true,
+        image_description: "Minimalist modern product packaging and iced beverages on a clean light oak wooden counter, bright morning daylight, clean aesthetic studio setup, unbranded, zero text"
+      }
+    };
+
+    const CATEGORY_PRESETS_MAP = {
+      promo: [
+        { key: 'beverage', label: 'Trà Đào Cam Sả' },
+        { key: 'perfume', label: 'Nước Hoa Pháp' },
+        { key: 'midautumn', label: 'Bánh Trung Thu' },
+        { key: 'suv', label: 'SUV Điện Ảnh' },
+        { key: 'lookbook', label: 'Lookbook Thời Trang' }
+      ],
+      product_intro: [
+        { key: 'headphones', label: 'Tai Nghe Hi-Res' },
+        { key: 'watch', label: 'Đồng Hồ Thụy Sĩ' }
+      ],
+      opening: [
+        { key: 'grand_opening', label: 'Khai Trương Flagship' }
+      ],
+      feedback: [
+        { key: 'spa_review', label: 'Feedback Spa & Da' }
+      ],
+      recruitment: [
+        { key: 'ai_engineer', label: 'Senior AI Engineer' }
+      ],
+      guide: [
+        { key: 'order_guide', label: '3 Bước Đặt Hàng' }
+      ]
+    };
+
+    function renderCategoryPresets(catKey) {
+      const container = document.getElementById('presets-container');
+      if (!container) return;
+      const list = CATEGORY_PRESETS_MAP[catKey] || CATEGORY_PRESETS_MAP.promo;
+      container.innerHTML = list.map(p => 
+        `<div class="preset-chip" onclick="loadPreset('${p.key}')">${p.label}</div>`
+      ).join('');
+    }
+
+    // Dynamic Step Inputs Handler for Guide Category
+    function addStepInput(val = "") {
+      const container = document.getElementById('steps-container');
+      if (!container) return;
+      const curRows = container.querySelectorAll('.step-input-row');
+      if (curRows.length >= 5) {
+        alert("Quy trình hỗ trợ tối đa 5 bước để đảm bảo bố cục trực quan!");
+        return;
+      }
+      const nextIdx = curRows.length + 1;
+      const row = document.createElement('div');
+      row.className = 'step-input-row';
+      row.setAttribute('data-step-idx', nextIdx);
+      row.innerHTML = `
+        <span class="step-row-num">${nextIdx}</span>
+        <input type="text" class="form-input inp-step-val" placeholder="Bước ${nextIdx}..." value="${val}">
+        <button type="button" class="btn-remove-step" onclick="removeStepInput(this)">✕ Xóa</button>
+      `;
+      container.appendChild(row);
+      updateStepNumbers();
+    }
+
+    function removeStepInput(btn) {
+      const container = document.getElementById('steps-container');
+      if (!container) return;
+      const curRows = container.querySelectorAll('.step-input-row');
+      if (curRows.length <= 1) {
+        alert("Cần có tối thiểu 1 bước trong quy trình!");
+        return;
+      }
+      const row = btn.closest('.step-input-row');
+      if (row) row.remove();
+      updateStepNumbers();
+    }
+
+    function updateStepNumbers() {
+      const container = document.getElementById('steps-container');
+      if (!container) return;
+      const rows = container.querySelectorAll('.step-input-row');
+      rows.forEach((r, idx) => {
+        const num = idx + 1;
+        r.setAttribute('data-step-idx', num);
+        const numNode = r.querySelector('.step-row-num');
+        if (numNode) numNode.textContent = num;
+      });
+    }
+
+    function getGuideSteps() {
+      const container = document.getElementById('steps-container');
+      if (!container) return [];
+      const inputs = container.querySelectorAll('.inp-step-val');
+      const steps = [];
+      inputs.forEach(inp => {
+        if (inp.value && inp.value.trim()) steps.push(inp.value.trim());
+      });
+      return steps;
+    }
+
+    // Category Switching Handler
+    function switchCategory(catKey) {
+      currentCategory = catKey;
+      document.querySelectorAll('.intent-card').forEach(card => card.classList.remove('active'));
+      const activeBtn = document.getElementById(`btn-cat-${catKey}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      // Toggle dynamic category form blocks
+      document.querySelectorAll('.cat-fields-block').forEach(b => b.style.display = 'none');
+      const activeBlock = document.getElementById(`cat-fields-${catKey}`);
+      if (activeBlock) {
+        activeBlock.style.display = 'flex';
+      } else {
+        const promoBlock = document.getElementById('cat-fields-promo');
+        if (promoBlock) promoBlock.style.display = 'flex';
+      }
+
+      const meta = CATEGORIES[catKey] || CATEGORIES.promo;
+      document.getElementById('section-general-title').textContent = meta.title;
+      document.getElementById('panel-category-title').textContent = meta.panelTitle;
+      document.getElementById('lbl-title').textContent = meta.lblTitle;
+      document.getElementById('inp-title').placeholder = meta.titlePlaceholder;
+      document.getElementById('lbl-scene-desc').textContent = meta.lblSceneDesc;
+      document.getElementById('inp-scene-desc').placeholder = meta.scenePlaceholder;
+
+      // Required-field markers (*) are driven by /api/required-fields, not hardcoded --
+      // see loadRequiredFieldsConfig()/applyRequiredMarkers() below.
+      applyRequiredMarkers(catKey);
+
+      // Layout is no longer user-chosen (Phase B) -- the indicator just shows a neutral
+      // "auto" state until a real /api/generate response reports the actual resolved
+      // layout (see updateLayoutIndicator(), called from handleGenerate's success path).
+      updateLayoutIndicator(null);
+
+      // Update preset chips to match this category
+      renderCategoryPresets(catKey);
+
+      // Scroll form into view nicely
+      document.getElementById('form-workspace').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Pure OmniBlock Architecture: Layout is unconditionally adaptive Omni-Block
+    const LAYOUT_DISPLAY_NAMES = {
+      omni: "Đa Khối Toàn Năng (Omni-Block)",
+    };
+
+    function updateLayoutIndicator(layoutName) {
+      const ind = document.getElementById('layout-indicator');
+      if (!ind) return;
+      ind.textContent = "Bố cục: Đa Khối Toàn Năng (Omni-Block)";
+    }
+
+    // 1-Click Preset Loader
+    function loadPreset(key) {
+      const p = PRESETS[key];
+      if (!p) return;
+      if (p.category && p.category !== currentCategory) {
+        switchCategory(p.category);
+      }
+      document.getElementById('sel-style-pref').value = p.style_pref || 'auto';
+
+      document.getElementById('inp-title').value = p.title || '';
+      document.getElementById('inp-scene-desc').value = p.image_description || '';
+      
+      document.getElementById('inp-store-name').value = p.store_name || '';
+      document.getElementById('inp-phone').value = p.phone || '';
+      document.getElementById('inp-address').value = p.address || '';
+      document.getElementById('inp-website').value = p.website_link || '';
+      document.getElementById('inp-enable-qr').checked = (p.enable_qr !== false);
+
+      // Populate Promo fields
+      if (document.getElementById('inp-discount')) document.getElementById('inp-discount').value = p.discount || '';
+      if (document.getElementById('inp-applied')) document.getElementById('inp-applied').value = p.applied_product || '';
+      if (document.getElementById('inp-date-start')) document.getElementById('inp-date-start').value = p.date_start || '';
+      if (document.getElementById('inp-date-end')) document.getElementById('inp-date-end').value = p.date_end || '';
+
+      // Populate Product Intro fields
+      if (document.getElementById('inp-product-name')) document.getElementById('inp-product-name').value = p.product_name || '';
+      if (document.getElementById('inp-price')) document.getElementById('inp-price').value = p.price || '';
+      if (document.getElementById('inp-product-desc')) document.getElementById('inp-product-desc').value = p.product_desc || '';
+      if (document.getElementById('inp-highlights')) document.getElementById('inp-highlights').value = p.highlights || '';
+
+      // Populate Opening fields
+      if (document.getElementById('inp-opening-date')) document.getElementById('inp-opening-date').value = p.opening_date || '';
+      if (document.getElementById('inp-opening-promo')) document.getElementById('inp-opening-promo').value = p.opening_promo || '';
+      if (document.getElementById('inp-booking-contact')) document.getElementById('inp-booking-contact').value = p.booking_contact || '';
+
+      // Populate Feedback fields
+      if (document.getElementById('inp-feedback-target')) document.getElementById('inp-feedback-target').value = p.feedback_target || '';
+      if (document.getElementById('inp-feedback-rating')) document.getElementById('inp-feedback-rating').value = p.feedback_rating || '';
+      if (document.getElementById('inp-feedback-quote')) document.getElementById('inp-feedback-quote').value = p.feedback_quote || '';
+      if (document.getElementById('inp-special-offer')) document.getElementById('inp-special-offer').value = p.special_offer || '';
+
+      // Populate Recruitment fields
+      if (document.getElementById('inp-job-position')) document.getElementById('inp-job-position').value = p.job_position || '';
+      if (document.getElementById('inp-apply-deadline')) document.getElementById('inp-apply-deadline').value = p.apply_deadline || '';
+      if (document.getElementById('inp-job-desc')) document.getElementById('inp-job-desc').value = p.job_desc || '';
+      if (document.getElementById('inp-apply-method')) document.getElementById('inp-apply-method').value = p.apply_method || '';
+
+      // Populate Guide fields
+      if (p.guide_steps && Array.isArray(p.guide_steps)) {
+        const container = document.getElementById('steps-container');
+        if (container) {
+          container.innerHTML = "";
+          p.guide_steps.forEach((st) => {
+            addStepInput(st);
+          });
+        }
+      }
+
+    }
+
+    // Toggle Advanced Technical Settings Box
+    function toggleAdvancedSettings() {
+      const box = document.getElementById('advanced-settings-box');
+      const arrow = document.getElementById('adv-arrow');
+      if (box.style.display === 'block') {
+        box.style.display = 'none';
+        arrow.textContent = '▶';
+      } else {
+        box.style.display = 'block';
+        arrow.textContent = '▼';
+      }
+    }
+
+    function randomizeSeed() {
+      document.getElementById('inp-seed').value = Math.floor(Math.random() * 1000000);
+    }
+
+    // File Upload Handler (Drag & Drop + Input File)
+    const dropzone = document.getElementById('upload-dropzone');
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        processUploadedFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    function handleFileSelected(e) {
+      if (e.target.files && e.target.files[0]) {
+        processUploadedFile(e.target.files[0]);
+      }
+    }
+
+    function processUploadedFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert("Vui lòng chỉ chọn tệp hình ảnh (PNG, JPG, WEBP)!");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        uploadedImageBase64 = evt.target.result;
+        document.getElementById('upload-preview-img').src = uploadedImageBase64;
+        document.getElementById('upload-filename').textContent = file.name;
+        document.getElementById('upload-filesize').textContent = (file.size / 1024).toFixed(1) + " KB";
+        document.getElementById('upload-dropzone').style.display = 'none';
+        document.getElementById('upload-preview-bar').style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeUploadedFile() {
+      uploadedImageBase64 = null;
+      document.getElementById('file-input').value = "";
+      document.getElementById('upload-preview-img').src = "";
+      document.getElementById('upload-dropzone').style.display = 'block';
+      document.getElementById('upload-preview-bar').style.display = 'none';
+    }
+
+    // Relative URL resolver for subpath & proxy transparency
+    const BASE_URL = window.location.pathname.replace(/\/+$/, '');
+    function resolveUrl(relPath) {
+      if (!relPath) return '';
+      if (relPath.startsWith('http://') || relPath.startsWith('https://')) return relPath;
+      const cleanRel = relPath.replace(/^\/+/, '');
+      return BASE_URL ? `${BASE_URL}/${cleanRel}` : `/${cleanRel}`;
+    }
+
+    // Main Poster Generation Handler
+    async function handleGenerate(e) {
+      e.preventDefault();
+
+      // Trường bắt buộc LUÔN phải điền: Không điền UI tuyệt đối không cho ấn tạo poster
+      const missingFields = getMissingRequiredFields(currentCategory);
+      if (missingFields.length) {
+        highlightMissingFields(missingFields);
+        alert("Vui lòng điền đầy đủ các trường bắt buộc (*) trước khi tạo ảnh.");
+        return;
+      }
+
+      const btn = document.getElementById('btn-generate');
+      const progressBox = document.getElementById('progress-box');
+      const progressTitle = document.getElementById('progress-title');
+      const progressDesc = document.getElementById('progress-desc');
+      const previewImg = document.getElementById('preview-image');
+      const placeholder = document.getElementById('placeholder-box');
+      const resultActions = document.getElementById('result-actions');
+      const viewTabs = document.getElementById('view-tabs');
+      const tabQr = document.getElementById('tab-qr');
+      const timingBadge = document.getElementById('timing-badge');
+
+      btn.disabled = true;
+      progressBox.style.display = 'flex';
+      progressTitle.textContent = "Đang gửi yêu cầu tới server...";
+      progressDesc.textContent = "Chuẩn bị tham số và khởi tạo inference DiT...";
+
+      const payload = {
+        category: currentCategory,
+        // Common Store Info
+        store_name: document.getElementById('inp-store-name').value,
+        phone: document.getElementById('inp-phone').value,
+        address: document.getElementById('inp-address').value,
+        website_link: document.getElementById('inp-website').value,
+        enable_qr: document.getElementById('inp-enable-qr').checked,
+        
+        // Category Fields (Promo)
+        title: document.getElementById('inp-title')?.value || '',
+        image_base64: uploadedImageBase64,
+        discount: document.getElementById('inp-discount')?.value || '',
+        applied_product: document.getElementById('inp-applied')?.value || '',
+        date_start: document.getElementById('inp-date-start')?.value || '',
+        date_end: document.getElementById('inp-date-end')?.value || '',
+        image_description: document.getElementById('inp-scene-desc')?.value || '',
+
+        // Product Intro
+        product_name: document.getElementById('inp-product-name')?.value || '',
+        price: document.getElementById('inp-price')?.value || '',
+        product_desc: document.getElementById('inp-product-desc')?.value || '',
+        highlights: document.getElementById('inp-highlights')?.value || '',
+
+        // Grand Opening
+        opening_date: document.getElementById('inp-opening-date')?.value || '',
+        opening_promo: document.getElementById('inp-opening-promo')?.value || '',
+        booking_contact: document.getElementById('inp-booking-contact')?.value || '',
+
+        // Customer Feedback
+        feedback_target: document.getElementById('inp-feedback-target')?.value || '',
+        feedback_quote: document.getElementById('inp-feedback-quote')?.value || '',
+        feedback_rating: document.getElementById('inp-feedback-rating')?.value || '',
+        special_offer: document.getElementById('inp-special-offer')?.value || '',
+
+        // Recruitment
+        job_position: document.getElementById('inp-job-position')?.value || '',
+        job_desc: document.getElementById('inp-job-desc')?.value || '',
+        apply_deadline: document.getElementById('inp-apply-deadline')?.value || '',
+        apply_method: document.getElementById('inp-apply-method')?.value || '',
+
+        // Usage Guide
+        guide_steps: getGuideSteps(),
+
+        // Visual / Design Controls -- layout/style_hint/font_family are no longer sent:
+        // the server auto-matches all three from category + style_pref (Phase B).
+        style_pref: document.getElementById('sel-style-pref').value,
+        primary_color: document.getElementById('inp-color-auto').checked
+          ? null
+          : document.getElementById('inp-primary-color').value,
+        aspect_ratio: document.getElementById('sel-aspect-ratio').value,
+        num_images: parseInt(document.getElementById('sel-num-images').value) || 1,
+        seed: parseInt(document.getElementById('inp-seed').value) || 42,
+        steps: parseInt(document.getElementById('inp-steps').value) || 8,
+        guidance: parseFloat(document.getElementById('inp-guidance').value) || 1.5
+      };
+
+      const t0 = performance.now();
+
+      try {
+        progressTitle.textContent = "FLUX.2 Klein DiT đang sinh ảnh...";
+        progressDesc.textContent = "Regional Velocity Blending + Playwright Vector Typography...";
+
+        const apiUrl = BASE_URL ? `${BASE_URL}/api/generate` : '/api/generate';
+        const resp = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json();
+          if (err.detail && err.detail.error === "missing_required_fields") {
+            highlightMissingFields(err.detail.fields || []);
+            throw new Error("Vui lòng điền đầy đủ các trường bắt buộc (*) trước khi tạo ảnh.");
+          }
+          const detailMsg = typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail);
+          throw new Error(detailMsg || "Sinh ảnh thất bại");
+        }
+
+        const data = await resp.json();
+        const durationSec = ((performance.now() - t0) / 1000).toFixed(2);
+
+        activePosterIdx = 0;
+        currentImages.poster = resolveUrl(data.final_poster_url);
+        currentImages.bg = resolveUrl(data.blended_bg_url);
+        currentImages.mask = resolveUrl(data.mask_url);
+        currentImages.qr = data.qr_url ? resolveUrl(data.qr_url) : null;
+
+        previewImg.src = currentImages.poster;
+        previewImg.style.display = 'block';
+        placeholder.style.display = 'none';
+        document.getElementById('preview-container').classList.add('has-image');
+
+        document.getElementById('btn-download').href = currentImages.poster;
+        resultActions.style.display = 'flex';
+        viewTabs.style.display = 'flex';
+
+        // Render Multi-Image Gallery Bar
+        if (data.posters && data.posters.length > 1) {
+          renderGallery(data.posters);
+        } else {
+          document.getElementById('gallery-container').style.display = 'none';
+        }
+
+        // Toggle QR Tab visibility
+        if (currentImages.qr) {
+          tabQr.style.display = 'inline-block';
+        } else {
+          tabQr.style.display = 'none';
+        }
+
+        timingBadge.textContent = `Hoàn thành trong ${data.latency_s || durationSec}s`;
+        timingBadge.style.display = 'inline-block';
+
+        // Reflects the server's actual Phase B auto-match decision, not a client guess.
+        updateLayoutIndicator(data.resolved_layout);
+
+      } catch (err) {
+        alert("Lỗi khi sinh ảnh: " + err.message);
+      } finally {
+        btn.disabled = false;
+        progressBox.style.display = 'none';
+      }
+    }
+
+    function switchViewTab(type) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const img = document.getElementById('preview-image');
+      if (type === 'poster') img.src = currentImages.poster;
+      else if (type === 'bg') img.src = currentImages.bg;
+      else if (type === 'mask') img.src = currentImages.mask;
+      else if (type === 'qr' && currentImages.qr) img.src = currentImages.qr;
+    }
+
+    function copyImageLink() {
+      if (!currentImages.poster) return;
+      const fullUrl = window.location.origin + currentImages.poster;
+      navigator.clipboard.writeText(fullUrl);
+      alert("Đã copy đường link ảnh Poster vào clipboard:\n" + fullUrl);
+    }
+
+    function openFullscreen() {
+      if (!currentImages.poster) return;
+      window.open(currentImages.poster, '_blank');
+    }
+
+    // Multi-Image Gallery Handlers
+    function renderGallery(posters) {
+      currentPostersList = posters || [];
+      const container = document.getElementById('gallery-container');
+      const cardsBox = document.getElementById('gallery-cards');
+      const countSpan = document.getElementById('gallery-count');
+
+      if (!currentPostersList || currentPostersList.length <= 1) {
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = 'block';
+      countSpan.textContent = currentPostersList.length;
+      cardsBox.innerHTML = '';
+
+      currentPostersList.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = `gallery-card ${idx === activePosterIdx ? 'active' : ''}`;
+        card.title = `Phiên bản #${idx + 1} (Seed: ${item.seed})`;
+        card.onclick = () => selectPosterByIndex(idx);
+
+        const img = document.createElement('img');
+        img.src = resolveUrl(item.final_poster_url);
+        img.alt = `Poster #${idx + 1}`;
+
+        const badge = document.createElement('div');
+        badge.className = 'gallery-card-badge';
+        badge.textContent = `#${idx + 1}`;
+
+        card.appendChild(img);
+        card.appendChild(badge);
+        cardsBox.appendChild(card);
+      });
+    }
+
+    function selectPosterByIndex(idx) {
+      if (!currentPostersList || !currentPostersList[idx]) return;
+      activePosterIdx = idx;
+
+      // Update card active states
+      const cards = document.querySelectorAll('.gallery-card');
+      cards.forEach((c, i) => {
+        if (i === idx) c.classList.add('active');
+        else c.classList.remove('active');
+      });
+
+      const selected = currentPostersList[idx];
+      currentImages.poster = resolveUrl(selected.final_poster_url);
+      currentImages.bg = resolveUrl(selected.blended_bg_url);
+
+      const previewImg = document.getElementById('preview-image');
+      const activeTab = document.querySelector('.tab-btn.active');
+      if (activeTab && activeTab.textContent.includes('Background')) {
+        previewImg.src = currentImages.bg;
+      } else {
+        previewImg.src = currentImages.poster;
+      }
+
+      document.getElementById('btn-download').href = currentImages.poster;
+      document.getElementById('btn-download').download = `tendoo_poster_var${idx + 1}_seed${selected.seed}.png`;
+    }
+
+    // Health check poll on page load
+    async function checkHealth() {
+      try {
+        const healthUrl = BASE_URL ? `${BASE_URL}/api/health` : '/api/health';
+        const res = await fetch(healthUrl);
+        const data = await res.json();
+        if (data.status === 'online') {
+          const gpuText = data.mock_mode ? 'Mock CPU Mode' : `${data.gpus_available}x GPU Online`;
+          document.getElementById('server-status-text').textContent = `FLUX.2 Klein 4B Online (${gpuText})`;
+        }
+      } catch (e) {
+        document.getElementById('server-status-text').textContent = 'FLUX.2 Klein 4B (Local Standalone)';
+      }
+    }
+
+    // Initialize with default preset on DOM ready
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPreset('beverage');
+      checkHealth();
+      loadRequiredFieldsConfig();
+
+      // Clear the invalid-field highlight as soon as the user starts fixing it.
+      document.getElementById('poster-form')?.addEventListener('input', (ev) => {
+        ev.target.classList?.remove('field-invalid');
+      });
+    });
+  </script>
+</body>
+</html>

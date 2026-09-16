@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {{font_face_css}}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: {{headline_font_css}};
+      background-color: #000;
+    }
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+    }
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+    /* Dải Băng Ngang Trên Đỉnh (Brand / Hotline / Header: 12% Height) */
+    .sandwich-top-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 40px;
+      background: {{palette.gradient_overlay}};
+      backdrop-filter: blur(12px);
+      color: {{palette.text_primary}};
+    }
+    .badge-pill {
+      padding: 5px 14px;
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: {{theme_color}};
+      background: {{palette.pill_bg}};
+      border: 1px solid {{theme_color}};
+      border-radius: 9999px;
+      box-shadow: 0 0 10px {{theme_color}}44;
+    }
+    .store-info-top {
+      font-size: 13px;
+      font-weight: 600;
+      color: {{palette.text_secondary}};
+      letter-spacing: 0.3px;
+    }
+    /* Bệ Đỡ Ở Đáy (Bottom Platform: Kính mờ siêu nhẹ, không vệt đen) */
+    .sandwich-bottom-platform {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 36px;
+      background: linear-gradient(to top, {{palette.glass_bg}} 0%, rgba(255, 255, 255, 0.01) 100%);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid {{palette.glass_border}};
+      text-align: center;
+      color: {{palette.text_primary}};
+      gap: 6px;
+    }
+    .hero-title {
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      max-width: 92%;
+      {{effect_css}}
+    }
+    .subhead-title {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{palette.text_secondary}};
+      text-shadow: {{palette.text_shadow}};
+    }
+    /* Extra Texts Stack */
+    .extra-tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 4px;
+      overflow: hidden;
+      /* font-size ở ĐÂY để autofit (data-autofit trên chính .extra-tag-row) co được
+         -- .extra-pill kế thừa, không tự khai font-size cố định nữa. */
+      font-size: 11.5px;
+    }
+    .extra-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      background: {{palette.pill_bg}};
+      border: 1px solid {{palette.pill_border}};
+      border-radius: 9999px;
+      font-weight: 600;
+      color: {{palette.pill_text}};
+    }
+    .extra-pill svg {
+      width: 13px;
+      height: 13px;
+      color: {{theme_color}};
+      flex-shrink: 0;
+    }
+    .cta-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 4px;
+    }
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 24px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: {{palette.cta_text}};
+      background: {{palette.cta_bg}};
+      border: none;
+      border-radius: 9999px;
+      box-shadow: 0 4px 16px {{theme_color}}66;
+    }
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    {{ vfx_html }}
+
+    <div class="sandwich-top-bar" style="height:{{ zones.top.height }}px; max-height:{{ zones.top.height }}px; overflow:hidden;">
+      {% if badge %}
+      <div class="badge-pill">{{ badge }}</div>
+      {% else %}
+      <div></div>
+      {% endif %}
+      {% if store_items %}
+      <div class="store-info-top" style="display:flex; gap:12px; align-items:center;">
+        {% for item in store_items %}
+        <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:{{palette.text_secondary}};">
+          {{ item.icon_svg }}
+          <span>{{ item.text }}</span>
+        </span>
+        {% endfor %}
+      </div>
+      {% elif store_info %}
+      <div class="store-info-top">{{ store_info }}</div>
+      {% endif %}
+    </div>
+
+    <div class="sandwich-bottom-platform" style="height:{{ zones.bottom.height }}px; max-height:{{ zones.bottom.height }}px; overflow:hidden;">
+      <div class="hero-title" data-autofit data-min-font="22" data-max-width="{{ zones.bottom.width * 0.92 }}" data-max-height="{{ zones.bottom.height * 0.42 }}">{{ hero }}</div>
+      {% if subhead %}
+      <div class="subhead-title" data-autofit data-min-font="11" data-max-width="{{ zones.bottom.width * 0.92 }}" data-max-height="{{ zones.bottom.height * 0.20 }}">{{ subhead }}</div>
+      {% endif %}
+
+      {% if extra_pills %}
+      <div class="extra-tag-row" data-autofit data-min-font="10" data-max-width="{{ zones.bottom.width * 0.9 }}" data-max-height="{{ zones.bottom.height * 0.28 }}">
+        {% for pill in extra_pills %}
+        <div class="extra-pill">
+          {{ pill.icon_svg }}
+          <span>{{ pill.text }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="cta-row" style="max-height:{{ zones.bottom.height * 0.28 }}px; overflow:hidden;">
+        {% if qr_svg %}
+        <div>{{ qr_svg }}</div>
+        {% endif %}
+        {% if cta %}
+        <div class="cta-btn">
+          <span>{{ cta }}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {{autofit_js}}
+</body>
+</html>

@@ -1,0 +1,822 @@
+<!--
+src/tendoo/engine/templates/master.html
+
+Master Jinja2 Template cho Hệ thống Dựng hình OmniBlockLayout:
+================================================================
+- 3x3 Spatial Grid: Tự động phân bổ các AdaptiveBlocks vào 8 ô xung quanh vùng Sanctuary.
+- Dynamic Bar Containers: omni-top-bar và omni-bottom-bar với hiệu ứng Glassmorphism.
+- Client-side Shrink-to-fit Loop: Đồng bộ 100% giữa Chromium DOM rects và Velocity Blending Mask.
+
+TẠI SAO CẦN THIẾT KẾ DOM/CSS NÀY TRONG TENDOO AI:
+1. TẠI SAO CẦN 3x3 GRID VỚI CHÍNH GIỮA LÀ SANCTUARY CHO SẢN PHẨM:
+   - Các mô hình khuếch tán (FLUX.2 DiT) sinh vật thể chính (sản phẩm, mẫu người) tập trung
+     ở vùng trung tâm 50-60% canvas.
+   - Lưới 3x3 loại bỏ ô middle_center, chỉ cho phép đặt chữ ở các cạnh biên và góc,
+     bảo vệ tuyệt đối chủ thể chính không bị che khuất hay đè nét.
+
+2. TẠI SAO CẦN CHẠY SHRINK-TO-FIT JAVASCRIPT TRỰC TIẾP TRONG CHROMIUM:
+   - Đảm bảo tính tất định (determinism): Cả 2 lần Chromium mở HTML (lần 1 đo rects để sinh mask,
+     lần 2 chụp ảnh hoàn thiện) đều chạy cùng một thuật toán thu nhỏ font chữ nếu bị tràn ô.
+   - Nhờ đó, Bounding Box của Mask và Bounding Box của Text thật luôn khớp nhau đến từng pixel,
+     triệt tiêu hiện tượng chữ bị tràn ra ngoài vùng dọn nền.
+-->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {{font_face_css}}
+    {{css_vars}}
+
+    :root {
+      --headline-font: {{headline_font_css}};
+      --accent: {{palette.accent_color}};
+      --headline: {{palette.headline_color}};
+      --sub: {{palette.sub_color}};
+      --badge-bg: {{palette.badge_bg}};
+      --badge-text: {{palette.badge_text}};
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: var(--headline-font, 'Be Vietnam Pro', sans-serif);
+      background-color: #000;
+    }
+
+
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+    }
+
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    /* Top Bar Container (Store info hoặc thông báo trên đỉnh) */
+    .omni-top-bar {
+      position: absolute;
+      top: 3.5%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: fit-content;
+      max-width: 92%;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 8px 20px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(12px);
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', system-ui, sans-serif !important;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* Bottom Bar Container (Store info mặc định) */
+    .omni-bottom-bar {
+      position: absolute;
+      bottom: 3.5%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: fit-content;
+      max-width: 92%;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 8px 20px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(14px);
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #fff;
+      font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', system-ui, sans-serif !important;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .omni-top-bar span, .omni-bottom-bar span {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    /* 3x3 Spatial Grid cho các vị trí tự do */
+    .omni-grid {
+      position: absolute;
+      inset: 4%;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+      grid-template-rows: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+      column-gap: 3%;
+      row-gap: 3%;
+      pointer-events: none;
+    }
+
+    .omni-zone {
+      box-sizing: border-box !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+      min-width: 0;
+      max-width: 100%;
+      width: fit-content;
+      height: fit-content;
+      padding: 4px 8px;
+      overflow: visible;
+    }
+
+    .omni-zone.zone-top_right, .omni-zone.zone-middle_right, .omni-zone.zone-bottom_right {
+      align-items: flex-end;
+    }
+    .omni-zone.zone-top_left, .omni-zone.zone-middle_left, .omni-zone.zone-bottom_left {
+      align-items: flex-start;
+    }
+    .omni-zone.zone-top_center, .omni-zone.zone-bottom_center {
+      align-items: center;
+    }
+
+    /* ==========================================================================
+       KIẾN TRÚC 3 TRỤC: 1. PURE TYPOGRAPHY (CHỮ NỔI TRỰC TIẾP, KHÔNG HỘP CHỨA)
+       ========================================================================== */
+    .block-pure-text {
+      display: inline-flex;
+      flex-direction: column;
+      width: fit-content;
+      max-width: 100%;
+      line-height: 1.22;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      overflow-wrap: normal;
+      padding: 4px 6px;
+      /* (2026-09-13 fix: trước đây `color`/`text-shadow` hardcode trắng + đổ bóng tối, hoàn
+         toàn bỏ qua `--headline`/`--text-shadow` (khai báo ở `{{css_vars}}`, đầu file) vốn đã
+         được `analyze_color_harmony()` tính đúng theo palette -- tối 14% sẫm màu + bóng SÁNG
+         trên nền sáng, trắng ngà + bóng tối trên nền tối. Kết quả trước đây: tiêu đề luôn
+         trắng + bóng tối kể cả trên nền sáng (poster nền trắng/kem), tương phản rất kém.
+         Effect nào cần màu/bóng riêng (neon/chrome/3d-gold/fire) đã tự ghi đè bằng
+         `!important` nên không bị ảnh hưởng bởi đổi này. */
+      color: var(--headline, #ffffff);
+      text-shadow: var(--text-shadow, 0 4px 20px rgba(0, 0, 0, 0.85), 0 2px 6px rgba(0, 0, 0, 0.6));
+    }
+    .block-pure-text.size-xlarge {
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+    .block-pure-text.size-large {
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .block-pure-text.size-medium {
+      font-weight: 700;
+      letter-spacing: 0px;
+    }
+    .block-pure-text.size-small {
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       KIẾN TRÚC 3 TRỤC: 2. BỘ HIỆU ỨNG ÁNH SÁNG & CHẤT LIỆU CHO TỪNG KHỐI
+       ========================================================================== */
+    .effect-neon-cyan {
+      color: #ffffff !important;
+      text-shadow: 0 0 10px #06b6d4, 0 0 22px #06b6d4, 0 0 45px #0891b2, 0 4px 20px rgba(0,0,0,0.9) !important;
+    }
+    .effect-neon-pink {
+      color: #ffffff !important;
+      text-shadow: 0 0 10px #ec4899, 0 0 22px #ec4899, 0 0 45px #db2777, 0 4px 20px rgba(0,0,0,0.9) !important;
+    }
+    .effect-neon-amber, .effect-neon-gold {
+      color: #ffffff !important;
+      text-shadow: 0 0 10px #f59e0b, 0 0 22px #f59e0b, 0 0 45px #d97706, 0 4px 20px rgba(0,0,0,0.9) !important;
+    }
+    .effect-neon-green {
+      color: #ffffff !important;
+      text-shadow: 0 0 10px #10b981, 0 0 22px #10b981, 0 0 45px #059669, 0 4px 20px rgba(0,0,0,0.9) !important;
+    }
+    /* .effect-embossed là alias của .effect-3d-gold (2026-09-13 fix): "embossed" nằm trong
+       VALID_EFFECTS (blocks.py) và được validate hợp lệ, nhưng trước đây không có rule CSS nào
+       khớp -- set effect="embossed" vẫn render chữ phẳng không cảnh báo. Về mặt thị giác, "in nổi
+       vàng 3D" chính là mô tả của effect-3d-gold nên dùng chung 1 rule. */
+    .effect-3d-gold, .effect-embossed {
+      background: linear-gradient(180deg, #fffbeb 0%, #fde047 30%, #eab308 60%, #ca8a04 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      filter: drop-shadow(0 2px 0 #854d0e) drop-shadow(0 4px 0 #713f12) drop-shadow(0 8px 18px rgba(0,0,0,0.85)) !important;
+    }
+    .effect-chrome {
+      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 35%, #94a3b8 50%, #f8fafc 55%, #64748b 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)) drop-shadow(0 0 12px rgba(255,255,255,0.4)) !important;
+    }
+    .effect-fire {
+      background: linear-gradient(180deg, #fef08a 0%, #f97316 45%, #dc2626 80%, #7f1d1d 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      filter: drop-shadow(0 0 15px rgba(249,115,22,0.8)) drop-shadow(0 4px 12px rgba(0,0,0,0.9)) !important;
+    }
+    /* (2026-09-13 fix: "shadow"/"plain"/"none" là các effect KHÔNG có màu chủ đề riêng (khác
+       neon/chrome/3d-gold/fire) -- trước đây vẫn hardcode trắng + bóng tối `!important`, đè lên
+       cả headline_color đúng của palette (đặc biệt sai trên nền sáng: chữ tối trên nền sáng lại
+       bị ép trắng + bóng ĐEN, ngược hẳn hiệu ứng mong muốn là bóng SÁNG nâng chữ tối lên khỏi
+       nền). Dùng `var(--headline)`/`var(--text-shadow)` để 2 effect mặc định (khi resolve "auto")
+       này luôn tôn trọng đúng tương phản palette đã tính. */
+    .effect-shadow {
+      color: var(--headline, #ffffff) !important;
+      text-shadow: var(--text-shadow, 0 4px 16px rgba(0, 0, 0, 0.95), 0 2px 6px rgba(0, 0, 0, 0.85), 0 0 1px rgba(0,0,0,1)) !important;
+    }
+    .effect-plain, .effect-none {
+      color: var(--headline, #ffffff) !important;
+      text-shadow: var(--text-shadow, 0 2px 10px rgba(0, 0, 0, 0.85), 0 1px 3px rgba(0, 0, 0, 0.7)) !important;
+    }
+
+    /* ==========================================================================
+       KIẾN TRÚC 3 TRỤC: 3. NÚT BẤM CTA TƯƠNG TÁC (.block-cta)
+       ========================================================================== */
+    .block-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      /* (2026-09-13 fix: 28px -- không đủ đáp ứng ngưỡng an toàn 2 đầu bo tròn mà chính
+         script Autofit bên dưới đòi hỏi -- xem giải thích đầy đủ ở `.block-pill` ngay
+         dưới đây, cùng 1 lỗi, cùng 1 cách sửa.) */
+      padding: 10px 40px !important;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+      color: #ffffff;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 18px rgba(6, 182, 212, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      white-space: nowrap !important;
+      width: fit-content;
+      max-width: 100%;
+      text-align: left !important;
+      box-sizing: border-box !important;
+    }
+    .block-cta.style-orange {
+      background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%);
+      box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35);
+    }
+    .block-cta.style-crimson {
+      background: linear-gradient(135deg, #dc2626 0%, #e11d48 100%);
+      box-shadow: 0 4px 18px rgba(225, 29, 72, 0.35);
+    }
+    .block-cta.style-gold {
+      background: linear-gradient(135deg, #d97706 0%, #fbbf24 100%);
+      color: #000;
+      box-shadow: 0 4px 18px rgba(251, 191, 36, 0.35);
+    }
+
+    /* ==========================================================================
+       KIẾN TRÚC 3 TRỤC: 4. VIÊN THUỐC / BADGE (.block-pill / .block-badge)
+       ========================================================================== */
+    .block-pill, .block-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      /* (2026-09-13 fix -- lỗi thật đã xảy ra: badge rating 5 sao/pill CTA dài luôn bị co
+         về floor 8px runtime dù offline PIL tính font hợp lý (đã xác nhận trực tiếp qua
+         Playwright: font-size đo được sau autofit luôn tụt về ~8px bất kể nội dung ngắn
+         hay dài). Nguyên nhân: script Autofit bên dưới ("Pass 1", kiểm tra "2 đầu bo tròn
+         bán nguyệt") đòi khoảng đệm tối thiểu `max(26, height*0.55)` giữa mép chữ và mép
+         viên nang -- nhưng padding ngang CSS cũ (24px, hoặc 16px với `.size-small`) LUÔN
+         nhỏ hơn ngưỡng này ở MỌI cỡ chữ (kể cả khi co hết mức, ngưỡng vẫn giữ sàn 26px) --
+         khiến `overflows()` không bao giờ trả về false, script co tới floor một cách vô
+         ích. Tăng padding đủ lớn để luôn vượt ngưỡng kể cả ở cỡ "medium" lớn nhất thực tế
+         dùng cho pill/badge (~39px, ngưỡng cần ~35px).) */
+      padding: 10px 38px !important;
+      border-radius: 9999px;
+      background: var(--badge-bg, var(--accent, #f59e0b));
+      color: var(--badge-text, #000);
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      white-space: nowrap !important;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      /* (2026-09-12 fix: dùng --badge-border thay vì hardcode -- xem
+         ColorPalette.badge_border/color_engine.py: badge chữ carbon đậm (nền badge
+         sáng) trước đây luôn nhận viền trắng mờ cố định dù giá trị badge_border tương
+         phản đúng đã được tính sẵn nhưng chưa từng truyền tới CSS.) */
+      border: 1px solid var(--badge-border, rgba(255, 255, 255, 0.3));
+      width: fit-content;
+      max-width: 100%;
+      text-align: left !important;
+      box-sizing: border-box !important;
+    }
+
+    /* ==========================================================================
+       KIẾN TRÚC 3 TRỤC: 5. THẺ KÍNH MỜ / CARD (.block-card / .block-body)
+       ========================================================================== */
+    .block-card, .block-body {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      line-height: 1.4;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      font-weight: 500;
+      color: #f1f5f9;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 10px 18px !important;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+      text-wrap: balance;
+      word-break: keep-all;
+      width: fit-content;
+      max-width: 100%;
+      text-align: left !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Khóa cứng căn lề trái và gắn kết tuyệt đối giữa icon SVG và text SPAN */
+    .block-cta span, .block-pill span, .block-card span, .block-badge span, .block-body span {
+      text-align: left !important;
+    }
+    /* (2026-09-13 fix -- Finding C: trước đây TẤT CẢ 5 loại container ở trên đều bị khoá
+       `white-space: nowrap !important` chung 1 rule. Nguyên nhân chính khiến quote/mô tả dài
+       trong `.block-card` từng render 1 dòng cực nhỏ là `compute_block_metrics()` (geometry.py)
+       chưa từng chèn `<br>` cho container ngoài pure-typography (đã sửa cùng đợt) -- bản thân
+       `<br>` luôn ngắt dòng dù có `nowrap` hay không. Đổi sang `pre-line` ở đây là lưới an toàn
+       thứ 2: nếu phép đo PIL offline lệch nhẹ so với render Chromium thật khiến 1 "dòng" tính
+       sẵn vẫn hơi rộng hơn khung, `pre-line` cho phép trình duyệt tự wrap tiếp thay vì tràn/cắt
+       cụt, đúng tinh thần `text-wrap: balance; word-break: keep-all;` đã có sẵn trên `.block-card`. */
+    .block-card span, .block-body span {
+      white-space: pre-line !important;
+    }
+    /* `pill`/`badge`/`cta` vẫn cố tình giữ 1 dòng (đúng ý đồ thiết kế: chip/badge/nút ngắn gọn),
+       nhưng thêm lưới an toàn ellipsis chuẩn UI (pattern chip/badge phổ biến -- Material/Ant
+       Design) cho trường hợp hiếm khi `fit_font_size_px` đã co tới `min_font_size` (14px) mà văn
+       bản vẫn còn dư -- cắt gọn bằng "…" thay vì tràn ra ngoài viên pill/badge/nút. */
+    .block-cta span, .block-pill span, .block-badge span {
+      white-space: nowrap !important;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .block-cta svg, .block-pill svg, .block-card svg, .block-badge svg, .block-body svg, .block-meta svg {
+      width: 1.25em;
+      height: 1.25em;
+      min-width: 1.25em;
+      min-height: 1.25em;
+      flex-shrink: 0;
+      vertical-align: middle;
+      margin-right: 0 !important;
+    }
+
+    /* Style Variant: Feature Card (dành cho danh sách tính năng công nghệ có icon nổi bật).
+       CHÚ Ý: selector nhắm vào .block-pill/.block-card (class thật do layout.py emit) --
+       trước đây nhắm nhầm .block-badge/.block-body (không class nào từng được emit ra
+       những tên đó), khiến rule này chưa từng áp dụng được lần nào. */
+    .block-pill.style-feature-card, .block-card.style-feature-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .block-pill.style-feature-card svg, .block-card.style-feature-card svg {
+      width: 1.5em;
+      height: 1.5em;
+      min-width: 1.5em;
+      min-height: 1.5em;
+      color: var(--accent, #f43f5e);
+      stroke: var(--accent, #f43f5e);
+      filter: drop-shadow(0 2px 6px rgba(244, 63, 94, 0.4));
+    }
+
+    /* style_variant="quote"/"quote_bubble" renders as .block-card (container="card"),
+       so the selector targets .block-card, not a standalone .block-quote class that
+       layout.py never actually emits. */
+    .block-card.style-quote, .block-card.style-quote-bubble {
+      font-style: italic;
+      line-height: 1.45;
+      color: #fff;
+      background: rgba(15, 23, 42, 0.65);
+      padding: 12px 16px;
+      border-left: 4px solid var(--accent, #f59e0b);
+      border-radius: 0 12px 12px 0;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Guide step list renders as .block-card + a literal .step-badge circle (below);
+       style_variant="step_list" gives it a slightly distinct dark-panel treatment. */
+    .block-card.style-step-list {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 8px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .step-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent, #f59e0b);
+      color: #000;
+      font-weight: 900;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    /* Block QR Adaptive Card */
+    .block-qr {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+      width: fit-content;
+      min-width: fit-content;
+      max-width: 100%;
+    }
+
+    .block-qr .qr-canvas {
+      background: #ffffff;
+      padding: 4px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .block-qr .qr-canvas img {
+      width: 60px;
+      height: 60px;
+      display: block;
+    }
+
+    .block-qr .qr-caption {
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      font-size: 11px;
+      font-weight: 700;
+      color: #e2e8f0;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      text-align: center;
+      padding: 0 2px;
+    }
+
+    /* Visual Style Variants (Bảng II Thẩm Mỹ Tendoo).
+       CHÚ Ý (2026-09-12): các selector này trước đây nhắm vào .block-badge/.block-body/
+       .block-meta -- những tên class KHÔNG BAO GIỜ được layout.py emit (chỉ emit
+       block-pure-text/block-cta/block-pill/block-card/block-qr) -- nên toàn bộ style
+       variant bên dưới chưa từng áp dụng được lần nào, luôn rơi về style mặc định
+       trơn của .block-pill/.block-card/.block-cta. Đã sửa để khớp đúng class thật. */
+    .block-pill.style-pill-badge {
+      background: linear-gradient(135deg, var(--accent, #f59e0b) 0%, #ef4444 100%);
+      color: #fff;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      padding: 8px 22px;
+      border-radius: 9999px;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      letter-spacing: 0.8px;
+      white-space: nowrap !important;
+      width: fit-content;
+      min-width: fit-content;
+      max-width: 100%;
+    }
+
+    .block-pill.style-luxury-tag {
+      background: rgba(15, 23, 42, 0.75);
+      color: var(--accent, #f59e0b);
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      padding: 6px 18px;
+      border-radius: 8px;
+      border: 1px solid var(--accent, #f59e0b);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      letter-spacing: 0.5px;
+      font-weight: 800;
+      white-space: nowrap !important;
+      width: fit-content;
+      min-width: fit-content;
+    }
+
+    .block-pill.style-calendar-box, .block-card.style-calendar-box {
+      background: rgba(15, 23, 42, 0.75);
+      color: #fff;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border-left: 3px solid var(--accent, #f59e0b);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      border-right: 1px solid rgba(255, 255, 255, 0.15);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+      white-space: nowrap !important;
+      width: fit-content;
+      min-width: fit-content;
+    }
+
+    .block-pill.style-rating-badge {
+      background: rgba(0, 0, 0, 0.65);
+      color: #fbbf24;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      /* Padding thật do .block-pill/.size-small (!important) ở trên quyết định -- không
+         khai báo lại ở đây để tránh 2 con số vênh nhau gây hiểu nhầm (giá trị cũ 6px 16px
+         từng nằm ở đây chưa từng thực sự có hiệu lực). */
+      border-radius: 9999px;
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      box-shadow: 0 2px 12px rgba(251, 191, 36, 0.25);
+      font-weight: 800;
+      letter-spacing: 1px;
+      white-space: nowrap !important;
+      width: fit-content;
+      min-width: fit-content;
+    }
+
+    .block-cta.style-cta-button {
+      background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+      color: #fff;
+      font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif !important;
+      /* Padding thật do .block-cta/.size-small (!important) ở trên quyết định -- xem ghi
+         chú tương tự ở .block-pill.style-rating-badge. */
+      border-radius: 9999px;
+      font-weight: 800;
+      box-shadow: 0 4px 18px rgba(6, 182, 212, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      letter-spacing: 0.5px;
+      white-space: nowrap !important;
+      width: fit-content;
+      min-width: fit-content;
+    }
+
+    /* size-small: .block-pure-text already differentiates size-* (xlarge/large/medium/
+       small); .block-cta/.block-pill/.block-card had NO size-based CSS distinction at
+       all before this -- "small" (dates, tags, apply-deadline meta) looked visually
+       identical to "medium" (CTAs, quotes, product descriptions). Only a small-vs-medium
+       distinction is added (matching SIZE_SCALE's own semantic: xlarge/large is reserved
+       for container="none" pure-text titles, never pill/card/cta in practice).
+       (2026-09-13 fix: split off .block-cta/.block-pill from .block-card here -- their
+       shared 16px padding was EVEN SMALLER than the base (non-small) padding bug above,
+       guaranteeing the worst case of the same always-shrinks-to-floor-8px defect for
+       every "small"-sized pill/cta (rating badges, small tags) -- this is exactly what
+       made the feedback rating stars badge look far tinier than everything else on the
+       poster. .block-card's 16px is untouched -- cards use a separate, fixed 16px-margin
+       overflow check (not the pill/cta formula) and were never affected. */
+    .block-card.size-small {
+      padding: 6px 16px !important;
+      letter-spacing: 0.3px;
+    }
+    .block-cta.size-small, .block-pill.size-small {
+      padding: 8px 34px !important;
+      letter-spacing: 0.3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <!-- Top Bar (nếu có block thuộc top_bar) -->
+    {% if top_bar_html %}
+    <div class="omni-top-bar" data-tendoo-zone="top_bar">
+      {{ top_bar_html }}
+    </div>
+    {% endif %}
+
+    <!-- 3x3 Spatial Grid -->
+    <div class="omni-grid" style="{% if top_bar_html %}top: 13%;{% else %}top: 4%;{% endif %} {% if bottom_bar_html %}bottom: 13%;{% else %}bottom: 4%;{% endif %}">
+      {% for zone_name, zone_html in zone_cells.items() %}
+      <div class="omni-zone zone-{{ zone_name }}" data-tendoo-zone="{{ zone_name }}" style="grid-area: {{ zone_grid_areas[zone_name] }}; text-align: {{ zone_aligns[zone_name] }}; justify-self: {{ zone_self_aligns[zone_name][0] }}; align-self: {{ zone_self_aligns[zone_name][1] }}; max-width: {{ zone_max_w.get(zone_name, width) }}px; max-height: {{ zone_max_h.get(zone_name, height) }}px;">
+        {{ zone_html }}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Bottom Bar (nếu có block thuộc bottom_bar) -->
+    {% if bottom_bar_html %}
+    <div class="omni-bottom-bar" data-tendoo-zone="bottom_bar">
+      {{ bottom_bar_html }}
+    </div>
+    {% endif %}
+  </div>
+
+  <script>
+    // Shrink-to-fit Autofit (2026-09-10):
+    // Runs in THIS same Chromium instance right after layout settles, both when this
+    // HTML is loaded for real screenshotting AND when it is loaded purely to measure
+    // geometry for the corridor mask (see PosterRenderer.measure_zone_rects). Because
+    // both passes run the identical DOM/CSS/text through the identical autofit logic,
+    // they always converge on the identical final font-size and rect -- the mask and
+    // the text it protects can no longer drift apart, at any canvas size.
+    // `.omni-zone` has hard `max-width`/`max-height` (px, from get_zone_bounding_box())
+    // plus `overflow:hidden`, so `scrollWidth/Height > clientWidth/Height` reliably
+    // detects overflow of the real safe-zone rect, not just of an estimated one.
+    (function () {
+      function runAutofit() {
+        var MIN_FONT_PX = 8;
+        var SHRINK_STEP = 0.94;
+        var MAX_ITERATIONS = 40;
+
+      function overflows(el) {
+        var maxW = parseFloat(el.style.maxWidth) || el.clientWidth || 9999;
+        var maxH = parseFloat(el.style.maxHeight) || el.clientHeight || 9999;
+        if (el.scrollWidth > maxW + 0.5 || el.scrollHeight > maxH + 0.5) return true;
+        if (el.scrollWidth > el.clientWidth + 0.5 || el.scrollHeight > el.clientHeight + 0.5) return true;
+        var children = el.querySelectorAll('.block-pure-text, .block-cta, .block-pill, .block-card, .block-badge, .block-body, .block-quote, .block-step, .block-meta, .block-qr, .qr-badge');
+        for (var i = 0; i < children.length; i++) {
+          var c = children[i];
+          if (c.scrollWidth > maxW + 0.5 || c.offsetWidth > maxW + 0.5) return true;
+          if (c.scrollHeight > maxH + 0.5 || c.offsetHeight > maxH + 0.5) return true;
+
+          var cr = c.getBoundingClientRect();
+          if (cr.width > maxW + 0.5 || cr.height > maxH + 0.5) return true;
+
+          // KIỂM TRA HÌNH HỌC: Chống tràn chữ / lòi chữ ra khỏi đầu bo cong của Button / Pill / Card
+          var isPillOrButton = c.classList.contains('block-cta') || c.classList.contains('block-pill') || c.classList.contains('block-badge');
+          var isCard = c.classList.contains('block-card');
+          var span = c.querySelector('span');
+          if (span) {
+            var sr = span.getBoundingClientRect();
+            if (isPillOrButton) {
+              // Khoảng đệm an toàn tới 2 đầu bo cong bán nguyệt (tối thiểu 26px hoặc 55% chiều cao container)
+              var padEnd = Math.max(26, cr.height * 0.55);
+              if (sr.right > cr.right - padEnd + 0.5) return true;
+              if (sr.left < cr.left + padEnd - 0.5) return true;
+              if (span.scrollWidth > span.clientWidth + 0.5) return true;
+            } else if (isCard) {
+              if (sr.right > cr.right - 16 + 0.5) return true;
+              if (sr.left < cr.left + 16 - 0.5) return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function shrinkStep(container) {
+        var scalables = container.querySelectorAll('[style*="font-size"]');
+        var targets = scalables.length ? Array.prototype.slice.call(scalables) : [container];
+        var reduced = false;
+        for (var j = 0; j < targets.length; j++) {
+          var el = targets[j];
+          var current = parseFloat(getComputedStyle(el).fontSize) || 0;
+          if (current > MIN_FONT_PX) {
+            el.style.fontSize = Math.max(MIN_FONT_PX, current * SHRINK_STEP) + 'px';
+            reduced = true;
+          }
+        }
+        return reduced;
+      }
+
+      function shrink(container) {
+        // Prefer shrinking each inline-sized block independently (pure-text/cta/pill/card/...
+        // each carry their own explicit `style="font-size:...px"`) so visual hierarchy
+        // between roles is preserved; fall back to shrinking the container itself for
+        // simple containers (top/bottom info bars) whose children inherit font-size.
+        var scalables = container.querySelectorAll('[style*="font-size"]');
+        var targets = scalables.length ? Array.prototype.slice.call(scalables) : [container];
+
+        for (var i = 0; i < MAX_ITERATIONS && overflows(container); i++) {
+          var reachedFloor = true;
+          for (var j = 0; j < targets.length; j++) {
+            var el = targets[j];
+            var current = parseFloat(getComputedStyle(el).fontSize) || 0;
+            if (current <= MIN_FONT_PX) continue;
+            var next = Math.max(MIN_FONT_PX, current * SHRINK_STEP);
+            el.style.fontSize = next + 'px';
+            reachedFloor = false;
+          }
+          if (reachedFloor) break;
+        }
+      }
+
+      var zones = document.querySelectorAll('[data-tendoo-zone]');
+      zones.forEach(shrink);
+
+      // Pass 2: Sibling Zone Anti-Collision (Phát hiện & giải phóng va chạm giữa các ô cạnh nhau)
+      var MIN_ZONE_GAP = 14;
+      var gridZones = Array.prototype.slice.call(document.querySelectorAll('.omni-zone'));
+      for (var cIter = 0; cIter < 30; cIter++) {
+        var hasCollision = false;
+        for (var a = 0; a < gridZones.length; a++) {
+          for (var b = a + 1; b < gridZones.length; b++) {
+            var za = gridZones[a];
+            var zb = gridZones[b];
+            var ra = za.getBoundingClientRect();
+            var rb = zb.getBoundingClientRect();
+            if (ra.width === 0 || ra.height === 0 || rb.width === 0 || rb.height === 0) continue;
+            var overlapX = (ra.left < rb.right + MIN_ZONE_GAP) && (ra.right + MIN_ZONE_GAP > rb.left);
+            var overlapY = (ra.top < rb.bottom + MIN_ZONE_GAP) && (ra.bottom + MIN_ZONE_GAP > rb.top);
+            if (overlapX && overlapY) {
+              hasCollision = true;
+              // Thu nhỏ ô có kích thước lớn hơn hoặc rộng hơn trước
+              var targetZone = (ra.width >= rb.width) ? za : zb;
+              if (!shrinkStep(targetZone)) {
+                shrinkStep(targetZone === za ? zb : za);
+              }
+            }
+          }
+        }
+        if (!hasCollision) break;
+      }
+
+      var rects = {};
+      zones.forEach(function (el) {
+        var zoneName = el.getAttribute('data-tendoo-zone');
+        // Top bar và Bottom bar là các khối pill container hoàn chỉnh (có border, backdrop, padding)
+        // Bắt buộc đo trực tiếp el.getBoundingClientRect() để mask TRÙM HẾT 100% capsule,
+        // không được đo span con bên trong khiến 2 đầu bo cong của pill bị lòi ra ngoài mask.
+        if (zoneName === 'top_bar' || zoneName === 'bottom_bar') {
+          var r = el.getBoundingClientRect();
+          rects[zoneName] = [r.left, r.top, r.right, r.bottom];
+          return;
+        }
+
+        var children = el.querySelectorAll('.block-pure-text, .block-cta, .block-pill, .block-card, .block-badge, .block-body, .block-quote, .block-step, .block-meta, .block-qr, .qr-badge');
+        if (children.length > 0) {
+          var minL = Infinity, minT = Infinity, maxR = -Infinity, maxB = -Infinity;
+          var found = false;
+          children.forEach(function (c) {
+            var cr = c.getBoundingClientRect();
+            if (cr.width > 0 && cr.height > 0) {
+              minL = Math.min(minL, cr.left);
+              minT = Math.min(minT, cr.top);
+              maxR = Math.max(maxR, cr.right);
+              maxB = Math.max(maxB, cr.bottom);
+              found = true;
+            }
+          });
+          if (found && minL < maxR && minT < maxB) {
+            rects[zoneName] = [minL, minT, maxR, maxB];
+            return;
+          }
+        }
+        var r = el.getBoundingClientRect();
+        rects[zoneName] = [r.left, r.top, r.right, r.bottom];
+      });
+        window.__tendooZoneRects = rects;
+        window.__tendooAutofitDone = true;
+      }
+
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(runAutofit);
+      } else {
+        runAutofit();
+      }
+    })();
+  </script>
+</body>
+</html>

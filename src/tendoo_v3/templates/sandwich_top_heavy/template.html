@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {{font_face_css}}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: {{headline_font_css}};
+      background-color: #000;
+    }
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+    }
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+    /* Dải Băng Ngang Trên Đỉnh -- chiều cao THẬT lấy từ zones.top (geometry.py, dùng
+       chung với mask_engine.py) qua inline style, không còn hard-code % rời rạc dễ
+       lệch với mask. overflow:hidden làm lưới an toàn cuối nếu autofit vẫn chưa đủ co. */
+    .sandwich-top-band {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 16px 32px 10px;
+      background: {{palette.gradient_overlay}};
+      backdrop-filter: blur(14px);
+      text-align: center;
+      color: {{palette.text_primary}};
+    }
+    .badge-pill {
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: {{theme_color}};
+      background: {{palette.pill_bg}};
+      border: 1px solid {{theme_color}};
+      border-radius: 9999px;
+      box-shadow: 0 0 10px {{theme_color}}44;
+      margin-bottom: 6px;
+    }
+    .hero-title {
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      max-width: 90%;
+      {{effect_css}}
+    }
+    .subhead-title {
+      font-size: 17px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{palette.text_secondary}};
+      text-shadow: {{palette.text_shadow}};
+      margin-top: 4px;
+    }
+    /* Dải Nhồi Text Linh Hoạt (Semantic Pills) -- giờ là con thường bên trong
+       .sandwich-top-band (KHÔNG còn position:absolute độc lập, vốn là nguyên nhân
+       khiến pill-row từng nằm hẳn ngoài mask: DOM-parent của nó cũ là toàn bộ canvas
+       nên script autofit không có trần thật nào để so sánh). */
+    .extra-tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      max-width: 88%;
+      overflow: hidden;
+      /* font-size ở ĐÂY để autofit (data-autofit trên chính .extra-tag-row) co được
+         -- .extra-pill kế thừa, không tự khai font-size cố định nữa. */
+      font-size: 12.5px;
+    }
+    .extra-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: {{palette.pill_bg}};
+      border: 1px solid {{palette.pill_border}};
+      border-radius: 9999px;
+      font-weight: 600;
+      color: {{palette.pill_text}};
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+    .extra-pill svg {
+      width: 14px;
+      height: 14px;
+      color: {{theme_color}};
+      flex-shrink: 0;
+    }
+    /* Dải Băng Ngang Ở Đáy (Bottom-Band: Kính mờ siêu nhẹ, không vệt đen) */
+    .sandwich-bottom-band {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 36px;
+      background: linear-gradient(to top, {{palette.glass_bg}} 0%, rgba(255, 255, 255, 0.01) 100%);
+      backdrop-filter: blur(14px);
+      border-top: 1px solid {{palette.glass_border}};
+      color: {{palette.text_primary}};
+    }
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 11px 26px;
+      font-size: 13.5px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: {{palette.cta_text}};
+      background: {{palette.cta_bg}};
+      border: none;
+      border-radius: 9999px;
+      box-shadow: 0 4px 18px {{theme_color}}66;
+    }
+    .store-info {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: {{palette.text_secondary}};
+      letter-spacing: 0.2px;
+      text-align: right;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    {{ vfx_html }}
+
+    <div class="sandwich-top-band" style="height:{{ zones.top.height }}px; max-height:{{ zones.top.height }}px; overflow:hidden;">
+      {% if badge %}
+      <div class="badge-pill">{{ badge }}</div>
+      {% endif %}
+      <div class="hero-title" data-autofit data-min-font="22" data-max-width="{{ zones.top.width * 0.9 }}" data-max-height="{{ zones.top.height * 0.42 }}">{{ hero }}</div>
+      {% if subhead %}
+      <div class="subhead-title" data-autofit data-min-font="11" data-max-width="{{ zones.top.width * 0.9 }}" data-max-height="{{ zones.top.height * 0.20 }}">{{ subhead }}</div>
+      {% endif %}
+      {% if extra_pills %}
+      <div class="extra-tag-row" data-autofit data-min-font="10" data-max-width="{{ zones.top.width * 0.88 }}" data-max-height="{{ zones.top.height * 0.32 }}">
+        {% for pill in extra_pills %}
+        <div class="extra-pill">
+          {{ pill.icon_svg }}
+          <span>{{ pill.text }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="sandwich-bottom-band" style="height:{{ zones.bottom.height }}px; max-height:{{ zones.bottom.height }}px; overflow:hidden;">
+      {% if qr_svg %}
+      <div class="qr-col">{{ qr_svg }}</div>
+      {% else %}
+      <div></div>
+      {% endif %}
+      {% if cta %}
+      <div class="cta-btn">
+        <span>{{ cta }}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+      {% endif %}
+      {% if store_items %}
+      <div class="store-info-col" style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+        {% for item in store_items %}
+        <span class="store-item" style="display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:{{palette.text_secondary}};">
+          {{ item.icon_svg }}
+          <span>{{ item.text }}</span>
+        </span>
+        {% endfor %}
+      </div>
+      {% elif store_info %}
+      <div class="store-info">{{ store_info }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {{autofit_js}}
+</body>
+</html>
