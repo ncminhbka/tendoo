@@ -510,7 +510,10 @@ async def get_models():
 @app.post("/api/v3/plan-only")
 async def plan_only(req: GenerateRequest):
     """Endpoint duyệt nhanh kế hoạch sáng tạo và preview HTML trong 1s mà không chạy diffusion."""
-    form_dict = req.model_dump(exclude={"prompt", "template", "aspect_ratio", "ref_image_b64", "fast_preview"})
+    form_dict = req.model_dump(
+        exclude={"prompt", "template", "aspect_ratio", "ref_image_b64", "image_base64", "fast_preview"}
+    )
+    form_dict["has_product_image"] = bool(req.ref_image_b64 or req.image_base64)
     width, height = ASPECT_RATIOS.get(req.aspect_ratio, (1024, 1024))
 
     plan, llm_trace = generate_creative_plan(
@@ -593,7 +596,10 @@ async def generate_poster(req: GenerateRequest):
         guidance = req.guidance if (req.guidance and req.guidance >= 3.0) else 4.0
 
     # 1. Thu thập dữ liệu form & Khởi tạo thư mục run
-    form_dict = req.model_dump(exclude={"prompt", "template", "aspect_ratio", "ref_image_b64", "fast_preview"})
+    form_dict = req.model_dump(
+        exclude={"prompt", "template", "aspect_ratio", "ref_image_b64", "image_base64", "fast_preview"}
+    )
+    form_dict["has_product_image"] = bool(req.ref_image_b64 or req.image_base64)
     run_id = f"run_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')[:19]}"
     run_dir = OUTPUT_RUNS_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -706,9 +712,9 @@ async def generate_poster(req: GenerateRequest):
                             )
                             ref_toks = r_toks.to(dtype=torch.bfloat16)
                             ref_ids = r_ids
-                            logger.info(f"  [✓] In-Context Product Reference attached (shape: {ref_toks.shape})")
+                            logger.info(f"  [✓] In-Context Product Reference attached: {ref_toks.shape[1]} tokens at RoPE t=10.0 (shape: {ref_toks.shape})")
                         except Exception as e:
-                            logger.warning(f"  [!] Failed to encode reference product image: {e}")
+                            logger.error(f"  [!] Failed to encode reference product image: {e}", exc_info=True)
 
                     # 4. Tạo nhiễu hạt khởi tạo canvas và lịch trình Euler ODE
                     torch.manual_seed(req.seed)
@@ -720,11 +726,13 @@ async def generate_poster(req: GenerateRequest):
                     if ref_toks is not None and ref_ids is not None:
                         img_total = torch.cat([img_tokens, ref_toks], dim=1)
                         img_ids_total = torch.cat([img_ids, ref_ids], dim=1)
+                        logger.info(f"  [Sequence] Total DiT tokens = {img_total.shape[1]} (Canvas: {img_tokens.shape[1]}, Ref: {ref_toks.shape[1]})")
                     else:
                         img_total = img_tokens
                         img_ids_total = img_ids
+                        logger.info(f"  [Sequence] Canvas-only DiT tokens = {img_tokens.shape[1]}")
 
-                    timesteps = get_schedule(num_steps=num_steps, image_seq_len=img_tokens.shape[1])
+                    timesteps = get_schedule(num_steps=num_steps, image_seq_len=img_total.shape[1])
 
                     t0_dit = time.time()
                     out_blended = denoise_regional_velocity_blended(

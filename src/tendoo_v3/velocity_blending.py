@@ -113,29 +113,38 @@ def load_and_encode_ref_image(
     # Resize giữ nguyên tỉ lệ
     pil_img.thumbnail((target_dim, target_dim), Image.Resampling.LANCZOS)
     
-    # Pad hoặc căn chỉnh bội số 16 cho VAE
+    # Pad hoặc căn chỉnh bội số 16 cho VAE (tối thiểu 16px)
     w, h = pil_img.size
-    new_w = (w // 16) * 16
-    new_h = (h // 16) * 16
+    new_w = max(16, (w // 16) * 16)
+    new_h = max(16, (h // 16) * 16)
     if new_w != w or new_h != h:
         pil_img = pil_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
     arr = np.array(pil_img, dtype=np.float32) / 127.5 - 1.0
-    tensor = torch.from_numpy(arr).permute(2, 0, 1).unsqueeze(0)  # (1, 3, H, W)
-    
     target_ae_device = ae_device or device
-    tensor = tensor.to(device=target_ae_device, dtype=torch.bfloat16)
+
+    # Dynamic dtype detection matching AE weights
+    ae_dtype = torch.bfloat16
+    if hasattr(ae, "parameters"):
+        try:
+            ae_dtype = next(ae.parameters()).dtype
+        except Exception:
+            pass
+
+    tensor = torch.from_numpy(arr).permute(2, 0, 1).unsqueeze(0).to(device=target_ae_device, dtype=ae_dtype)
 
     with torch.inference_mode():
         latents = ae.encode(tensor)
 
-    ref_tokens, ref_ids = prc_img(latents)
-    # Gán mốc time_offset chuẩn vào trục t (trục 0 của ids)
-    ref_ids[..., 0] = time_offset
+    # latents has shape (1, 128, H_lat, W_lat). prc_img expects 3D (128, H_lat, W_lat).
+    ref_tokens, ref_ids = prc_img(latents[0])
 
-    if str(target_ae_device) != str(device):
-        ref_tokens = ref_tokens.to(device=device)
-        ref_ids = ref_ids.to(device=device)
+    # Add batch dimension to match img_tokens (1, L, 128) and img_ids (1, L, 4)
+    ref_tokens = ref_tokens.unsqueeze(0).to(device=device, dtype=torch.bfloat16)
+    ref_ids = ref_ids.unsqueeze(0).to(device=device)
+
+    # Gán mốc time_offset chuẩn vào trục t (trục 0 của ids)
+    ref_ids[:, :, 0] = time_offset
 
     return ref_tokens, ref_ids
 
