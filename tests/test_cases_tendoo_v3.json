@@ -507,5 +507,63 @@
       "scene_prompt": "Modern high-end gym fitness equipment, dramatic cyan and red neon studio lighting, 8k",
       "corridor_prompt": "Deep dark gym background in soft focus, subtle cyan neon haze, clean bottom copy space"
     }
+  },
+  {
+    "id": "case_19_sneakers_diagonal_slash_left",
+    "title": "Diagonal Slash Left - Sneaker Thể Thao Bứt Tốc (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "diagonal_slash",
+      "orientation": "left",
+      "style": {
+        "font": "anton",
+        "theme_color": "#FF3366",
+        "text_effect": "fire",
+        "background_tone": "dark_luxury",
+        "vfx": "anamorphic_flare"
+      },
+      "hero": "BỨT PHÁ MỌI GIỚI HẠN TỐC ĐỘ",
+      "subhead": "Công nghệ đệm khí Nitro Zoom hoàn trả năng lượng tối đa",
+      "badge": "NEW DROP 2026",
+      "extra_texts": [
+        "Trọng lượng siêu nhẹ 185g",
+        "Đế cao su bám đường Carbon",
+        "Vải dệt thoáng khí kháng khuẩn"
+      ],
+      "cta": "MUA NGAY - GIẢM 30%",
+      "store_info": "Tendoo Sport Flagship • Vincom Đồng Khởi, Q.1, TP.HCM",
+      "scene_prompt": "Dynamic running shoe floating in air, water splash and red laser rim light, athletic studio photo, 8k",
+      "corridor_prompt": "Dark athletic studio background in extreme blur, subtle red glow, clean diagonal negative space"
+    }
+  },
+  {
+    "id": "case_20_fintech_diagonal_slash_right",
+    "title": "Diagonal Slash Right - Thẻ Tín Dụng Kim Loại Fintech (9:16)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "diagonal_slash",
+      "orientation": "right",
+      "style": {
+        "font": "days",
+        "theme_color": "#00F0FF",
+        "text_effect": "chromatic",
+        "background_tone": "cyber_neon",
+        "vfx": "anamorphic_flare"
+      },
+      "hero": "QUYỀN NĂNG CHI TIÊU KHÔNG GIỚI HẠN",
+      "subhead": "Hoàn tiền 10% mọi giao dịch quốc tế cùng đặc quyền phòng chờ sân bay hạng thương gia",
+      "badge": "BLACK TITANIUM",
+      "extra_texts": [
+        "Bảo mật sinh trắc học chuẩn FIDO2",
+        "Miễn phí thường niên trọn đời",
+        "Hạn mức tín dụng tới 1 tỷ đồng"
+      ],
+      "cta": "MỞ THẺ ONLINE TRONG 3 PHÚT",
+      "store_info": "Tendoo Digital Bank • Hotline 1900 8899",
+      "scene_prompt": "Matte black titanium credit card floating with blue neon edge glow, high-tech fintech podium, 8k",
+      "corridor_prompt": "Futuristic dark tech background with soft blue neon grid bokeh, completely clean right negative space"
+    }
   }
 ]
