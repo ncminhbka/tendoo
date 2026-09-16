@@ -77,6 +77,22 @@ Nhiệm vụ của bạn là tiếp nhận thông tin từ form người dùng +
      + Chọn 'cinematic_haze' cho du lịch hùng vĩ, núi non, điện ảnh sử thi moody.
      + Chọn 'none' nếu poster phẳng tối giản hiện đại.
 
+6. BẢNG ÁNH XẠ TRƯỜNG DỮ LIỆU TỪ FORM (Form Fields Semantic Mapping):
+   - Khuyến Mại (promo): `title` -> `hero`, `discount` -> `badge`, `applied_product` -> `subhead`, ngày tháng -> `extra_texts`.
+   - Giới Thiệu Sản Phẩm (product_intro): `title` hoặc `product_name` -> `hero`, `price` -> `badge`, `product_desc` -> `subhead`, `highlights` -> `extra_texts` (tách thành các pills ngắn gọn).
+   - Khai Trương (opening): `title` -> `hero`, `opening_promo` -> `badge`, `opening_date` + `booking_contact` -> `subhead` hoặc `extra_texts`.
+   - Đánh Giá (feedback): `feedback_target` hoặc `title` -> `hero`, `feedback_quote` -> `testimonial`, `customer_name` -> `reviewer_name`, `feedback_rating` (vd 5 sao) -> `rating` (số nguyên 1-5), `special_offer` -> `badge`. Template tối ưu: 'customer_feedback_card'.
+   - Tuyển Dụng (recruitment): `title` hoặc `job_position` -> `hero`, `job_desc` -> `subhead`, `apply_deadline` + `apply_method` -> `extra_texts`. Template tối ưu: 'recruitment_board'.
+   - Quy Trình / Hướng Dẫn (guide): `title` -> `hero`, `guide_steps` -> `steps`. Template tối ưu: 'step_process_roadmap'.
+   - Màu sắc & Phong cách từ Form:
+     + Nếu có `primary_color` (hex color): gán `style.theme_color = primary_color`.
+     + Nếu có `style_pref`:
+       * 'sang_trong': ưu tiên font 'playfair', text_effect '3d_gold', background_tone 'dark_luxury'.
+       * 'hien_dai': ưu tiên font 'bevietnam' hoặc 'days', text_effect 'plain_elegant'.
+       * 'nang_dong': ưu tiên font 'anton', text_effect 'embossed'.
+       * 'le_hoi': ưu tiên font 'playfair', text_effect 'fire', vfx 'gold_dust'.
+       * 'am_cung': ưu tiên font 'lobster' hoặc 'bevietnam', background_tone 'warm_rustic', vfx 'light_leak'.
+
 {build_llm_catalog_prompt()}
 
 {build_llm_font_prompt()}
@@ -213,38 +229,84 @@ def fallback_heuristic_planner(
         # Khung ngang (16:9, 4:3) -> split_left (cột bên trái thuận hướng quét mắt)
         template = "sandwich_top_heavy" if aspect_ratio in ["9:16", "2:3", "4:5", "1:1"] else "split_left"
 
-    # 2. Rút trích các trường văn bản theo nguyên tắc Prompt > Form (và không bịa fake info)
-    hero = (
-        form_data.get("product_name")
-        or form_data.get("discount")
-        or form_data.get("job_position")
-        or form_data.get("feedback_target")
-        or form_data.get("headline")
-        or "TENDOO AI STUDIO"
-    )
-    subhead = (
-        form_data.get("product_desc")
-        or form_data.get("opening_promo")
-        or form_data.get("job_desc")
-        or form_data.get("subhead")
-        or None
-    )
-    
-    # Badge: ưu tiên form, prompt nếu có "giảm"/"ưu đãi", nếu không thì None (không tự bịa HOT DEAL)
-    if form_data.get("discount"):
-        badge = form_data["discount"]
-    elif form_data.get("badge"):
-        badge = form_data["badge"]
-    elif "giảm" in prompt_lower or "ưu đãi" in prompt_lower:
-        badge = "ƯU ĐÃI ĐẶC BIỆT"
-    else:
-        badge = None
+    # 2. Rút trích các trường văn bản theo Category và quyền uy Prompt > Form
+    testimonial: Optional[str] = None
+    reviewer_name: Optional[str] = None
+    rating: Optional[int] = None
+    steps: List[str] = []
+    extra_texts: List[str] = []
 
-    # CTA: nếu prompt yêu cầu bỏ/đừng vẽ thì None
+    if category == "feedback":
+        hero = form_data.get("feedback_target") or form_data.get("title") or "KHÁCH HÀNG NÓI GÌ VỀ TENDOO"
+        subhead = form_data.get("subhead")
+        badge = form_data.get("special_offer") or form_data.get("discount") or "ĐÁNH GIÁ 5 SAO"
+        testimonial = form_data.get("feedback_quote") or "Trải nghiệm dịch vụ tuyệt vời, chất lượng vượt trội ngoài mong đợi!"
+        reviewer_name = form_data.get("customer_name") or "Khách hàng thân thiết"
+        # Parse rating
+        raw_r = str(form_data.get("feedback_rating", "5"))
+        rating = 5
+        for ch in raw_r:
+            if ch.isdigit():
+                rating = max(1, min(5, int(ch)))
+                break
+        cta = form_data.get("cta") or "ĐẶT LỊCH NGAY"
+
+    elif category == "guide":
+        hero = form_data.get("title") or "QUY TRÌNH HƯỚNG DẪN"
+        subhead = form_data.get("subhead")
+        badge = form_data.get("discount") or form_data.get("badge")
+        raw_steps = form_data.get("guide_steps") or []
+        if isinstance(raw_steps, list) and raw_steps:
+            steps = [str(s).strip() for s in raw_steps if str(s).strip()]
+        if not steps:
+            steps = ["Bước 1: Chọn dịch vụ", "Bước 2: Xác nhận thông tin", "Bước 3: Hoàn tất đơn hàng"]
+        cta = form_data.get("cta") or "BẮT ĐẦU NGAY"
+
+    elif category == "recruitment":
+        hero = form_data.get("job_position") or form_data.get("title") or "TENDOO TÌM ĐỒNG ĐỘI"
+        subhead = form_data.get("job_desc") or form_data.get("subhead")
+        badge = form_data.get("discount") or "TUYỂN DỤNG"
+        if form_data.get("apply_deadline"):
+            extra_texts.append(f"Hạn nộp: {form_data['apply_deadline']}")
+        if form_data.get("apply_method"):
+            extra_texts.append(str(form_data["apply_method"]))
+        cta = form_data.get("cta") or "ỨNG TUYỂN NGAY"
+
+    elif category == "opening":
+        hero = form_data.get("title") or "TƯNG BỪNG KHAI TRƯƠNG"
+        subhead = form_data.get("booking_contact") or form_data.get("subhead")
+        badge = form_data.get("opening_promo") or form_data.get("discount") or "TẶNG QUÀ KHAI TRƯƠNG"
+        if form_data.get("opening_date"):
+            extra_texts.append(f"Ngày mở bán: {form_data['opening_date']}")
+        cta = form_data.get("cta") or "ĐẾN NGAY"
+
+    elif category == "product_intro":
+        hero = form_data.get("title") or form_data.get("product_name") or "GIỚI THIỆU SẢN PHẨM"
+        subhead = form_data.get("product_desc") or form_data.get("subhead")
+        badge = form_data.get("price") or form_data.get("discount")
+        if form_data.get("highlights"):
+            hl = str(form_data["highlights"])
+            extra_texts.extend([p.strip() for p in hl.split(",") if p.strip()])
+        cta = form_data.get("cta") or "XEM CHI TIẾT"
+
+    else:  # promo
+        hero = form_data.get("title") or form_data.get("product_name") or "ƯU ĐÃI ĐẶC BIỆT"
+        subhead = form_data.get("applied_product") or form_data.get("product_desc") or form_data.get("subhead")
+        badge = form_data.get("discount") or "ƯU ĐÃI ĐẶC BIỆT"
+        dates = []
+        if form_data.get("date_start"):
+            dates.append(f"Từ {form_data['date_start']}")
+        if form_data.get("date_end"):
+            dates.append(f"Đến {form_data['date_end']}")
+        if dates:
+            extra_texts.append(" - ".join(dates))
+        if form_data.get("highlights"):
+            extra_texts.append(str(form_data["highlights"]))
+        cta = form_data.get("cta") or "XEM CHI TIẾT"
+
+    # CTA suppression nếu prompt cấm
     if any(k in prompt_lower for k in ["bỏ cta", "không cần cta", "đừng vẽ cta", "không có nút"]):
         cta = None
-    else:
-        cta = form_data.get("cta") or ("XEM CHI TIẾT" if category != "feedback" else "ĐẶT LỊCH NGAY")
 
     # Store info: kiểm tra quyền uy Prompt > Form
     suppress_store = any(k in prompt_lower for k in [
@@ -264,7 +326,10 @@ def fallback_heuristic_planner(
         store_info = " | ".join(parts) if parts else None
 
     # QR Code
-    if form_data.get("qr_code"):
+    if form_data.get("website_link") and form_data.get("enable_qr"):
+        qr_code = form_data["website_link"]
+        qr_label = "QUÉT MÃ NGAY"
+    elif form_data.get("qr_code"):
         qr_code = form_data["qr_code"]
         qr_label = form_data.get("qr_label", "QUÉT MÃ NGAY")
     elif "qr" in prompt_lower or "quét mã" in prompt_lower:
@@ -273,13 +338,6 @@ def fallback_heuristic_planner(
     else:
         qr_code = None
         qr_label = None
-
-    # Extra texts
-    extra_texts = []
-    if form_data.get("highlights"):
-        extra_texts.append(str(form_data["highlights"]))
-    if form_data.get("price") and not any(k in prompt_lower for k in ["không ghi giá", "đừng vẽ giá", "bỏ giá"]):
-        extra_texts.append(f"Giá chỉ {form_data['price']}")
 
     # VFX khí quyển
     if any(k in prompt_lower for k in ["film", "grain", "retro", "vintage", "tạp chí", "cổ điển", "analog"]):
@@ -295,36 +353,64 @@ def fallback_heuristic_planner(
     else:
         vfx = "none"
 
-    # Font & Text Effect
-    if any(k in prompt_lower for k in ["serif", "cổ điển", "sang trọng", "luxury", "bìa"]):
+    # Font & Text Effect từ prompt hoặc style_pref
+    style_pref = str(form_data.get("style_pref") or "auto").lower()
+    if style_pref == "sang_trong":
         font = "playfair"
-    elif any(k in prompt_lower for k in ["mạnh mẽ", "sale", "khỏe", "gym", "thể thao"]):
-        font = "anton"
-    elif any(k in prompt_lower for k in ["tech", "công nghệ", "robot", "hiện đại"]):
-        font = "days"
-    elif any(k in prompt_lower for k in ["cafe", "mềm mại", "handwriting"]):
-        font = "lobster"
-    else:
-        font = "bevietnam"
-
-    if "neon" in prompt_lower:
-        text_effect = "neon_bloom" if "bloom" in prompt_lower else "neon"
-    elif "dập nổi" in prompt_lower or "emboss" in prompt_lower:
-        text_effect = "embossed"
-    elif "chromatic" in prompt_lower or "sai sắc" in prompt_lower:
-        text_effect = "chromatic"
-    elif "hologram" in prompt_lower:
-        text_effect = "hologram"
-    elif "vàng" in prompt_lower or "gold" in prompt_lower:
         text_effect = "3d_gold"
-    else:
+        background_tone = "dark_luxury"
+    elif style_pref == "nang_dong":
+        font = "anton"
+        text_effect = "embossed"
+        background_tone = "vibrant"
+    elif style_pref == "le_hoi":
+        font = "playfair"
+        text_effect = "fire"
+        background_tone = "dark_luxury"
+        vfx = "gold_dust"
+    elif style_pref == "am_cung":
+        font = "lobster"
         text_effect = "plain_elegant"
+        background_tone = "warm_rustic"
+        vfx = "light_leak"
+    elif style_pref == "hien_dai":
+        font = "bevietnam"
+        text_effect = "plain_elegant"
+        background_tone = "dark_luxury"
+    else:
+        if any(k in prompt_lower for k in ["serif", "cổ điển", "sang trọng", "luxury", "bìa"]):
+            font = "playfair"
+        elif any(k in prompt_lower for k in ["mạnh mẽ", "sale", "khỏe", "gym", "thể thao"]):
+            font = "anton"
+        elif any(k in prompt_lower for k in ["tech", "công nghệ", "robot", "hiện đại"]):
+            font = "days"
+        elif any(k in prompt_lower for k in ["cafe", "mềm mại", "handwriting"]):
+            font = "lobster"
+        else:
+            font = "bevietnam"
+
+        if "neon" in prompt_lower:
+            text_effect = "neon_bloom" if "bloom" in prompt_lower else "neon"
+        elif "dập nổi" in prompt_lower or "emboss" in prompt_lower:
+            text_effect = "embossed"
+        elif "chromatic" in prompt_lower or "sai sắc" in prompt_lower:
+            text_effect = "chromatic"
+        elif "hologram" in prompt_lower:
+            text_effect = "hologram"
+        elif "vàng" in prompt_lower or "gold" in prompt_lower:
+            text_effect = "3d_gold"
+        else:
+            text_effect = "plain_elegant"
+        background_tone = "warm_rustic" if vfx in ["film_grain", "light_leak"] else "dark_luxury"
+
+    # Theme color: ưu tiên primary_color từ form
+    theme_color = form_data.get("primary_color") or ("#06B6D4" if "neon" in prompt_lower else "#D4AF37")
 
     style = StyleConfig(
         font=font,
-        theme_color="#06B6D4" if "neon" in prompt_lower else "#D4AF37",
+        theme_color=theme_color,
         text_effect=text_effect,
-        background_tone="warm_rustic" if vfx in ["film_grain", "light_leak"] else "dark_luxury",
+        background_tone=background_tone,
         vfx=vfx,
     )
 
@@ -339,6 +425,10 @@ def fallback_heuristic_planner(
         qr_code=qr_code,
         qr_label=qr_label,
         orientation=orientation,
+        testimonial=testimonial,
+        reviewer_name=reviewer_name,
+        rating=rating,
+        steps=steps,
         scene_prompt=prompt or "Studio product photography, high-end commercial aesthetic, beautiful lighting",
         corridor_prompt="Smooth background surface in soft focus, gentle bokeh, clean negative space without objects, matching scene color and lighting",
         style=style,
