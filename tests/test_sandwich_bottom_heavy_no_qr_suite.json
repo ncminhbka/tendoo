@@ -1,0 +1,202 @@
+[
+  {
+    "id": "sbh_noqr_01_1x1_min",
+    "title": "[NO-QR] 1:1 Minimal Text - Hero Tối Giản Nổi Bật Cực Đại",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SIÊU SALE 50%",
+      "store_info": "Hotline: 1900 8888",
+      "qr_code": null,
+      "qr_label": "QUÉT MÃ MUA",
+      "scene_prompt": "Luxury golden cosmetic bottle standing on dark marble podium, cinematic lighting, 8k",
+      "corridor_prompt": "Dark luxury studio gradient background, soft gold ambient lighting, clean copy space"
+    }
+  },
+  {
+    "id": "sbh_noqr_04_1x1_heavy",
+    "title": "[NO-QR] 1:1 Heavy Text - Khảo Nghiệm Căng Thẳng Đa Dòng & Chính Sách",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FF3366",
+        "text_effect": "clean_gradient",
+        "background_tone": "vibrant_sale"
+      },
+      "badge": "LỄ HỘI MUA SẮM LỚN NHẤT NĂM 2026",
+      "hero": "BÙNG NỔ ƯU ĐÃI BLACK FRIDAY TỚI 70%",
+      "subhead": "Hàng ngàn sản phẩm công nghệ, gia dụng và thời trang giảm giá kịch sàn tại hệ thống toàn quốc",
+      "extra_texts": [
+        "Tặng voucher trị giá 500.000 VNĐ cho đơn hàng thanh toán qua VNPAY từ 2 triệu đồng trở lên",
+        "Hỗ trợ trả góp lãi suất 0% qua thẻ tín dụng liên kết ngân hàng thời hạn tới 12 tháng",
+        "Miễn phí vận chuyển hỏa tốc trong 2 giờ nội thành Hà Nội và TP. Hồ Chí Minh"
+      ],
+      "cta": "SĂN DEAL HÔM NAY",
+      "store_info": "Hotline: 1800 6789 | Tòa nhà Keangnam Landmark 72, Mễ Trì, Nam Từ Liêm, Hà Nội | Website: www.tendoo-store.vn | Email: support@tendoo.vn",
+      "qr_code": null,
+      "qr_label": "QUÉT NHẬN DEAL",
+      "scene_prompt": "Sleek modern flagship smartphone next to wireless earbuds floating in vibrant studio red ambient background, 8k",
+      "corridor_prompt": "Vibrant energetic deep crimson red studio backdrop with soft geometric light rays"
+    }
+  },
+  {
+    "id": "sbh_noqr_05_9x16_min",
+    "title": "[NO-QR] 9:16 Minimal Text - Khổ Dọc Story / TikTok Hero Cực Đại",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#FFB800",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "FLASH SALE ĐÊM NAY",
+      "store_info": "Hotline: 1900 9999",
+      "qr_code": null,
+      "qr_label": "MUA NGAY",
+      "scene_prompt": "A pair of luxury high-end sneakers hovering with golden glow sparks on black platform, 8k",
+      "corridor_prompt": "Dark vertical studio backdrop, subtle golden particle dust, high contrast copy space"
+    }
+  },
+  {
+    "id": "sbh_noqr_08_9x16_heavy",
+    "title": "[NO-QR] 9:16 Heavy Text - Khổ Dọc Bất Động Sản Nghỉ Dưỡng",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "MỞ BÁN PHÂN KHU BIỆT THỰ BIỂN",
+      "hero": "VINHOMES ROYAL ISLAND VŨ YÊN",
+      "subhead": "Sở hữu thiên đường nghỉ dưỡng ven sông đẳng cấp thượng lưu với sân golf 36 hố quốc tế",
+      "extra_texts": [
+        "Chiết khấu thanh toán sớm lên đến 12% trực tiếp vào giá bán hợp đồng mua bán",
+        "Ngân hàng hỗ trợ vay 70% với lãi suất 0% và ân hạn nợ gốc trong 24 tháng liên tục",
+        "Tặng gói nội thất hoàng gia nhập khẩu Ý trị giá 500 triệu đồng khi ký cọc trong tháng"
+      ],
+      "cta": "NHẬN BẢNG GIÁ",
+      "store_info": "Văn phòng dự án: Tầng 5 Vincom Center, Lê Thánh Tông, Hải Phòng | Hotline 24/7: 0988 123 456 | Website: www.vinhomesroyalisland.vn",
+      "qr_code": null,
+      "qr_label": "QUÉT TẢI BROSUR",
+      "scene_prompt": "Modern luxury waterfront villa at dusk with warm glowing interior lights, private infinity pool, yachts anchored nearby, 8k",
+      "corridor_prompt": "Deep twilight blue and subtle gold horizon sunset sky, expansive clean negative space"
+    }
+  },
+  {
+    "id": "sbh_noqr_09_16x9_min",
+    "title": "[NO-QR] 16:9 Minimal Text - Khổ Ngang Banner Website Tối Giản",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#3B82F6",
+        "text_effect": "clean_gradient",
+        "background_tone": "cool_tech"
+      },
+      "hero": "CLOUD AI PLATFORM 2026",
+      "store_info": "Hotline: 1900 1234",
+      "qr_code": null,
+      "qr_label": "TRẢI NGHIỆM",
+      "scene_prompt": "Sleek futuristic server rack with glowing blue cyan fiber optic cables and floating holographic data cubes, 8k",
+      "corridor_prompt": "Deep navy blue technology gradient background with subtle cyber grid lines"
+    }
+  },
+  {
+    "id": "sbh_noqr_11_16x9_heavy",
+    "title": "[NO-QR] 16:9 Heavy Text - Khổ Ngang Khóa Học Chuyển Đổi Số Doanh Nghiệp",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#8B5CF6",
+        "text_effect": "clean_gradient",
+        "background_tone": "cool_tech"
+      },
+      "badge": "CHƯƠNG TRÌNH ĐÀO TẠO GIÁM ĐỐC ĐIỀU HÀNH 2026",
+      "hero": "LÀM CHỦ CÔNG NGHỆ AI & TỰ ĐỘNG HÓA DOANH NGHIỆP",
+      "subhead": "Lộ trình thực chiến 12 tuần giúp tối ưu hóa 60% chi phí vận hành và nhân đôi doanh số bán hàng",
+      "extra_texts": [
+        "Học trực tiếp cùng 5 chuyên gia công nghệ hàng đầu từ Google và Viettel Solution",
+        "Thực hành xây dựng hệ sinh thái AI Agent phục vụ tự động hóa chăm sóc khách hàng 24/7",
+        "Cam kết hoàn tiền 100% nếu học viên không ứng dụng được vào thực tế quản trị công ty"
+      ],
+      "cta": "ĐĂNG KÝ KHÓA HỌC",
+      "store_info": "Học viện Doanh nhân Tendoo | Tầng 18 Tòa nhà Lotte, 54 Liễu Giai, Ba Đình, Hà Nội | Hotline tuyển sinh: 024 3999 8888 | info@tendoo-academy.edu.vn",
+      "qr_code": null,
+      "qr_label": "QUÉT ĐĂNG KÝ",
+      "scene_prompt": "Modern high-tech auditorium seminar with executive business people listening to AI innovation keynote, 8k",
+      "corridor_prompt": "Deep dark violet and ultramarine conference hall ambient background with clean negative space"
+    }
+  },
+  {
+    "id": "sbh_noqr_12_4x5_min",
+    "title": "[NO-QR] 4:5 Minimal Text - Khổ Dọc Instagram Feed Tối Giản",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BỘ SƯU TẬP KIM CƯƠNG 2026",
+      "store_info": "Hotline: 0988 888 888",
+      "qr_code": null,
+      "qr_label": "QUÉT XEM BST",
+      "scene_prompt": "Brilliant cut luxury diamond ring resting on dark reflective obsidian stone, dramatic studio spotlight, 8k",
+      "corridor_prompt": "Deep obsidian black luxury backdrop with subtle golden rim light reflections"
+    }
+  },
+  {
+    "id": "sbh_noqr_15_4x5_heavy",
+    "title": "[NO-QR] 4:5 Heavy Text - Khổ Dọc Tour Du Lịch Nhật Bản Trọn Gói",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EC4899",
+        "text_effect": "3d_gold",
+        "background_tone": "pastel_soft"
+      },
+      "badge": "TOUR CAO CẤP MÙA HOA ANH ĐÀO 2026",
+      "hero": "HÀNH TRÌNH KHÁM PHÁ XỨ SỞ PHÙ TANG 6N5Đ",
+      "subhead": "Chiêm ngưỡng sắc hoa Sakura rực rỡ từ Tokyo hiện đại đến cố đô Kyoto cổ kính",
+      "extra_texts": [
+        "Bay thẳng hàng không quốc gia Vietnam Airlines tiêu chuẩn 4 sao đầy đủ hành lý 46kg",
+        "Nghỉ dưỡng 5 đêm tại hệ thống khách sạn 4-5 sao trung tâm, trải nghiệm tắm khoáng nóng Onsen truyền thống",
+        "Tặng toàn bộ chi phí làm visa Nhật Bản và vé tàu siêu tốc Shinkansen trải nghiệm ngắm núi Phú Sĩ"
+      ],
+      "cta": "ĐĂNG KÝ TOUR SỚM",
+      "store_info": "Công ty Cổ phần Lữ hành Quốc tế Tendoo Travel | Tòa nhà Vincom 72 Lê Thánh Tôn, Bến Nghé, Quận 1, TP.HCM | Tổng đài tư vấn: 1900 6688 | contact@tendoo-travel.com",
+      "qr_code": null,
+      "qr_label": "QUÉT XEM LỊCH TRÌNH",
+      "scene_prompt": "Stunning Mount Fuji surrounded by blooming pink cherry blossom sakura branches in spring, clear morning sky, 8k",
+      "corridor_prompt": "Soft pastel blue spring sky and subtle blossom petal blur backdrop, peaceful ambient copy space"
+    }
+  }
+]

@@ -1,0 +1,406 @@
+[
+  {
+    "id": "sl_01_1x1_min",
+    "title": "1:1 Minimal Text - Hero Tối Giản Nổi Bật Cực Đại",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SIÊU SALE 50%",
+      "cta": "MUA NGAY HÔM NAY",
+      "store_info": "Hotline: 1900 8888",
+      "scene_prompt": "Luxury golden cosmetic bottle standing on dark marble podium, cinematic lighting, 8k",
+      "corridor_prompt": "Dark luxury studio gradient background on left, soft gold ambient lighting, clean copy space"
+    }
+  },
+  {
+    "id": "sl_02_1x1_light",
+    "title": "1:1 Light Text - Poster Đồng Hồ Thông Minh Chuẩn Mực",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#06B6D4",
+        "text_effect": "neon_glow",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "THẾ HỆ MỚI 2026",
+      "hero": "ĐỒNG HỒ TITAN THÔNG MINH S7",
+      "subhead": "Màn hình AMOLED sắc nét theo dõi sức khỏe và nhịp tim 24/7",
+      "cta": "MUA NGAY HÔM NAY",
+      "store_info": "Hotline: 1800 6677 • Vincom Mega Mall Thảo Điền, TP. Thủ Đức",
+      "qr_code": "https://tendoo.ai/smartwatch",
+      "qr_label": "QUÉT MUA NGAY",
+      "scene_prompt": "Futuristic matte black smartwatch floating with neon cyan digital UI glow and water splashes, dark reflective podium 8k",
+      "corridor_prompt": "Clean dark cyber space with subtle diffuse blue backlight on the left"
+    }
+  },
+  {
+    "id": "sl_03_1x1_medium",
+    "title": "1:1 Medium Text - Đa Khối Tag & Thông Tin Đầy Đủ",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#8B5CF6",
+        "text_effect": "glow_edge",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "FLAGSHIP AI 2026",
+      "hero": "SMART PHONE TITANIUM PRO",
+      "subhead": "Camera tiềm vọng zoom quang học 100x và chip AI thế hệ mới",
+      "extra_texts": [
+        "Màn hình 120Hz mượt mà",
+        "Sạc siêu nhanh 120W"
+      ],
+      "cta": "ĐẶT HÀNG TRƯỚC",
+      "store_info": "Hotline: 1900 1122 • Tràng Tiền Plaza, Hoàn Kiếm, Hà Nội",
+      "qr_code": "https://tendoo.ai/phone-pro",
+      "qr_label": "ĐẶT TRƯỚC",
+      "scene_prompt": "Sleek titanium smartphone standing upright with purple ambient glow on edges, studio lighting 8k",
+      "corridor_prompt": "Deep studio shadow with subtle violet light leak on left column"
+    }
+  },
+  {
+    "id": "sl_04_1x1_heavy",
+    "title": "1:1 Heavy Text - Stress Test Freetext Đa Dòng & Full Footer",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#F59E0B",
+        "text_effect": "plain_elegant",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "HỘI NGHỊ CÔNG NGHỆ QUỐC TẾ",
+      "hero": "THƯỢNG ĐỈNH TRÍ TUỆ NHÂN TẠO 2026",
+      "subhead": "Quy tụ hơn 500 chuyên gia công nghệ và lãnh đạo tập đoàn hàng đầu thế giới",
+      "extra_texts": [
+        "Ưu đãi 50% vé cho nhóm đăng ký sớm trước ngày 15/10",
+        "Cơ hội nhận gói tài trợ nghiên cứu AI lên tới 100.000 USD",
+        "Trải nghiệm trực tiếp các giải pháp robot thông minh"
+      ],
+      "cta": "ĐĂNG KÝ THAM GIA",
+      "store_info": "Tòa nhà Viettel, Số 1 Giang Văn Minh, Ba Đình, Hà Nội • Hotline: 1800 8098",
+      "qr_code": "https://tendoo.ai/summit2026",
+      "qr_label": "QUÉT LẤY VÉ",
+      "scene_prompt": "Futuristic AI robotics humanoid on high tech glass pedestal, subtle holographic blue particles, 8k",
+      "corridor_prompt": "Dark high tech conference stage gradient on left, soft cinematic illumination, clean negative space"
+    }
+  },
+  {
+    "id": "sl_05_9x16_min",
+    "title": "9:16 Minimal Text - Banner Dọc TikTok / Story Tối Giản",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FF0055",
+        "text_effect": "neon_bloom",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BÙNG NỔ ƯU ĐÃI",
+      "cta": "MUA NGAY",
+      "store_info": "Hotline: 1900 6868",
+      "scene_prompt": "Neon glowing high fashion sneaker floating mid-air, dynamic urban sparks, 8k",
+      "corridor_prompt": "Moody vertical dark studio backdrop on left, soft neon pink rim light, clean copy space"
+    }
+  },
+  {
+    "id": "sl_06_9x16_light",
+    "title": "9:16 Light Text - Story Tai Nghe Chống Ồn Bán Hàng",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#00E5FF",
+        "text_effect": "neon_glow",
+        "background_tone": "cyber_neon"
+      },
+      "badge": "HOT DEAL HÔM NAY",
+      "hero": "SẮC MÀU THỜI THƯỢNG",
+      "subhead": "Bộ sưu tập tai nghe không dây chống ồn đỉnh cao",
+      "cta": "MUA NGAY GIẢM 40%",
+      "store_info": "Hotline: 0912 345 678 • Showroom Toàn Quốc",
+      "qr_code": "https://tendoo.ai/earbuds",
+      "qr_label": "QUÉT ĐẶT MUA",
+      "scene_prompt": "Sleek wireless earbuds resting in open charging case on right, futuristic cyan glow reflections, 8k",
+      "corridor_prompt": "Dark cybernetic gradient background on left, subtle cyan lighting, clean copy space"
+    }
+  },
+  {
+    "id": "sl_07_9x16_medium",
+    "title": "9:16 Medium Text - Dọc Story Smartphone AI Đầy Đủ",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#8B5CF6",
+        "text_effect": "glow_edge",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "ĐỘT PHÁ AI",
+      "hero": "SMART PHONE TITANIUM PRO",
+      "subhead": "Camera tiềm vọng zoom quang học 100x và chip AI thế hệ mới",
+      "extra_texts": [
+        "Màn hình 120Hz mượt mà",
+        "Sạc siêu nhanh 120W"
+      ],
+      "cta": "ĐẶT HÀNG TRƯỚC",
+      "store_info": "Hotline: 1900 1122 • Tràng Tiền Plaza, Hoàn Kiếm, Hà Nội",
+      "qr_code": "https://tendoo.ai/phone-pro",
+      "qr_label": "ĐẶT TRƯỚC",
+      "scene_prompt": "Sleek titanium smartphone standing upright on right with purple ambient glow on edges, studio lighting 8k",
+      "corridor_prompt": "Deep studio shadow on left with subtle violet light leak"
+    }
+  },
+  {
+    "id": "sl_08_9x16_heavy",
+    "title": "9:16 Heavy Text - Dọc Story Stress Test Nhồi Bullet",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#10B981",
+        "text_effect": "subtle_depth",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "TUẦN LỄ VÀNG",
+      "hero": "ƯU ĐÃI NGHỈ DƯỠNG 5 SAO",
+      "subhead": "Trải nghiệm không gian nghỉ dưỡng biệt lập ven biển",
+      "extra_texts": [
+        "Miễn phí bữa sáng buffet cao cấp",
+        "Tặng voucher spa trị liệu 1.000.000đ",
+        "Đưa đón sân bay 2 chiều miễn phí"
+      ],
+      "cta": "ĐẶT PHÒNG NGAY",
+      "store_info": "Hotline: 1800 5588 • Vinpearl Resort Nha Trang",
+      "qr_code": "https://tendoo.ai/resort",
+      "qr_label": "QUÉT NHẬN DEAL",
+      "scene_prompt": "Luxury private ocean villa with infinity pool at dusk on right, warm ambient sunset glow, 8k",
+      "corridor_prompt": "Clean dark tropical gradient on left with soft emerald ambient glow"
+    }
+  },
+  {
+    "id": "sl_09_16x9_min",
+    "title": "16:9 Minimal Text - Banner Ngang Website Tối Giản",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#38BDF8",
+        "text_effect": "subtle_depth",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "LAPTOP SIÊU MỎNG",
+      "cta": "KHÁM PHÁ NGAY",
+      "store_info": "Hotline: 1800 2233",
+      "scene_prompt": "Ultra slim metal laptop open on modern concrete office desk on right, dramatic angled softbox light 8k",
+      "corridor_prompt": "Soft diffuse grey studio backdrop with clear negative space on left"
+    }
+  },
+  {
+    "id": "sl_10_16x9_light",
+    "title": "16:9 Light Text - Banner Ngang Ultrabook Doanh Nhân",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#38BDF8",
+        "text_effect": "subtle_depth",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "MỎNG NHẸ 1KG",
+      "hero": "ULTRABOOK DOANH NHÂN TITAN",
+      "subhead": "Hiệu năng bứt phá với chip xử lý AI chuyên dụng",
+      "cta": "KHÁM PHÁ NGAY",
+      "store_info": "Hotline: 1800 2233 • Tendoo Center, 120 Pasteur, Quận 1, TP. HCM",
+      "qr_code": "https://tendoo.ai/laptop",
+      "qr_label": "XEM SPECS",
+      "scene_prompt": "Ultra slim metal laptop open on modern concrete office desk on right, dramatic angled softbox light 8k",
+      "corridor_prompt": "Soft diffuse grey studio backdrop with clear negative space on left"
+    }
+  },
+  {
+    "id": "sl_11_16x9_medium",
+    "title": "16:9 Medium Text - Banner Ngang Quảng Cáo Xe Điện",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#06B6D4",
+        "text_effect": "neon_glow",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "CÔNG NGHỆ TƯƠNG LAI",
+      "hero": "XE ĐIỆN THÔNG MINH EV9",
+      "subhead": "Quãng đường di chuyển 600km một lần sạc và tự lái cấp độ 3",
+      "extra_texts": [
+        "Bảo hành pin 10 năm",
+        "Tặng kèm bộ sạc nhanh tại nhà"
+      ],
+      "cta": "ĐĂNG KÝ LÁI THỬ",
+      "store_info": "Hotline: 1900 9988 • Showroom VinFast Toàn Quốc",
+      "qr_code": "https://tendoo.ai/ev9",
+      "qr_label": "LÁI THỬ NGAY",
+      "scene_prompt": "Modern luxury electric SUV parked under city bridge lights at night on right, sleek rim lights 8k",
+      "corridor_prompt": "Dark cinematic urban highway backdrop on left, soft cyan glow"
+    }
+  },
+  {
+    "id": "sl_12_16x9_heavy",
+    "title": "16:9 Heavy Text - Banner Ngang Khóa Học Chuyên Sâu",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#F59E0B",
+        "text_effect": "plain_elegant",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "CHỨNG CHỈ QUỐC TẾ",
+      "hero": "CHUYÊN VIÊN TRÍ TUỆ NHÂN TẠO",
+      "subhead": "Chương trình đào tạo kỹ sư AI thực chiến cùng chuyên gia",
+      "extra_texts": [
+        "Học bổng 30% cho học viên đăng ký sớm",
+        "Cam kết hỗ trợ việc làm tại các tập đoàn công nghệ",
+        "Thực hành trực tiếp trên hạ tầng GPU đám mây"
+      ],
+      "cta": "NHẬN TƯ VẤN NGAY",
+      "store_info": "Hotline: 1800 6688 • Viettel Academy, Khu Công Nghệ Cao Hòa Lạc, Hà Nội",
+      "qr_code": "https://tendoo.ai/ai-course",
+      "qr_label": "TƯ VẤN 24/7",
+      "scene_prompt": "Futuristic high tech server room and glowing data streams on right, blue orange cinematic lighting 8k",
+      "corridor_prompt": "Dark tech studio backdrop on left with warm gold accent"
+    }
+  },
+  {
+    "id": "sl_13_4x5_min",
+    "title": "4:5 Minimal Text - Poster Dọc Instagram Feed Tối Giản",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BỘ SƯU TẬP MÙA HÈ",
+      "cta": "XEM NGAY",
+      "store_info": "Hotline: 1900 3344",
+      "scene_prompt": "High fashion luxury summer apparel and leather handbag on right, warm golden studio sunbeam 8k",
+      "corridor_prompt": "Minimalist clean studio background on left, warm ivory shadow"
+    }
+  },
+  {
+    "id": "sl_14_4x5_light",
+    "title": "4:5 Light Text - Tai Nghe Chống Ồn Master",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#F59E0B",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "HI-RES AUDIO",
+      "hero": "TAI NGHE KHÔNG DÂY MASTER",
+      "subhead": "Khử tiếng ồn chủ động kép và driver dynamic 40mm cao cấp",
+      "cta": "TRẢI NGHIỆM NGAY",
+      "store_info": "Hotline: 1900 4455 • Crescent Mall, Quận 7, TP. HCM",
+      "qr_code": "https://tendoo.ai/audio",
+      "qr_label": "MUA NGAY",
+      "scene_prompt": "Luxury golden metallic wireless headphones suspended in air on right, soft warm rim light 8k",
+      "corridor_prompt": "Deep warm shadow on left with golden ambient glow"
+    }
+  },
+  {
+    "id": "sl_15_4x5_medium",
+    "title": "4:5 Medium Text - Máy Pha Cà Phê Chuyên Nghiệp",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#D97706",
+        "text_effect": "plain_elegant",
+        "background_tone": "warm_rustic"
+      },
+      "badge": "CHUẨN Ý 2026",
+      "hero": "MÁY PHA ESPRESSO NGUYÊN BẢN",
+      "subhead": "Áp suất 20 bar chiết xuất trọn vẹn hương vị cà phê đậm đà",
+      "extra_texts": [
+        "Vỏ thép không gỉ sáng bóng",
+        "Cần đánh sữa tạo bọt mịn mượt"
+      ],
+      "cta": "ĐẶT MUA ƯU ĐÃI",
+      "store_info": "Hotline: 1800 7799 • 88 Đồng Khởi, Bến Nghé, Quận 1, TP. HCM",
+      "qr_code": "https://tendoo.ai/coffee-machine",
+      "qr_label": "QUÉT MUA NGAY",
+      "scene_prompt": "Vintage polished chrome espresso machine pouring rich crema coffee into glass cup on right, warm cafe lighting 8k",
+      "corridor_prompt": "Dark rustic mahogany wood texture on left, subtle warm amber ambient light"
+    }
+  },
+  {
+    "id": "sl_16_4x5_heavy",
+    "title": "4:5 Heavy Text - Dòng Chăm Sóc Da Chuyên Sâu Tế Bào Gốc",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#EC4899",
+        "text_effect": "subtle_depth",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "CÔNG NGHỆ SINH HỌC",
+      "hero": "SERUM TÁI TẠO TẾ BÀO GỐC",
+      "subhead": "Phục hồi làn da hư tổn và làm mờ nếp nhăn chỉ sau 14 ngày sử dụng",
+      "extra_texts": [
+        "Chiết xuất tế bào gốc thực vật tự nhiên",
+        "Không chứa cồn và hương liệu nhân tạo",
+        "Được kiểm nghiệm da liễu an toàn tuyệt đối"
+      ],
+      "cta": "TRẢI NGHIỆM LIỆU TRÌNH",
+      "store_info": "Hệ thống thẩm mỹ viện quốc tế • Hotline: 1800 9999 • 50 Lê Duẩn, Quận 1, TP. HCM",
+      "qr_code": "https://tendoo.ai/serum",
+      "qr_label": "NHẬN TƯ VẤN",
+      "scene_prompt": "Elegant glass serum dropper bottle with golden liquid droplets and pink rose petals on right, luxury cosmetics lighting 8k",
+      "corridor_prompt": "Deep rose velvet backdrop on left, soft diffused glow, clean copy space"
+    }
+  }
+]

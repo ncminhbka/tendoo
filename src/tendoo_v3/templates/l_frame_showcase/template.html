@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {{font_face_css}}
+    :root {
+      /* Font UI phụ (brand-title/store-details) tách khỏi font nghệ thuật headline --
+         xem giải thích đầy đủ ở sandwich_top_heavy/template.html. */
+      --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: {{headline_font_css}};
+      background-color: #000;
+    }
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      background-color: transparent;
+    }
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    {% set is_right = orientation in ['right', 'top_right', 'bottom_right'] %}
+
+    /* Cụm Tiêu Đề Góc L: Hoàn toàn transparent, không scrim che khuất */
+    .lframe-top-cluster {
+      position: absolute;
+      top: 24px;
+      {% if is_right %}
+      right: 28px;
+      align-items: flex-end;
+      text-align: right;
+      padding: 2px 16px 8px 16px;
+      {% else %}
+      left: 28px;
+      align-items: flex-start;
+      text-align: left;
+      padding: 2px 20px 8px 8px;
+      {% endif %}
+      width: {{ zones.top_cluster.width if zones.top_cluster else width * 0.56 }}px;
+      max-height: {{ lframe_budget.container_max_h }}px;
+      box-sizing: border-box;
+      overflow: visible;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      color: {{palette.text_primary}};
+      background: transparent;
+    }
+
+    .hero-title {
+      font-size: 46px;
+      font-weight: 900;
+      font-style: italic;
+      line-height: 1.16;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+      word-break: keep-all;
+      width: 100%;
+      color: {{ header_text_primary }};
+      text-shadow: 0 3px 18px rgba(0, 0, 0, 0.95), 0 0 4px rgba(0, 0, 0, 0.95);
+      {% if is_right %}
+      transform: skewX(1.5deg);
+      padding: 4px 4px 4px 18px;
+      {% else %}
+      transform: skewX(-1.5deg);
+      padding: 4px 20px 4px 4px;
+      {% endif %}
+      overflow: visible;
+      box-sizing: border-box;
+      {{ header_effect_css }}
+    }
+
+    .badge-capsule {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35em 1.25em;
+      font-weight: 900;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+      color: {{ palette.badge_text if palette.badge_text else '#000' }};
+      background: {{ palette.badge_bg if palette.badge_bg else theme_color }};
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 9999px;
+      box-shadow: 0 4px 16px {{ palette.badge_bg if palette.badge_bg else theme_color }}88, 0 2px 4px rgba(0, 0, 0, 0.5);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .subhead-benefit {
+      font-size: 14.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{ header_text_secondary }};
+      /* Blur cu (6-8px) qua lon so voi font nho cua subhead, lam net chu bi
+         "nuot" trong mo/nho hon that (user bao cao truc tiep) -- xem giai thich
+         day du + doi chung anh render that o sandwich_top_heavy/template.html.
+         Giam blur chinh xuong 2px, giu 1 lop glow phu nhe (6px/0.55). Bo han
+         `-webkit-text-stroke` ban trong suot -- gay vien mau (chromatic fringing)
+         o co chu nho khi chong lop voi text-shadow. */
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.55);
+      max-width: 95%;
+    }
+
+    /* Dual-Mode FreeText: Pills hoặc Bullet Card */
+    .extra-tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      {% if is_right %}
+      justify-content: flex-end;
+      {% else %}
+      justify-content: flex-start;
+      {% endif %}
+      gap: 6px;
+      width: 100%;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .extra-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.28em 0.85em;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 9999px;
+      font-size: inherit;
+      font-weight: 600;
+      color: #fff;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      line-height: 1.2;
+    }
+
+    .extra-pill svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ palette.on_card_accent if palette.on_card_accent else (palette.accent if palette.accent else theme_color) }};
+      flex-shrink: 0;
+    }
+
+    .freetext-block {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      width: 100%;
+      background: rgba(10, 15, 28, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      padding: 5px 12px;
+      backdrop-filter: blur(8px);
+      font-size: 11.5px;
+      {% if is_right %}
+      text-align: right;
+      {% else %}
+      text-align: left;
+      {% endif %}
+    }
+
+    .freetext-line {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      line-height: 1.25;
+      color: #F1F5F9;
+      {% if is_right %}
+      flex-direction: row-reverse;
+      {% endif %}
+    }
+
+    .freetext-bullet {
+      color: {{ palette.on_card_accent if palette.on_card_accent else (palette.accent if palette.accent else theme_color) }};
+      font-size: 0.85em;
+      font-family: Arial, 'Segoe UI Symbol', sans-serif;
+      flex-shrink: 0;
+    }
+
+    /* Dải Đáy Ngang: Store Brand Card + Floating QR Card (Không overflow: hidden để bóng đổ không bị cắt) */
+    .lframe-bottom-bar {
+      position: absolute;
+      bottom: 22px;
+      left: 36px;
+      right: 36px;
+      box-sizing: border-box;
+      z-index: 10;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      background: transparent;
+      {% if is_right %}
+      flex-direction: row-reverse;
+      {% else %}
+      flex-direction: row;
+      {% endif %}
+    }
+
+    .store-brand-card {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: rgba(10, 14, 24, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.20);
+      border-radius: 14px;
+      padding: 9px 18px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      max-width: calc(100% - 110px);
+      color: #F1F5F9;
+      {% if is_right %}
+      align-items: flex-end;
+      text-align: right;
+      {% else %}
+      align-items: flex-start;
+      text-align: left;
+      {% endif %}
+    }
+
+    .brand-title {
+      font-family: var(--ui-font);
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #FFF;
+      font-style: italic;
+    }
+
+    .store-details-row {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      font-size: 11.5px;
+      color: #CBD5E1;
+      font-weight: 600;
+      {% if is_right %}
+      justify-content: flex-end;
+      {% else %}
+      justify-content: flex-start;
+      {% endif %}
+    }
+
+    .store-detail-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: inherit;
+    }
+
+    .store-detail-item span {
+      font-size: inherit;
+    }
+
+    .store-detail-item svg {
+      width: 14px;
+      height: 14px;
+      color: {{ palette.on_card_accent if palette.on_card_accent else (palette.accent if palette.accent else theme_color) }};
+      flex-shrink: 0;
+    }
+
+    /* Floating QR Code Card ở góc */
+    .qr-card-pod {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      margin-bottom: 2px;
+    }
+
+    /* Thích ứng 9:16 narrow portrait */
+    {% if is_portrait_narrow %}
+    .lframe-top-cluster {
+      top: 16px;
+      {% if is_right %}
+      right: 18px;
+      {% else %}
+      left: 18px;
+      {% endif %}
+      width: {{ zones.top_cluster.width if zones.top_cluster else width * 0.88 }}px;
+      max-height: {{ lframe_budget.container_max_h }}px;
+    }
+    .hero-title {
+      font-size: 34px;
+    }
+    .lframe-bottom-bar {
+      bottom: 14px;
+      left: 16px;
+      right: 16px;
+      gap: 8px;
+    }
+    .store-brand-card {
+      padding: 7px 12px;
+      max-width: calc(100% - 85px);
+    }
+    .store-details-row {
+      gap: 6px;
+      font-size: 10px;
+    }
+    {% endif %}
+
+    /* Thích ứng 16:9 wide landscape */
+    {% if is_landscape_wide %}
+    .lframe-top-cluster {
+      top: 14px;
+      {% if is_right %}
+      right: 24px;
+      {% else %}
+      left: 24px;
+      {% endif %}
+      width: {{ zones.top_cluster.width if zones.top_cluster else width * 0.46 }}px;
+      max-height: {{ lframe_budget.container_max_h }}px;
+      gap: 5px;
+    }
+    .hero-title {
+      font-size: 36px;
+    }
+    .lframe-bottom-bar {
+      bottom: 10px;
+      left: 24px;
+      right: 24px;
+    }
+    .store-brand-card {
+      padding: 6px 14px;
+    }
+    {% endif %}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <!-- Cụm Tiêu Đề Góc L: Tiêu đề 3D nghiêng thể thao + Badge Ưu Đãi + Lợi ích + Thời hạn -->
+    <!-- badge-capsule/subhead-benefit/freetext-block/extra-tag-row KHÔNG khai báo
+         data-max-width (chỉ hero-title còn giữ, đã verify đúng) -- các giá trị hand-
+         computed cũ (zones.top_cluster.width trừ đi 1 hằng số đoán chừng: 0/40px tuỳ
+         phần tử) không khớp padding thật của .lframe-top-cluster (8-20px trái/phải tuỳ
+         orientation): `.extra-tag-row` (width:100%) luôn rộng ~627px thật nhưng trần
+         khai báo chỉ 615px -- KHÔNG BAO GIỜ thoả điều kiện ở bất kỳ font nào, khiến
+         autofit tụt thẳng về sàn tối thiểu (đo Playwright thật: kẹt cứng ở 13px dù
+         trần 18px, ảnh render server user gửi xác nhận chữ pill quá nhỏ). Bỏ hẳn
+         data-max-width để JS tự đo đúng (`styles.py`'s self-width-cap, đã verify hoạt
+         động chính xác cho mọi dạng width:100% lẫn auto-width/inline-flex). -->
+    <div class="lframe-top-cluster">
+      <div class="hero-title" data-autofit data-min-font="{{ lframe_budget.hero.min_font }}" data-max-font="{{ lframe_budget.hero.max_font }}" data-max-width="{{ (zones.top_cluster.width if zones.top_cluster else width * 0.56) - 28 }}" data-max-height="{{ lframe_budget.hero.max_h }}">{{ hero }}</div>
+
+      {% if badge %}
+      <div class="badge-capsule" data-autofit data-min-font="{{ lframe_budget.badge.min_font }}" data-max-font="{{ lframe_budget.badge.max_font }}" data-max-height="{{ lframe_budget.badge.max_h }}">{{ badge }}</div>
+      {% endif %}
+
+      {% if subhead %}
+      <div class="subhead-benefit" data-autofit data-min-font="{{ lframe_budget.subhead.min_font }}" data-max-font="{{ lframe_budget.subhead.max_font }}" data-max-height="{{ lframe_budget.subhead.max_h }}">{{ subhead }}</div>
+      {% endif %}
+
+      <!-- FreeText Dual-Mode -->
+      {% if extra_texts %}
+        {% if is_freetext_block %}
+        <div class="freetext-block" data-autofit data-min-font="{{ lframe_budget.freetext_block.min_font }}" data-max-font="{{ lframe_budget.freetext_block.max_font }}" data-max-height="{{ lframe_budget.freetext_block.max_h }}">
+          {% for line in extra_texts %}
+          <div class="freetext-line">
+            <span class="freetext-bullet">{{ bullet_svg }}</span>
+            <span>{{ line }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="extra-tag-row" data-autofit data-min-font="{{ lframe_budget.freetext_pills.min_font }}" data-max-font="{{ lframe_budget.freetext_pills.max_font }}" data-max-height="{{ lframe_budget.freetext_pills.max_h }}">
+          {% for pill in extra_pills %}
+          <div class="extra-pill">
+            {{ pill.icon_svg }}
+            <span>{{ pill.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- Dải Đáy Ngang: Store Info Card (Trái hoặc Phải) + QR Code (Phải hoặc Trái) -->
+    {% if (store_items or store_info) or qr_svg %}
+    <div class="lframe-bottom-bar" style="max-height:{{ zones.bottom.height if zones.bottom else height * 0.14 }}px;">
+      {% if store_items or store_info %}
+      <div class="store-brand-card">
+        {% if tag_left %}
+        <div class="brand-title">{{ tag_left }}</div>
+        {% endif %}
+        {% if store_items %}
+        <div class="store-details-row" data-autofit data-min-font="{{ lframe_budget.store.min_font }}" data-max-font="{{ lframe_budget.store.max_font }}" data-max-width="{{ width * 0.70 }}" data-max-height="{{ lframe_budget.store.max_h }}">
+          {% for item in store_items %}
+          <div class="store-detail-item">
+            {{ item.icon_svg }}
+            <span>{{ item.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% elif store_info %}
+        <div class="store-details-row" data-autofit data-min-font="{{ lframe_budget.store.min_font }}" data-max-font="{{ lframe_budget.store.max_font }}" data-max-width="{{ width * 0.70 }}" data-max-height="{{ lframe_budget.store.max_h }}">
+          <span>{{ store_info }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if qr_svg %}
+      <div class="qr-card-pod">
+        {{ qr_svg }}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {{autofit_js}}
+</body>
+</html>

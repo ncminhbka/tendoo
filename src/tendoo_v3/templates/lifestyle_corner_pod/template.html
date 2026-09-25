@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ hero }}</title>
+  <style>
+    {{ font_face_css }}
+
+    :root {
+      --headline-font: {{ headline_font_css }};
+      --theme-color: {{ theme_color }};
+      /* Font UI phụ (badge/cta/store/freetext) tách khỏi font nghệ thuật headline --
+         xem giải thích đầy đủ ở sandwich_top_heavy/template.html. */
+      --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      font-family: var(--headline-font, 'Inter', 'Be Vietnam Pro', sans-serif);
+      background-color: #060911;
+      position: relative;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      background-color: transparent;
+    }
+
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{ bg_data_uri }}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    /* Hộp Bo Góc Capsule Ở Góc (Corner Pod) */
+    .corner-pod {
+      position: absolute;
+      {% if orientation in ('bottom_right', 'right') %}
+      bottom: 24px;
+      right: 24px;
+      align-items: flex-end;
+      text-align: right;
+      {% elif orientation == 'top_left' %}
+      top: 24px;
+      left: 24px;
+      align-items: flex-start;
+      text-align: left;
+      {% elif orientation == 'top_right' %}
+      top: 24px;
+      right: 24px;
+      align-items: flex-end;
+      text-align: right;
+      {% else %}
+      bottom: 24px;
+      left: 24px;
+      align-items: flex-start;
+      text-align: left;
+      {% endif %}
+      width: {{ zones.pod.width if zones.pod else width * 0.48 }}px;
+      max-height: {{ zones.pod.height if zones.pod else height * 0.48 }}px;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 20px 22px;
+      background: transparent;
+      color: {{ card_text_primary }};
+    }
+
+    .top-section {
+      display: flex;
+      flex-direction: column;
+      {% if orientation in ('bottom_right', 'right', 'top_right') %}
+      align-items: flex-end;
+      {% else %}
+      align-items: flex-start;
+      {% endif %}
+      gap: 6px;
+      width: 100%;
+    }
+
+    .badge-pill {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      align-items: center;
+      padding: 0.28em 1.1em;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: {{ palette.badge_text }};
+      background: {{ palette.badge_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 9999px;
+      box-shadow: 0 3px 12px {{ theme_color }}66;
+      margin-bottom: 2px;
+      flex-shrink: 0;
+    }
+
+    .hero-title {
+      font-size: 34px;
+      font-weight: 900;
+      line-height: 1.20;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      width: 100%;
+      color: {{ card_text_primary }};
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.92);
+      padding: 2px 0;
+      {{ card_effect_css }}
+    }
+
+    .subhead-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{ card_text_secondary }};
+      /* Blur cu (6-8px) qua lon so voi font nho cua subhead, lam net chu bi
+         "nuot" trong mo/nho hon that (user bao cao truc tiep) -- xem giai thich
+         day du + doi chung anh render that o sandwich_top_heavy/template.html.
+         Giam blur chinh xuong 2px, giu 1 lop glow phu nhe (6px/0.55). Bo han
+         `-webkit-text-stroke` ban trong suot -- gay vien mau (chromatic fringing)
+         o co chu nho khi chong lop voi text-shadow. */
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.55);
+      width: 100%;
+    }
+
+    /* Dual-Mode FreeText: 1. Semantic Pills Row */
+    .extra-tag-row {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-wrap: wrap;
+      {% if orientation in ('bottom_right', 'right', 'top_right') %}
+      justify-content: flex-end;
+      {% else %}
+      justify-content: flex-start;
+      {% endif %}
+      gap: 5px;
+      width: 100%;
+      font-size: 11.5px;
+    }
+
+    .extra-pill {
+      display: inline-flex;
+      {% if orientation in ('bottom_right', 'right', 'top_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.4em;
+      padding: 0.28em 0.75em;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.20);
+      border-radius: 9999px;
+      font-size: inherit;
+      font-weight: 600;
+      /* `card_footer_text_secondary` -- nền chỉ tint 12% (gần như vẫn là ảnh thật),
+         nằm gần đáy pod cạnh footer-row -- sample cục bộ ở đáy thay vì trung bình
+         chung với đỉnh (badge/hero), đúng lỗi user báo cáo (chữ trắng hoà nền trắng). */
+      color: {{ card_footer_text_secondary }};
+      line-height: 1.2;
+    }
+
+    .extra-pill svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ card_footer_accent }};
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+    }
+
+    /* Dual-Mode FreeText: 2. Freetext Card */
+    .freetext-block {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 11px;
+      {% if orientation in ('bottom_right', 'right', 'top_right') %}
+      text-align: right;
+      {% else %}
+      text-align: left;
+      {% endif %}
+    }
+
+    .freetext-line {
+      display: flex;
+      {% if orientation in ('bottom_right', 'right', 'top_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: baseline;
+      gap: 5px;
+      line-height: 1.25;
+      /* `card_chrome_text` -- .freetext-block có nền đen cố định riêng (35%), phải
+         contrast với nền đó chứ không phải ảnh. */
+      color: {{ card_chrome_text }};
+    }
+
+    .freetext-bullet {
+      color: {{ card_chrome_accent }};
+      font-size: 0.85em;
+      font-family: Arial, 'Segoe UI Symbol', sans-serif;
+      flex-shrink: 0;
+    }
+
+    /* Footer Row */
+    .footer-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      margin-top: auto;
+    }
+
+    .cta-qr-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      {% if orientation in ('bottom_right', 'right', 'top_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      gap: 8px;
+      width: 100%;
+    }
+
+    .cta-btn {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      {% if orientation in ('bottom_right', 'right', 'top_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.5em 1.2em;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{ palette.cta_text }};
+      background: {{ palette.cta_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 9999px;
+      box-shadow: 0 4px 16px {{ theme_color }}66;
+      white-space: nowrap;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .qr-col {
+      flex-shrink: 0;
+    }
+
+    .store-info-col {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      {% if orientation in ('bottom_right', 'right', 'top_right') %}
+      align-items: flex-end;
+      {% else %}
+      align-items: flex-start;
+      {% endif %}
+      gap: 3px;
+      width: 100%;
+      font-size: 10.5px;
+    }
+
+    .store-item {
+      display: inline-flex;
+      {% if orientation in ('bottom_right', 'right', 'top_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.4em;
+      padding: 0.22em 0.65em;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 9999px;
+      font-size: inherit;
+      font-weight: 600;
+      /* `card_footer_text_secondary` -- store-item ở ĐÁY pod (footer-row), sample
+         cục bộ ở đáy thay vì trung bình chung với đỉnh. */
+      color: {{ card_footer_text_secondary }};
+      max-width: 100%;
+      line-height: 1.2;
+    }
+
+    .store-item svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ card_footer_accent }};
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+    }
+
+    .store-item span {
+      word-break: break-word;
+    }
+
+    /* Thích ứng 9:16 narrow portrait */
+    {% if is_portrait_narrow %}
+    .corner-pod {
+      padding: 16px 18px;
+      gap: 6px;
+    }
+    {% endif %}
+
+    /* Thích ứng 16:9 wide landscape */
+    {% if is_landscape_wide %}
+    .corner-pod {
+      padding: 16px 18px;
+      gap: 6px;
+    }
+    .hero-title {
+      font-size: 28px;
+    }
+    {% endif %}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <div class="corner-pod">
+      <div class="top-section">
+        {% if badge %}
+        <div class="badge-pill" data-autofit data-min-font="{{ lifestyle_budget.badge.min_font }}" data-max-font="{{ lifestyle_budget.badge.max_font }}" data-max-width="{{ (zones.pod.width * 0.9) if zones.pod else width * 0.4 }}" data-max-height="{{ lifestyle_budget.badge.max_h }}">{{ badge }}</div>
+        {% endif %}
+        <div class="hero-title" data-autofit data-min-font="{{ lifestyle_budget.hero.min_font }}" data-max-font="{{ lifestyle_budget.hero.max_font }}" data-max-height="{{ lifestyle_budget.hero.max_h }}">{{ hero }}</div>
+        {% if subhead %}
+        <div class="subhead-title" data-autofit data-min-font="{{ lifestyle_budget.subhead.min_font }}" data-max-font="{{ lifestyle_budget.subhead.max_font }}" data-max-height="{{ lifestyle_budget.subhead.max_h }}">{{ subhead }}</div>
+        {% endif %}
+      </div>
+
+      <!-- FreeText Dual-Mode -->
+      {% if extra_texts %}
+        {% if is_freetext_block %}
+        <div class="freetext-block" data-autofit data-min-font="{{ lifestyle_budget.freetext_block.min_font }}" data-max-font="{{ lifestyle_budget.freetext_block.max_font }}" data-max-height="{{ lifestyle_budget.freetext_block.max_h }}">
+          {% for line in extra_texts %}
+          <div class="freetext-line">
+            <span class="freetext-bullet">{{ bullet_svg }}</span>
+            <span>{{ line }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="extra-tag-row" data-autofit data-min-font="{{ lifestyle_budget.freetext_pills.min_font }}" data-max-font="{{ lifestyle_budget.freetext_pills.max_font }}" data-max-height="{{ lifestyle_budget.freetext_pills.max_h }}">
+          {% for pill in extra_pills %}
+          <div class="extra-pill">
+            {{ pill.icon_svg }}
+            <span>{{ pill.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endif %}
+
+      {% if cta or qr_svg or store_items or store_info %}
+      <div class="footer-row">
+        <div class="cta-qr-group">
+          {% if cta %}
+          <div class="cta-btn" data-autofit data-min-font="{{ lifestyle_budget.cta.min_font }}" data-max-font="{{ lifestyle_budget.cta.max_font }}" data-max-height="{{ lifestyle_budget.cta.max_h }}">
+            <span>{{ cta }}</span>
+            <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              {% if orientation in ('bottom_right', 'right', 'top_right') %}
+              <polyline points="15 18 9 12 15 6"></polyline>
+              {% else %}
+              <polyline points="9 18 15 12 9 6"></polyline>
+              {% endif %}
+            </svg>
+          </div>
+          {% endif %}
+          {% if qr_svg %}
+          <div class="qr-col">{{ qr_svg }}</div>
+          {% endif %}
+        </div>
+
+        {% if store_items %}
+        <div class="store-info-col" data-autofit data-min-font="{{ lifestyle_budget.store.min_font }}" data-max-font="{{ lifestyle_budget.store.max_font }}" data-max-height="{{ lifestyle_budget.store.max_h }}">
+          {% for item in store_items %}
+          <div class="store-item">
+            {{ item.icon_svg }}
+            <span>{{ item.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% elif store_info %}
+        <div class="store-item">
+          <span>{{ store_info }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {{ autofit_js }}
+</body>
+</html>

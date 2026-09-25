@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {{font_face_css}}
+    {% include "components/ui_components.css" %}
+
+    body, html {
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      font-family: {{headline_font_css}};
+      background-color: #000;
+    }
+    .poster-canvas {
+      position: relative;
+      width: {{width}}px;
+      height: {{height}}px;
+      overflow: hidden;
+      background-color: transparent;
+    }
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{bg_data_uri}}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    /* Layout Dải Đỉnh (Top Band): Badge + Hero + Subhead + FreeText */
+    .sandwich-top-band {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: safe center;
+      gap: 3px;
+      padding: 8px 20px 4px;
+      background: transparent;
+      text-align: center;
+      color: {{palette.text_primary}};
+    }
+
+    /* Layout Dải Đáy (Bottom Band): Store Info + CTA + QR */
+    .sandwich-bottom-band {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 24px;
+      background: transparent;
+      color: {{palette.text_primary}};
+      gap: 12px;
+    }
+
+    /* Adaptive: Căn giữa khi chỉ có 1 khối con (Zero-Trace) */
+    .sandwich-bottom-band:has(> :only-child) {
+      justify-content: center;
+    }
+
+    /* Responsive 9:16 (Narrow Portrait: w <= 600px): Bottom Band 2 tầng */
+    {% if is_portrait_narrow %}
+    .sandwich-bottom-band {
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 20px 10px;
+    }
+    .bottom-row-top {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .bottom-row-top .store-info-col {
+      max-width: 62%;
+      font-size: 13.5px;
+    }
+    .bottom-row-cta {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    .bottom-row-cta .cta-btn {
+      width: 90%;
+      justify-content: center;
+      padding: 0.5em 1.2em;
+      font-size: 14px;
+    }
+    {% endif %}
+
+    /* Responsive 16:9 (Wide Landscape: w >= 1.5 * h) */
+    {% if is_landscape_wide %}
+    .sandwich-top-band {
+      padding: 6px 32px 4px;
+      gap: 3px;
+    }
+    .hero-title { max-width: 96%; }
+    .freetext-block {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      padding: 3px 14px;
+    }
+    .sandwich-bottom-band {
+      padding: 6px 36px;
+      gap: 16px;
+    }
+    .store-info-col { max-width: 48%; font-size: 11px; }
+    .cta-btn { padding: 0.5em 1.4em; font-size: 12px; }
+    {% endif %}
+  </style>
+</head>
+{% from "components/ui_macros.html" import render_badge, render_hero, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta, render_qr %}
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <!-- Cụm Đỉnh (Top Band): Badge + Hero + Subhead + FreeText -->
+    <div class="sandwich-top-band" style="height:{{ zones.top.height }}px; max-height:{{ zones.top.height }}px; overflow:hidden;">
+      {{ render_badge(badge, budget=budget.badge, max_w=zones.top.width * 0.85) }}
+      {{ render_hero_phrase(hero, hero_parts, budget=budget.hero, max_w=zones.top.width * 0.94) }}
+      {{ render_subhead(subhead, budget=budget.subhead, max_w=zones.top.width * 0.90) }}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=budget.extra, bullet_svg=bullet_svg, max_w=zones.top.width * 0.92) }}
+    </div>
+
+    <!-- Cụm Đáy (Bottom Band): Store Info + CTA + QR (Zero-Trace) -->
+    {% if store_items or store_info or cta or qr_svg %}
+    <div class="sandwich-bottom-band" style="height:{{ zones.bottom.height }}px; max-height:{{ zones.bottom.height }}px; overflow:hidden;">
+      {% if is_portrait_narrow %}
+        {% if store_items or store_info or qr_svg %}
+        <div class="bottom-row-top">
+          {{ render_store(store_items, store_info, budget=budget.store, extra_cls='store-info-col', is_col=true, max_w=zones.bottom.width * 0.62) }}
+          {{ render_qr(qr_svg, max_h=zones.bottom.height * 0.44) }}
+        </div>
+        {% endif %}
+        {% if cta %}
+        <div class="bottom-row-cta">
+          {{ render_cta(cta, budget=budget.cta, max_w=zones.bottom.width * 0.90) }}
+        </div>
+        {% endif %}
+      {% else %}
+        {{ render_store(store_items, store_info, budget=budget.store, extra_cls='store-info-col', is_col=true, max_w=zones.bottom.width * 0.52) }}
+        {% if cta %}
+        <div class="cta-container">
+          {{ render_cta(cta, budget=budget.cta, max_w=zones.bottom.width * 0.36) }}
+        </div>
+        {% endif %}
+        {{ render_qr(qr_svg, max_h=zones.bottom.height * 0.85) }}
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {{autofit_js}}
+</body>
+</html>

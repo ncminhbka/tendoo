@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ hero }}</title>
+  <style>
+    {{ font_face_css }}
+
+    :root {
+      --headline-font: {{ headline_font_css }};
+      --price-font: Georgia, 'Times New Roman', serif;
+      /* Font nghệ thuật chỉ dành cho hero/subhead -- UI phụ (badge/pill/store/cta)
+         dùng font sans-serif dễ đọc riêng, xem giải thích đầy đủ ở
+         sandwich_top_heavy/template.html. */
+      --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      font-family: var(--headline-font, 'Inter', 'Be Vietnam Pro', sans-serif);
+      background: #0B0F19;
+      position: relative;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+    }
+
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{ bg_data_uri }}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    {% if orientation in ('right', 'top_right', 'bottom_right') %}
+    .menu-column {
+      right: 0;
+      align-items: flex-end;
+      text-align: right;
+    }
+    .menu-row {
+      flex-direction: row-reverse;
+    }
+    {% else %}
+    .menu-column {
+      left: 0;
+      align-items: flex-start;
+      text-align: left;
+    }
+    .menu-row {
+      flex-direction: row;
+    }
+    {% endif %}
+
+    .menu-column {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: {{ zones.content.width if zones.content else width * 0.44 }}px;
+      max-height: 100%;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      /* `center` (không phải `space-between`) -- cùng họ với split_left/split_right
+         (đã xác nhận cả 2 dùng chung 1 lỗi: cột luôn cao 100% canvas bất kể nội dung,
+         space-between + margin-top:auto trên .bottom-stack từng ghim 2 khối vào 2
+         đầu, đo thật case menu_05_1x1_minimal cho gap 840px/82% canvas). */
+      justify-content: center;
+      padding: 28px 22px;
+      background: transparent;
+      color: {{ palette.text_primary }};
+      gap: 32px;
+      box-sizing: border-box;
+    }
+
+    .top-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .badge-pill {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      align-items: center;
+      padding: 0.3em 1.15em;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: {{ palette.badge_text }};
+      background: {{ palette.badge_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 9999px;
+      box-shadow: 0 3px 12px {{ theme_color }}66, 0 1px 3px rgba(0, 0, 0, 0.4);
+      align-self: inherit;
+      flex-shrink: 0;
+    }
+
+    .hero-title {
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1.18;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      width: 100%;
+      color: {{ header_text_primary }};
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.92), 0 0 4px rgba(0, 0, 0, 0.95);
+      padding: 2px 0;
+      {{ header_effect_css }}
+    }
+
+    .subhead-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{ header_text_secondary }};
+      /* Blur cu (6-8px) qua lon so voi font nho cua subhead, lam net chu bi
+         "nuot" trong mo/nho hon that (user bao cao truc tiep) -- xem giai thich
+         day du + doi chung anh render that o sandwich_top_heavy/template.html.
+         Giam blur chinh xuong 2px, giu 1 lop glow phu nhe (6px/0.55). Bo han
+         `-webkit-text-stroke` ban trong suot -- gay vien mau (chromatic fringing)
+         o co chu nho khi chong lop voi text-shadow. */
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.55);
+      width: 100%;
+    }
+
+    /* Bảng Món/Giá: category > tên món > giá (docs/DESIGN_PRINCIPLES.md mục 8) --
+       1 serif cho giá (var(--price-font)), 1 sans-serif cho tên món (var(--headline-font)),
+       dot-leader cổ điển đúng chuẩn ngành nhà hàng nối tên món với giá. */
+    .menu-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .menu-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      width: 100%;
+      font-size: inherit;
+    }
+
+    .menu-item-name {
+      font-family: var(--headline-font);
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+      /* KHÔNG dùng text-overflow:ellipsis -- yeu_cau_templates.txt:9 cấm mất/cắt nội
+         dung; tên món dài xuống dòng thay vì bị cắt (đo thấy thật: ellipsis khiến
+         Playwright DOM-measurement coi là tràn, và về bản chất vẫn là mất chữ). */
+      white-space: normal;
+      overflow-wrap: break-word;
+      flex-shrink: 1;
+      min-width: 0;
+    }
+
+    .menu-dots {
+      flex: 1 1 auto;
+      min-width: 10px;
+      height: 0.55em;
+      align-self: flex-end;
+      border-bottom: 2px dotted rgba(255, 255, 255, 0.38);
+    }
+
+    .menu-item-price {
+      font-family: var(--price-font);
+      font-weight: 700;
+      font-style: italic;
+      color: {{ palette.on_card_accent }};
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Bottom Stack: QR + CTA + Store Info */
+    .bottom-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      /* KHÔNG dùng margin-top:auto -- xem giải thích ở split_left/template.html
+         (auto-margin trên flex-item luôn thắng justify-content của cha). */
+    }
+
+    .cta-btn {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+      padding: 0.52em 1.2em;
+      background: {{ palette.cta_bg }};
+      color: {{ palette.cta_text }};
+      font-size: 12.5px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      cursor: pointer;
+      line-height: 1.2;
+      flex-shrink: 0;
+      align-self: inherit;
+    }
+
+    .store-info-col {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+      font-size: 11px;
+    }
+
+    .store-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.25em 0.75em;
+      background: rgba(10, 15, 28, 0.76);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 9999px;
+      font-size: inherit;
+      font-weight: 600;
+      color: #E2E8F0;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      max-width: 100%;
+      line-height: 1.2;
+      align-self: inherit;
+    }
+
+    {% if orientation in ('right', 'top_right', 'bottom_right') %}
+    .store-item {
+      flex-direction: row-reverse;
+    }
+    {% endif %}
+
+    .store-item svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ palette.on_card_accent }};
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+    }
+
+    .store-item span {
+      word-break: break-word;
+    }
+
+    /* Thích ứng 9:16 narrow portrait */
+    {% if is_portrait_narrow %}
+    .menu-column {
+      padding: 24px 16px;
+      gap: 28px;
+    }
+    .menu-list {
+      gap: 5px;
+    }
+    .store-item {
+      padding: 0.2em 0.6em;
+    }
+    .cta-btn {
+      width: 100%;
+      justify-content: center;
+      padding: 0.45em 1em;
+      font-size: 11.5px;
+    }
+    {% endif %}
+
+    /* Thích ứng 16:9 wide landscape */
+    {% if is_landscape_wide %}
+    .menu-column {
+      padding: 16px 20px;
+      gap: 24px;
+    }
+    .menu-list {
+      gap: 4px;
+    }
+    .bottom-stack {
+      flex-direction: row;
+      align-items: flex-end;
+      gap: 12px;
+      width: 100%;
+    }
+    .bottom-col-qr {
+      flex-shrink: 0;
+    }
+    .bottom-col-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+      min-width: 0;
+    }
+    .store-info-col {
+      gap: 3px;
+      font-size: 10px;
+    }
+    .cta-btn {
+      padding: 0.42em 1.0em;
+      font-size: 11px;
+    }
+    {% endif %}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    <div class="menu-column">
+      <div class="top-stack">
+        {% if badge %}
+        <div class="badge-pill" data-autofit data-min-font="{{ menu_budget.badge.min_font }}" data-max-font="{{ menu_budget.badge.max_font }}" data-max-width="{{ (zones.content.width * 0.9) if zones.content else width * 0.4 }}" data-max-height="{{ menu_budget.badge.max_h }}">{{ badge }}</div>
+        {% endif %}
+        <div class="hero-title" data-autofit data-min-font="{{ menu_budget.hero.min_font }}" data-max-font="{{ menu_budget.hero.max_font }}" data-max-height="{{ menu_budget.hero.max_h }}">{{ hero }}</div>
+        {% if subhead %}
+        <div class="subhead-title" data-autofit data-min-font="{{ menu_budget.subhead.min_font }}" data-max-font="{{ menu_budget.subhead.max_font }}" data-max-height="{{ menu_budget.subhead.max_h }}">{{ subhead }}</div>
+        {% endif %}
+      </div>
+
+      {% if extra_texts %}
+      <div class="menu-list" data-autofit data-min-font="{{ menu_budget.menu_list.min_font }}" data-max-font="{{ menu_budget.menu_list.max_font }}" data-max-height="{{ menu_budget.menu_list.max_h }}">
+        {% for line in extra_texts %}
+          {% set norm_line = line.replace('–', ' - ').replace('—', ' - ') %}
+          {% set parts = norm_line.rsplit(' - ', 1) if ' - ' in norm_line else [norm_line] %}
+          <div class="menu-row">
+            <span class="menu-item-name">{{ parts[0].strip() }}</span>
+            {% if parts|length > 1 %}
+            <span class="menu-dots"></span>
+            <span class="menu-item-price">{{ parts[1].strip() }}</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="bottom-stack">
+        {% if is_landscape_wide %}
+          {% if qr_svg %}
+          <div class="bottom-col-qr">{{ qr_svg }}</div>
+          {% endif %}
+          <div class="bottom-col-actions">
+            {% if cta %}
+            <div class="cta-btn" data-autofit data-min-font="{{ menu_budget.cta.min_font }}" data-max-font="{{ menu_budget.cta.max_font }}" data-max-height="{{ menu_budget.cta.max_h }}">
+              <span>{{ cta }}</span>
+              <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            {% endif %}
+            {% if store_items %}
+            <div class="store-info-col" data-autofit data-min-font="{{ menu_budget.store.min_font }}" data-max-font="{{ menu_budget.store.max_font }}" data-max-height="{{ menu_budget.store.max_h }}">
+              {% for item in store_items %}
+              <div class="store-item">
+                {{ item.icon_svg }}
+                <span>{{ item.text }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% elif store_info %}
+            <div class="store-item">
+              <span>{{ store_info }}</span>
+            </div>
+            {% endif %}
+          </div>
+        {% else %}
+          {% if qr_svg %}
+          <div style="margin-bottom:2px;">{{ qr_svg }}</div>
+          {% endif %}
+          {% if cta %}
+          <div class="cta-btn" data-autofit data-min-font="{{ menu_budget.cta.min_font }}" data-max-font="{{ menu_budget.cta.max_font }}" data-max-height="{{ menu_budget.cta.max_h }}">
+            <span>{{ cta }}</span>
+            <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+          {% endif %}
+          {% if store_items %}
+          <div class="store-info-col" data-autofit data-min-font="{{ menu_budget.store.min_font }}" data-max-font="{{ menu_budget.store.max_font }}" data-max-height="{{ menu_budget.store.max_h }}">
+            {% for item in store_items %}
+            <div class="store-item">
+              {{ item.icon_svg }}
+              <span>{{ item.text }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% elif store_info %}
+          <div class="store-item">
+            <span>{{ store_info }}</span>
+          </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {{ autofit_js }}
+</body>
+</html>

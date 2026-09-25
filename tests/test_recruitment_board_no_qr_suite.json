@@ -1,0 +1,126 @@
+[
+  {
+    "id": "recruit_noqr_01_1x1_left_ai",
+    "title": "[NO-QR] Recruitment 1:1 - Tuyển Dụng Senior AI Research Engineer",
+    "template": "recruitment_board",
+    "orientation": "left",
+    "width": 1024,
+    "height": 1024,
+    "hero": "TUYỂN DỤNG KỸ SƯ AI CAO CẤP",
+    "subhead": "Tham gia phát triển các mô hình Diffusion & Generative AI đột phá",
+    "badge": "WE ARE HIRING",
+    "extra_texts": [
+      "Thu nhập hấp dẫn 45M - 70M + Thưởng dự án",
+      "Làm việc Hybrid linh hoạt, cấp Macbook Pro M3",
+      "Bảo hiểm sức khỏe quốc tế toàn diện"
+    ],
+    "cta": "ỨNG TUYỂN NGAY",
+    "store_info": "Tendoo AI Labs • Tòa nhà Landmark 81, TP.HCM",
+    "qr_code": null,
+    "qr_label": "NỘP CV ONLINE",
+    "style": {
+      "theme_color": "#38BDF8",
+      "text_effect": "glow",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "recruit_noqr_02_9x16_left_barista",
+    "title": "[NO-QR] Recruitment 9:16 - Tuyển Barista & Quản Lý Ca F&B",
+    "template": "recruitment_board",
+    "orientation": "left",
+    "width": 576,
+    "height": 1024,
+    "hero": "TÌM KIẾM ĐỒNG ĐỘI BARISTA",
+    "subhead": "Cùng tạo nên những tách cà phê specialty đầy cảm hứng",
+    "badge": "JOIN OUR TEAM",
+    "extra_texts": [
+      "Lương cứng 8M - 12M + Tip + Thưởng doanh số",
+      "Đào tạo pha chế SCA chuyên nghiệp miễn phí",
+      "Môi trường trẻ trung, cơ hội thăng tiến nhanh"
+    ],
+    "cta": "ỨNG TUYỂN NHANH",
+    "store_info": "Specialty Coffee Roasters • 182 Pasteur, Q.1",
+    "qr_code": null,
+    "qr_label": "QUÉT MÃ NỘP CV",
+    "style": {
+      "theme_color": "#F59E0B",
+      "text_effect": "warm_glow",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "recruit_noqr_03_16x9_left_creative",
+    "title": "[NO-QR] Recruitment 16:9 - Tuyển Art Director / Creative Lead",
+    "template": "recruitment_board",
+    "orientation": "left",
+    "width": 1024,
+    "height": 576,
+    "hero": "CHIÊU MỘ ART DIRECTOR SÁNG TẠO",
+    "subhead": "Dẫn dắt các chiến dịch truyền thông đa kênh cho thương hiệu hàng đầu",
+    "badge": "LEADERSHIP",
+    "extra_texts": [
+      "Lương thỏa thuận 50M - 80M + ESOP cổ phần",
+      "Tự do sáng tạo, không giới hạn ngân sách ý tưởng"
+    ],
+    "cta": "GỬI PORTFOLIO NGAY",
+    "store_info": "Creative Agency Global • Hotline: 028 3822 9999",
+    "qr_code": null,
+    "qr_label": "GỬI HỒ SƠ",
+    "style": {
+      "theme_color": "#EC4899",
+      "text_effect": "neon",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "recruit_noqr_04_4x5_left_dental",
+    "title": "[NO-QR] Recruitment 4:5 - Tuyển Bác Sĩ Răng Hàm Mặt",
+    "template": "recruitment_board",
+    "orientation": "left",
+    "width": 816,
+    "height": 1024,
+    "hero": "TUYỂN BÁC SĨ NHA KHOA THẨM MỸ",
+    "subhead": "Hệ thống nha khoa công nghệ cao mở rộng cơ sở mới tại Hà Nội",
+    "badge": "CAREER OPPORTUNITY",
+    "extra_texts": [
+      "Thu nhập 40M - 80M theo năng lực chuyên môn",
+      "Hệ thống máy móc CAD/CAM & CT ConeBeam hiện đại",
+      "Tham gia các khóa tu nghiệp chuyên sâu tại Hàn Quốc"
+    ],
+    "cta": "LIÊN HỆ PHỎNG VẤN",
+    "store_info": "Nha Khoa Quốc Tế • 92 Bà Triệu, Hoàn Kiếm, HN",
+    "qr_code": null,
+    "qr_label": "ĐẶT LỊCH PV",
+    "style": {
+      "theme_color": "#10B981",
+      "text_effect": "glow",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "recruit_noqr_12_4x5_left_rich",
+    "title": "[NO-QR] Recruitment 4:5 - Tuyển Dược Sĩ Quản Lý Chuỗi Nhà Thuốc",
+    "template": "recruitment_board",
+    "orientation": "left",
+    "width": 816,
+    "height": 1024,
+    "hero": "TUYỂN DỤNG DƯỢC SĨ ĐẠI HỌC",
+    "subhead": "Phụ trách chuyên môn và quản lý chất lượng chuỗi nhà thuốc đạt chuẩn GPP",
+    "badge": "PHARMACY",
+    "extra_texts": [
+      "Lương cứng 18M - 28M + Thưởng doanh thu cửa hàng",
+      "Môi trường làm việc chuẩn mực, chuyên nghiệp",
+      "Cơ hội thăng tiến lên Quản lý khu vực sau 6 tháng"
+    ],
+    "cta": "ỨNG TUYỂN VỊ TRÍ NÀY",
+    "store_info": "Hệ Thống Nhà Thuốc Chuẩn GPP • Hotline: 1800 2026",
+    "qr_code": null,
+    "qr_label": "NỘP HỒ SƠ",
+    "style": {
+      "theme_color": "#10B981",
+      "text_effect": "glow",
+      "background_tone": "dark_luxury"
+    }
+  }
+]

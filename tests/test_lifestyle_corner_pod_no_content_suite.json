@@ -1,0 +1,86 @@
+[
+  {
+    "id": "pod_nocontent_01_1x1_bottom_left_coffee",
+    "title": "[NO QR/FREETEXT] Lifestyle Pod 1:1 Bottom Left - Cà Phê Thư Giãn Buổi Sáng",
+    "template": "lifestyle_corner_pod",
+    "orientation": "bottom_left",
+    "width": 1024,
+    "height": 1024,
+    "hero": "GÓC NHỎ BÌNH YÊN BÊN TÁCH CÀ PHÊ",
+    "subhead": "Hạt Arabica Cầu Đất rang mộc thơm dịu",
+    "badge": "LIFESTYLE",
+    "extra_texts": [],
+    "cta": "GHÉ TIỆM NGAY",
+    "store_info": "12 Đặng Thai Mai, Tây Hồ, Hà Nội",
+    "qr_code": null,
+    "qr_label": "MENU NGÀY",
+    "style": {
+      "theme_color": "#D4AF37",
+      "text_effect": "warm_glow",
+      "background_tone": "warm_rustic"
+    }
+  },
+  {
+    "id": "pod_nocontent_02_9x16_bottom_left_skincare",
+    "title": "[NO QR/FREETEXT] Lifestyle Pod 9:16 Bottom Left - Dưỡng Da Thuần Chay",
+    "template": "lifestyle_corner_pod",
+    "orientation": "bottom_left",
+    "width": 576,
+    "height": 1024,
+    "hero": "LÀN DA TƯƠI SÁNG CÙNG THIÊN NHIÊN",
+    "subhead": "Chiết xuất rau má đảo Jeju làm dịu tức thì",
+    "badge": "VEGAN CARE",
+    "extra_texts": [],
+    "cta": "MUA NGAY NHẬN QUÀ",
+    "store_info": "Hotline: 1800 6688 • Giao hàng miễn phí",
+    "qr_code": null,
+    "qr_label": "MÃ GIẢM 30%",
+    "style": {
+      "theme_color": "#10B981",
+      "text_effect": "neon_glow",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "pod_nocontent_03_16x9_bottom_left_homestay",
+    "title": "[NO QR/FREETEXT] Lifestyle Pod 16:9 Bottom Left - Homestay Bên Đồi Thông",
+    "template": "lifestyle_corner_pod",
+    "orientation": "bottom_left",
+    "width": 1024,
+    "height": 576,
+    "hero": "TRỐN KHỎI PHỐ THỊ VỀ NƠI MÂY NGÀN",
+    "subhead": "Không gian nghỉ dưỡng biệt lập view thung lũng Đà Lạt",
+    "badge": "RETREAT",
+    "extra_texts": [],
+    "cta": "ĐẶT PHÒNG",
+    "store_info": "Đường Hoa Hồng, Hồ Tuyền Lâm, Đà Lạt",
+    "qr_code": null,
+    "qr_label": "XEM PHÒNG",
+    "style": {
+      "theme_color": "#F59E0B",
+      "text_effect": "gold_3d",
+      "background_tone": "warm_rustic"
+    }
+  },
+  {
+    "id": "pod_nocontent_04_4x5_bottom_left_book",
+    "title": "[NO QR/FREETEXT] Lifestyle Pod 4:5 Bottom Left - Tiệm Sách & Trà Chiều",
+    "template": "lifestyle_corner_pod",
+    "orientation": "bottom_left",
+    "width": 816,
+    "height": 1024,
+    "hero": "MỘT CUỐN SÁCH HAY CHO NGÀY MƯA",
+    "subhead": "Không gian đọc sách tĩnh lặng cùng trà sen ấm nóng",
+    "badge": "BOOK CLUB",
+    "extra_texts": [],
+    "cta": "TÌM HIỂU THÊM",
+    "store_info": "24 Nguyễn Đình Chiểu, Quận 3, TP.HCM",
+    "qr_code": null,
+    "qr_label": "DANH MỤC",
+    "style": {
+      "theme_color": "#38BDF8",
+      "text_effect": "hologram",
+      "background_tone": "dark_luxury"
+    }
+  }
+]

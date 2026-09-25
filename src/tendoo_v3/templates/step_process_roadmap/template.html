@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ hero }}</title>
+  <style>
+    {{ font_face_css }}
+
+    :root {
+      --headline-font: {{ headline_font_css }};
+      --theme-color: {{ theme_color }};
+      /* Font nghệ thuật chỉ dành cho hero/subhead -- UI phụ (badge/pill/store/cta)
+         dùng font sans-serif dễ đọc riêng, xem giải thích đầy đủ ở
+         sandwich_top_heavy/template.html. */
+      --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      font-family: var(--headline-font, 'Inter', 'Be Vietnam Pro', sans-serif);
+      background-color: #060913;
+      position: relative;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px 28px;
+      background-color: transparent;
+    }
+
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{ bg_data_uri }}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+
+    /* Top Header Bar: Hoàn toàn transparent, hỗ trợ Mirror */
+    .top-header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      align-items: flex-end;
+      text-align: right;
+      align-self: flex-end;
+      {% else %}
+      align-items: flex-start;
+      text-align: left;
+      align-self: flex-start;
+      {% endif %}
+      gap: 6px;
+      max-width: 88%;
+      background: transparent;
+    }
+
+    .badge-pill {
+      font-family: var(--ui-font);
+      padding: 0.32em 1.2em;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: {{ palette.badge_text }};
+      background: {{ palette.badge_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 9999px;
+      box-shadow: 0 4px 14px {{ theme_color }}66;
+      flex-shrink: 0;
+    }
+
+    .hero-title {
+      font-size: 40px;
+      font-weight: 900;
+      line-height: 1.20;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      color: {{ header_text_primary }};
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
+      padding: 2px 0;
+      {{ header_effect_css }}
+    }
+
+    .subhead-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{ header_text_secondary }};
+      /* Blur cu (6-8px) qua lon so voi font nho cua subhead, lam net chu bi
+         "nuot" trong mo/nho hon that (user bao cao truc tiep) -- xem giai thich
+         day du + doi chung anh render that o sandwich_top_heavy/template.html.
+         Giam blur chinh xuong 2px, giu 1 lop glow phu nhe (6px/0.55). Bo han
+         `-webkit-text-stroke` ban trong suot -- gay vien mau (chromatic fringing)
+         o co chu nho khi chong lop voi text-shadow. */
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.55);
+    }
+
+    .roadmap-platform {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: {{ zones.platform.height if zones.platform else height * 0.165 }}px;
+      max-height: {{ zones.platform.height if zones.platform else height * 0.165 }}px;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% else %}
+      flex-direction: row;
+      {% endif %}
+      align-items: stretch;
+      gap: 14px;
+      padding: 10px 20px;
+      background: transparent;
+      color: {{ palette.text_primary }};
+    }
+
+    /* Khu vực Quy Trình & Nút Bấm (~78% width) */
+    .platform-flow-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      /* `center` (không phải `space-between`) -- platform_h cấp cho zone này chủ yếu
+         do QR quyết định (xem geometry.py::_step_process_roadmap), không phải do
+         steps-grid+unified-pill-bar -- 2 khối này chỉ cần 103-160px thật trong khi
+         platform cao 127-169px, dư 15-35px từng bị space-between đẩy thành 1 khe hở
+         lộ liễu giữa 2 khối. */
+      justify-content: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .steps-grid {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .step-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 8px 12px;
+      background: transparent;
+      min-width: 0;
+    }
+
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: {{ palette.on_card_accent }};
+      color: {{ palette.badge_text }};
+      font-size: 13px;
+      font-weight: 900;
+      box-shadow: 0 2px 8px {{ theme_color }}88;
+      flex-shrink: 0;
+    }
+
+    .step-text {
+      font-size: inherit;
+      font-weight: 700;
+      line-height: 1.32;
+      color: {{ card_text_primary }};
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+      word-break: break-word;
+    }
+
+    /* Dải Viên Thuốc Thuần Túy: CTA Button + Store Info Chips (Không có QR chèn ngang) */
+    .unified-pill-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      gap: 12px;
+      width: 100%;
+      min-height: 36px;
+    }
+
+    .cta-btn {
+      display: inline-flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.46em 1.25em;
+      font-family: var(--ui-font);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{ palette.cta_text }};
+      background: {{ palette.cta_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 9999px;
+      box-shadow: 0 4px 18px {{ theme_color }}77;
+      white-space: nowrap;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .store-info-row {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      justify-content: flex-start;
+      {% else %}
+      justify-content: flex-end;
+      {% endif %}
+      font-size: 10.5px;
+    }
+
+    .store-item {
+      display: inline-flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.4em;
+      padding: 0.22em 0.65em;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 9999px;
+      color: {{ card_text_secondary }};
+      white-space: nowrap;
+    }
+
+    .store-item svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ card_accent }};
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+    }
+
+    /* Trạm Kiosk Scan QR Kích Hoạt (~22% width, spans full height) */
+    .platform-qr-kiosk {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      border-right: 1px solid rgba(255, 255, 255, 0.16);
+      padding-right: 12px;
+      {% else %}
+      border-left: 1px solid rgba(255, 255, 255, 0.16);
+      padding-left: 12px;
+      {% endif %}
+      flex-shrink: 0;
+    }
+
+    .qr-kiosk-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{ card_accent }};
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      padding: 2px 8px;
+    }
+
+    .qr-col {
+      flex-shrink: 0;
+    }
+
+    /* Thích ứng 9:16 Narrow Portrait */
+    {% if is_portrait_narrow %}
+    .poster-canvas {
+      padding: 16px 18px;
+    }
+    .top-header {
+      max-width: 94%;
+    }
+    .hero-title {
+      font-size: 28px;
+    }
+    .roadmap-platform {
+      flex-direction: column !important;
+      padding: 10px 14px 12px;
+      gap: 8px;
+      height: {{ zones.platform.height if zones.platform else height * 0.25 }}px;
+      max-height: {{ zones.platform.height if zones.platform else height * 0.25 }}px;
+    }
+    .platform-flow-col {
+      width: 100%;
+    }
+    .steps-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 6px !important;
+    }
+    .step-card {
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px !important;
+    }
+    .step-num {
+      width: 20px !important;
+      height: 20px !important;
+      font-size: 10.5px !important;
+    }
+    .step-text {
+      line-height: 1.25 !important;
+    }
+    .roadmap-bottom-split {
+      display: flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% else %}
+      flex-direction: row;
+      {% endif %}
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 6px;
+      margin-top: auto;
+    }
+    .roadmap-split-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      align-items: flex-end;
+      {% else %}
+      align-items: flex-start;
+      {% endif %}
+    }
+    .platform-qr-kiosk {
+      border: none !important;
+      padding: 0 !important;
+      flex: 0 0 auto;
+    }
+    .cta-btn {
+      padding: 0.42em 0.9em;
+      font-size: 11px;
+    }
+    {% endif %}
+
+    /* Thích ứng 16:9 Landscape */
+    {% if is_landscape_wide %}
+    .poster-canvas {
+      padding: 12px 28px;
+    }
+    .hero-title {
+      font-size: 30px;
+    }
+    .roadmap-platform {
+      padding: 6px 24px 8px;
+      gap: 12px;
+    }
+    .steps-grid {
+      gap: 6px;
+    }
+    .step-card {
+      padding: 4px 8px;
+      gap: 3px;
+    }
+    .step-num {
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+    }
+    .step-text {
+      line-height: 1.2;
+    }
+    .unified-pill-bar {
+      min-height: 32px;
+    }
+    .cta-btn {
+      padding: 0.38em 1.0em;
+      font-size: 11px;
+    }
+    .store-item {
+      padding: 0.18em 0.55em;
+    }
+    {% endif %}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <div class="top-header">
+      {% if badge %}
+      <div class="badge-pill" data-autofit data-min-font="{{ step_budget.badge.min_font }}" data-max-font="{{ step_budget.badge.max_font }}" data-max-width="{{ (zones.header.width * 0.85) if zones.header else width * 0.8 }}" data-max-height="{{ step_budget.badge.max_h }}">{{ badge }}</div>
+      {% endif %}
+      <div class="hero-title" data-autofit data-min-font="{{ step_budget.hero.min_font }}" data-max-font="{{ step_budget.hero.max_font }}" data-max-height="{{ step_budget.hero.max_h }}">{{ hero }}</div>
+      {% if subhead %}
+      <div class="subhead-title" data-autofit data-min-font="{{ step_budget.subhead.min_font }}" data-max-font="{{ step_budget.subhead.max_font }}" data-max-height="{{ step_budget.subhead.max_h }}">{{ subhead }}</div>
+      {% endif %}
+    </div>
+
+    <div class="roadmap-platform">
+      {% if is_portrait_narrow %}
+        <div class="steps-grid" data-autofit data-min-font="{{ step_budget.steps.min_font }}" data-max-font="{{ step_budget.steps.max_font }}" data-max-height="{{ step_budget.steps.max_h }}">
+          {% if steps %}
+            {% for st in steps %}
+            <div class="step-card">
+              <span class="step-num">{{ loop.index }}</span>
+              <span class="step-text">{{ st }}</span>
+            </div>
+            {% endfor %}
+          {% elif extra_texts %}
+            {% for line in extra_texts %}
+            <div class="step-card">
+              <span class="step-num">{{ loop.index }}</span>
+              <span class="step-text">{{ line }}</span>
+            </div>
+            {% endfor %}
+          {% elif extra_pills %}
+            {% for pill in extra_pills %}
+            <div class="step-card">
+              <span class="step-num">{{ loop.index }}</span>
+              <span class="step-text">{{ pill.text }}</span>
+            </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+
+        <div class="roadmap-bottom-split">
+          <div class="roadmap-split-actions">
+            {% if cta %}
+            <div class="cta-btn" data-autofit data-min-font="{{ step_budget.cta.min_font }}" data-max-font="{{ step_budget.cta.max_font }}" data-max-height="{{ step_budget.cta.max_h }}">
+              <span>{{ cta }}</span>
+              <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                {% if orientation in ('right', 'top_right', 'bottom_right') %}
+                <polyline points="15 18 9 12 15 6"></polyline>
+                {% else %}
+                <polyline points="9 18 15 12 9 6"></polyline>
+                {% endif %}
+              </svg>
+            </div>
+            {% endif %}
+
+            {% if store_items %}
+            <div class="store-info-row" data-autofit data-min-font="{{ step_budget.store.min_font }}" data-max-font="{{ step_budget.store.max_font }}" data-max-height="{{ step_budget.store.max_h }}">
+              {% for item in store_items %}
+              <div class="store-item">
+                {{ item.icon_svg }}
+                <span>{{ item.text }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% elif store_info %}
+            <div class="store-item">
+              <span>{{ store_info }}</span>
+            </div>
+            {% endif %}
+          </div>
+
+          {% if qr_svg %}
+          <div class="platform-qr-kiosk">
+            <div class="qr-col">{{ qr_svg }}</div>
+          </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <!-- Bố cục tiêu chuẩn 1:1, 4:5, 16:9 -->
+        <div class="platform-flow-col">
+          <div class="steps-grid" data-autofit data-min-font="{{ step_budget.steps.min_font }}" data-max-font="{{ step_budget.steps.max_font }}" data-max-height="{{ step_budget.steps.max_h }}">
+            {% if steps %}
+              {% for st in steps %}
+              <div class="step-card">
+                <span class="step-num">{{ loop.index }}</span>
+                <span class="step-text">{{ st }}</span>
+              </div>
+              {% endfor %}
+            {% elif extra_texts %}
+              {% for line in extra_texts %}
+              <div class="step-card">
+                <span class="step-num">{{ loop.index }}</span>
+                <span class="step-text">{{ line }}</span>
+              </div>
+              {% endfor %}
+            {% elif extra_pills %}
+              {% for pill in extra_pills %}
+              <div class="step-card">
+                <span class="step-num">{{ loop.index }}</span>
+                <span class="step-text">{{ pill.text }}</span>
+              </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          <div class="unified-pill-bar">
+            {% if cta %}
+            <div class="cta-btn" data-autofit data-min-font="{{ step_budget.cta.min_font }}" data-max-font="{{ step_budget.cta.max_font }}" data-max-height="{{ step_budget.cta.max_h }}">
+              <span>{{ cta }}</span>
+              <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                {% if orientation in ('right', 'top_right', 'bottom_right') %}
+                <polyline points="15 18 9 12 15 6"></polyline>
+                {% else %}
+                <polyline points="9 18 15 12 9 6"></polyline>
+                {% endif %}
+              </svg>
+            </div>
+            {% endif %}
+
+            {% if store_items %}
+            <div class="store-info-row" data-autofit data-min-font="{{ step_budget.store.min_font }}" data-max-font="{{ step_budget.store.max_font }}" data-max-height="{{ step_budget.store.max_h }}">
+              {% for item in store_items %}
+              <div class="store-item">
+                {{ item.icon_svg }}
+                <span>{{ item.text }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% elif store_info %}
+            <div class="store-item">
+              <span>{{ store_info }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if qr_svg %}
+        <div class="platform-qr-kiosk">
+          <span class="qr-kiosk-badge">QUÉT MÃ</span>
+          <div class="qr-col">{{ qr_svg }}</div>
+        </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  {{ autofit_js }}
+</body>
+</html>

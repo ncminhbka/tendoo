@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    {{ font_face_css }}
+    :root {
+      /* Font UI phụ (badge/cta/store/message list) tách khỏi font nghệ thuật
+         headline -- xem giải thích đầy đủ ở sandwich_top_heavy/template.html. */
+      --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    body, html {
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      font-family: {{ headline_font_css }};
+      background-color: #000;
+    }
+    .poster-canvas {
+      position: relative;
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      background: #060911;
+    }
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{ bg_data_uri }}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    /* Thẻ Kính Mờ Sang Trọng (Luxury Floating Glass Card) */
+    .centered-glass-card {
+      position: absolute;
+      left: {{ zones.card.x1 if zones.card else width * 0.18 }}px;
+      top: {{ zones.card.y1 if zones.card else height * 0.14 }}px;
+      width: {{ zones.card.width if zones.card else width * 0.64 }}px;
+      height: {{ zones.card.height if zones.card else height * 0.72 }}px;
+      max-height: {{ zones.card.height if zones.card else height * 0.72 }}px;
+      box-sizing: border-box;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      {# LUÔN dùng `center` + `gap` cố định, bất kể có extra_texts hay không --
+         trước đây nhánh CÓ extra_texts vẫn dùng `space-between`, và
+         `margin-top:auto` của .footer-action bên dưới đẩy nó sát đáy bất kể
+         justify-content của cha là gì (đúng lỗi đã fix ở split_left/right/
+         diagonal_slash/menu_price_board) -- đo thật cho thấy khi extra_texts có
+         nhưng phần còn lại (badge/rating/subhead/footer) thưa, gap giữa
+         .message-container và .footer-action vẫn tới 444px/60% card ở 1:1.
+         Nhánh KHÔNG extra_texts đã được sửa center+gap từ 2026-09-21 (case
+         lux_13_1x1_center_minimal) -- giờ áp dụng thống nhất cho cả 2 nhánh. #}
+      justify-content: center;
+      gap: {{ '16px' if (width / height < 0.7) else '32px' }};
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      align-items: flex-end;
+      text-align: right;
+      {% elif orientation in ('left', 'top_left', 'bottom_left') %}
+      align-items: flex-start;
+      text-align: left;
+      {% else %}
+      align-items: center;
+      text-align: center;
+      {% endif %}
+      padding: {{ '18px 20px' if (width / height < 0.7) else '22px 26px' }};
+      background: transparent;
+      color: {{ card_text_primary }};
+    }
+
+    .header-cluster {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      align-items: flex-end;
+      {% elif orientation in ('left', 'top_left', 'bottom_left') %}
+      align-items: flex-start;
+      {% else %}
+      align-items: center;
+      {% endif %}
+      gap: 6px;
+    }
+
+    .badge-capsule {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 14px;
+      font-family: var(--ui-font);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      /* `card_chrome_accent` (KHÔNG phải `card_accent`) -- badge có nền ĐEN CỐ ĐỊNH
+         riêng (rgba(0,0,0,0.65), được phép theo yeu_cau_templates.txt mục 1), phải
+         contrast với nền đen ĐÓ chứ không phải ảnh phía sau -- dùng card_accent (vốn
+         tính theo ảnh) từng khiến chữ chìm vào chính nền badge khi ảnh phía sau sáng
+         (user báo cáo trực tiếp). */
+      color: {{ card_chrome_accent }};
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid {{ card_chrome_accent }};
+      border-radius: 9999px;
+      box-shadow: 0 0 14px {{ theme_color }}44;
+      flex-shrink: 0;
+    }
+
+    .rating-stars {
+      display: flex;
+      gap: 4px;
+      margin: 2px 0;
+    }
+
+    .hero-title {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.20;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      width: 100%;
+      color: {{ card_text_primary }};
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
+      padding: 2px 0;
+      {{ card_effect_css }}
+    }
+
+    .subhead-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{ card_text_secondary }};
+      /* Blur cu (6-8px) qua lon so voi font nho cua subhead, lam net chu bi
+         "nuot" trong mo/nho hon that (user bao cao truc tiep) -- xem giai thich
+         day du + doi chung anh render that o sandwich_top_heavy/template.html.
+         Giam blur chinh xuong 2px, giu 1 lop glow phu nhe (6px/0.55). Bo han
+         `-webkit-text-stroke` ban trong suot -- gay vien mau (chromatic fringing)
+         o co chu nho khi chong lop voi text-shadow. */
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.55);
+      width: 100%;
+    }
+
+    /* Vùng Điểm Nhấn / Lời Chúc / Cam Kết (Frosted Features Container) -- đây là
+       1 danh sách nhiều dòng thông tin/cam kết (feature bullet list), không phải
+       1 câu trích dẫn "giọng nói" thương hiệu duy nhất như testimonial-quote,
+       nên xử lý như freetext-block: dùng --ui-font cho dễ đọc. */
+    .message-container {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 8px 14px;
+      box-sizing: border-box;
+      margin: 4px 0;
+    }
+
+    .message-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: inherit;
+      font-weight: 500;
+      color: {{ card_text_primary }};
+      line-height: 1.35;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      text-align: right;
+      {% elif orientation in ('left', 'top_left', 'bottom_left') %}
+      justify-content: flex-start;
+      text-align: left;
+      {% else %}
+      justify-content: center;
+      text-align: center;
+      {% endif %}
+    }
+
+    .bullet-gem {
+      color: {{ card_accent }};
+      font-size: 0.85em;
+      font-family: Arial, 'Segoe UI Symbol', sans-serif;
+      flex-shrink: 0;
+    }
+
+    /* Dải Hành Động Đáy: CTA + Store Info + QR */
+    .footer-action {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      gap: 12px;
+      width: 100%;
+      {# KHÔNG dùng margin-top:auto -- xem giải thích ở .centered-glass-card phía
+         trên (auto-margin trên flex-item luôn thắng justify-content của cha). #}
+      padding-top: 4px;
+    }
+
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      align-items: flex-end;
+      {% elif orientation in ('left', 'top_left', 'bottom_left') %}
+      align-items: flex-start;
+      {% else %}
+      align-items: center;
+      {% endif %}
+    }
+
+    .cta-btn {
+      display: inline-flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.46em 1.25em;
+      font-family: var(--ui-font);
+      font-size: 12.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{ palette.cta_text }};
+      background: {{ palette.cta_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 9999px;
+      box-shadow: 0 4px 18px {{ theme_color }}77;
+      white-space: nowrap;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .store-info-row {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      align-items: center;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      justify-content: flex-end;
+      {% elif orientation in ('left', 'top_left', 'bottom_left') %}
+      justify-content: flex-start;
+      {% else %}
+      justify-content: center;
+      {% endif %}
+      font-size: 14px;
+    }
+
+    .store-item {
+      display: inline-flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.4em;
+      font-size: inherit;
+    }
+
+    .store-item span {
+      font-size: inherit;
+    }
+      padding: 0.20em 0.60em;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 9999px;
+      font-family: inherit;
+      /* `card_footer_text_secondary` (không phải `card_text_secondary` -- màu trung
+         bình CẢ card) -- store-item nằm ở ĐÁY card, nền chỉ tint 8% (gần như vẫn là
+         ảnh thật phía dưới), cần sample riêng độ sáng cục bộ ở đáy thay vì trung bình
+         chung với đỉnh card (badge/hero) -- user báo cáo thật: chữ trắng hoà nền trắng. */
+      color: {{ card_footer_text_secondary }};
+    }
+
+    .store-item svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ card_footer_accent }};
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+    }
+
+    .qr-col {
+      flex-shrink: 0;
+    }
+
+    /* Thích ứng 9:16 Narrow Portrait */
+    {% if is_portrait_narrow %}
+    .centered-glass-card {
+      padding: 16px 18px;
+    }
+    .hero-title {
+      font-size: 28px;
+    }
+    .footer-action {
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .footer-left {
+      align-items: center;
+    }
+    .store-info-row {
+      justify-content: center;
+    }
+    {% endif %}
+
+    /* Thích ứng 16:9 Landscape Wide */
+    {% if is_landscape_wide %}
+    .centered-glass-card {
+      padding: 14px 20px;
+    }
+    .hero-title {
+      font-size: 28px;
+    }
+    .subhead-title {
+      font-size: 13px;
+    }
+    .message-container {
+      padding: 6px 12px;
+      gap: 4px;
+    }
+    .footer-action {
+      gap: 10px;
+      padding-top: 2px;
+    }
+    .cta-btn {
+      padding: 0.38em 1.0em;
+      font-size: 11px;
+    }
+    .store-item {
+      padding: 0.18em 0.55em;
+    }
+    {% endif %}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <div class="centered-glass-card">
+      <div class="header-cluster" data-max-height="{{ luxury_budget.header_budget }}">
+        {% if badge %}
+        <div class="badge-capsule">{{ badge }}</div>
+        {% endif %}
+
+        {% if stars_svg %}
+        <div class="rating-stars">{{ stars_svg | safe }}</div>
+        {% endif %}
+
+        <div class="hero-title" data-autofit data-min-font="{{ luxury_budget.hero.min_font }}" data-max-font="{{ luxury_budget.hero.max_font }}" data-max-height="{{ luxury_budget.hero.max_h }}">{{ hero }}</div>
+
+        {% if subhead %}
+        <div class="subhead-title" data-autofit data-min-font="{{ luxury_budget.subhead.min_font }}" data-max-font="{{ luxury_budget.subhead.max_font }}" data-max-height="{{ luxury_budget.subhead.max_h }}">{{ subhead }}</div>
+        {% endif %}
+      </div>
+
+      {% if extra_texts %}
+      <div class="message-container" data-autofit data-min-font="{{ luxury_budget.message.min_font }}" data-max-font="{{ luxury_budget.message.max_font }}" data-max-height="{{ luxury_budget.message.max_h }}">
+        {% for item in extra_texts %}
+        <div class="message-line">
+          <span class="bullet-gem">{{ bullet_svg }}</span>
+          <span>{{ item }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if qr_svg or cta or store_items or store_info %}
+      <div class="footer-action">
+        {% if cta or store_items or store_info %}
+        <div class="footer-left">
+          {% if cta %}
+          <button class="cta-btn" data-autofit data-min-font="{{ luxury_budget.cta.min_font }}" data-max-font="{{ luxury_budget.cta.max_font }}" data-max-height="{{ luxury_budget.cta.max_h }}">
+            {% if orientation in ('right', 'top_right', 'bottom_right') %}
+            <span>‹</span>
+            {% endif %}
+            <span>{{ cta }}</span>
+            {% if orientation not in ('right', 'top_right', 'bottom_right') %}
+            <span>›</span>
+            {% endif %}
+          </button>
+          {% endif %}
+
+          {% if store_items %}
+          <div class="store-info-row" data-autofit data-min-font="{{ luxury_budget.store.min_font }}" data-max-font="{{ luxury_budget.store.max_font }}" data-max-height="{{ luxury_budget.store.max_h }}">
+            {% for item in store_items %}
+            <span class="store-item">
+              {{ item.icon_svg | safe }}
+              <span>{{ item.text }}</span>
+            </span>
+            {% endfor %}
+          </div>
+          {% elif store_info %}
+          <div class="store-info-row" data-autofit data-min-font="{{ luxury_budget.store.min_font }}" data-max-font="{{ luxury_budget.store.max_font }}" data-max-height="{{ luxury_budget.store.max_h }}">
+            <span class="store-item">{{ store_info }}</span>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% if qr_svg %}
+        <div class="qr-col">
+          {{ qr_svg | safe }}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {{ autofit_js }}
+</body>
+</html>

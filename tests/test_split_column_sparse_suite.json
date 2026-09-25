@@ -1,0 +1,202 @@
+[
+  {
+    "id": "split_left_sparse_1x1",
+    "title": "[SPARSE] split_left 1x1 - chi hero+badge+cta+hotline",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#06B6D4",
+        "text_effect": "neon_glow",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "THẾ HỆ MỚI 2026",
+      "hero": "ĐỒNG HỒ TITAN THÔNG MINH S7",
+      "subhead": null,
+      "extra_texts": [],
+      "cta": "MUA NGAY HÔM NAY",
+      "store_info": "Hotline: 1900 8888",
+      "qr_code": null,
+      "qr_label": "QUÉT MUA NGAY",
+      "scene_prompt": "Futuristic matte black smartwatch floating with neon cyan digital UI glow and water splashes, dark reflective podium 8k",
+      "corridor_prompt": "Clean dark cyber space with subtle diffuse blue backlight on the left"
+    }
+  },
+  {
+    "id": "split_left_sparse_9x16",
+    "title": "[SPARSE] split_left 9x16 - chi hero+badge+cta+hotline",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#06B6D4",
+        "text_effect": "neon_glow",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "THẾ HỆ MỚI 2026",
+      "hero": "ĐỒNG HỒ TITAN THÔNG MINH S7",
+      "subhead": null,
+      "extra_texts": [],
+      "cta": "MUA NGAY HÔM NAY",
+      "store_info": "Hotline: 1900 8888",
+      "qr_code": null,
+      "qr_label": "QUÉT MUA NGAY",
+      "scene_prompt": "Futuristic matte black smartwatch floating with neon cyan digital UI glow and water splashes, dark reflective podium 8k",
+      "corridor_prompt": "Clean dark cyber space with subtle diffuse blue backlight on the left"
+    }
+  },
+  {
+    "id": "split_left_sparse_16x9",
+    "title": "[SPARSE] split_left 16x9 - chi hero+badge+cta+hotline",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#06B6D4",
+        "text_effect": "neon_glow",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "THẾ HỆ MỚI 2026",
+      "hero": "ĐỒNG HỒ TITAN THÔNG MINH S7",
+      "subhead": null,
+      "extra_texts": [],
+      "cta": "MUA NGAY HÔM NAY",
+      "store_info": "Hotline: 1900 8888",
+      "qr_code": null,
+      "qr_label": "QUÉT MUA NGAY",
+      "scene_prompt": "Futuristic matte black smartwatch floating with neon cyan digital UI glow and water splashes, dark reflective podium 8k",
+      "corridor_prompt": "Clean dark cyber space with subtle diffuse blue backlight on the left"
+    }
+  },
+  {
+    "id": "split_left_sparse_4x5",
+    "title": "[SPARSE] split_left 4x5 - chi hero+badge+cta+hotline",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#06B6D4",
+        "text_effect": "neon_glow",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "THẾ HỆ MỚI 2026",
+      "hero": "ĐỒNG HỒ TITAN THÔNG MINH S7",
+      "subhead": null,
+      "extra_texts": [],
+      "cta": "MUA NGAY HÔM NAY",
+      "store_info": "Hotline: 1900 8888",
+      "qr_code": null,
+      "qr_label": "QUÉT MUA NGAY",
+      "scene_prompt": "Futuristic matte black smartwatch floating with neon cyan digital UI glow and water splashes, dark reflective podium 8k",
+      "corridor_prompt": "Clean dark cyber space with subtle diffuse blue backlight on the left"
+    }
+  },
+  {
+    "id": "split_right_sparse_1x1",
+    "title": "[SPARSE] split_right 1x1 - chi hero+badge+cta+hotline",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "split_right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EC4899",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "ĐỘT PHÁ LÀN DA",
+      "hero": "SERUM NANO COLLAGEN TƯƠI",
+      "subhead": null,
+      "extra_texts": [],
+      "cta": "NHẬN ƯU ĐÃI NGAY",
+      "store_info": "Hotline: 1900 8888",
+      "qr_code": null,
+      "qr_label": "QUÉT MÃ ƯU ĐÃI",
+      "scene_prompt": "Glass dropper bottle of luxury pink face serum standing on wet marble with water ripples and pink flower petals 8k",
+      "corridor_prompt": "Deep rose tinted studio shadow on the right column for clean typography"
+    }
+  },
+  {
+    "id": "split_right_sparse_9x16",
+    "title": "[SPARSE] split_right 9x16 - chi hero+badge+cta+hotline",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EC4899",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "ĐỘT PHÁ LÀN DA",
+      "hero": "SERUM NANO COLLAGEN TƯƠI",
+      "subhead": null,
+      "extra_texts": [],
+      "cta": "NHẬN ƯU ĐÃI NGAY",
+      "store_info": "Hotline: 1900 8888",
+      "qr_code": null,
+      "qr_label": "QUÉT MÃ ƯU ĐÃI",
+      "scene_prompt": "Glass dropper bottle of luxury pink face serum standing on wet marble with water ripples and pink flower petals 8k",
+      "corridor_prompt": "Deep rose tinted studio shadow on the right column for clean typography"
+    }
+  },
+  {
+    "id": "split_right_sparse_16x9",
+    "title": "[SPARSE] split_right 16x9 - chi hero+badge+cta+hotline",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EC4899",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "ĐỘT PHÁ LÀN DA",
+      "hero": "SERUM NANO COLLAGEN TƯƠI",
+      "subhead": null,
+      "extra_texts": [],
+      "cta": "NHẬN ƯU ĐÃI NGAY",
+      "store_info": "Hotline: 1900 8888",
+      "qr_code": null,
+      "qr_label": "QUÉT MÃ ƯU ĐÃI",
+      "scene_prompt": "Glass dropper bottle of luxury pink face serum standing on wet marble with water ripples and pink flower petals 8k",
+      "corridor_prompt": "Deep rose tinted studio shadow on the right column for clean typography"
+    }
+  },
+  {
+    "id": "split_right_sparse_4x5",
+    "title": "[SPARSE] split_right 4x5 - chi hero+badge+cta+hotline",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EC4899",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "ĐỘT PHÁ LÀN DA",
+      "hero": "SERUM NANO COLLAGEN TƯƠI",
+      "subhead": null,
+      "extra_texts": [],
+      "cta": "NHẬN ƯU ĐÃI NGAY",
+      "store_info": "Hotline: 1900 8888",
+      "qr_code": null,
+      "qr_label": "QUÉT MÃ ƯU ĐÃI",
+      "scene_prompt": "Glass dropper bottle of luxury pink face serum standing on wet marble with water ripples and pink flower petals 8k",
+      "corridor_prompt": "Deep rose tinted studio shadow on the right column for clean typography"
+    }
+  }
+]

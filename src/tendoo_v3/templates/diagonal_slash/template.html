@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ hero }}</title>
+  <style>
+    {{ font_face_css }}
+
+    :root {
+      --headline-font: {{ headline_font_css }};
+      --theme-color: {{ theme_color }};
+      /* Font nghệ thuật chỉ dành cho hero/subhead -- UI phụ (badge/pill/store/cta)
+         dùng font sans-serif dễ đọc riêng, xem giải thích đầy đủ ở
+         sandwich_top_heavy/template.html. */
+      --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      font-family: var(--headline-font, 'Inter', 'Be Vietnam Pro', sans-serif);
+      background: #060911;
+      position: relative;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      background-color: transparent;
+    }
+
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{ bg_data_uri }}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    {% if orientation in ('right', 'top_right', 'bottom_right') %}
+
+    .diagonal-content {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: {{ zones.content.width if zones.content else width * 0.44 }}px;
+      height: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      /* `center` (không phải `space-between`) -- cùng họ lỗi với split_left/right và
+         menu_price_board: cột luôn cao 100% canvas, space-between + margin-top:auto
+         trên .conversion-suite từng ghim 2 khối vào 2 đầu (đo thật: gap 670px/65%
+         canvas ở 1:1 khi thưa nội dung). */
+      justify-content: center;
+      align-items: flex-end;
+      text-align: right;
+      padding: 32px 28px 24px 20px;
+      color: {{ palette.text_primary }};
+      background: transparent;
+      gap: 32px;
+    }
+
+    .top-section {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .kicker-tag {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      flex-direction: row-reverse;
+      align-items: center;
+      gap: 8px;
+      padding: 0.32em 1.15em;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: {{ palette.badge_text }};
+      background: {{ palette.badge_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 4px;
+      transform: skewX(12deg);
+      box-shadow: 0 4px 14px {{ theme_color }}66, 0 1px 3px rgba(0, 0, 0, 0.4);
+      margin-bottom: 2px;
+      flex-shrink: 0;
+    }
+
+    .kicker-tag > * {
+      transform: skewX(-12deg);
+    }
+
+    .extra-pills-wrap {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      font-size: 12px;
+    }
+
+    .extra-pill {
+      display: inline-flex;
+      flex-direction: row-reverse;
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.32em 0.85em;
+      background: rgba(15, 23, 42, 0.74);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 9999px;
+      font-size: inherit;
+      font-weight: 600;
+      color: #fff;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+      line-height: 1.2;
+      align-self: flex-end;
+      max-width: 100%;
+    }
+
+    .freetext-block {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+      background: rgba(10, 15, 28, 0.70);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      padding: 6px 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      text-align: right;
+      font-size: 11.5px;
+    }
+
+    .freetext-line {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: baseline;
+      gap: 6px;
+      font-size: inherit;
+      line-height: 1.25;
+      color: #F1F5F9;
+    }
+
+    .conversion-suite {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      width: 100%;
+      /* KHÔNG dùng margin-top:auto -- xem giải thích ở split_left/template.html. */
+    }
+
+    .cta-btn {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      flex-direction: row-reverse;
+      align-items: center;
+      gap: 0.5em;
+      padding: 0.52em 1.25em;
+      font-size: 12.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{ palette.cta_text }};
+      background: {{ palette.cta_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 9999px;
+      box-shadow: 0 4px 16px {{ theme_color }}66, 0 2px 6px rgba(0, 0, 0, 0.4);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .store-info-col {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      width: 100%;
+      font-size: 11px;
+    }
+
+    .store-item {
+      display: inline-flex;
+      flex-direction: row-reverse;
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.25em 0.75em;
+      background: rgba(10, 15, 28, 0.74);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 9999px;
+      font-size: inherit;
+      font-weight: 600;
+      color: #E2E8F0;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      max-width: 100%;
+      line-height: 1.2;
+    }
+
+    {% else %}
+    /* Left Orientation (Mặc định) */
+
+    .diagonal-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: {{ zones.content.width if zones.content else width * 0.44 }}px;
+      height: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      /* `center` -- xem giải thích ở nhánh orientation "right" phía trên. */
+      justify-content: center;
+      align-items: flex-start;
+      text-align: left;
+      padding: 32px 20px 24px 28px;
+      color: {{ palette.text_primary }};
+      background: transparent;
+      gap: 32px;
+    }
+
+    .top-section {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .kicker-tag {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.32em 1.15em;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: {{ palette.badge_text }};
+      background: {{ palette.badge_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 4px;
+      transform: skewX(-12deg);
+      box-shadow: 0 4px 14px {{ theme_color }}66, 0 1px 3px rgba(0, 0, 0, 0.4);
+      margin-bottom: 2px;
+      flex-shrink: 0;
+    }
+
+    .kicker-tag > * {
+      transform: skewX(12deg);
+    }
+
+    .extra-pills-wrap {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      font-size: 12px;
+    }
+
+    .extra-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.32em 0.85em;
+      background: rgba(15, 23, 42, 0.74);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 9999px;
+      font-size: inherit;
+      font-weight: 600;
+      color: #fff;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+      line-height: 1.2;
+      align-self: flex-start;
+      max-width: 100%;
+    }
+
+    .freetext-block {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+      background: rgba(10, 15, 28, 0.70);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      padding: 6px 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      text-align: left;
+      font-size: 11.5px;
+    }
+
+    .freetext-line {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-size: inherit;
+      line-height: 1.25;
+      color: #F1F5F9;
+    }
+
+    .conversion-suite {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      width: 100%;
+      /* KHÔNG dùng margin-top:auto -- xem giải thích ở split_left/template.html. */
+    }
+
+    .cta-btn {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+      padding: 0.52em 1.25em;
+      font-size: 12.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{ palette.cta_text }};
+      background: {{ palette.cta_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 9999px;
+      box-shadow: 0 4px 16px {{ theme_color }}66, 0 2px 6px rgba(0, 0, 0, 0.4);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .store-info-col {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      width: 100%;
+      font-size: 11px;
+    }
+
+    .store-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.25em 0.75em;
+      background: rgba(10, 15, 28, 0.74);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 9999px;
+      font-size: inherit;
+      font-weight: 600;
+      color: #E2E8F0;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      max-width: 100%;
+      line-height: 1.2;
+    }
+    {% endif %}
+
+    .hero-title {
+      font-size: 44px;
+      font-weight: 900;
+      line-height: 1.18;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      width: 100%;
+      color: {{ header_text_primary }};
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.92), 0 0 4px rgba(0, 0, 0, 0.95);
+      padding: 2px 0;
+      {{ header_effect_css }}
+    }
+
+    .subhead-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{ header_text_secondary }};
+      /* Blur cu (6-8px) qua lon so voi font nho cua subhead, lam net chu bi
+         "nuot" trong mo/nho hon that (user bao cao truc tiep) -- xem giai thich
+         day du + doi chung anh render that o sandwich_top_heavy/template.html.
+         Giam blur chinh xuong 2px, giu 1 lop glow phu nhe (6px/0.55). Bo han
+         `-webkit-text-stroke` ban trong suot -- gay vien mau (chromatic fringing)
+         o co chu nho khi chong lop voi text-shadow. */
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.55);
+      width: 100%;
+    }
+
+    .extra-pill svg, .store-item svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ palette.on_card_accent }};
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+    }
+
+    .freetext-bullet {
+      color: {{ palette.on_card_accent }};
+      font-size: 0.85em;
+      font-family: Arial, 'Segoe UI Symbol', sans-serif;
+      flex-shrink: 0;
+    }
+
+    .store-item span {
+      word-break: break-word;
+    }
+
+    /* Thích ứng 9:16 narrow portrait */
+    {% if is_portrait_narrow %}
+    .diagonal-content {
+      padding: 24px 16px;
+      gap: 28px;
+    }
+    .store-item {
+      padding: 0.2em 0.6em;
+    }
+    .cta-btn {
+      width: 95%;
+      justify-content: center;
+      padding: 0.45em 1em;
+      font-size: 11.5px;
+    }
+    {% endif %}
+
+    /* Thích ứng 16:9 wide landscape */
+    {% if is_landscape_wide %}
+    .diagonal-content {
+      padding: 16px 20px;
+      gap: 24px;
+    }
+    .freetext-block {
+      padding: 4px 10px;
+      gap: 2px;
+      font-size: 10.5px;
+    }
+    .conversion-suite {
+      flex-direction: row;
+      align-items: flex-end;
+      gap: 12px;
+      width: 100%;
+    }
+    .bottom-col-qr {
+      flex-shrink: 0;
+    }
+    .bottom-col-actions {
+      display: flex;
+      flex-direction: column;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      align-items: flex-end;
+      {% else %}
+      align-items: flex-start;
+      {% endif %}
+      gap: 5px;
+      flex: 1;
+      min-width: 0;
+    }
+    .store-info-col {
+      gap: 3px;
+      font-size: 10px;
+    }
+    .cta-btn {
+      padding: 0.42em 1.0em;
+      font-size: 11px;
+    }
+    {% endif %}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <div class="diagonal-content">
+      <div class="top-section">
+        {% if badge %}
+        <div class="kicker-tag" data-autofit data-min-font="{{ diagonal_budget.badge.min_font }}" data-max-font="{{ diagonal_budget.badge.max_font }}" data-max-width="{{ (zones.content.width * 0.9) if zones.content else width * 0.4 }}" data-max-height="{{ diagonal_budget.badge.max_h }}"><span>{{ badge }}</span></div>
+        {% endif %}
+        <div class="hero-title" data-autofit data-min-font="{{ diagonal_budget.hero.min_font }}" data-max-font="{{ diagonal_budget.hero.max_font }}" data-max-height="{{ diagonal_budget.hero.max_h }}">{{ hero }}</div>
+        {% if subhead %}
+        <div class="subhead-title" data-autofit data-min-font="{{ diagonal_budget.subhead.min_font }}" data-max-font="{{ diagonal_budget.subhead.max_font }}" data-max-height="{{ diagonal_budget.subhead.max_h }}">{{ subhead }}</div>
+        {% endif %}
+      </div>
+
+      <!-- FreeText Dual-Mode -->
+      {% if extra_texts %}
+        {% if is_freetext_block %}
+        <div class="freetext-block" data-autofit data-min-font="{{ diagonal_budget.freetext_block.min_font }}" data-max-font="{{ diagonal_budget.freetext_block.max_font }}" data-max-height="{{ diagonal_budget.freetext_block.max_h }}">
+          {% for line in extra_texts %}
+          <div class="freetext-line">
+            <span class="freetext-bullet">{{ bullet_svg }}</span>
+            <span>{{ line }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="extra-pills-wrap" data-autofit data-min-font="{{ diagonal_budget.freetext_pills.min_font }}" data-max-font="{{ diagonal_budget.freetext_pills.max_font }}" data-max-height="{{ diagonal_budget.freetext_pills.max_h }}">
+          {% for pill in extra_pills %}
+          <div class="extra-pill">
+            {{ pill.icon_svg }}
+            <span>{{ pill.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endif %}
+
+      <div class="conversion-suite">
+        {% if is_landscape_wide %}
+          {% if orientation in ('right', 'top_right', 'bottom_right') %}
+            <div class="bottom-col-actions">
+              {% if cta %}
+              <div class="cta-btn" data-autofit data-min-font="{{ diagonal_budget.cta.min_font }}" data-max-font="{{ diagonal_budget.cta.max_font }}" data-max-height="{{ diagonal_budget.cta.max_h }}">
+                <span>{{ cta }}</span>
+                <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </div>
+              {% endif %}
+              {% if store_items %}
+              <div class="store-info-col" data-autofit data-min-font="{{ diagonal_budget.store.min_font }}" data-max-font="{{ diagonal_budget.store.max_font }}" data-max-height="{{ diagonal_budget.store.max_h }}">
+                {% for item in store_items %}
+                <div class="store-item">
+                  {{ item.icon_svg }}
+                  <span>{{ item.text }}</span>
+                </div>
+                {% endfor %}
+              </div>
+              {% elif store_info %}
+              <div class="store-item">
+                <span>{{ store_info }}</span>
+              </div>
+              {% endif %}
+            </div>
+            {% if qr_svg %}
+            <div class="bottom-col-qr">{{ qr_svg }}</div>
+            {% endif %}
+          {% else %}
+            {% if qr_svg %}
+            <div class="bottom-col-qr">{{ qr_svg }}</div>
+            {% endif %}
+            <div class="bottom-col-actions">
+              {% if cta %}
+              <div class="cta-btn" data-autofit data-min-font="{{ diagonal_budget.cta.min_font }}" data-max-font="{{ diagonal_budget.cta.max_font }}" data-max-height="{{ diagonal_budget.cta.max_h }}">
+                <span>{{ cta }}</span>
+                <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </div>
+              {% endif %}
+              {% if store_items %}
+              <div class="store-info-col" data-autofit data-min-font="{{ diagonal_budget.store.min_font }}" data-max-font="{{ diagonal_budget.store.max_font }}" data-max-height="{{ diagonal_budget.store.max_h }}">
+                {% for item in store_items %}
+                <div class="store-item">
+                  {{ item.icon_svg }}
+                  <span>{{ item.text }}</span>
+                </div>
+                {% endfor %}
+              </div>
+              {% elif store_info %}
+              <div class="store-item">
+                <span>{{ store_info }}</span>
+              </div>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% else %}
+          {% if qr_svg %}
+          <div style="{% if orientation in ('right', 'top_right', 'bottom_right') %}align-self:flex-end;{% else %}align-self:flex-start;{% endif %} margin-bottom:2px;">{{ qr_svg }}</div>
+          {% endif %}
+          {% if cta %}
+          <div class="cta-btn" data-autofit data-min-font="{{ diagonal_budget.cta.min_font }}" data-max-font="{{ diagonal_budget.cta.max_font }}" data-max-height="{{ diagonal_budget.cta.max_h }}">
+            <span>{{ cta }}</span>
+            <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              {% if orientation in ('right', 'top_right', 'bottom_right') %}
+              <polyline points="15 18 9 12 15 6"></polyline>
+              {% else %}
+              <polyline points="9 18 15 12 9 6"></polyline>
+              {% endif %}
+            </svg>
+          </div>
+          {% endif %}
+          {% if store_items %}
+          <div class="store-info-col" data-autofit data-min-font="{{ diagonal_budget.store.min_font }}" data-max-font="{{ diagonal_budget.store.max_font }}" data-max-height="{{ diagonal_budget.store.max_h }}">
+            {% for item in store_items %}
+            <div class="store-item">
+              {{ item.icon_svg }}
+              <span>{{ item.text }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% elif store_info %}
+          <div class="store-item">
+            <span>{{ store_info }}</span>
+          </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {{ autofit_js }}
+</body>
+</html>

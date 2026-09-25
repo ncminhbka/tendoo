@@ -1,0 +1,565 @@
+[
+  {
+    "id": "case_01_watch_split_left",
+    "title": "Prompt 1 - Watch Split Left (4:5)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#E0E0E0",
+        "text_effect": "chrome",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "THỜI GIAN LÀ CỦA BẠN",
+      "subhead": "NÂNG TẦM PHONG CÁCH ĐỜI SỐNG",
+      "badge": "SANG TRỌNG & ĐẲNG CẤP",
+      "extra_texts": [
+        "Dây đeo kim loại mạ bạc bóng bẩy",
+        "Ống kính 35mm chân thực 8K",
+        "Mặt kính Sapphire nguyên khối"
+      ],
+      "cta": "MUA NGAY",
+      "store_info": "Hotline: 1900 8888 • www.tendoo.ai",
+      "scene_prompt": "A modern luxury smartwatch on rustic wooden table, morning soft sunlight, 35mm lens, 8k",
+      "corridor_prompt": "Clean minimal dark wooden surface gradient, soft diffused morning sunlight, zero text"
+    }
+  },
+  {
+    "id": "case_02_sport_watch_sandwich_9_16",
+    "title": "Prompt 3 - Sport Watch Sandwich (9:16)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "days",
+        "theme_color": "#00F0FF",
+        "text_effect": "neon",
+        "background_tone": "cyber_neon"
+      },
+      "hero": "CHINH PHỤC MỌI GIỚI HẠN",
+      "subhead": "DÒNG ĐỒNG HỒ THỂ THAO CAO CẤP",
+      "badge": "SPORT EDITION",
+      "extra_texts": [
+        "Màn hình nhịp tim phát sáng",
+        "Chống va đập chuẩn quân đội",
+        "Pin 14 ngày liên tục"
+      ],
+      "cta": "KHÁM PHÁ NGAY",
+      "store_info": "Bảo hành 24 tháng chính hãng",
+      "scene_prompt": "Close-up muscular wrist wearing modern black sport smartwatch, neon green glowing heart rate, 8k",
+      "corridor_prompt": "Smooth dark urban haze gradient, neon glow ambient light, clean copy space"
+    }
+  },
+  {
+    "id": "case_03_family_watch_1_1",
+    "title": "Prompt 5 - Family Warmth Sandwich (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "hero": "KẾT NỐI YÊU THƯƠNG",
+      "subhead": "NGƯỜI BẠN ĐỒNG HÀNH CỦA GIA ĐÌNH",
+      "badge": "GẮN KẾT TRỌN VẸN",
+      "extra_texts": [
+        "Định vị trẻ em an toàn",
+        "Gọi thoại chất lượng cao",
+        "Chống nước chuẩn IP68"
+      ],
+      "cta": "XEM CHI TIẾT",
+      "store_info": "Hệ thống cửa hàng toàn quốc",
+      "scene_prompt": "A smiling young father wearing stylish navy smartwatch playing with kid in sunny green park, 8k",
+      "corridor_prompt": "Warm ambient sunlight gradient, soft bokeh park background, clean copy space"
+    }
+  },
+  {
+    "id": "case_04_fashion_gold_watch_2_3",
+    "title": "Prompt 7 - Fashion Luxury Split Left (2:3)",
+    "width": 680,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "ĐẲNG CẤP & SANG TRỌNG",
+      "subhead": "BIỂU TƯỢNG THỜI TRANG MỚI",
+      "badge": "LUXURY ROSE GOLD",
+      "extra_texts": [
+        "Dây lưới mịn mạ vàng 18K",
+        "Trang sức vàng tối giản",
+        "Phiên bản giới hạn 500 chiếc"
+      ],
+      "cta": "SỞ HỮU NGAY",
+      "store_info": "Flagship Boutique • Hà Nội & TP.HCM",
+      "scene_prompt": "Elegant fashion editorial photo of woman wearing rose gold luxury smartwatch, pastel pink and beige studio, 8k",
+      "corridor_prompt": "Soft luxury satin ambient background, warm studio lighting, clean vertical copy space"
+    }
+  },
+  {
+    "id": "case_05_cyberpunk_neon_9_16",
+    "title": "Prompt 9 - Cyberpunk Smartwatch (9:16)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "days",
+        "theme_color": "#FF007F",
+        "text_effect": "neon",
+        "background_tone": "cyber_neon"
+      },
+      "hero": "TƯƠNG LAI TRONG TẦM TAY",
+      "subhead": "KHÁM PHÁ CÔNG NGHỆ ĐỘT PHÁ",
+      "badge": "CYBER TECH",
+      "extra_texts": [
+        "Màn hình 3D Hologram",
+        "Vi xử lý nơ-ron thế hệ mới",
+        "Giao diện vị lai độc quyền"
+      ],
+      "cta": "TRẢI NGHIỆM NGAY",
+      "store_info": "CyberStore 2026",
+      "scene_prompt": "Sleek smartwatch levitating in mid-air over dark background with vivid neon cyan and pink rim lights, 8k",
+      "corridor_prompt": "Deep cyber dark blue gradient with subtle neon haze, clean empty space"
+    }
+  },
+  {
+    "id": "case_06_waterproof_corner_pod_1_1",
+    "title": "Prompt 15 - Waterproof 50M Corner Pod (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "lifestyle_corner_pod",
+      "style": {
+        "font": "days",
+        "theme_color": "#00E5FF",
+        "text_effect": "neon",
+        "background_tone": "cyber_neon"
+      },
+      "hero": "CHỐNG NƯỚC 50M",
+      "subhead": "SẴN SÀNG CHO MỌI CUỘC PHIÊU LƯU",
+      "badge": "DURABILITY MAX",
+      "extra_texts": [
+        "Bọt khí chuyển động",
+        "Khung thép không gỉ 316L",
+        "Mặt số dạ quang ban đêm"
+      ],
+      "cta": "ĐẶT HÀNG",
+      "store_info": "Hotline: 1800 6868",
+      "scene_prompt": "Macro photo of rugged sport smartwatch submerged in crystal clear water with bubbles, glowing dial, 8k",
+      "corridor_prompt": "Deep aqua blue water gradient, soft underwater light refraction, clean corner space"
+    }
+  },
+  {
+    "id": "case_07_outdoor_mountain_16_9",
+    "title": "Prompt 19 - Hiking Mountain 16:9",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "lifestyle_corner_pod",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFB300",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "hero": "KHÁM PHÁ THẾ GIỚI",
+      "subhead": "NGƯỜI BẠN ĐỒNG HÀNH TRÊN MỌI NẺO ĐƯỜNG",
+      "badge": "ADVENTURE PRO",
+      "extra_texts": [
+        "Bản đồ cao độ vệ tinh",
+        "Đo nồng độ oxy SpO2",
+        "Pin năng lượng mặt trời"
+      ],
+      "cta": "MUA NGAY",
+      "store_info": "Tendoo Outdoor gear",
+      "scene_prompt": "Outdoor smartwatch on hiker wrist facing breathtaking mountain range at sunrise, solar flare, 8k",
+      "corridor_prompt": "Golden sunrise mountain mist gradient, cinematic warm light, clean corner space"
+    }
+  },
+  {
+    "id": "case_08_fitness_gym_before_after",
+    "title": "Prompt 21 - Fitness Gym 90 Days Before/After (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "before_after_split",
+      "style": {
+        "font": "days",
+        "theme_color": "#FF3333",
+        "text_effect": "fire",
+        "background_tone": "cinema_red"
+      },
+      "hero": "LỘT XÁC SAU 90 NGÀY",
+      "subhead": "97% Khách hàng hài lòng với vóc dáng chuẩn Fitness",
+      "badge": "TRANSFORMATION",
+      "tag_left": "TRƯỚC / DAY 01",
+      "tag_right": "SAU / DAY 90",
+      "rating": 5,
+      "extra_texts": [
+        "PT 1:1 riêng tư",
+        "Giáo án cá nhân hóa",
+        "Theo dõi dinh dưỡng chi tiết"
+      ],
+      "cta": "GIẢM 20% GÓI THÁNG ĐẦU",
+      "store_info": "Elite Fitness Club • 090 123 4567",
+      "scene_prompt": "Split view before after transformation of male fitness client in luxury gym, cinematic contrast lighting, 8k",
+      "corridor_prompt": "Dark red and charcoal gym ambient gradient, soft rim light, clean bottom copy space"
+    }
+  },
+  {
+    "id": "case_09_pet_spa_before_after",
+    "title": "Prompt 23 - Pet Spa Poodle Before/After (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "before_after_split",
+      "style": {
+        "font": "pacifico",
+        "theme_color": "#FF69B4",
+        "text_effect": "plain_elegant",
+        "background_tone": "pastel"
+      },
+      "hero": "BOSS LỘT XÁC SAU 2 GIỜ",
+      "subhead": "100% các bé cún/mèo thơm tho bồng bềnh sau combo 7 bước",
+      "badge": "PET SPA & GROOMING",
+      "tag_left": "BEFORE",
+      "tag_right": "AFTER",
+      "rating": 5,
+      "extra_texts": [
+        "Sữa tắm hữu cơ an toàn",
+        "Cắt tỉa chuẩn form Hàn Quốc",
+        "Không gian không lồng kính"
+      ],
+      "cta": "TẶNG GÓI NGÂM SỤC OZON 200K",
+      "store_info": "Tendoo Pet Care • 098 765 4321",
+      "scene_prompt": "Split comparison of adorable poodle dog before and after grooming at luxury bright pet spa, pastel tone, 8k",
+      "corridor_prompt": "Bright pastel pink and mint green ambient gradient, soft diffused lighting, clean bottom space"
+    }
+  },
+  {
+    "id": "case_10_cleaning_service_before_after",
+    "title": "Prompt 33 - Deep Cleaning Service (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "before_after_split",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#00D2D3",
+        "text_effect": "plain_elegant",
+        "background_tone": "light_clean"
+      },
+      "hero": "TRẢ LẠI KHÔNG GIAN SỐNG SẠCH BONG",
+      "subhead": "Nhà sạch không tì vết, diệt khuẩn 99% mọi ngóc ngách",
+      "badge": "DEEP CLEANING",
+      "tag_left": "BỪA BỘN BỤI BẶM",
+      "tag_right": "SẠCH BÓNG LẤP LÁNH",
+      "rating": 5,
+      "extra_texts": [
+        "Chuẩn khách sạn 5 sao",
+        "Hóa chất sinh học an toàn",
+        "Bảo hành dịch vụ 24h"
+      ],
+      "cta": "GIẢM 20% ĐẶT LỊCH CUỐI TUẦN",
+      "store_info": "Dịch vụ tận tâm • 1900 1234",
+      "scene_prompt": "Split screen room before after cleaning, bright sparkling clean living room on the right, 8k",
+      "corridor_prompt": "Clean light blue cyan gradient, fresh airy atmosphere, clean bottom copy space"
+    }
+  },
+  {
+    "id": "case_11_sofa_zen_split_right_16_9",
+    "title": "Prompt 27 - Smart Zen Sofa Split Right (16:9)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_right",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "ĐỊNH NGHĨA LẠI SỰ THƯ GIÃN",
+      "subhead": "Ghế Sofa Chỉnh Điện Smart Zen Da Bò Ý 100%",
+      "badge": "SMART FURNITURE",
+      "extra_texts": [
+        "Ngả lưng không trọng lực 170 độ",
+        "Tích hợp sạc không dây & loa Bluetooth",
+        "Massage đa điểm thông minh"
+      ],
+      "cta": "TẶNG BÀN TRÀ MẶT ĐÁ CAO CẤP",
+      "store_info": "Zen Living • Showroom Toàn Quốc",
+      "scene_prompt": "Modern luxury penthouse living room at night overlooking city lights, man relaxing on brown leather smart recliner sofa, 8k",
+      "corridor_prompt": "Warm ambient dark leather brown gradient, soft luxury softbox lighting, clean vertical space on the right"
+    }
+  },
+  {
+    "id": "case_12_english_course_recruitment_board",
+    "title": "Prompt 31 - English Course Recruitment Board (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "recruitment_board",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "TỰ TIN GIAO TIẾP TIẾNG ANH",
+      "subhead": "Đập tan rào cản ngôn ngữ, tự tin thăng tiến sự nghiệp toàn cầu",
+      "badge": "KHÓA HỌC ĐỘC QUYỀN",
+      "extra_texts": [
+        "Học 1 kèm 1 với 100% giáo viên bản xứ",
+        "Lộ trình cá nhân hóa theo từng ngành nghề",
+        "Phương pháp phản xạ ngôn ngữ thực chiến",
+        "Cam kết chuẩn đầu ra Cambridge quốc tế"
+      ],
+      "cta": "TEST NĂNG LỰC & VOUCHER 1 TRIỆU",
+      "store_info": "Global English Institute • Hotline: 024 7300 8888",
+      "scene_prompt": "Professional international office environment, confident young Vietnamese professional shaking hands with foreign partner, 8k",
+      "corridor_prompt": "Deep corporate navy blue gradient, soft golden studio rim lighting, clean top and bottom space"
+    }
+  },
+  {
+    "id": "case_13_grand_opening_cafe_16_9",
+    "title": "Prompt 43 - Grand Opening Cafe Sandwich (16:9)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "hero": "GRAND OPENING - MUA 1 TẶNG 1",
+      "subhead": "Trải nghiệm hương vị Coffee rang mộc chuẩn vị trong không gian cực chill",
+      "badge": "KHAI TRƯƠNG TƯNG BỪNG",
+      "extra_texts": [
+        "Áp dụng từ 14/05 đến 30/05",
+        "Check-in nhận quà tặng độc quyền",
+        "Không gian âm nhạc Acoustic cuối tuần"
+      ],
+      "cta": "GHÉ NGAY HÔM NAY!",
+      "store_info": "Tendoo Coffee • 123 Phố Cổ, Hoàn Kiếm, Hà Nội",
+      "scene_prompt": "Cozy luxury coffee shop background in warm brown tones with cinematic golden lighting, steaming coffee cup at center, flying roasted coffee beans, 8k",
+      "corridor_prompt": "Warm ambient coffee brown gradient, soft golden haze, clean copy space"
+    }
+  },
+  {
+    "id": "case_14_store_on_top_sandwich_bottom_heavy",
+    "title": "User Case - Store Info On Top / Sandwich Bottom Heavy (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "days",
+        "theme_color": "#FF3366",
+        "text_effect": "neon",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "ƯU ĐÃI KHỦNG CUỐI NĂM",
+      "subhead": "Giảm tới 50% toàn bộ phụ kiện công nghệ",
+      "badge": "MEGA SALE",
+      "extra_texts": [
+        "Số lượng có hạn",
+        "Đổi trả 30 ngày miễn phí",
+        "Freeship toàn quốc"
+      ],
+      "cta": "SĂN DEAL NGAY",
+      "store_info": "TENDOO STORE • Hotline: 1900 6868 • info@tendoo.ai",
+      "scene_prompt": "Futuristic electronic accessories flatlay on dark titanium textured surface, red and magenta studio lighting, 8k",
+      "corridor_prompt": "Smooth dark ambient background, magenta rim light haze, clean bottom copy space"
+    }
+  },
+  {
+    "id": "case_15_luxury_thank_you_card_zero_mask",
+    "title": "User Case - Luxury Thank-You Card / Voucher (Zero Mask 1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "luxury_centered_card",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "hero": "TRI ÂN KHÁCH HÀNG THÂN THIẾT",
+      "subhead": "Cảm ơn bạn đã luôn tin tưởng và đồng hành cùng thương hiệu Tendoo",
+      "badge": "VIP PRIVILEGE",
+      "rating": 5,
+      "extra_texts": [
+        "Mỗi đơn hàng của bạn là niềm tự hào to lớn của toàn thể đội ngũ chúng tôi.",
+        "Kính tặng bạn Voucher đặc quyền giảm 15% cho lần trải nghiệm dịch vụ kế tiếp.",
+        "Mã ưu đãi độc quyền: TENDOO-VIP2026 (Hạn dùng 31/12/2026)"
+      ],
+      "cta": "KÍCH HOẠT VOUCHER",
+      "store_info": "Bộ Phận Chăm Sóc Khách Hàng Cao Cấp • www.tendoo.ai",
+      "scene_prompt": "Warm rustic oak wooden desk flatlay, dried eucalyptus flowers and vintage fountain pen at top corner, warm sunlight, 8k",
+      "corridor_prompt": null
+    }
+  },
+  {
+    "id": "case_16_stress_test_extreme_long_text",
+    "title": "Stress Test - Nhồi Text Cực Đại (4:5)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "CHƯƠNG TRÌNH KHUYẾN MẠI MÙA HÈ RỰC LỬA CHO TOÀN BỘ SẢN PHẨM CÔNG NGHỆ",
+      "subhead": "Một cơ hội duy nhất trong năm để sở hữu những siêu phẩm công nghệ hàng đầu với mức giá không tưởng kèm hàng ngàn quà tặng giá trị",
+      "badge": "SIÊU SALE TOÀN HỆ THỐNG",
+      "extra_texts": [
+        "Giảm ngay 50% cho 100 khách hàng đầu tiên đăng ký đặt trước",
+        "Tặng kèm gói bảo hành rơi vỡ vô điều kiện trị giá 3 triệu đồng",
+        "Hỗ trợ trả góp 0% lãi suất xét duyệt nhanh trong 5 phút",
+        "Thu cũ đổi mới trợ giá thêm 2 triệu đồng cho mọi dòng máy",
+        "Giao hàng hỏa tốc trong 2 giờ nội thành Hà Nội và Hồ Chí Minh"
+      ],
+      "cta": "ĐĂNG KÝ NHẬN ƯU ĐÃI NGAY HÔM NAY KẺO HẾT",
+      "store_info": "Tendoo Megastore • 1800 8888 • 99 Phố Huế, Hai Bà Trưng, Hà Nội • Mở cửa 8h - 22h hàng ngày",
+      "scene_prompt": "High-end consumer tech gadget showcase on sleek carbon fiber background, dramatic lighting, 8k",
+      "corridor_prompt": "Minimal dark carbon gradient, soft golden studio lighting, clean vertical copy space"
+    }
+  },
+  {
+    "id": "case_17_spa_feedback_card_5stars",
+    "title": "Customer Feedback Card - Spa 5 Stars Testimonial (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "customer_feedback_card",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#D4AF37",
+        "text_effect": "embossed",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "FEEDBACK TỪ HỘI VIÊN VIP",
+      "subhead": "Trải nghiệm liệu trình trẻ hóa da 90 ngày tại An Nhiên Spa",
+      "badge": "KHÁCH HÀNG THÂN THIẾT",
+      "rating": 5,
+      "testimonial": "Sau 3 tháng kiên trì chăm sóc theo phác đồ riêng, làn da mình đã hoàn toàn phục hồi, mịn màng và sáng khỏe vượt ngoài mong đợi!",
+      "reviewer_name": "Chị Bảo Trân - Doanh nhân",
+      "extra_texts": [
+        "Liệu trình chuẩn y khoa 1:1",
+        "100% mỹ phẩm hữu cơ cao cấp",
+        "Cam kết bảo hành kết quả bằng văn bản"
+      ],
+      "cta": "ĐẶT LỊCH TRẢI NGHIỆM",
+      "store_info": "An Nhiên Wellness Spa • Thảo Điền, TP. Thủ Đức, TP.HCM",
+      "scene_prompt": "Luxury quiet Zen spa room, white lotus and aromatic candles, soft warm studio lighting, 8k",
+      "corridor_prompt": "Smooth ambient warm dark wooden surface in extreme bokeh, soft golden rim light, clean space"
+    }
+  },
+  {
+    "id": "case_18_gym_step_process_roadmap",
+    "title": "Step Process Roadmap - Quy Trình Gym 3 Bước (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "step_process_roadmap",
+      "style": {
+        "font": "anton",
+        "theme_color": "#06B6D4",
+        "text_effect": "neon_bloom",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "3 BƯỚC THAY ĐỔI VÓC DÁNG",
+      "subhead": "Hành trình bứt phá thể lực và định hình cơ bắp chuẩn quốc tế",
+      "badge": "FITNESS TRANSFORMATION",
+      "steps": [
+        "Kiểm tra InBody & Thể lực",
+        "Lên phác đồ ăn uống 1:1",
+        "Tập luyện cùng HLV sau 30 ngày"
+      ],
+      "extra_texts": [
+        "Cam kết giảm 5kg mỡ thừa",
+        "Miễn phí đo chỉ số định kỳ",
+        "Phòng tập đạt chuẩn 5 sao"
+      ],
+      "cta": "NHẬN TƯ VẤN MIỄN PHÍ",
+      "store_info": "Titan Fitness Center • Landmark 81, TP.HCM",
+      "scene_prompt": "Modern high-end gym fitness equipment, dramatic cyan and red neon studio lighting, 8k",
+      "corridor_prompt": "Deep dark gym background in soft focus, subtle cyan neon haze, clean bottom copy space"
+    }
+  },
+  {
+    "id": "case_19_sneakers_diagonal_slash_left",
+    "title": "Diagonal Slash Left - Sneaker Thể Thao Bứt Tốc (1:1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "diagonal_slash",
+      "orientation": "left",
+      "style": {
+        "font": "anton",
+        "theme_color": "#FF3366",
+        "text_effect": "fire",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BỨT PHÁ MỌI GIỚI HẠN TỐC ĐỘ",
+      "subhead": "Công nghệ đệm khí Nitro Zoom hoàn trả năng lượng tối đa",
+      "badge": "NEW DROP 2026",
+      "extra_texts": [
+        "Trọng lượng siêu nhẹ 185g",
+        "Đế cao su bám đường Carbon",
+        "Vải dệt thoáng khí kháng khuẩn"
+      ],
+      "cta": "MUA NGAY - GIẢM 30%",
+      "store_info": "Tendoo Sport Flagship • Vincom Đồng Khởi, Q.1, TP.HCM",
+      "scene_prompt": "Dynamic running shoe floating in air, water splash and red laser rim light, athletic studio photo, 8k",
+      "corridor_prompt": "Dark athletic studio background in extreme blur, subtle red glow, clean diagonal negative space"
+    }
+  },
+  {
+    "id": "case_20_fintech_diagonal_slash_right",
+    "title": "Diagonal Slash Right - Thẻ Tín Dụng Kim Loại Fintech (9:16)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "diagonal_slash",
+      "orientation": "right",
+      "style": {
+        "font": "days",
+        "theme_color": "#00F0FF",
+        "text_effect": "chromatic",
+        "background_tone": "cyber_neon"
+      },
+      "hero": "QUYỀN NĂNG CHI TIÊU KHÔNG GIỚI HẠN",
+      "subhead": "Hoàn tiền 10% mọi giao dịch quốc tế cùng đặc quyền phòng chờ sân bay hạng thương gia",
+      "badge": "BLACK TITANIUM",
+      "extra_texts": [
+        "Bảo mật sinh trắc học chuẩn FIDO2",
+        "Miễn phí thường niên trọn đời",
+        "Hạn mức tín dụng tới 1 tỷ đồng"
+      ],
+      "cta": "MỞ THẺ ONLINE TRONG 3 PHÚT",
+      "store_info": "Tendoo Digital Bank • Hotline 1900 8899",
+      "scene_prompt": "Matte black titanium credit card floating with blue neon edge glow, high-tech fintech podium, 8k",
+      "corridor_prompt": "Futuristic dark tech background with soft blue neon grid bokeh, completely clean right negative space"
+    }
+  }
+]

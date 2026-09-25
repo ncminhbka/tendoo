@@ -1,0 +1,311 @@
+/* ==============================================================================
+   TENDOO V3 - SHARED UI COMPONENTS CSS (components/ui_components.css)
+   Chứa toàn bộ style chuẩn của các phần tử đồ họa dùng chung:
+   Badge, Hero, Subhead, Extra Pills, Freetext Card, Store Info, CTA Button, QR Code.
+   ============================================================================== */
+
+:root {
+  --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 1. BADGE PILL */
+.badge-pill {
+  font-family: var(--ui-font);
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3em 1.15em;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: {{ palette.badge_text }};
+  background: {{ palette.badge_bg }};
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 9999px;
+  box-shadow: 0 3px 12px {{theme_color}}66, 0 1px 3px rgba(0, 0, 0, 0.4);
+  margin-bottom: 2px;
+  flex-shrink: 0;
+}
+
+/* 2. HERO TITLE */
+.hero-title {
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+  word-break: keep-all;
+  max-width: 94%;
+  color: {{ header_text_primary }};
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.92), 0 0 4px rgba(0, 0, 0, 0.95);
+  {{ header_effect_css }}
+}
+
+/* 3. SUBHEAD TITLE */
+.subhead-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: {{ header_text_secondary }};
+  {{ subhead_effect_css }}
+  max-width: 90%;
+}
+
+/* 4. DUAL-MODE FREETEXT: 4.1. Semantic Pills Row (cho từ khóa ngắn) */
+.extra-tag-row {
+  font-family: var(--ui-font);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  max-width: 92%;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.extra-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.3em 0.85em;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  font-size: inherit;
+  font-weight: 600;
+  color: #fff;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  line-height: 1.2;
+}
+
+.extra-pill svg {
+  width: 1.15em;
+  height: 1.15em;
+  color: {{ palette.on_card_accent if palette.on_card_accent else (palette.accent if palette.accent else theme_color) }};
+  flex-shrink: 0;
+}
+
+/* 4. DUAL-MODE FREETEXT: 4.2. Freetext Card / Bullet Pod (cho câu dài, lưu ý KM) */
+.freetext-block {
+  font-family: var(--ui-font);
+  display: flex;
+  flex-direction: column;
+  gap: 2.5px;
+  max-width: 92%;
+  background: rgba(10, 15, 28, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9px;
+  padding: 4px 12px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  text-align: left;
+  margin-top: 0;
+  font-size: 11.5px;
+}
+
+.freetext-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: inherit;
+  line-height: 1.25;
+  color: #F1F5F9;
+}
+
+.freetext-bullet {
+  color: {{ palette.on_card_accent if palette.on_card_accent else (palette.accent if palette.accent else theme_color) }};
+  font-size: 0.85em;
+  font-family: Arial, 'Segoe UI Symbol', sans-serif !important;
+  flex-shrink: 0;
+}
+
+/* 5. STORE INFO */
+.store-info-col {
+  font-family: var(--ui-font);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  align-items: flex-start;
+  max-width: 52%;
+  flex-shrink: 1;
+  font-size: 16px;
+}
+
+.store-info-row {
+  font-family: var(--ui-font);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em 0.8em;
+  align-items: center;
+  font-size: 14px;
+}
+
+.store-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.32em 0.85em;
+  background: rgba(10, 15, 28, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  font-size: inherit;
+  font-weight: 600;
+  color: #E2E8F0;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  max-width: 100%;
+  line-height: 1.25;
+}
+
+.store-item svg {
+  width: 1.15em;
+  height: 1.15em;
+  color: {{ palette.on_card_accent }};
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  flex-shrink: 0;
+}
+
+.store-item span {
+  word-break: break-word;
+}
+
+/* 6. CTA BUTTON */
+.cta-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.cta-btn {
+  font-family: var(--ui-font);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.6em 1.5em;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: {{palette.cta_text}};
+  background: {{palette.cta_bg}};
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  box-shadow: 0 4px 18px {{theme_color}}77, 0 2px 6px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.cta-btn svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+}
+
+/* 7. QR CODE */
+.qr-col {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  padding: 6px 8px 5px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+}
+
+.qr-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  padding: 4px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.qr-label {
+  font-family: var(--ui-font);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #F8FAFC;
+  margin-top: 4px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   10. HERO PHRASE -- TƯƠNG PHẢN TRONG DÒNG (INLINE HIERARCHICAL RHYTHM)
+   Hiện thực hóa DESIGN_PRINCIPLES mục 1.3 + 2.1: một dòng hero KHÔNG còn là
+   một chuỗi một cỡ chữ, mà là cụm nhiều vai trò to nhỏ xen kẽ căn theo trục
+   đáy -- "GIẢM TỚI [25%] TOÀN BỘ MENU", "CÓ CƠ HỘI NHẬN NGAY [2] TRIỆU ĐỒNG".
+
+   TẠI SAO CẦN: đo thực tế (probe_type_contrast, 12 case sandwich_top_heavy)
+   cho thấy tương phản hero:subhead thật chỉ đạt 1.3x-1.9x (yêu cầu 4x-10x),
+   vì hero bị NGÂN SÁCH CHIỀU CAO của dải đỉnh khoá lại chứ không phải bị trần
+   max_font khoá. Không thể nới chiều cao mãi -- nên nguồn tương phản thứ hai
+   phải đến từ BÊN TRONG chính dòng hero: stat 1em vs prefix/suffix 0.38em
+   cho ngay 2.6x mà KHÔNG tốn thêm một pixel chiều cao nào.
+
+   Dùng chung với .hero-title (kế thừa màu, weight, hiệu ứng chất liệu), nên
+   luôn viết class="hero-title hero-phrase". Mọi cỡ chữ con dùng đơn vị `em`
+   để tự co giãn theo font-size mà binary-search autofit gán cho phần tử cha.
+   ========================================================================== */
+.hero-phrase {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.06em 0.25em;
+  line-height: 1.05;
+}
+
+.hero-seg {
+  font-size: inherit;
+  line-height: 1;
+}
+
+/* Từ bổ trợ: nhỏ, mảnh hơn, chữ hoa giãn nét -- KHÔNG cạnh tranh với điểm neo */
+.hero-seg--prefix,
+.hero-seg--suffix {
+  font-size: 0.38em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.92;
+}
+
+/* Điểm neo cấp 1: giữ trọn 1em, là phần tử duy nhất được phép chiếm thị giác */
+.hero-seg--stat {
+  font-size: 1em;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+/* Màu nhấn 10% theo quy tắc 60-30-10 (DESIGN_PRINCIPLES mục 1.6).
+   `-webkit-text-fill-color` bắt buộc phải có để thắng được `background-clip: text`
+   của các hiệu ứng chất liệu (3d_gold, chrome...) vốn ép text-fill về transparent. */
+.hero-seg--accent {
+  color: {{ theme_color }};
+  -webkit-text-fill-color: {{ theme_color }};
+  background: none;
+  text-shadow: 0 2px 14px {{ theme_color }}80, 0 2px 6px rgba(0, 0, 0, 0.85);
+}

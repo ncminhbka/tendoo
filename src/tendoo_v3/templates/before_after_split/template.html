@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ hero }}</title>
+  <style>
+    {{ font_face_css }}
+
+    :root {
+      --headline-font: {{ headline_font_css }};
+      --theme-color: {{ theme_color }};
+      /* Font UI phụ (tag badge/cta/store/freetext) tách khỏi font nghệ thuật
+         headline -- xem giải thích đầy đủ ở sandwich_top_heavy/template.html. */
+      --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      font-family: var(--headline-font, 'Inter', 'Be Vietnam Pro', sans-serif);
+      background-color: #040711;
+      position: relative;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      background-color: transparent;
+    }
+
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{ bg_data_uri }}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    /* Nhãn BEFORE & AFTER hỗ trợ Mirror */
+    .tag-badge {
+      font-family: var(--ui-font);
+      position: absolute;
+      top: 24px;
+      z-index: 10;
+      padding: 6px 18px;
+      font-size: 12.5px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-radius: 9999px;
+      backdrop-filter: blur(14px);
+    }
+
+    .tag-before {
+      color: #fff;
+      background: rgba(8, 12, 22, 0.76);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+    }
+
+    .tag-after {
+      color: {{ palette.badge_text }};
+      background: {{ palette.badge_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 0 22px {{ theme_color }}99, 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+
+    .bottom-info-pod {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: {{ zones.bottom.height if zones.bottom else height * 0.33 }}px;
+      max-height: {{ zones.bottom.height if zones.bottom else height * 0.33 }}px;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* `center` (không phải `space-between`) -- cùng họ lỗi với split_left/right,
+         diagonal_slash, menu_price_board, luxury_centered_card: pod luôn cao cố định
+         bất kể nội dung, space-between + margin-top:auto trên .footer-row (luôn render
+         dù rỗng) từng ghim nó sát đáy, để hở khoảng trống lớn giữa hero/subhead và
+         footer khi thiếu freetext/qr/cta/store (đo thật: "natural" bounding-box luôn
+         ~367-375px bất kể tổ hợp field nào, xác nhận space-between đang kéo giãn đều
+         thay vì phản ánh nội dung thật). */
+      justify-content: center;
+      padding: 10px 18px 12px;
+      background: transparent;
+      text-align: center;
+      gap: 10px;
+    }
+
+    .rating-stars {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+    }
+
+    .hero-title {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.18;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      color: {{ header_text_primary }};
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95), 0 0 4px rgba(0, 0, 0, 0.95);
+      padding: 2px 0;
+      {{ header_effect_css }}
+    }
+
+    .subhead-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{ header_text_secondary }};
+      /* Blur cu (6-8px) qua lon so voi font nho cua subhead, lam net chu bi
+         "nuot" trong mo/nho hon that (user bao cao truc tiep) -- xem giai thich
+         day du + doi chung anh render that o sandwich_top_heavy/template.html.
+         Giam blur chinh xuong 2px, giu 1 lop glow phu nhe (6px/0.55). Bo han
+         `-webkit-text-stroke` ban trong suot -- gay vien mau (chromatic fringing)
+         o co chu nho khi chong lop voi text-shadow. */
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.55);
+    }
+
+    /* Dual-Mode FreeText */
+    .extra-tag-row {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .extra-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.25em 0.75em;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 9999px;
+      font-weight: 600;
+      /* `card_footer_text_secondary` -- KHÔNG có nền riêng đủ tối (chỉ
+         rgba(255,255,255,0.10), gần như trong suốt), nằm thẳng lên ảnh thật y hệt
+         hero/subhead -- hardcode #E2E8F0 (gần trắng) từng hoà mất vào nền sáng/pastel
+         (user báo cáo trực tiếp: "100% các bé cún..." không nhìn được text). */
+      color: {{ card_footer_text_secondary }};
+      line-height: 1.2;
+    }
+
+    .extra-pill svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ card_footer_accent }};
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+    }
+
+    .freetext-block {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      background: rgba(0, 0, 0, 0.40);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      padding: 5px 12px;
+      text-align: left;
+      font-size: 11px;
+    }
+
+    .freetext-line {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      line-height: 1.25;
+      /* `card_chrome_text` -- .freetext-block có nền đen cố định riêng (40%), phải
+         contrast với nền đen ĐÓ chứ không phải ảnh phía sau (mirror đúng pattern đã
+         sửa ở customer_feedback_card/lifestyle_corner_pod). */
+      color: {{ card_chrome_text }};
+    }
+
+    .freetext-bullet {
+      color: {{ card_chrome_accent }};
+      font-size: 0.85em;
+      font-family: Arial, 'Segoe UI Symbol', sans-serif;
+      flex-shrink: 0;
+    }
+
+    /* Footer Action Row */
+    .footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      /* KHÔNG dùng margin-top:auto -- xem giải thích ở .bottom-info-pod phía trên. */
+      padding-top: 2px;
+      width: 100%;
+    }
+
+    .qr-col {
+      flex-shrink: 0;
+    }
+
+    .cta-btn {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.48em 1.25em;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{ palette.cta_text }};
+      background: {{ palette.cta_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 9999px;
+      box-shadow: 0 4px 18px {{ theme_color }}77;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .store-info-row {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .store-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      padding: 0.22em 0.65em;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 9999px;
+      font-size: inherit;
+      font-weight: 600;
+      color: {{ card_footer_text_secondary }};
+    }
+
+    .store-item svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ card_footer_accent }};
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+    }
+
+    /* Thích ứng 16:9 Landscape 2 cột ngang */
+    {% if is_landscape_wide %}
+    .bottom-info-pod {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 36px;
+      gap: 20px;
+      text-align: left;
+    }
+    .land-left-col {
+      flex: 1.1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .land-right-col {
+      flex: 0.9;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 14px;
+    }
+    .action-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    {% endif %}
+
+    /* Thích ứng 9:16 Narrow Portrait */
+    {% if is_portrait_narrow %}
+    .bottom-info-pod {
+      padding: 10px 14px 14px;
+      gap: 5px;
+    }
+    .hero-title {
+      font-size: 28px;
+    }
+    .footer-row {
+      gap: 8px;
+    }
+    {% endif %}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <!-- Nhãn BEFORE & AFTER hỗ trợ Mirror -->
+    {% if orientation in ('right', 'top_right', 'bottom_right', 'reverse') %}
+      <div class="tag-badge tag-after" style="left: 24px; right: auto;">{{ tag_right or "AFTER" }}</div>
+      <div class="tag-badge tag-before" style="right: 24px; left: auto;">{{ tag_left or "BEFORE" }}</div>
+    {% else %}
+      <div class="tag-badge tag-before" style="left: 24px; right: auto;">{{ tag_left or "BEFORE" }}</div>
+      <div class="tag-badge tag-after" style="right: 24px; left: auto;">{{ tag_right or "AFTER" }}</div>
+    {% endif %}
+
+    {% if is_landscape_wide %}
+    <!-- Bố cục 16:9 Landscape 2 cột ngang -->
+    <div class="bottom-info-pod">
+      <div class="land-left-col">
+        {% if stars_svg %}
+        <div class="rating-stars">{{ stars_svg }}</div>
+        {% endif %}
+        <div class="hero-title" data-autofit data-min-font="{{ before_after_budget.hero.min_font }}" data-max-font="{{ before_after_budget.hero.max_font }}" data-max-height="{{ before_after_budget.hero.max_h }}">{{ hero }}</div>
+        {% if subhead %}
+        <div class="subhead-title" data-autofit data-min-font="{{ before_after_budget.subhead.min_font }}" data-max-font="{{ before_after_budget.subhead.max_font }}" data-max-height="{{ before_after_budget.subhead.max_h }}">{{ subhead }}</div>
+        {% endif %}
+      </div>
+      <div class="land-right-col">
+        {% if qr_svg %}
+        <div class="qr-col">{{ qr_svg }}</div>
+        {% endif %}
+        <div class="action-stack">
+          {% if cta %}
+          <div class="cta-btn" data-autofit data-min-font="{{ before_after_budget.cta.min_font }}" data-max-font="{{ before_after_budget.cta.max_font }}" data-max-height="{{ before_after_budget.cta.max_h }}">
+            <span>{{ cta }}</span>
+            <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+          {% endif %}
+          {% if store_items %}
+          <div class="store-info-row" data-autofit data-min-font="{{ before_after_budget.store.min_font }}" data-max-font="{{ before_after_budget.store.max_font }}" data-max-height="{{ before_after_budget.store.max_h }}">
+            {% for item in store_items %}
+            <div class="store-item">
+              {{ item.icon_svg }}
+              <span>{{ item.text }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% elif store_info %}
+          <div class="store-item">
+            <span>{{ store_info }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+
+    <!-- Bố cục 1:1, 9:16, 4:5 Stack Chuẩn -->
+    <div class="bottom-info-pod">
+      {% if stars_svg %}
+      <div class="rating-stars">{{ stars_svg }}</div>
+      {% endif %}
+
+      <div class="hero-title" data-autofit data-min-font="{{ before_after_budget.hero.min_font }}" data-max-font="{{ before_after_budget.hero.max_font }}" data-max-height="{{ before_after_budget.hero.max_h }}">{{ hero }}</div>
+
+      {% if subhead %}
+      <div class="subhead-title" data-autofit data-min-font="{{ before_after_budget.subhead.min_font }}" data-max-font="{{ before_after_budget.subhead.max_font }}" data-max-height="{{ before_after_budget.subhead.max_h }}">{{ subhead }}</div>
+      {% endif %}
+
+      <!-- FreeText Dual-Mode -->
+      {% if extra_texts %}
+        {% if is_freetext_block %}
+        <div class="freetext-block" data-autofit data-min-font="{{ before_after_budget.freetext_block.min_font }}" data-max-font="{{ before_after_budget.freetext_block.max_font }}" data-max-height="{{ before_after_budget.freetext_block.max_h }}">
+          {% for line in extra_texts %}
+          <div class="freetext-line">
+            <span class="freetext-bullet">{{ bullet_svg }}</span>
+            <span>{{ line }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="extra-tag-row" data-autofit data-min-font="{{ before_after_budget.freetext_pills.min_font }}" data-max-font="{{ before_after_budget.freetext_pills.max_font }}" data-max-height="{{ before_after_budget.freetext_pills.max_h }}">
+          {% for pill in extra_pills %}
+          <div class="extra-pill">
+            {{ pill.icon_svg }}
+            <span>{{ pill.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endif %}
+
+      {% if qr_svg or cta or store_items or store_info %}
+      <div class="footer-row">
+        {% if qr_svg %}
+        <div class="qr-col">{{ qr_svg }}</div>
+        {% endif %}
+
+        {% if cta %}
+        <div class="cta-btn" data-autofit data-min-font="{{ before_after_budget.cta.min_font }}" data-max-font="{{ before_after_budget.cta.max_font }}" data-max-height="{{ before_after_budget.cta.max_h }}">
+          <span>{{ cta }}</span>
+          <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+        {% endif %}
+
+        {% if store_items %}
+        <div class="store-info-row" data-autofit data-min-font="{{ before_after_budget.store.min_font }}" data-max-font="{{ before_after_budget.store.max_font }}" data-max-height="{{ before_after_budget.store.max_h }}">
+          {% for item in store_items %}
+          <div class="store-item">
+            {{ item.icon_svg }}
+            <span>{{ item.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% elif store_info %}
+        <div class="store-item">
+          <span>{{ store_info }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {{ autofit_js }}
+</body>
+</html>

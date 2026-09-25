@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ hero }}</title>
+  <style>
+    {{ font_face_css }}
+
+    :root {
+      --headline-font: {{ headline_font_css }};
+      --theme-color: {{ theme_color }};
+      /* Font UI phụ (badge/cta/store/label) tách khỏi font nghệ thuật headline --
+         xem giải thích đầy đủ ở sandwich_top_heavy/template.html. */
+      --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      font-family: var(--headline-font, 'Inter', 'Be Vietnam Pro', sans-serif);
+      background-color: #060913;
+      position: relative;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px 28px;
+      background-color: transparent;
+    }
+
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{ bg_data_uri }}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+
+    /* Khối Header Trên Cùng: Hoàn toàn transparent, hỗ trợ Mirror */
+    .recruitment-header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      align-items: flex-end;
+      text-align: right;
+      align-self: flex-end;
+      {% else %}
+      align-items: flex-start;
+      text-align: left;
+      align-self: flex-start;
+      {% endif %}
+      gap: 6px;
+      max-width: 85%;
+      background: transparent;
+    }
+
+    .badge-capsule {
+      font-family: var(--ui-font);
+      padding: 0.32em 1.2em;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: {{ palette.badge_text }};
+      background: {{ palette.badge_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 9999px;
+      box-shadow: 0 4px 14px {{ theme_color }}66;
+      flex-shrink: 0;
+    }
+
+    .hero-title {
+      font-size: 40px;
+      font-weight: 900;
+      line-height: 1.20;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      padding: 2px 0;
+      color: {{ header_text_primary }};
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.92);
+      {{ header_effect_css }}
+    }
+
+    .subhead-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: {{ header_text_secondary }};
+      line-height: 1.35;
+      /* Blur cu (6-8px) qua lon so voi font nho cua subhead, lam net chu bi
+         "nuot" trong mo/nho hon that (user bao cao truc tiep) -- xem giai thich
+         day du + doi chung anh render that o sandwich_top_heavy/template.html.
+         Giam blur chinh xuong 2px, giu 1 lop glow phu nhe (6px/0.55). Bo han
+         `-webkit-text-stroke` ban trong suot -- gay vien mau (chromatic fringing)
+         o co chu nho khi chong lop voi text-shadow. */
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.55);
+    }
+
+    /* Thẻ Bảng Tin Ở Đáy */
+    .board-card {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% else %}
+      flex-direction: row;
+      {% endif %}
+      align-items: stretch;
+      gap: 14px;
+      padding: 12px 18px;
+      background: transparent;
+      color: {{ card_text_primary }};
+      width: 100%;
+      height: {{ zones.board.height if zones.board else height * 0.24 }}px;
+      max-height: {{ zones.board.height if zones.board else height * 0.24 }}px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    /* Cột 1: Quyền Lợi & Điều Kiện */
+    .board-col-left {
+      flex: 1.35;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 6px;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      border-left: 1px solid rgba(255, 255, 255, 0.14);
+      padding-left: 14px;
+      text-align: right;
+      {% else %}
+      border-right: 1px solid rgba(255, 255, 255, 0.14);
+      padding-right: 14px;
+      text-align: left;
+      {% endif %}
+      min-width: 0;
+    }
+
+    .col-title {
+      font-family: var(--ui-font);
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{ card_accent }};
+      margin-bottom: 2px;
+      display: flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      justify-content: flex-end;
+      {% else %}
+      justify-content: flex-start;
+      {% endif %}
+      align-items: center;
+      gap: 5px;
+    }
+
+    .extra-tag-row {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .extra-item {
+      display: flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% else %}
+      flex-direction: row;
+      {% endif %}
+      align-items: baseline;
+      gap: 6px;
+      line-height: 1.32;
+      font-size: inherit;
+      font-weight: 500;
+      color: {{ card_text_primary }};
+    }
+
+    .bullet {
+      color: {{ card_accent }};
+      font-size: 0.95em;
+      flex-shrink: 0;
+    }
+
+    /* Cột 2: Hành Động & Đơn Vị Tuyển Dụng */
+    .board-col-mid {
+      flex: 1.0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 4px;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      align-items: flex-end;
+      text-align: right;
+      {% else %}
+      align-items: flex-start;
+      text-align: left;
+      {% endif %}
+      min-width: 0;
+    }
+
+    .cta-btn {
+      display: inline-flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.48em 1.2em;
+      font-family: var(--ui-font);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{ palette.cta_text }};
+      background: {{ palette.cta_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 9999px;
+      box-shadow: 0 4px 16px {{ theme_color }}66;
+      white-space: nowrap;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .store-info-col {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 3.5px;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      align-items: flex-end;
+      {% else %}
+      align-items: flex-start;
+      {% endif %}
+      font-size: 10.5px;
+      color: {{ card_text_secondary }};
+    }
+
+    .store-item {
+      display: inline-flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.4em;
+    }
+
+    .store-item svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ card_accent }};
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+    }
+
+    /* Cột 3: Trạm Kiosk Scan QR Nộp Hồ Sơ */
+    .board-col-qr {
+      flex: 0.65;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      border-right: 1px solid rgba(255, 255, 255, 0.14);
+      padding-right: 8px;
+      {% else %}
+      border-left: 1px solid rgba(255, 255, 255, 0.14);
+      padding-left: 8px;
+      {% endif %}
+      flex-shrink: 0;
+    }
+
+    .qr-kiosk-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .qr-kiosk-badge {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{ card_accent }};
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      padding: 2px 8px;
+    }
+
+    /* Thích ứng 9:16 Narrow Portrait */
+    {% if is_portrait_narrow %}
+    .poster-canvas {
+      padding: 16px 16px;
+    }
+    .board-card {
+      flex-direction: column !important;
+      gap: 8px;
+      padding: 10px 14px;
+    }
+    .board-col-left {
+      width: 100%;
+      border: none !important;
+      padding: 0 !important;
+      text-align: left !important;
+    }
+    .board-bottom-split {
+      display: flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% else %}
+      flex-direction: row;
+      {% endif %}
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 6px;
+      margin-top: auto;
+    }
+    .board-col-mid {
+      border: none !important;
+      padding: 0 !important;
+      flex: 1;
+      justify-content: center;
+    }
+    .board-col-qr {
+      border: none !important;
+      padding: 0 !important;
+      flex: 0 0 auto;
+    }
+    {% endif %}
+
+    /* Thích ứng 16:9 Landscape */
+    {% if is_landscape_wide %}
+    .poster-canvas {
+      padding: 14px 28px;
+    }
+    .hero-title {
+      font-size: 32px;
+    }
+    .board-card {
+      padding: 8px 16px;
+    }
+    {% endif %}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <div class="recruitment-header">
+      {% if badge %}
+      <div class="badge-capsule" data-autofit data-min-font="{{ recruit_budget.badge.min_font }}" data-max-font="{{ recruit_budget.badge.max_font }}" data-max-width="{{ (zones.header.width * 0.85) if zones.header else width * 0.8 }}" data-max-height="{{ recruit_budget.badge.max_h }}">{{ badge }}</div>
+      {% endif %}
+      <div class="hero-title" data-autofit data-min-font="{{ recruit_budget.hero.min_font }}" data-max-font="{{ recruit_budget.hero.max_font }}" data-max-height="{{ recruit_budget.hero.max_h }}">{{ hero }}</div>
+      {% if subhead %}
+      <div class="subhead-title" data-autofit data-min-font="{{ recruit_budget.subhead.min_font }}" data-max-font="{{ recruit_budget.subhead.max_font }}" data-max-height="{{ recruit_budget.subhead.max_h }}">{{ subhead }}</div>
+      {% endif %}
+    </div>
+
+    <div class="board-card">
+      <div class="board-col-left">
+        <div class="col-title">
+          <span>QUYỀN LỢI & ĐIỀU KIỆN</span>
+        </div>
+        {% if extra_pills %}
+        <div class="extra-tag-row" data-autofit data-min-font="{{ recruit_budget.extra.min_font }}" data-max-font="{{ recruit_budget.extra.max_font }}" data-max-height="{{ recruit_budget.extra.max_h }}">
+          {% for pill in extra_pills %}
+          <div class="extra-item">
+            {{ pill.icon_svg }}
+            <span>{{ pill.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      {% if is_portrait_narrow %}
+      <div class="board-bottom-split">
+        <div class="board-col-mid">
+          {% if cta %}
+          <div class="cta-btn" data-autofit data-min-font="{{ recruit_budget.cta.min_font }}" data-max-font="{{ recruit_budget.cta.max_font }}" data-max-height="{{ recruit_budget.cta.max_h }}">
+            <span>{{ cta }}</span>
+            <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              {% if orientation in ('right', 'top_right', 'bottom_right') %}
+              <polyline points="15 18 9 12 15 6"></polyline>
+              {% else %}
+              <polyline points="9 18 15 12 9 6"></polyline>
+              {% endif %}
+            </svg>
+          </div>
+          {% endif %}
+
+          {% if store_items %}
+          <div class="store-info-col" data-autofit data-min-font="{{ recruit_budget.store.min_font }}" data-max-font="{{ recruit_budget.store.max_font }}" data-max-height="{{ recruit_budget.store.max_h }}">
+            {% for item in store_items %}
+            <div class="store-item">
+              {{ item.icon_svg }}
+              <span>{{ item.text }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% elif store_info %}
+          <div class="store-item">
+            <span>{{ store_info }}</span>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if qr_svg %}
+        <div class="board-col-qr">
+          <div class="qr-kiosk-box">
+            <div class="qr-code-wrapper">{{ qr_svg }}</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="board-col-mid">
+        {% if cta %}
+        <div class="cta-btn" data-autofit data-min-font="{{ recruit_budget.cta.min_font }}" data-max-font="{{ recruit_budget.cta.max_font }}" data-max-height="{{ recruit_budget.cta.max_h }}">
+          <span>{{ cta }}</span>
+          <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            {% if orientation in ('right', 'top_right', 'bottom_right') %}
+            <polyline points="15 18 9 12 15 6"></polyline>
+            {% else %}
+            <polyline points="9 18 15 12 9 6"></polyline>
+            {% endif %}
+          </svg>
+        </div>
+        {% endif %}
+
+        {% if store_items %}
+        <div class="store-info-col" data-autofit data-min-font="{{ recruit_budget.store.min_font }}" data-max-font="{{ recruit_budget.store.max_font }}" data-max-height="{{ recruit_budget.store.max_h }}">
+          {% for item in store_items %}
+          <div class="store-item">
+            {{ item.icon_svg }}
+            <span>{{ item.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% elif store_info %}
+        <div class="store-item">
+          <span>{{ store_info }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if qr_svg %}
+      <div class="board-col-qr">
+        <div class="qr-kiosk-box">
+          <span class="qr-kiosk-badge">ỨNG TUYỂN</span>
+          <div class="qr-code-wrapper">{{ qr_svg }}</div>
+        </div>
+      </div>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  {{ autofit_js }}
+</body>
+</html>

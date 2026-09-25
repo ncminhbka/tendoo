@@ -1,0 +1,308 @@
+[
+  {
+    "id": "diagonal_slash_sparse_1x1_no_qr",
+    "title": "[DIAGONAL_SLASH] 1x1 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 1024,
+    "height": 1024,
+    "hero": "BỨT PHÁ TỐC ĐỘ NITRO SNEAKER",
+    "subhead": "Đế đệm khí hoàn trả 85% năng lượng trên từng bước chạy",
+    "badge": "NEW ARRIVAL",
+    "extra_texts": [
+      "Trọng lượng siêu nhẹ chỉ 185g",
+      "Vải dệt thoáng khí đa chiều",
+      "Đế cao su chống trượt chuẩn F1"
+    ],
+    "cta": "MUA NGAY NHẬN QUÀ",
+    "store_info": "Hotline: 1900 6868 • Showroom: 45 Lê Duẩn, Q.1",
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#FF3366",
+      "text_effect": "neon_glow",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "diagonal_slash_sparse_1x1_no_store",
+    "title": "[DIAGONAL_SLASH] 1x1 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 1024,
+    "height": 1024,
+    "hero": "BỨT PHÁ TỐC ĐỘ NITRO SNEAKER",
+    "subhead": "Đế đệm khí hoàn trả 85% năng lượng trên từng bước chạy",
+    "badge": "NEW ARRIVAL",
+    "extra_texts": [
+      "Trọng lượng siêu nhẹ chỉ 185g",
+      "Vải dệt thoáng khí đa chiều",
+      "Đế cao su chống trượt chuẩn F1"
+    ],
+    "cta": "MUA NGAY NHẬN QUÀ",
+    "store_info": null,
+    "qr_code": "https://tendoo.ai/sneaker",
+    "qr_label": "QUÉT MÃ",
+    "style": {
+      "theme_color": "#FF3366",
+      "text_effect": "neon_glow",
+      "background_tone": "dark_luxury"
+    },
+    "store_items": null,
+    "tag_left": null,
+    "tag_right": null
+  },
+  {
+    "id": "diagonal_slash_sparse_1x1_minimal_hero_only",
+    "title": "[DIAGONAL_SLASH] 1x1 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 1024,
+    "height": 1024,
+    "hero": "BỨT PHÁ TỐC ĐỘ NITRO SNEAKER",
+    "subhead": "",
+    "badge": "",
+    "extra_texts": [],
+    "cta": "",
+    "store_info": null,
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#FF3366",
+      "text_effect": "neon_glow",
+      "background_tone": "dark_luxury"
+    },
+    "tag_left": null,
+    "tag_right": null,
+    "store_items": null
+  },
+  {
+    "id": "diagonal_slash_sparse_9x16_no_qr",
+    "title": "[DIAGONAL_SLASH] 9x16 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 576,
+    "height": 1024,
+    "hero": "NĂNG LƯỢNG BÙNG NỔ TỨC THÌ",
+    "subhead": "Chiết xuất nhân sâm & Taurine tự nhiên tăng tỉnh táo",
+    "badge": "BOOST ENERGY",
+    "extra_texts": [
+      "Không đường hóa học",
+      "Tăng cường Vitamin B3 B6 B12"
+    ],
+    "cta": "THỬ NGAY HÔM NAY",
+    "store_info": "Có mặt tại mọi hệ thống siêu thị",
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#00E5FF",
+      "text_effect": "cyber_glow",
+      "background_tone": "cyber_neon"
+    }
+  },
+  {
+    "id": "diagonal_slash_sparse_9x16_no_store",
+    "title": "[DIAGONAL_SLASH] 9x16 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 576,
+    "height": 1024,
+    "hero": "NĂNG LƯỢNG BÙNG NỔ TỨC THÌ",
+    "subhead": "Chiết xuất nhân sâm & Taurine tự nhiên tăng tỉnh táo",
+    "badge": "BOOST ENERGY",
+    "extra_texts": [
+      "Không đường hóa học",
+      "Tăng cường Vitamin B3 B6 B12"
+    ],
+    "cta": "THỬ NGAY HÔM NAY",
+    "store_info": null,
+    "qr_code": "https://tendoo.ai/boost",
+    "qr_label": "SĂN VOUCHER",
+    "style": {
+      "theme_color": "#00E5FF",
+      "text_effect": "cyber_glow",
+      "background_tone": "cyber_neon"
+    },
+    "store_items": null,
+    "tag_left": null,
+    "tag_right": null
+  },
+  {
+    "id": "diagonal_slash_sparse_9x16_minimal_hero_only",
+    "title": "[DIAGONAL_SLASH] 9x16 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 576,
+    "height": 1024,
+    "hero": "NĂNG LƯỢNG BÙNG NỔ TỨC THÌ",
+    "subhead": "",
+    "badge": "",
+    "extra_texts": [],
+    "cta": "",
+    "store_info": null,
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#00E5FF",
+      "text_effect": "cyber_glow",
+      "background_tone": "cyber_neon"
+    },
+    "tag_left": null,
+    "tag_right": null,
+    "store_items": null
+  },
+  {
+    "id": "diagonal_slash_sparse_16x9_no_qr",
+    "title": "[DIAGONAL_SLASH] 16x9 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 1024,
+    "height": 576,
+    "hero": "CHIẾN GAME ĐỈNH CAO 360HZ",
+    "subhead": "Tốc độ phản hồi 0.03ms chuẩn Esports chuyên nghiệp",
+    "badge": "ESPORTS PRO",
+    "extra_texts": [
+      "Tấm nền QD-OLED thế hệ mới",
+      "Độ phân giải 2K siêu nét",
+      "Tương thích G-Sync & FreeSync"
+    ],
+    "cta": "TRẢI NGHIỆM TẠI SHOWROOM",
+    "store_info": "Tendoo Gaming Center, 120 Thái Hà, Đống Đa, HN",
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#A855F7",
+      "text_effect": "hologram",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "diagonal_slash_sparse_16x9_no_store",
+    "title": "[DIAGONAL_SLASH] 16x9 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 1024,
+    "height": 576,
+    "hero": "CHIẾN GAME ĐỈNH CAO 360HZ",
+    "subhead": "Tốc độ phản hồi 0.03ms chuẩn Esports chuyên nghiệp",
+    "badge": "ESPORTS PRO",
+    "extra_texts": [
+      "Tấm nền QD-OLED thế hệ mới",
+      "Độ phân giải 2K siêu nét",
+      "Tương thích G-Sync & FreeSync"
+    ],
+    "cta": "TRẢI NGHIỆM TẠI SHOWROOM",
+    "store_info": null,
+    "qr_code": "https://tendoo.ai/oled360",
+    "qr_label": "SPECS PRO",
+    "style": {
+      "theme_color": "#A855F7",
+      "text_effect": "hologram",
+      "background_tone": "dark_luxury"
+    },
+    "store_items": null,
+    "tag_left": null,
+    "tag_right": null
+  },
+  {
+    "id": "diagonal_slash_sparse_16x9_minimal_hero_only",
+    "title": "[DIAGONAL_SLASH] 16x9 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 1024,
+    "height": 576,
+    "hero": "CHIẾN GAME ĐỈNH CAO 360HZ",
+    "subhead": "",
+    "badge": "",
+    "extra_texts": [],
+    "cta": "",
+    "store_info": null,
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#A855F7",
+      "text_effect": "hologram",
+      "background_tone": "dark_luxury"
+    },
+    "tag_left": null,
+    "tag_right": null,
+    "store_items": null
+  },
+  {
+    "id": "diagonal_slash_sparse_4x5_no_qr",
+    "title": "[DIAGONAL_SLASH] 4x5 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 816,
+    "height": 1024,
+    "hero": "BỨT PHÁ GIỚI HẠN THỂ CHẤT",
+    "subhead": "Huấn luyện viên 1:1 cá nhân hóa theo mục tiêu vóc dáng",
+    "badge": "ƯU ĐÃI THÁNG 9",
+    "extra_texts": [
+      "Đo chỉ số InBody miễn phí",
+      "Lộ trình dinh dưỡng chuẩn y khoa",
+      "Khu vực Sauna & Recovery riêng"
+    ],
+    "cta": "ĐĂNG KÝ TẬP THỬ",
+    "store_info": "Hotline: 028 3822 9999 • Hệ thống 12 chi nhánh",
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#F59E0B",
+      "text_effect": "gold_3d",
+      "background_tone": "warm_rustic"
+    }
+  },
+  {
+    "id": "diagonal_slash_sparse_4x5_no_store",
+    "title": "[DIAGONAL_SLASH] 4x5 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 816,
+    "height": 1024,
+    "hero": "BỨT PHÁ GIỚI HẠN THỂ CHẤT",
+    "subhead": "Huấn luyện viên 1:1 cá nhân hóa theo mục tiêu vóc dáng",
+    "badge": "ƯU ĐÃI THÁNG 9",
+    "extra_texts": [
+      "Đo chỉ số InBody miễn phí",
+      "Lộ trình dinh dưỡng chuẩn y khoa",
+      "Khu vực Sauna & Recovery riêng"
+    ],
+    "cta": "ĐĂNG KÝ TẬP THỬ",
+    "store_info": null,
+    "qr_code": "https://tendoo.ai/gym-vip",
+    "qr_label": "NHẬN ƯU ĐÃI",
+    "style": {
+      "theme_color": "#F59E0B",
+      "text_effect": "gold_3d",
+      "background_tone": "warm_rustic"
+    },
+    "store_items": null,
+    "tag_left": null,
+    "tag_right": null
+  },
+  {
+    "id": "diagonal_slash_sparse_4x5_minimal_hero_only",
+    "title": "[DIAGONAL_SLASH] 4x5 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "template": "diagonal_slash",
+    "orientation": "left",
+    "width": 816,
+    "height": 1024,
+    "hero": "BỨT PHÁ GIỚI HẠN THỂ CHẤT",
+    "subhead": "",
+    "badge": "",
+    "extra_texts": [],
+    "cta": "",
+    "store_info": null,
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#F59E0B",
+      "text_effect": "gold_3d",
+      "background_tone": "warm_rustic"
+    },
+    "tag_left": null,
+    "tag_right": null,
+    "store_items": null
+  }
+]

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ hero }}</title>
+  <style>
+    {{ font_face_css }}
+
+    :root {
+      --headline-font: {{ headline_font_css }};
+      /* Font nghệ thuật (script/brush/calligraphy như Dancing Script, Pacifico) rất
+         đẹp cho hero/subhead/testimonial (chữ lớn, ít, mang tính "giọng nói" của
+         thương hiệu) nhưng đọc RẤT khó ở cỡ nhỏ (badge/chip/store info/pill) -- toàn
+         bộ UI phụ trước đây kế thừa thẳng `--headline-font` qua `html, body`, khiến cả
+         địa chỉ/hotline/badge cũng bị vẽ bằng chữ thảo viết tay (user báo cáo trực
+         tiếp: "chữ vẫn nhỏ và khó nhìn"). `font_face_css` vốn đã LUÔN nhúng kèm Be
+         Vietnam Pro riêng cho đúng mục đích này (xem docstring `resolve_font()` trong
+         `src/tendoo/core/fonts.py`) nhưng chưa từng có selector nào trong template
+         thật sự dùng tới -- khai báo biến riêng rồi áp cho các phần tử UI nhỏ bên dưới. */
+      --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
+      --theme-color: {{ theme_color }};
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      font-family: var(--headline-font, 'Inter', 'Be Vietnam Pro', sans-serif);
+      background-color: #060911;
+      position: relative;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      background-color: transparent;
+    }
+
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{ bg_data_uri }}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    .top-header-bar {
+      position: absolute;
+      top: 20px;
+      left: 28px;
+      right: 28px;
+      z-index: 10;
+      display: flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      text-align: right;
+      {% else %}
+      flex-direction: row;
+      text-align: left;
+      {% endif %}
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: transparent;
+    }
+
+    .brand-kicker {
+      font-family: var(--ui-font);
+      padding: 0.32em 1.2em;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: {{ palette.badge_text }};
+      background: {{ palette.badge_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 9999px;
+      box-shadow: 0 4px 14px {{ theme_color }}66;
+      flex-shrink: 0;
+    }
+
+    .hero-top-title {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.18;
+      letter-spacing: -0.5px;
+      word-break: keep-all;
+      color: {{ header_text_primary }};
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.92);
+      padding: 2px 0;
+      {{ header_effect_css }}
+    }
+
+    .subhead-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: {{ header_text_secondary }};
+      /* Blur cu (6-8px) qua lon so voi font nho cua subhead, lam net chu bi
+         "nuot" trong mo/nho hon that (user bao cao truc tiep) -- xem giai thich
+         day du + doi chung anh render that o sandwich_top_heavy/template.html.
+         Giam blur chinh xuong 2px, giu 1 lop glow phu nhe (6px/0.55). Bo han
+         `-webkit-text-stroke` ban trong suot -- gay vien mau (chromatic fringing)
+         o co chu nho khi chong lop voi text-shadow. */
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.55);
+      margin-top: 2px;
+    }
+
+    /* Thẻ Feedback Khách Hàng (Floating Card ở đáy hoặc góc) */
+    .feedback-card {
+      position: absolute;
+      left: {{ zones.card.x1 if zones.card else 28 }}px;
+      top: {{ zones.card.y1 if zones.card else height * 0.70 }}px;
+      width: {{ zones.card.width if zones.card else width - 56 }}px;
+      height: {{ zones.card.height if zones.card else height * 0.27 }}px;
+      max-height: {{ zones.card.height if zones.card else height * 0.27 }}px;
+      box-sizing: border-box;
+      overflow: hidden;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      {% if qr_svg or cta or store_items or store_info %}
+      {# Footer thật (qr/cta/store) -- gom nội dung phía trên (stars/testimonial/
+         reviewer/freetext) sát nhau bằng flex-start + gap cố định, để `.footer-
+         action-row` (đã có sẵn `margin-top:auto`) tự neo xuống đáy -- 1 khoảng trống
+         DUY NHẤT giữa nội dung và footer thay vì `space-between` rải đều thành nhiều
+         khe hở giữa TỪNG dòng khi nội dung ngắn (case testimonial ngắn không freetext
+         -- user báo cáo trực tiếp qua ảnh nồi chiên không dầu). #}
+      justify-content: flex-start;
+      {% else %}
+      {# Không có footer nào cả -- không còn phần tử neo đáy, dồn toàn bộ nội dung
+         vào GIỮA card thay vì để trôi lên đỉnh rồi hở khoảng trống lớn phía dưới. #}
+      justify-content: center;
+      {% endif %}
+      gap: 6px;
+      padding: 14px 20px;
+      background: transparent;
+      color: {{ card_text_primary }};
+    }
+
+    .stars-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      gap: 8px;
+    }
+
+    .verified-chip {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #10B981;
+      background: rgba(16, 185, 129, 0.16);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      padding: 3px 9px;
+      border-radius: 9999px;
+    }
+
+    .testimonial-quote {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: {{ card_text_primary }};
+      font-style: italic;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.75), 0 4px 20px rgba(0, 0, 0, 0.5);
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      text-align: right;
+      {% else %}
+      text-align: left;
+      {% endif %}
+    }
+
+    .reviewer-info {
+      font-family: var(--ui-font);
+      font-size: 12px;
+      font-weight: 700;
+      color: {{ card_accent }};
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      text-align: left;
+      {% else %}
+      text-align: right;
+      {% endif %}
+      letter-spacing: 0.5px;
+      max-width: 100%;
+      overflow-wrap: break-word;
+    }
+
+    /* Dual-Mode FreeText */
+    .extra-tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      justify-content: flex-end;
+      {% else %}
+      justify-content: flex-start;
+      {% endif %}
+      gap: 5px;
+      font-size: 11px;
+    }
+
+    .extra-pill {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.4em;
+      padding: 0.25em 0.7em;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 9999px;
+      font-weight: 600;
+      /* `card_footer_text_secondary` -- nền chỉ tint 10% (gần như vẫn là ảnh thật),
+         nằm gần đáy card cạnh footer-action-row -- cần sample cục bộ ở đáy thay vì
+         trung bình chung với đỉnh card (chính là case user báo cáo: chữ trắng hoà
+         vào nền trắng của ảnh thật). */
+      color: {{ card_footer_text_secondary }};
+    }
+
+    .extra-pill svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ card_footer_accent }};
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+    }
+
+    .freetext-block {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 11px;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      text-align: right;
+      {% else %}
+      text-align: left;
+      {% endif %}
+    }
+
+    .freetext-line {
+      display: flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: baseline;
+      gap: 5px;
+      line-height: 1.25;
+      /* `card_chrome_text` -- .freetext-block có nền đen cố định riêng (35%), phải
+         contrast với nền đó chứ không phải ảnh (xem giải thích ở luxury_centered_card). */
+      color: {{ card_chrome_text }};
+    }
+
+    .freetext-bullet {
+      color: {{ card_chrome_accent }};
+      font-size: 0.85em;
+      font-family: Arial, 'Segoe UI Symbol', sans-serif;
+      flex-shrink: 0;
+    }
+
+    /* Footer Action Row: QR + CTA + Store Info */
+    .footer-action-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 2px;
+    }
+
+    .qr-col {
+      flex-shrink: 0;
+    }
+
+    .cta-btn {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.48em 1.2em;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: {{ palette.cta_text }};
+      background: {{ palette.cta_bg }};
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 9999px;
+      box-shadow: 0 4px 16px {{ theme_color }}66;
+      white-space: nowrap;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .store-text {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      align-items: flex-start;
+      {% else %}
+      align-items: flex-end;
+      {% endif %}
+      font-size: 14px;
+      /* `card_footer_text_secondary` -- store-text nằm ở ĐÁY card, không có nền riêng
+         (nằm thẳng lên ảnh), cần sample độ sáng cục bộ ở đáy card thay vì trung bình
+         chung với đỉnh (badge/hero) -- xem giải thích ở luxury_centered_card. */
+      color: {{ card_footer_text_secondary }};
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    }
+
+    .store-item {
+      display: inline-flex;
+      {% if orientation in ('right', 'top_right', 'bottom_right') %}
+      flex-direction: row-reverse;
+      {% endif %}
+      align-items: center;
+      gap: 0.4em;
+    }
+
+    .store-item svg {
+      width: 1.15em;
+      height: 1.15em;
+      color: {{ card_footer_accent }};
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+    }
+
+    /* Thích ứng 9:16 narrow portrait */
+    {% if is_portrait_narrow %}
+    .top-header-bar {
+      top: 14px;
+      left: 18px;
+      right: 18px;
+    }
+    .hero-top-title {
+      font-size: 28px;
+    }
+    .feedback-card {
+      padding: 14px 16px;
+      gap: 6px;
+    }
+    {% endif %}
+
+    /* Thích ứng 16:9 wide landscape */
+    {% if is_landscape_wide %}
+    .top-header-bar {
+      top: 12px;
+      left: 28px;
+      right: 28px;
+    }
+    .hero-top-title {
+      font-size: 30px;
+    }
+    .feedback-card {
+      padding: 14px 18px;
+      gap: 6px;
+    }
+    .footer-action-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+    }
+    .cta-btn {
+      justify-content: center;
+      width: 100%;
+    }
+    .store-text {
+      align-items: center;
+    }
+    {% endif %}
+  </style>
+</head>
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+
+    <div class="top-header-bar">
+      <div style="flex: 1;">
+        <div class="hero-top-title" data-autofit data-min-font="{{ feedback_budget.hero.min_font }}" data-max-font="{{ feedback_budget.hero.max_font }}" data-max-height="{{ feedback_budget.hero.max_h }}">{{ hero }}</div>
+        {% if subhead %}
+        <div class="subhead-title" data-autofit data-min-font="{{ feedback_budget.subhead.min_font }}" data-max-font="{{ feedback_budget.subhead.max_font }}" data-max-height="{{ feedback_budget.subhead.max_h }}">{{ subhead }}</div>
+        {% endif %}
+      </div>
+      {% if badge %}
+      <div class="brand-kicker">{{ badge }}</div>
+      {% endif %}
+    </div>
+
+    <div class="feedback-card">
+      <div class="stars-badge-row">
+        <div class="stars-wrap">{{ stars_svg }}</div>
+        <div class="verified-chip">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span>Khách Hàng Đánh Giá</span>
+        </div>
+      </div>
+
+      <div class="testimonial-quote" data-autofit data-min-font="{{ feedback_budget.testimonial.min_font }}" data-max-font="{{ feedback_budget.testimonial.max_font }}" data-max-height="{{ feedback_budget.testimonial.max_h }}">
+        “{{ testimonial or subhead or hero }}”
+      </div>
+      {% if reviewer_name %}
+      <div class="reviewer-info" data-autofit data-min-font="{{ feedback_budget.reviewer.min_font }}" data-max-font="{{ feedback_budget.reviewer.max_font }}" data-max-height="{{ feedback_budget.reviewer.max_h }}">— {{ reviewer_name }}</div>
+      {% endif %}
+
+      <!-- FreeText Dual-Mode -->
+      {% if extra_texts %}
+        {% if is_freetext_block %}
+        <div class="freetext-block" data-autofit data-min-font="{{ feedback_budget.freetext_block.min_font }}" data-max-font="{{ feedback_budget.freetext_block.max_font }}" data-max-height="{{ feedback_budget.freetext_block.max_h }}">
+          {% for line in extra_texts %}
+          <div class="freetext-line">
+            <span class="freetext-bullet">{{ bullet_svg }}</span>
+            <span>{{ line }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="extra-tag-row" data-autofit data-min-font="{{ feedback_budget.freetext_pills.min_font }}" data-max-font="{{ feedback_budget.freetext_pills.max_font }}" data-max-height="{{ feedback_budget.freetext_pills.max_h }}">
+          {% for pill in extra_pills %}
+          <div class="extra-pill">
+            {{ pill.icon_svg }}
+            <span>{{ pill.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endif %}
+
+      {% if qr_svg or cta or store_items or store_info %}
+      <div class="footer-action-row">
+        {% if qr_svg %}
+        <div class="qr-col">{{ qr_svg }}</div>
+        {% endif %}
+
+        {% if cta %}
+        <div class="cta-btn" data-autofit data-min-font="{{ feedback_budget.cta.min_font }}" data-max-font="{{ feedback_budget.cta.max_font }}" data-max-height="{{ feedback_budget.cta.max_h }}">
+          <span>{{ cta }}</span>
+          <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            {% if orientation in ('right', 'top_right', 'bottom_right') %}
+            <polyline points="15 18 9 12 15 6"></polyline>
+            {% else %}
+            <polyline points="9 18 15 12 9 6"></polyline>
+            {% endif %}
+          </svg>
+        </div>
+        {% endif %}
+
+        {% if store_items %}
+        <div class="store-text" data-autofit data-min-font="{{ feedback_budget.store.min_font }}" data-max-font="{{ feedback_budget.store.max_font }}" data-max-height="{{ feedback_budget.store.max_h }}">
+          {% for item in store_items %}
+          <div class="store-item">
+            {{ item.icon_svg }}
+            <span>{{ item.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% elif store_info %}
+        <div class="store-text" data-autofit data-min-font="{{ feedback_budget.store.min_font }}" data-max-font="{{ feedback_budget.store.max_font }}" data-max-height="{{ feedback_budget.store.max_h }}">
+          <span>{{ store_info }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {{ autofit_js }}
+</body>
+</html>

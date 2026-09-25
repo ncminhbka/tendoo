@@ -1,0 +1,202 @@
+[
+  {
+    "id": "sth_noqr_01_1x1_min",
+    "title": "[NO-QR] 1:1 Minimal Text - Hero Tối Giản Nổi Bật Cực Đại",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SIÊU SALE 50%",
+      "store_info": "Hotline: 1900 8888",
+      "qr_code": null,
+      "qr_label": "QUÉT MÃ MUA",
+      "scene_prompt": "Luxury golden cosmetic bottle standing on dark marble podium, cinematic lighting, 8k",
+      "corridor_prompt": "Dark luxury studio gradient background, soft gold ambient lighting, clean copy space"
+    }
+  },
+  {
+    "id": "sth_noqr_04_1x1_heavy",
+    "title": "[NO-QR] 1:1 Heavy Text - Stress Test Nhồi Text Cực Đại",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#FFB300",
+        "text_effect": "plain_elegant",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "SỰ KIỆN CÔNG NGHỆ ĐỘT PHÁ 2026",
+      "hero": "HỘI NGHỊ THƯỢNG ĐỈNH TRÍ TUỆ NHÂN TẠO QUỐC TẾ",
+      "subhead": "Quy tụ hơn 500 chuyên gia, viện sĩ và lãnh đạo tập đoàn công nghệ toàn cầu cùng định hình tương lai số",
+      "extra_texts": [
+        "Giảm 50% vé cho sinh viên và nhóm đăng ký trước ngày 30/10",
+        "Cơ hội nhận gói tài trợ nghiên cứu AI lên tới 100.000 USD",
+        "Triển lãm thực tế ảo AR/VR và robot thế hệ mới"
+      ],
+      "cta": "ĐĂNG KÝ THAM GIA NGAY",
+      "store_info": "Cơ sở 1: Tòa nhà Viettel, Số 1 Giang Văn Minh, Ba Đình, Hà Nội • Cơ sở 2: 285 Cách Mạng Tháng 8, Quận 10, TP.HCM • Hotline: 1800 8098 • Email: contact@tendoo.ai",
+      "qr_code": null,
+      "qr_label": "QUÉT LẤY VÉ",
+      "scene_prompt": "Futuristic AI robotics humanoid on high tech glass pedestal, subtle holographic blue particles, 8k",
+      "corridor_prompt": "Dark high tech conference stage gradient, soft cinematic illumination, clean negative space"
+    }
+  },
+  {
+    "id": "sth_noqr_05_9x16_min",
+    "title": "[NO-QR] 9:16 Minimal Text - Banner Dọc TikTok / Story Tối Giản",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FF0055",
+        "text_effect": "neon_bloom",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BÙNG NỔ ƯU ĐÃI",
+      "store_info": "Hotline: 1900 6868",
+      "qr_code": null,
+      "qr_label": "QUÉT MUA",
+      "scene_prompt": "Neon glowing high fashion sneaker floating mid-air, dynamic urban sparks, 8k",
+      "corridor_prompt": "Moody vertical dark studio backdrop, soft neon pink rim light, clean copy space"
+    }
+  },
+  {
+    "id": "sth_noqr_08_9x16_heavy",
+    "title": "[NO-QR] 9:16 Heavy Text - Stress Test Dọc Hẹp 576px Với Nhiều Text",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#10B981",
+        "text_effect": "plain_elegant",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "TUẦN LỄ SỨC KHỎE VÀNG",
+      "hero": "GÓI KHÁM TỔNG QUÁT TIÊU CHUẨN QUỐC TẾ",
+      "subhead": "Tầm soát toàn diện sức khỏe gia đình với hệ thống trang thiết bị chẩn đoán hình ảnh hiện đại nhất",
+      "extra_texts": [
+        "Miễn phí khám lâm sàng ban đầu cùng chuyên gia đầu ngành",
+        "Giảm 30% xét nghiệm gen sàng lọc dị tật di truyền",
+        "Tặng kèm gói tư vấn dinh dưỡng 1 năm trị giá 5 triệu đồng"
+      ],
+      "cta": "ĐẶT LỊCH KHÁM NGAY",
+      "store_info": "Bệnh viện Quốc Tế Á Âu • Cơ sở 1: 56 Hai Bà Trưng, Hà Nội • Cơ sở 2: 120 Điện Biên Phủ, TP.HCM • Hotline: 1900 1234 • Hỗ trợ 24/7",
+      "qr_code": null,
+      "qr_label": "QUÉT ĐẶT LỊCH",
+      "scene_prompt": "Modern luxury medical clinic interior with soft diffused medical lighting, clean stethoscope on marble table, 8k",
+      "corridor_prompt": "Clean deep teal navy gradient backdrop, soft gentle medical glow, clean negative space"
+    }
+  },
+  {
+    "id": "sth_noqr_09_16x9_min",
+    "title": "[NO-QR] 16:9 Minimal Text - Banner Ngang Tối Giản Nổi Bật",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#E50914",
+        "text_effect": "plain_elegant",
+        "background_tone": "cinema_red"
+      },
+      "hero": "ĐẠI HỘI ĐIỆN ẢNH 2026",
+      "store_info": "Hotline: 1900 2099",
+      "qr_code": null,
+      "qr_label": "QUÉT ĐẶT VÉ",
+      "scene_prompt": "Classic cinema projector lens shooting dramatic golden light ray through dark theatre haze, 8k",
+      "corridor_prompt": "Cinematic dark crimson gradient backdrop, atmospheric theatrical haze, clean copy space"
+    }
+  },
+  {
+    "id": "sth_noqr_12_16x9_heavy",
+    "title": "[NO-QR] 16:9 Heavy Text - Stress Test Ngang Hẹp Chiều Dọc (138px / 115px)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#F59E0B",
+        "text_effect": "plain_elegant",
+        "background_tone": "warm_rustic"
+      },
+      "badge": "TUẦN LỄ ẨM THỰC TRUYỀN THỐNG VIỆT NAM",
+      "hero": "TINH HOA MÓN ĂN BA MIỀN ĐẬM ĐÀ BẢN SẮC",
+      "subhead": "Quy tụ 50 nghệ nhân ẩm thực dân gian chế biến tại chỗ các món đặc sản truyền thống vang danh",
+      "extra_texts": [
+        "Tặng kèm set trà sen Tây Hồ ướp hoa gạo",
+        "Giảm 15% cho đoàn đặt từ 10 khách",
+        "Miễn phí trải nghiệm làm bánh dân gian"
+      ],
+      "cta": "ĐẶT CHỖ TRƯỚC",
+      "store_info": "Nhà hàng Hương Việt • Cơ sở 1: 18 Hàng Bè, Hoàn Kiếm, Hà Nội • Cơ sở 2: 74 Đồng Khởi, Quận 1, TP.HCM • Hotline: 0912 666 888",
+      "qr_code": null,
+      "qr_label": "QUÉT ĐẶT CHỖ",
+      "scene_prompt": "Traditional Vietnamese clay pots and ceramic bowls filled with steaming pho and crispy spring rolls on bamboo mat, warm morning light, 8k",
+      "corridor_prompt": "Warm rustic bamboo gradient texture, soft atmospheric golden glow, clean copy space"
+    }
+  },
+  {
+    "id": "sth_noqr_13_4x5_min",
+    "title": "[NO-QR] 4:5 Minimal Text - Khung Ảnh Instagram Đậm Nét",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFC107",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "ĐẠI TIỆC BUFFET",
+      "store_info": "Hotline: 1900 9999",
+      "qr_code": null,
+      "qr_label": "QUÉT NHẬN VOUCHER",
+      "scene_prompt": "Luxurious roasted wagyu beef slice garnished with rosemary and pink salt on black slate board, studio light, 8k",
+      "corridor_prompt": "Dark luxury culinary backdrop gradient, soft warm bokeh highlights, clean copy space"
+    }
+  },
+  {
+    "id": "sth_noqr_16_4x5_heavy",
+    "title": "[NO-QR] 4:5 Heavy Text - Stress Test 4:5 Nhồi Đầy Đủ Chi Tiết",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_top_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "TUYỂN DỤNG NHÂN TÀI CÔNG NGHỆ CAO 2026",
+      "hero": "XÂY DỰNG TƯƠNG LAI CÙNG TẬP ĐOÀN CÔNG NGHỆ HÀNG ĐẦU",
+      "subhead": "Mở rộng 50 vị trí Kỹ sư Trí tuệ Nhân tạo, Kiến trúc sư Giải pháp Đám mây và Chuyên gia An toàn Thông tin",
+      "extra_texts": [
+        "Mức lương thỏa thuận cạnh tranh theo năng lực từ 2.000 đến 5.000 USD",
+        "Thưởng hiệu quả công việc và cổ phiếu ESOP định kỳ hàng năm",
+        "Môi trường làm việc chuẩn quốc tế, cơ hội đào tạo tại thung lũng Silicon"
+      ],
+      "cta": "ỨNG TUYỂN NGAY HÔM NAY",
+      "store_info": "Tập Đoàn Công Nghệ Viettel • Tòa nhà Viettel, Số 1 Giang Văn Minh, Ba Đình, Hà Nội • Hotline tuyển dụng: 098 123 4567 • Email: hr@tendoo.ai",
+      "qr_code": null,
+      "qr_label": "QUÉT NỘP CV",
+      "scene_prompt": "Modern architectural corporate glass office tower at dusk with illuminated warm lights and sleek lobby, 8k",
+      "corridor_prompt": "Sophisticated dark charcoal blue corporate gradient, refined minimal copy space"
+    }
+  }
+]

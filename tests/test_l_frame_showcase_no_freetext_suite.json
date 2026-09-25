@@ -1,0 +1,28 @@
+[
+  {
+    "id": "lframe_nofree_01_1x1_suv_left",
+    "title": "[NO FREETEXT] L-Frame 1:1 - Mercedes SUV 2026 (Left Anchor)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EAB308",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "KHÁM PHÁ ĐẲNG CẤP SUV THẾ HỆ MỚI 2026",
+      "badge": "ƯU ĐÃI 100 TRIỆU",
+      "subhead": "Tặng gói bảo hiểm thân vỏ & 3 năm bảo dưỡng miễn phí",
+      "extra_texts": [],
+      "tag_left": "TENDOO MOTORS",
+      "store_info": "Hotline: 1900 8888 | Showroom Phú Mỹ Hưng, Quận 7, TP. HCM | https://tendoo.ai/suv-2026",
+      "qr_code": "https://tendoo.ai/suv-2026",
+      "qr_label": "QUÉT MÃ QR",
+      "scene_prompt": "Grey luxury SUV Mercedes driving dynamically on mountain serpentine road during sunset, dramatic rim light 8k",
+      "corridor_prompt": "Cinematic dramatic sunset sky over majestic mountain range with dark negative space in upper left"
+    }
+  }
+]

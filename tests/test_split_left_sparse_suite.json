@@ -1,0 +1,302 @@
+[
+  {
+    "id": "split_left_sparse_1x1_no_qr",
+    "title": "[SPLIT_LEFT] 1x1 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SIÊU SALE 50%",
+      "cta": "MUA NGAY HÔM NAY",
+      "store_info": "Hotline: 1900 8888",
+      "scene_prompt": "Luxury golden cosmetic bottle standing on dark marble podium, cinematic lighting, 8k",
+      "corridor_prompt": "Dark luxury studio gradient background on left, soft gold ambient lighting, clean copy space",
+      "qr_code": null,
+      "qr_label": null
+    }
+  },
+  {
+    "id": "split_left_sparse_1x1_no_store",
+    "title": "[SPLIT_LEFT] 1x1 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SIÊU SALE 50%",
+      "cta": "MUA NGAY HÔM NAY",
+      "store_info": null,
+      "scene_prompt": "Luxury golden cosmetic bottle standing on dark marble podium, cinematic lighting, 8k",
+      "corridor_prompt": "Dark luxury studio gradient background on left, soft gold ambient lighting, clean copy space",
+      "store_items": null,
+      "tag_left": null,
+      "tag_right": null,
+      "qr_code": "https://tendoo.ai/split_left",
+      "qr_label": "QUÉT MÃ MUA"
+    }
+  },
+  {
+    "id": "split_left_sparse_1x1_minimal_hero_only",
+    "title": "[SPLIT_LEFT] 1x1 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SIÊU SALE 50%",
+      "cta": "",
+      "store_info": null,
+      "scene_prompt": "Luxury golden cosmetic bottle standing on dark marble podium, cinematic lighting, 8k",
+      "corridor_prompt": "Dark luxury studio gradient background on left, soft gold ambient lighting, clean copy space",
+      "subhead": "",
+      "badge": "",
+      "tag_left": null,
+      "tag_right": null,
+      "extra_texts": [],
+      "store_items": null,
+      "qr_code": null,
+      "qr_label": null
+    }
+  },
+  {
+    "id": "split_left_sparse_9x16_no_qr",
+    "title": "[SPLIT_LEFT] 9x16 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FF0055",
+        "text_effect": "neon_bloom",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BÙNG NỔ ƯU ĐÃI",
+      "cta": "MUA NGAY",
+      "store_info": "Hotline: 1900 6868",
+      "scene_prompt": "Neon glowing high fashion sneaker floating mid-air, dynamic urban sparks, 8k",
+      "corridor_prompt": "Moody vertical dark studio backdrop on left, soft neon pink rim light, clean copy space",
+      "qr_code": null,
+      "qr_label": null
+    }
+  },
+  {
+    "id": "split_left_sparse_9x16_no_store",
+    "title": "[SPLIT_LEFT] 9x16 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FF0055",
+        "text_effect": "neon_bloom",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BÙNG NỔ ƯU ĐÃI",
+      "cta": "MUA NGAY",
+      "store_info": null,
+      "scene_prompt": "Neon glowing high fashion sneaker floating mid-air, dynamic urban sparks, 8k",
+      "corridor_prompt": "Moody vertical dark studio backdrop on left, soft neon pink rim light, clean copy space",
+      "store_items": null,
+      "tag_left": null,
+      "tag_right": null,
+      "qr_code": "https://tendoo.ai/split_left",
+      "qr_label": "QUÉT MÃ MUA"
+    }
+  },
+  {
+    "id": "split_left_sparse_9x16_minimal_hero_only",
+    "title": "[SPLIT_LEFT] 9x16 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FF0055",
+        "text_effect": "neon_bloom",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BÙNG NỔ ƯU ĐÃI",
+      "cta": "",
+      "store_info": null,
+      "scene_prompt": "Neon glowing high fashion sneaker floating mid-air, dynamic urban sparks, 8k",
+      "corridor_prompt": "Moody vertical dark studio backdrop on left, soft neon pink rim light, clean copy space",
+      "subhead": "",
+      "badge": "",
+      "tag_left": null,
+      "tag_right": null,
+      "extra_texts": [],
+      "store_items": null,
+      "qr_code": null,
+      "qr_label": null
+    }
+  },
+  {
+    "id": "split_left_sparse_16x9_no_qr",
+    "title": "[SPLIT_LEFT] 16x9 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#38BDF8",
+        "text_effect": "subtle_depth",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "LAPTOP SIÊU MỎNG",
+      "cta": "KHÁM PHÁ NGAY",
+      "store_info": "Hotline: 1800 2233",
+      "scene_prompt": "Ultra slim metal laptop open on modern concrete office desk on right, dramatic angled softbox light 8k",
+      "corridor_prompt": "Soft diffuse grey studio backdrop with clear negative space on left",
+      "qr_code": null,
+      "qr_label": null
+    }
+  },
+  {
+    "id": "split_left_sparse_16x9_no_store",
+    "title": "[SPLIT_LEFT] 16x9 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#38BDF8",
+        "text_effect": "subtle_depth",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "LAPTOP SIÊU MỎNG",
+      "cta": "KHÁM PHÁ NGAY",
+      "store_info": null,
+      "scene_prompt": "Ultra slim metal laptop open on modern concrete office desk on right, dramatic angled softbox light 8k",
+      "corridor_prompt": "Soft diffuse grey studio backdrop with clear negative space on left",
+      "store_items": null,
+      "tag_left": null,
+      "tag_right": null,
+      "qr_code": "https://tendoo.ai/split_left",
+      "qr_label": "QUÉT MÃ MUA"
+    }
+  },
+  {
+    "id": "split_left_sparse_16x9_minimal_hero_only",
+    "title": "[SPLIT_LEFT] 16x9 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#38BDF8",
+        "text_effect": "subtle_depth",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "LAPTOP SIÊU MỎNG",
+      "cta": "",
+      "store_info": null,
+      "scene_prompt": "Ultra slim metal laptop open on modern concrete office desk on right, dramatic angled softbox light 8k",
+      "corridor_prompt": "Soft diffuse grey studio backdrop with clear negative space on left",
+      "subhead": "",
+      "badge": "",
+      "tag_left": null,
+      "tag_right": null,
+      "extra_texts": [],
+      "store_items": null,
+      "qr_code": null,
+      "qr_label": null
+    }
+  },
+  {
+    "id": "split_left_sparse_4x5_no_qr",
+    "title": "[SPLIT_LEFT] 4x5 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BỘ SƯU TẬP MÙA HÈ",
+      "cta": "XEM NGAY",
+      "store_info": "Hotline: 1900 3344",
+      "scene_prompt": "High fashion luxury summer apparel and leather handbag on right, warm golden studio sunbeam 8k",
+      "corridor_prompt": "Minimalist clean studio background on left, warm ivory shadow",
+      "qr_code": null,
+      "qr_label": null
+    }
+  },
+  {
+    "id": "split_left_sparse_4x5_no_store",
+    "title": "[SPLIT_LEFT] 4x5 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BỘ SƯU TẬP MÙA HÈ",
+      "cta": "XEM NGAY",
+      "store_info": null,
+      "scene_prompt": "High fashion luxury summer apparel and leather handbag on right, warm golden studio sunbeam 8k",
+      "corridor_prompt": "Minimalist clean studio background on left, warm ivory shadow",
+      "store_items": null,
+      "tag_left": null,
+      "tag_right": null,
+      "qr_code": "https://tendoo.ai/split_left",
+      "qr_label": "QUÉT MÃ MUA"
+    }
+  },
+  {
+    "id": "split_left_sparse_4x5_minimal_hero_only",
+    "title": "[SPLIT_LEFT] 4x5 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BỘ SƯU TẬP MÙA HÈ",
+      "cta": "",
+      "store_info": null,
+      "scene_prompt": "High fashion luxury summer apparel and leather handbag on right, warm golden studio sunbeam 8k",
+      "corridor_prompt": "Minimalist clean studio background on left, warm ivory shadow",
+      "subhead": "",
+      "badge": "",
+      "tag_left": null,
+      "tag_right": null,
+      "extra_texts": [],
+      "store_items": null,
+      "qr_code": null,
+      "qr_label": null
+    }
+  }
+]

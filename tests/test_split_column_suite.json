@@ -1,0 +1,227 @@
+[
+  {
+    "id": "split_left_01_1x1_smartwatch",
+    "title": "Split Left 1:1 - Smartwatch Titan Kháng Nước",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#06B6D4",
+        "text_effect": "neon_glow",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "THẾ HỆ MỚI 2026",
+      "hero": "ĐỒNG HỒ TITAN THÔNG MINH S7",
+      "subhead": "Màn hình AMOLED sắc nét theo dõi sức khỏe và nhịp tim 24/7",
+      "extra_texts": [
+        "Chống nước độ sâu 50 mét",
+        "Thời lượng pin 14 ngày bền bỉ"
+      ],
+      "cta": "MUA NGAY HÔM NAY",
+      "store_info": "Hotline: 1800 6677 | Vincom Mega Mall Thảo Điền, TP. Thủ Đức",
+      "qr_code": "https://tendoo.ai/smartwatch",
+      "qr_label": "QUÉT MUA NGAY",
+      "scene_prompt": "Futuristic matte black smartwatch floating with neon cyan digital UI glow and water splashes, dark reflective podium 8k",
+      "corridor_prompt": "Clean dark cyber space with subtle diffuse blue backlight on the left"
+    }
+  },
+  {
+    "id": "split_left_02_9x16_phone",
+    "title": "Split Left 9:16 - Flagship AI Smartphone",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#8B5CF6",
+        "text_effect": "glow_edge",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "ĐỘT PHÁ AI",
+      "hero": "SMARTPHONE TITANIUM PRO",
+      "subhead": "Camera tiềm vọng zoom quang học 100x và chip AI thế hệ mới",
+      "extra_texts": [
+        "Màn hình 120Hz mượt mà",
+        "Sạc siêu nhanh 120W"
+      ],
+      "cta": "ĐẶT HÀNG TRƯỚC",
+      "store_info": "Hotline: 1900 1122 | Tràng Tiền Plaza, Hoàn Kiếm, Hà Nội",
+      "qr_code": "https://tendoo.ai/phone-pro",
+      "qr_label": "ĐẶT TRƯỚC",
+      "scene_prompt": "Sleek titanium smartphone standing upright with purple ambient glow on edges, studio lighting 8k",
+      "corridor_prompt": "Deep studio shadow with subtle violet light leak on left column"
+    }
+  },
+  {
+    "id": "split_left_03_16x9_laptop",
+    "title": "Split Left 16:9 - Laptop Doanh Nhân Siêu Mỏng",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#38BDF8",
+        "text_effect": "subtle_depth",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "MỎNG NHẸ 1KG",
+      "hero": "ULTRABOOK DOANH NHÂN TITAN",
+      "subhead": "Hiệu năng bứt phá với chip xử lý AI chuyên dụng",
+      "extra_texts": [
+        "Vỏ nhôm nguyên khối"
+      ],
+      "cta": "KHÁM PHÁ NGAY",
+      "store_info": "Hotline: 1800 2233 | Tendoo Center, 120 Pasteur, Quận 1, TP. HCM",
+      "qr_code": "https://tendoo.ai/laptop",
+      "qr_label": "XEM SPECS",
+      "scene_prompt": "Ultra slim metal laptop open on modern concrete office desk, dramatic angled softbox light 8k",
+      "corridor_prompt": "Soft diffuse grey studio backdrop with clear negative space on left"
+    }
+  },
+  {
+    "id": "split_left_04_4x5_headphone",
+    "title": "Split Left 4:5 - Tai Nghe Chống Ồn Cao Cấp",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#F59E0B",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "HI-RES AUDIO",
+      "hero": "TAI NGHE KHÔNG DÂY MASTER",
+      "subhead": "Khử tiếng ồn chủ động kép và driver dynamic 40mm cao cấp",
+      "extra_texts": [
+        "Đệm tai da cừu êm ái",
+        "Thời lượng pin 50 giờ",
+        "Hỗ trợ chuẩn giải mã LDAC không dây chất lượng cao"
+      ],
+      "cta": "TRẢI NGHIỆM NGAY",
+      "store_info": "Hotline: 1900 4455 | Crescent Mall, Quận 7, TP. HCM",
+      "qr_code": "https://tendoo.ai/audio",
+      "qr_label": "MUA NGAY",
+      "scene_prompt": "Luxury golden metallic wireless headphones suspended in air, soft warm rim light 8k",
+      "corridor_prompt": "Dark textured studio wall with soft golden ambient glow on left"
+    }
+  },
+  {
+    "id": "split_right_05_1x1_cosmetics",
+    "title": "Split Right 1:1 - Serum Collagen Dưỡng Sáng Da",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "split_right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EC4899",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "ĐỘT PHÁ LÀN DA",
+      "hero": "SERUM NANO COLLAGEN TƯƠI",
+      "subhead": "Tái tạo độ đàn hồi và dưỡng da sáng mịn không tì vết chỉ sau 7 ngày",
+      "extra_texts": [
+        "Chiết xuất 100% tế bào gốc hoa hồng tuyết",
+        "Cấp ẩm sâu 72 giờ liên tục",
+        "Phù hợp cho mọi làn da nhạy cảm nhất"
+      ],
+      "cta": "NHẬN ƯU ĐÃI NGAY",
+      "store_info": "Hotline: 1900 8686 | Diamond Plaza, Quận 1, TP. HCM",
+      "qr_code": "https://tendoo.ai/serum",
+      "qr_label": "QUÉT MÃ ƯU ĐÃI",
+      "scene_prompt": "Glass dropper bottle of luxury pink face serum standing on wet marble with water ripples and pink flower petals 8k",
+      "corridor_prompt": "Deep rose tinted studio shadow on the right column for clean typography"
+    }
+  },
+  {
+    "id": "split_right_06_9x16_perfume",
+    "title": "Split Right 9:16 - Nước Hoa Nữ Cao Cấp Pháp",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "PARFUM DE FRANCE",
+      "hero": "NƯỚC HOA ELIXIR PARIS",
+      "subhead": "Hương thơm nồng nàn quyến rũ lưu hương suốt 24 giờ",
+      "extra_texts": [
+        "Hương đầu hoa mẫu đơn",
+        "Hương cuối vani ấm áp"
+      ],
+      "cta": "MUA NGAY BÂY GIỜ",
+      "store_info": "Hotline: 1800 9988 | Lotte Mall Tây Hồ, Hà Nội",
+      "qr_code": "https://tendoo.ai/elixir",
+      "qr_label": "QUÉT MUA NGAY",
+      "scene_prompt": "Elegant crystal perfume bottle with golden liquid placed on gold trimmed pedestal, soft warm glow 8k",
+      "corridor_prompt": "Dark luxury studio gradient with clear open right column for text"
+    }
+  },
+  {
+    "id": "split_right_07_16x9_spa",
+    "title": "Split Right 16:9 - Liệu Trình Trẻ Hóa Tế Bào Gốc",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "split_right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#10B981",
+        "text_effect": "subtle_depth",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "ƯU ĐÃI THÁNG 9",
+      "hero": "LIỆU TRÌNH TRẺ HÓA TẾ BÀO",
+      "subhead": "Công nghệ nâng cơ trẻ hóa không phẫu thuật từ Thụy Sĩ",
+      "extra_texts": [
+        "Bác sĩ chuyên khoa trực tiếp thăm khám"
+      ],
+      "cta": "ĐẶT LỊCH TƯ VẤN",
+      "store_info": "Hotline: 028 3925 6789 | 88 Hai Bà Trưng, Quận 1, TP. HCM",
+      "qr_code": "https://tendoo.ai/spa-vip",
+      "qr_label": "ĐẶT LỊCH NGAY",
+      "scene_prompt": "Serene luxury spa room with warm wooden panels, hot stones, white orchids, soft candlelight 8k",
+      "corridor_prompt": "Soft dark spa ambient shadow on the right side of canvas"
+    }
+  },
+  {
+    "id": "split_right_08_4x5_jewelry",
+    "title": "Split Right 4:5 - Dây Chuyền Kim Cương Tinh Tuyển",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#38BDF8",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "KIM CƯƠNG GIA",
+      "hero": "DÂY CHUYỀN KIM CƯƠNG ROYAL",
+      "subhead": "Chế tác từ vàng trắng 18K và kim cương tự nhiên chuẩn nước D",
+      "extra_texts": [
+        "Chứng nhận kiểm định GIA quốc tế",
+        "Bảo hành đánh bóng trọn đời",
+        "Tặng kèm hộp quà bọc nhung cao cấp"
+      ],
+      "cta": "XEM BỘ SƯU TẬP",
+      "store_info": "Hotline: 1900 7799 | Vincom Center Bà Triệu, Hà Nội",
+      "qr_code": "https://tendoo.ai/diamond",
+      "qr_label": "XEM CHI TIẾT",
+      "scene_prompt": "Sparkling diamond necklace resting on black velvet cushion with brilliant light caustics and refractions 8k",
+      "corridor_prompt": "Deep black velvet shadow on the right column with soft rim lighting"
+    }
+  }
+]

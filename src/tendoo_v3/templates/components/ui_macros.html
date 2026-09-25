@@ -1,0 +1,181 @@
+{# ==============================================================================
+   TENDOO V3 SHARED UI MACROS (components/ui_macros.html)
+   Quy tắc cốt lõi:
+   1. Zero-Trace: Nếu dữ liệu null/rỗng -> Hoàn toàn KHÔNG sinh thẻ wrapper hay khoảng trống nào.
+   2. Font Hierarchy: UI text luôn dùng var(--ui-font), deco bullets dùng Arial/Segoe UI Symbol chống tofu.
+   3. Adaptive Size: Phần tử con luôn để font-size: inherit để tuân thủ data-autofit của cha.
+   ============================================================================== #}
+
+{# 1. RENDER BADGE PILL (Tự biến mất nếu rỗng) #}
+{% macro render_badge(badge, budget=none, extra_cls='', max_w=none) %}
+  {% if badge %}
+    <div class="badge-pill {{ extra_cls }}"
+         data-autofit
+         data-min-font="{{ budget.min_font if (budget and budget.min_font) else 11 }}"
+         data-max-font="{{ budget.max_font if (budget and budget.max_font) else 14 }}"
+         data-max-height="{{ budget.max_h if (budget and budget.max_h) else 28 }}"
+         {% if max_w %}data-max-width="{{ max_w }}"{% endif %}
+         style="font-family: var(--ui-font); flex-shrink: 0;">
+      <span style="font-size: inherit;">{{ badge }}</span>
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{# 2. RENDER HERO TITLE #}
+{% macro render_hero(hero, budget=none, extra_cls='', max_w=none) %}
+  {% if hero %}
+    <div class="hero-title {{ extra_cls }}"
+         data-autofit
+         data-min-font="{{ budget.min_font if (budget and budget.min_font) else 20 }}"
+         data-max-font="{{ budget.max_font if (budget and budget.max_font) else 80 }}"
+         data-max-height="{{ budget.max_h if (budget and budget.max_h) else 160 }}"
+         {% if max_w %}data-max-width="{{ max_w }}"{% endif %}>
+      {{ hero }}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{# 2b. RENDER HERO PHRASE (Tương phản trong dòng -- Inline Hierarchical Rhythm)
+
+   Thay thế render_hero() khi plan có `hero_parts` (markup ngữ nghĩa do LLM cắt vai
+   trò). Nếu không có markup -> gọi thẳng render_hero() nguyên bản, hành vi CŨ Y HỆT.
+   Nhờ vậy cả 14 template chỉ cần đổi 1 lời gọi macro là có tương phản trong dòng,
+   KHÔNG phải viết lại layout nào.
+
+   `hero_parts` đã được schema.py cưỡng chế khớp nguyên văn với `hero` trước khi tới
+   đây, nên không có đường nào markup làm sai chính tả nội dung gốc. #}
+{% macro render_hero_phrase(hero, hero_parts, budget=none, extra_cls='', max_w=none) %}
+  {% if hero_parts %}
+    <div class="hero-title hero-phrase {{ extra_cls }}"
+         data-autofit
+         data-min-font="{{ budget.min_font if (budget and budget.min_font) else 20 }}"
+         data-max-font="{{ budget.max_font if (budget and budget.max_font) else 80 }}"
+         data-max-height="{{ budget.max_h if (budget and budget.max_h) else 160 }}"
+         {% if max_w %}data-max-width="{{ max_w }}"{% endif %}>
+      {%- for seg in hero_parts -%}
+        <span class="hero-seg hero-seg--{{ seg.role }}{{ ' hero-seg--accent' if seg.emphasis == 'accent' else '' }}">{{ seg.t }}</span>
+      {%- endfor -%}
+    </div>
+  {% else %}
+    {{ render_hero(hero, budget=budget, extra_cls=extra_cls, max_w=max_w) }}
+  {% endif %}
+{% endmacro %}
+
+{# 3. RENDER SUBHEAD (Sắc nét tự nhiên, không lem mờ quầng đen trên nền sáng) #}
+{% macro render_subhead(subhead, budget=none, extra_cls='', max_w=none) %}
+  {% if subhead %}
+    <div class="subhead-title {{ extra_cls }}"
+         data-autofit
+         data-min-font="{{ budget.min_font if (budget and budget.min_font) else 12 }}"
+         data-max-font="{{ budget.max_font if (budget and budget.max_font) else 26 }}"
+         data-max-height="{{ budget.max_h if (budget and budget.max_h) else 60 }}"
+         {% if max_w %}data-max-width="{{ max_w }}"{% endif %}>
+      {{ subhead }}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{# 4. RENDER FREETEXT DUAL-MODE (Semantic Pills vs Freetext Block) #}
+{% macro render_freetext(extra_texts, extra_pills, is_block=false, budget=none, bullet_svg='', extra_cls='', max_w=none) %}
+  {% if extra_texts %}
+    {% if is_block %}
+      <div class="freetext-block {{ extra_cls }}"
+           data-autofit
+           data-min-font="{{ budget.min_font if (budget and budget.min_font) else 10 }}"
+           data-max-font="{{ budget.max_font if (budget and budget.max_font) else 16 }}"
+           data-max-height="{{ budget.max_h if (budget and budget.max_h) else 80 }}"
+           {% if max_w %}data-max-width="{{ max_w }}"{% endif %}>
+        {% for line in extra_texts %}
+          <div class="freetext-line">
+            {% if bullet_svg %}
+              <span class="freetext-bullet">{{ bullet_svg }}</span>
+            {% else %}
+              <span class="freetext-bullet" style="font-family: Arial, 'Segoe UI Symbol', sans-serif !important;">✦</span>
+            {% endif %}
+            <span>{{ line }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="extra-tag-row {{ extra_cls }}"
+           data-autofit
+           data-min-font="{{ budget.min_font if (budget and budget.min_font) else 11 }}"
+           data-max-font="{{ budget.max_font if (budget and budget.max_font) else 16 }}"
+           data-max-height="{{ budget.max_h if (budget and budget.max_h) else 60 }}"
+           {% if max_w %}data-max-width="{{ max_w }}"{% endif %}>
+        {% if extra_pills %}
+          {% for pill in extra_pills %}
+            <div class="extra-pill">
+              {% if pill.icon_svg %}{{ pill.icon_svg }}{% endif %}
+              <span>{{ pill.text }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          {% for text in extra_texts %}
+            <div class="extra-pill">
+              <span>{{ text }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endif %}
+{% endmacro %}
+
+{# 5. RENDER STORE INFO (Hotline / Địa chỉ cửa hàng) #}
+{% macro render_store(store_items, store_info, budget=none, extra_cls='', is_col=true, max_w=none) %}
+  {% if store_items or store_info %}
+    <div class="{{ 'store-info-col' if is_col else 'store-info-row' }} {{ extra_cls }}"
+         data-autofit
+         data-min-font="{{ budget.min_font if (budget and budget.min_font) else 12 }}"
+         data-max-font="{{ budget.max_font if (budget and budget.max_font) else 21 }}"
+         data-max-height="{{ budget.max_h if (budget and budget.max_h) else 80 }}"
+         {% if max_w %}data-max-width="{{ max_w }}"{% endif %}
+         style="font-family: var(--ui-font);">
+      {% if store_items %}
+        {% for item in store_items %}
+          <div class="store-item" style="font-size: inherit;">
+            {{ item.icon_svg }}
+            <span style="font-size: inherit;">{{ item.text }}</span>
+          </div>
+        {% endfor %}
+      {% elif store_info %}
+        <div class="store-item" style="font-size: inherit;">
+          <span style="font-size: inherit;">{{ store_info }}</span>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{# 6. RENDER CTA BUTTON (Nút kêu gọi hành động) #}
+{% macro render_cta(cta, budget=none, extra_cls='', max_w=none) %}
+  {% if cta %}
+    <div class="cta-btn {{ extra_cls }}"
+         data-autofit
+         data-min-font="{{ budget.min_font if (budget and budget.min_font) else 13 }}"
+         data-max-font="{{ budget.max_font if (budget and budget.max_font) else 22 }}"
+         data-max-height="{{ budget.max_h if (budget and budget.max_h) else 48 }}"
+         {% if max_w %}data-max-width="{{ max_w }}"{% endif %}
+         style="font-family: var(--ui-font); flex-shrink: 0;">
+      <span style="font-size: inherit;">{{ cta }}</span>
+      <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{# 7. RENDER QR CODE (Card QR co giãn an toàn, không xén mép) #}
+{% macro render_qr(qr_svg, max_h=none, extra_cls='') %}
+  {% if qr_svg %}
+    <div class="qr-col {{ extra_cls }}" style="{% if max_h %}max-height: {{ max_h }}px;{% endif %} flex-shrink: 0; font-family: var(--ui-font);">
+      {{ qr_svg }}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{# 8. RENDER DECO BULLET (Bảo vệ 100% chống lỗi TOFU theo Mục 2 yeu_cau_templates.txt) #}
+{% macro render_deco_bullet(symbol="✦", color="") %}
+  <span class="deco-bullet" style="font-family: Arial, 'Segoe UI Symbol', sans-serif !important; font-size: 0.85em; {{ 'color:' ~ color ~ ';' if color else '' }} flex-shrink: 0;">
+    {{ symbol }}
+  </span>
+{% endmacro %}

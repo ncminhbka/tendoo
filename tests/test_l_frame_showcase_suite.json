@@ -1,0 +1,453 @@
+[
+  {
+    "id": "lframe_01_1x1_suv_left",
+    "title": "L-Frame 1:1 - Mercedes SUV 2026 (Left Anchor)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EAB308",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "KHÁM PHÁ ĐẲNG CẤP SUV THẾ HỆ MỚI 2026",
+      "badge": "ƯU ĐÃI 100 TRIỆU",
+      "subhead": "Tặng gói bảo hiểm thân vỏ & 3 năm bảo dưỡng miễn phí",
+      "extra_texts": [
+        "Từ 2026-09-01 - Đến 2026-09-30"
+      ],
+      "tag_left": "TENDOO MOTORS",
+      "store_info": "Hotline: 1900 8888 | Showroom Phú Mỹ Hưng, Quận 7, TP. HCM | https://tendoo.ai/suv-2026",
+      "qr_code": "https://tendoo.ai/suv-2026",
+      "qr_label": "QUÉT MÃ QR",
+      "scene_prompt": "Grey luxury SUV Mercedes driving dynamically on mountain serpentine road during sunset, dramatic rim light 8k",
+      "corridor_prompt": "Cinematic dramatic sunset sky over majestic mountain range with dark negative space in upper left"
+    }
+  },
+  {
+    "id": "lframe_02_1x1_fashion_left",
+    "title": "L-Frame 1:1 - Áo Khoác Măng Tô Dạ Lông Cừu (Left Anchor)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#3B82F6",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "ÁO KHOÁC MĂNG TÔ DẠ LÔNG CỪU Ý",
+      "badge": "ƯU ĐÃI ĐẾN 25%",
+      "subhead": "Tặng khăn choàng lụa tơ tằm cao cấp cho hóa đơn từ 3 triệu",
+      "extra_texts": [
+        "Từ 2026-09-01 - Đến 2026-09-25"
+      ],
+      "tag_left": "TENDOO ATELIER",
+      "store_info": "Hotline: 1900 6868 | Tràng Tiền Plaza, Hoàn Kiếm, Hà Nội | https://tendoo.ai/lookbook-2026",
+      "qr_code": "https://tendoo.ai/lookbook-2026",
+      "qr_label": "QUÉT MÃ QR",
+      "scene_prompt": "Asian female model wearing tailored dark wool overcoat with hands in pockets, studio rim light, moody editorial aesthetic 8k",
+      "corridor_prompt": "Deep textured studio shadow with subtle angled light rays in background"
+    }
+  },
+  {
+    "id": "lframe_03_1x1_watch_right",
+    "title": "L-Frame 1:1 - Đồng Hồ Chronograph Titan (Right Mirror)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "right",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#06B6D4",
+        "text_effect": "neon_glow",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "ĐỒNG HỒ TITAN THỜI GIAN",
+      "badge": "PHIÊN BẢN GIỚI HẠN",
+      "subhead": "Bộ máy cơ Thụy Sĩ tự động chống nước 300 mét",
+      "extra_texts": [
+        "Mặt kính Sapphire nguyên khối",
+        "Bảo hành quốc tế 5 năm"
+      ],
+      "tag_left": "CHRONO LUXURY",
+      "store_info": "Hotline: 1800 5566 | Vincom Đồng Khởi, Quận 1, TP. HCM | https://chrono.ai/titan",
+      "qr_code": "https://chrono.ai/titan",
+      "qr_label": "XEM CHI TIẾT",
+      "scene_prompt": "Luxury titanium chronograph watch on wet black granite stone with water splashes, dramatic cyan rim light 8k",
+      "corridor_prompt": "Dark sleek minimalist studio background with soft diffuse light"
+    }
+  },
+  {
+    "id": "lframe_04_1x1_heavy_left",
+    "title": "L-Frame 1:1 - Biệt Thự Nghỉ Dưỡng Thung Lũng (Heavy Freetext)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "hero": "TUYỆT TÁC BIỆT THỰ ĐỈNH NÚI MAJESTIC",
+      "badge": "MỞ BÁN ĐỢT 1",
+      "subhead": "Chiết khấu 8% và tặng gói nội thất hoàng gia 500 triệu",
+      "extra_texts": [
+        "Tầm nhìn panorama 360 độ ôm trọn thung lũng mây",
+        "Hồ bơi vô cực nước ấm 4 mùa chuẩn resort 6 sao",
+        "Sổ hồng lâu dài trao tay ngay khi nhận bàn giao",
+        "Hỗ trợ lãi suất 0% trong 24 tháng đầu tiên"
+      ],
+      "tag_left": "MAJESTIC ESTATE",
+      "store_info": "Hotline: 0909 888 999 | Đồi Gió Hú, Phường 3, TP. Đà Lạt | https://majestic.tendoo.ai",
+      "qr_code": "https://majestic.tendoo.ai",
+      "qr_label": "ĐĂNG KÝ XEM NHÀ",
+      "scene_prompt": "Luxury modern minimalist glass villa perched on cliff edge overlooking misty pine forest at sunrise, cinematic 8k",
+      "corridor_prompt": "Morning mist and soft golden sunlight framing negative space in upper left"
+    }
+  },
+  {
+    "id": "lframe_05_9x16_min_left",
+    "title": "L-Frame 9:16 - Siêu Xe Thể Thao GT (Minimal Text)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#EF4444",
+        "text_effect": "glow_edge",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BỨT PHÁ TỐC ĐỘ VỚI GT SPORT",
+      "badge": "CHÍNH HÃNG",
+      "tag_left": "TENDOO MOTORSPORT",
+      "store_info": "Hotline: 1900 9999 | Landmark 81, TP. HCM",
+      "qr_code": "https://tendoo.ai/gt",
+      "qr_label": "TRẢI NGHIỆM",
+      "scene_prompt": "Red supercar speeding on neon city asphalt with motion blur and headlight light trails, rain wet reflections 8k",
+      "corridor_prompt": "Night city skyline with deep dark atmospheric smoke in top region"
+    }
+  },
+  {
+    "id": "lframe_06_9x16_light_left",
+    "title": "L-Frame 9:16 - Túi Xách Da Thủ Công Paris (Light Text)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#F59E0B",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "TÚI XÁCH DA THỦ CÔNG PARIS",
+      "badge": "NEW COLLECTION",
+      "subhead": "Da bê nguyên tấm chế tác thủ công 100 giờ từ Pháp",
+      "extra_texts": [
+        "Từ 2026-09-01 - Đến 2026-09-30"
+      ],
+      "tag_left": "MAISON DE CUIR",
+      "store_info": "Hotline: 1900 1234 | Tràng Tiền, Hoàn Kiếm, Hà Nội | https://maison.ai",
+      "qr_code": "https://maison.ai",
+      "qr_label": "ĐẶT HÀNG NGAY",
+      "scene_prompt": "High fashion brown leather luxury handbag standing on minimalist pedestal, warm studio lighting 8k",
+      "corridor_prompt": "Soft dark textured studio background with subtle warm gradient"
+    }
+  },
+  {
+    "id": "lframe_07_9x16_med_right",
+    "title": "L-Frame 9:16 - Nước Hoa Hoàng Gia Versailles (Medium Right)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EC4899",
+        "text_effect": "embossed_shadow",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "HƯƠNG THƠM HOÀNG GIA QUÝ PHÁI",
+      "badge": "GIẢM 20%",
+      "subhead": "Tinh chất hoa hồng Grasse và gỗ trầm hương quý hiếm",
+      "extra_texts": [
+        "Lưu hương 24 giờ",
+        "Tặng kèm vial 10ml"
+      ],
+      "tag_left": "PARFUM DE ROYAL",
+      "store_info": "Hotline: 028 3822 9999 | Diamond Plaza, Q.1, HCM | https://parfum.ai",
+      "qr_code": "https://parfum.ai",
+      "qr_label": "MUA NGAY",
+      "scene_prompt": "Luxury glass perfume bottle with golden liquid, floating rose petals, crystal clear lighting 8k",
+      "corridor_prompt": "Deep rose tinted studio shadow with soft backlighting in upper region"
+    }
+  },
+  {
+    "id": "lframe_08_9x16_heavy_right",
+    "title": "L-Frame 9:16 - Khóa Học Lãnh Đạo Tương Lai (Heavy Right Mirror)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "right",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#10B981",
+        "text_effect": "subtle_depth",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "KHÓA HỌC LÃNH ĐẠO CẤP CAO 2026",
+      "badge": "CHỈ 30 SUẤT",
+      "subhead": "Chương trình huấn luyện điều hành doanh nghiệp thực chiến",
+      "extra_texts": [
+        "Giảng viên là các CEO tập đoàn đa quốc gia hàng đầu",
+        "Cấp chứng chỉ danh giá chuẩn quốc tế Harvard Business",
+        "Mở rộng mạng lưới kết nối hơn 500 lãnh đạo tinh hoa",
+        "Học bổng trị giá 50 triệu đồng cho học viên xuất sắc"
+      ],
+      "tag_left": "LEADERSHIP ACADEMY",
+      "store_info": "Hotline: 1800 6789 | Keangnam Landmark 72, Hà Nội | https://lead.ai",
+      "qr_code": "https://lead.ai",
+      "qr_label": "ĐĂNG KÝ NGAY",
+      "scene_prompt": "Confident Asian business leader speaking in modern auditorium, dramatic warm stage light 8k",
+      "corridor_prompt": "Dark modern conference hall background with subtle ambient stage lights"
+    }
+  },
+  {
+    "id": "lframe_09_16x9_min_left",
+    "title": "L-Frame 16:9 - Siêu Du Thuyền Monaco (Landscape Minimal)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#38BDF8",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SIÊU DU THUYỀN MONACO 100FT",
+      "badge": "ĐỘC BẢN",
+      "tag_left": "MONACO YACHTS",
+      "store_info": "Hotline: 090 999 8888 | Marina Saigon, TP. HCM | https://yachts.tendoo.ai",
+      "qr_code": "https://yachts.tendoo.ai",
+      "qr_label": "KHÁM PHÁ",
+      "scene_prompt": "Luxury white superyacht sailing on deep blue Mediterranean sea during golden hour, majestic aerial view 8k",
+      "corridor_prompt": "Golden sunset clouds and open sea horizon with calm negative space in top left"
+    }
+  },
+  {
+    "id": "lframe_10_16x9_light_left",
+    "title": "L-Frame 16:9 - Căn Hộ Penthouse View Sông (Landscape Light)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#F59E0B",
+        "text_effect": "glow_edge",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "PENTHOUSE THE RIVER THỦ THIÊM",
+      "badge": "VỊ TRÍ KIM CƯƠNG",
+      "subhead": "Tầm nhìn triệu đô trực diện sông Sài Gòn lung linh về đêm",
+      "extra_texts": [
+        "Từ 2026-09-01 - Đến 2026-09-30"
+      ],
+      "tag_left": "THE RIVER RESIDENCE",
+      "store_info": "Hotline: 1800 8899 | Đại lộ Vòng Cung, Thủ Thiêm, TP. Thủ Đức | https://theriver.ai",
+      "qr_code": "https://theriver.ai",
+      "qr_label": "XEM MẪU",
+      "scene_prompt": "Luxury modern penthouse living room with floor to ceiling glass windows showing dazzling city night river view 8k",
+      "corridor_prompt": "Dark twilight city sky with ambient glowing horizon in upper left"
+    }
+  },
+  {
+    "id": "lframe_11_16x9_med_right",
+    "title": "L-Frame 16:9 - Tai Nghe Audiophile Không Dây (Landscape Right)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "right",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#A855F7",
+        "text_effect": "neon_glow",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "TAI NGHE HI-RES CHỐNG ỒN CHỦ ĐỘNG",
+      "badge": "MỚI RA MẮT",
+      "subhead": "Âm thanh không gian Spatial Audio 360 độ chuẩn phòng thu",
+      "extra_texts": [
+        "Pin 45 giờ liên tục",
+        "Sạc nhanh 10 phút dùng 5 giờ"
+      ],
+      "tag_left": "SONIC AUDIO",
+      "store_info": "Hotline: 1900 3344 | Tràng Tiền Plaza, Hà Nội | https://sonic.ai",
+      "qr_code": "https://sonic.ai",
+      "qr_label": "TRẢI NGHIỆM",
+      "scene_prompt": "Sleek matte black wireless over-ear headphones floating with purple neon light trails, water ripples beneath 8k",
+      "corridor_prompt": "Dark studio atmosphere with subtle purple violet backlights in upper right"
+    }
+  },
+  {
+    "id": "lframe_12_16x9_heavy_right",
+    "title": "L-Frame 16:9 - Hội Nghị Thượng Đỉnh AI Quốc Tế (Landscape Heavy Right)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "right",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#06B6D4",
+        "text_effect": "subtle_depth",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "HỘI NGHỊ TRÍ TUỆ NHÂN TẠO GLOBAL AI 2026",
+      "badge": "SỰ KIỆN QUỐC TẾ",
+      "subhead": "Quy tụ 100 diễn giả hàng đầu từ DeepMind, OpenAI và Google",
+      "extra_texts": [
+        "Khám phá các đột phá mới nhất về Generative AI và DiT models",
+        "Triển lãm công nghệ tương lai với hơn 200 gian hàng trải nghiệm",
+        "Cơ hội kết nối đầu tư mạo hiểm cùng các quỹ công nghệ lớn"
+      ],
+      "tag_left": "GLOBAL AI SUMMIT",
+      "store_info": "Hotline: 024 3974 8888 | Trung tâm Hội nghị Quốc gia, Hà Nội | https://aisummit.vn",
+      "qr_code": "https://aisummit.vn",
+      "qr_label": "ĐẶT VÉ SỚM",
+      "scene_prompt": "Futuristic stage with giant glowing holographic AI brain and tech keynote speakers, deep blue neon lights 8k",
+      "corridor_prompt": "Dark high tech cyber backdrop with deep negative space in upper right"
+    }
+  },
+  {
+    "id": "lframe_13_4x5_min_left",
+    "title": "L-Frame 4:5 - Rượu Vang Đỏ Bordeaux Grand Cru (Minimal Left)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#DC2626",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "VANG ĐỎ BORDEAUX GRAND CRU 2018",
+      "badge": "VINTAGE 2018",
+      "tag_left": "CHÂTEAU DE BORDEAUX",
+      "store_info": "Hotline: 1900 8822 | Khách sạn Park Hyatt Saigon, Quận 1 | https://bordeaux.ai",
+      "qr_code": "https://bordeaux.ai",
+      "qr_label": "THƯỞNG THỨC",
+      "scene_prompt": "Elegant dark red wine bottle with vintage gold label next to filled wine glass, dark oak wood cellar background 8k",
+      "corridor_prompt": "Subtle warm candlelight and dark barrel cellar shadows in upper left"
+    }
+  },
+  {
+    "id": "lframe_14_4x5_light_left",
+    "title": "L-Frame 4:5 - Máy Ảnh Phim Cổ Điển Leica M (Light Left)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#F59E0B",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "MÁY ẢNH LEICA M RANGEFINDER",
+      "badge": "HUYỀN THOẠI",
+      "subhead": "Cảm biến Full-frame 60MP và chất lượng quang học đỉnh cao",
+      "extra_texts": [
+        "Từ 2026-09-01 - Đến 2026-09-30"
+      ],
+      "tag_left": "LEICA BOUTIQUE",
+      "store_info": "Hotline: 028 3823 4567 | Đồng Khởi, Bến Nghé, Quận 1 | https://leica.ai",
+      "qr_code": "https://leica.ai",
+      "qr_label": "TRẢI NGHIỆM",
+      "scene_prompt": "Vintage classic Leica black leather camera on dark wooden desk next to coffee cup, morning natural window light 8k",
+      "corridor_prompt": "Soft morning shadow on textured wall in upper left region"
+    }
+  },
+  {
+    "id": "lframe_15_4x5_med_right",
+    "title": "L-Frame 4:5 - Giày Da Oxford Nam Cao Cấp (Medium Right)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "GIÀY TÂY OXFORD DA BÒ Ý CAO CẤP",
+      "badge": "GIẢM 15%",
+      "subhead": "Khâu đế Goodyear Welted thủ công siêu bền đẹp chuẩn Anh",
+      "extra_texts": [
+        "Chất liệu da bò mộc Patina đánh màu thủ công",
+        "Tặng kèm cây giữ form gỗ tuyết tùng cao cấp"
+      ],
+      "tag_left": "ROYAL OXFORD",
+      "store_info": "Hotline: 1900 5577 | Hai Bà Trưng, Hoàn Kiếm, Hà Nội | https://oxford.ai",
+      "qr_code": "https://oxford.ai",
+      "qr_label": "ĐẶT MUA",
+      "scene_prompt": "Pair of polished dark cognac leather oxford shoes on dark marble floor with reflection, elegant rim lighting 8k",
+      "corridor_prompt": "Deep studio shadow and warm ambient light in upper right area"
+    }
+  },
+  {
+    "id": "lframe_16_4x5_heavy_right",
+    "title": "L-Frame 4:5 - Dinh Thự Ven Hồ Thiên Nga (Heavy Right Mirror)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#38BDF8",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "DINH THỰ ĐẢO NGỌC SWAN LAKE",
+      "badge": "ĐẶC QUYỀN VIP",
+      "subhead": "Tận hưởng không gian sống thượng lưu bên hồ sinh thái 50ha",
+      "extra_texts": [
+        "Hồ bơi riêng biệt và bến đỗ du thuyền trước hiên nhà",
+        "Hệ thống an ninh sinh trắc học 3 lớp bảo vệ tuyệt đối",
+        "Tặng du thuyền thể thao 2 tỷ đồng cho 5 chủ nhân đầu tiên",
+        "Thanh toán linh hoạt 1% mỗi tháng đến khi nhận nhà"
+      ],
+      "tag_left": "SWAN LAKE RESIDENCES",
+      "store_info": "Hotline: 1800 7788 | Đảo Ngọc Ecopark, Hưng Yên | https://swanlake.ai",
+      "qr_code": "https://swanlake.ai",
+      "qr_label": "NHẬN BÁO GIÁ",
+      "scene_prompt": "Stunning luxury waterfront villa surrounded by crystal lake with white swans at sunset, lush green landscaping 8k",
+      "corridor_prompt": "Serene evening sky over tranquil water with soft clouds in upper right"
+    }
+  }
+]

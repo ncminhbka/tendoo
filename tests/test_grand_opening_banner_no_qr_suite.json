@@ -1,0 +1,78 @@
+[
+  {
+    "id": "open_noqr_05_1x1_minimal",
+    "title": "[NO-QR] Grand Opening 1:1 - Tối Giản Trọng Thể",
+    "template": "grand_opening_banner",
+    "width": 1024,
+    "height": 1024,
+    "hero": "CHÍNH THỨC KHAI TRƯƠNG",
+    "subhead": "Chào Đón Quý Khách Từ Ngày 20/09/2026",
+    "badge": "CHÀO ĐÓN",
+    "cta": "THAM GIA NGAY",
+    "store_info": "Hệ thống 20 chi nhánh toàn quốc",
+    "qr_code": null,
+    "qr_label": "QUÉT MÃ",
+    "style": {
+      "theme_color": "#D4AF37",
+      "text_effect": "3d_gold",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "open_noqr_07_16x9_minimal",
+    "title": "[NO-QR] Grand Opening 16:9 - Banner Khai Trương Tối Giản",
+    "template": "grand_opening_banner",
+    "width": 1024,
+    "height": 576,
+    "hero": "MỪNG ĐẠI LỄ KHAI TRƯƠNG CƠ SỞ MỚI",
+    "subhead": "Tuần Lễ Ưu Đãi Đặc Biệt: 21 - 28/09/2026",
+    "badge": "WELCOME",
+    "cta": "KHÁM PHÁ NGAY",
+    "store_info": "Hotline tư vấn: 1900 1234",
+    "qr_code": null,
+    "qr_label": "XEM NGAY",
+    "style": {
+      "theme_color": "#EF4444",
+      "text_effect": "cinema_red",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "open_noqr_10_9x16_minimal",
+    "title": "[NO-QR] Grand Opening 9:16 - Banner Dọc Tối Giản",
+    "template": "grand_opening_banner",
+    "width": 576,
+    "height": 1024,
+    "hero": "ĐẠI TIỆC KHAI TRƯƠNG",
+    "subhead": "Ngày Hội Mua Sắm Bùng Nổ 27/09/2026",
+    "badge": "KHAI TRƯƠNG",
+    "cta": "MUA SẮM NGAY",
+    "store_info": "Chi nhánh 1: 50 Nguyễn Huệ, Quận 1",
+    "qr_code": null,
+    "qr_label": "QUÉT MÃ",
+    "style": {
+      "theme_color": "#FF3366",
+      "text_effect": "neon_glow",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "open_noqr_12_4x5_minimal",
+    "title": "[NO-QR] Grand Opening 4:5 - Tối Giản Trọng Thể",
+    "template": "grand_opening_banner",
+    "width": 816,
+    "height": 1024,
+    "hero": "CHÀO ĐÓN THÀNH VIÊN THỨ 50",
+    "subhead": "Cột Mốc Phát Triển Mới: Tháng 09/2026",
+    "badge": "MILESTONE",
+    "cta": "TÌM HIỂU THÊM",
+    "store_info": "Tổng đài CSKH: 1800 1122",
+    "qr_code": null,
+    "qr_label": "THÔNG TIN",
+    "style": {
+      "theme_color": "#14B8A6",
+      "text_effect": "neon_glow",
+      "background_tone": "dark_luxury"
+    }
+  }
+]

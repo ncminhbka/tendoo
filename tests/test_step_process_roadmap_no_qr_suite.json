@@ -1,0 +1,105 @@
+[
+  {
+    "id": "step_noqr_02_9x16_left_ceramic",
+    "title": "[NO-QR] Roadmap 9:16 - Quy Trình Phủ Ceramic 9H Cho Ô Tô",
+    "template": "step_process_roadmap",
+    "orientation": "left",
+    "width": 576,
+    "height": 1024,
+    "hero": "QUY TRÌNH CHĂM SÓC XE CHUẨN ĐỨC",
+    "subhead": "Bảo vệ toàn diện bề mặt sơn trước mọi tác nhân thời tiết khắc nghiệt",
+    "badge": "AUTO DETAILING",
+    "steps": [
+      "Rửa xe chi tiết 3 xô",
+      "Tẩy bụi sơn & Hiệu chỉnh",
+      "Phủ 3 lớp Ceramic 9H",
+      "Sấy đèn hồng ngoại chuyên dụng"
+    ],
+    "cta": "ĐẶT LỊCH DETAILING",
+    "store_info": "Auto Care Hub • Hotline: 0909 6688",
+    "qr_code": null,
+    "qr_label": "BÁO GIÁ",
+    "style": {
+      "theme_color": "#F59E0B",
+      "text_effect": "warm_glow",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "step_noqr_10_9x16_left_rich",
+    "title": "[NO-QR] Roadmap 9:16 - Quy Trình Du Học & Định Cư Quốc Tế",
+    "template": "step_process_roadmap",
+    "orientation": "left",
+    "width": 576,
+    "height": 1024,
+    "hero": "LỘ TRÌNH CHINH PHỤC HỌC BỔNG TOÀN PHẦN",
+    "subhead": "Đồng hành cùng học sinh từ khâu chuẩn bị hồ sơ đến khi nhập học tại Mỹ",
+    "badge": "STUDY ABROAD",
+    "steps": [
+      "Đánh giá năng lực học thuật",
+      "Luyện thi chứng chỉ IELTS & SAT",
+      "Xây dựng bài luận cá nhân nổi bật",
+      "Nộp hồ sơ & Xin visa du học"
+    ],
+    "cta": "ĐẶT HẸN TƯ VẤN 1:1",
+    "store_info": "Tổ Chức Giáo Dục Quốc Tế • 154 Trần Hưng Đạo, Q.1",
+    "qr_code": null,
+    "qr_label": "XÉT HỒ SƠ",
+    "style": {
+      "theme_color": "#3B82F6",
+      "text_effect": "plain_elegant",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "step_noqr_01_1x1_left_dental",
+    "title": "[NO-QR] Roadmap 1:1 - Quy Trình Niềng Răng Khay Trong Suốt 4 Bước",
+    "template": "step_process_roadmap",
+    "orientation": "left",
+    "width": 1024,
+    "height": 1024,
+    "hero": "QUY TRÌNH KIẾN TẠO NỤ CƯỜI HOÀN MỸ",
+    "subhead": "Phác đồ cá nhân hóa chuẩn y khoa cùng đội ngũ bác sĩ chuyên khoa",
+    "badge": "LỘ TRÌNH 4 BƯỚC",
+    "steps": [
+      "Thăm khám & Quét 3D Itero",
+      "Lập phác đồ ClinCheck",
+      "Giao khay & Theo dõi định kỳ",
+      "Tháo khay & Duy trì nụ cười"
+    ],
+    "cta": "ĐẶT HẸN KHÁM 1:1",
+    "store_info": "Nha Khoa Quốc Tế • 45 Lê Duẩn, Q.1",
+    "qr_code": null,
+    "qr_label": "XEM PHÁC ĐỒ",
+    "style": {
+      "theme_color": "#38BDF8",
+      "text_effect": "glow",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "step_noqr_09_1x1_left_minimal",
+    "title": "[NO-QR] Roadmap 1:1 - Quy Trình 3 Bước Gọn Nhẹ",
+    "template": "step_process_roadmap",
+    "orientation": "left",
+    "width": 1024,
+    "height": 1024,
+    "hero": "BA BƯỚC ĐỂ BẮT ĐẦU SỬ DỤNG DỊCH VỤ",
+    "subhead": "Nhanh chóng, tiện lợi, hoàn tất mọi thủ tục chỉ trong 5 phút",
+    "badge": "SIMPLE STEPS",
+    "steps": [
+      "Đăng ký tài khoản online",
+      "Xác thực định danh eKYC",
+      "Kích hoạt & Trải nghiệm ngay"
+    ],
+    "cta": "KÍCH HOẠT NGAY",
+    "store_info": "Fintech Global • Hỗ trợ 24/7",
+    "qr_code": null,
+    "qr_label": "TẢI APP",
+    "style": {
+      "theme_color": "#10B981",
+      "text_effect": "glow",
+      "background_tone": "dark_luxury"
+    }
+  }
+]

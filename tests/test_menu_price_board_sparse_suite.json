@@ -1,0 +1,239 @@
+[
+  {
+    "id": "menu_price_board_sparse_1x1_no_qr",
+    "title": "[MENU_PRICE_BOARD] 1x1 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "template": "menu_price_board",
+    "orientation": "left",
+    "width": 1024,
+    "height": 1024,
+    "hero": "THỰC ĐƠN QUÁN",
+    "subhead": "Cà phê rang mộc chuẩn vị Việt",
+    "badge": "GIẢM 10% CUỐI TUẦN",
+    "extra_texts": [
+      "Cà Phê Sữa Đá - 25.000đ",
+      "Bạc Xỉu - 29.000đ",
+      "Trà Đào Cam Sả - 35.000đ",
+      "Trà Vải Hoa Hồng - 38.000đ",
+      "Cold Brew Nguyên Chất - 45.000đ"
+    ],
+    "cta": "ĐẶT NGAY HÔM NAY",
+    "store_info": "Hotline: 1900 6868 • 88 Phố Huế, Hà Nội",
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#D4AF37",
+      "text_effect": "plain_elegant",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "menu_price_board_sparse_1x1_no_store",
+    "title": "[MENU_PRICE_BOARD] 1x1 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "template": "menu_price_board",
+    "orientation": "left",
+    "width": 1024,
+    "height": 1024,
+    "hero": "THỰC ĐƠN QUÁN",
+    "subhead": "Cà phê rang mộc chuẩn vị Việt",
+    "badge": "GIẢM 10% CUỐI TUẦN",
+    "extra_texts": [
+      "Cà Phê Sữa Đá - 25.000đ",
+      "Bạc Xỉu - 29.000đ",
+      "Trà Đào Cam Sả - 35.000đ",
+      "Trà Vải Hoa Hồng - 38.000đ",
+      "Cold Brew Nguyên Chất - 45.000đ"
+    ],
+    "cta": "ĐẶT NGAY HÔM NAY",
+    "store_info": null,
+    "qr_code": "https://tendoo.ai/menu-cafe",
+    "qr_label": "QUÉT MÃ ĐẶT BÀN",
+    "style": {
+      "theme_color": "#D4AF37",
+      "text_effect": "plain_elegant",
+      "background_tone": "dark_luxury"
+    },
+    "store_items": null,
+    "tag_left": null,
+    "tag_right": null
+  },
+  {
+    "id": "menu_price_board_sparse_1x1_minimal_hero_only",
+    "title": "[MENU_PRICE_BOARD] 1x1 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "template": "menu_price_board",
+    "orientation": "left",
+    "width": 1024,
+    "height": 1024,
+    "hero": "THỰC ĐƠN QUÁN",
+    "subhead": "",
+    "badge": "",
+    "extra_texts": [],
+    "cta": "",
+    "store_info": null,
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#D4AF37",
+      "text_effect": "plain_elegant",
+      "background_tone": "dark_luxury"
+    },
+    "tag_left": null,
+    "tag_right": null,
+    "store_items": null
+  },
+  {
+    "id": "menu_price_board_sparse_9x16_no_qr",
+    "title": "[MENU_PRICE_BOARD] 9x16 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "template": "menu_price_board",
+    "orientation": "right",
+    "width": 576,
+    "height": 1024,
+    "hero": "BẢNG GIÁ SPA",
+    "subhead": "Gói chăm sóc toàn diện",
+    "badge": null,
+    "extra_texts": [
+      "Massage Body 60 Phút - 350.000đ",
+      "Chăm Sóc Da Mặt Cơ Bản - 280.000đ",
+      "Gội Đầu Dưỡng Sinh - 150.000đ"
+    ],
+    "cta": "ĐẶT LỊCH NGAY",
+    "store_info": "Hotline: 0909 123 456",
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#E8B4B8",
+      "text_effect": "plain_elegant",
+      "background_tone": "pastel"
+    }
+  },
+  {
+    "id": "menu_price_board_sparse_9x16_no_store",
+    "title": "[MENU_PRICE_BOARD] 9x16 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "template": "menu_price_board",
+    "orientation": "right",
+    "width": 576,
+    "height": 1024,
+    "hero": "BẢNG GIÁ SPA",
+    "subhead": "Gói chăm sóc toàn diện",
+    "badge": null,
+    "extra_texts": [
+      "Massage Body 60 Phút - 350.000đ",
+      "Chăm Sóc Da Mặt Cơ Bản - 280.000đ",
+      "Gội Đầu Dưỡng Sinh - 150.000đ"
+    ],
+    "cta": "ĐẶT LỊCH NGAY",
+    "store_info": null,
+    "qr_code": "https://tendoo.ai/menu_price_board",
+    "qr_label": "QUÉT MÃ MUA",
+    "style": {
+      "theme_color": "#E8B4B8",
+      "text_effect": "plain_elegant",
+      "background_tone": "pastel"
+    },
+    "store_items": null,
+    "tag_left": null,
+    "tag_right": null
+  },
+  {
+    "id": "menu_price_board_sparse_9x16_minimal_hero_only",
+    "title": "[MENU_PRICE_BOARD] 9x16 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "template": "menu_price_board",
+    "orientation": "right",
+    "width": 576,
+    "height": 1024,
+    "hero": "BẢNG GIÁ SPA",
+    "subhead": "",
+    "badge": "",
+    "extra_texts": [],
+    "cta": "",
+    "store_info": null,
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#E8B4B8",
+      "text_effect": "plain_elegant",
+      "background_tone": "pastel"
+    },
+    "tag_left": null,
+    "tag_right": null,
+    "store_items": null
+  },
+  {
+    "id": "menu_price_board_sparse_16x9_no_qr",
+    "title": "[MENU_PRICE_BOARD] 16x9 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "template": "menu_price_board",
+    "orientation": "left",
+    "width": 1024,
+    "height": 576,
+    "hero": "THỰC ĐƠN ĐẶC BIỆT",
+    "subhead": "Món ngon chuẩn vị ba miền",
+    "badge": "COMBO TIẾT KIỆM",
+    "extra_texts": [
+      "Phở Bò Đặc Biệt - 65.000đ",
+      "Bún Chả Hà Nội - 55.000đ",
+      "Cơm Tấm Sườn Bì Chả - 45.000đ",
+      "Gỏi Cuốn Tôm Thịt - 40.000đ"
+    ],
+    "cta": "GỌI MÓN NGAY",
+    "store_info": "154 Quang Trung, Gò Vấp, TP.HCM",
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#F59E0B",
+      "text_effect": "plain_elegant",
+      "background_tone": "warm_rustic"
+    }
+  },
+  {
+    "id": "menu_price_board_sparse_16x9_no_store",
+    "title": "[MENU_PRICE_BOARD] 16x9 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "template": "menu_price_board",
+    "orientation": "left",
+    "width": 1024,
+    "height": 576,
+    "hero": "THỰC ĐƠN ĐẶC BIỆT",
+    "subhead": "Món ngon chuẩn vị ba miền",
+    "badge": "COMBO TIẾT KIỆM",
+    "extra_texts": [
+      "Phở Bò Đặc Biệt - 65.000đ",
+      "Bún Chả Hà Nội - 55.000đ",
+      "Cơm Tấm Sườn Bì Chả - 45.000đ",
+      "Gỏi Cuốn Tôm Thịt - 40.000đ"
+    ],
+    "cta": "GỌI MÓN NGAY",
+    "store_info": null,
+    "qr_code": "https://tendoo.ai/menu-restaurant",
+    "qr_label": "QUÉT MÃ XEM FULL MENU",
+    "style": {
+      "theme_color": "#F59E0B",
+      "text_effect": "plain_elegant",
+      "background_tone": "warm_rustic"
+    },
+    "store_items": null,
+    "tag_left": null,
+    "tag_right": null
+  },
+  {
+    "id": "menu_price_board_sparse_16x9_minimal_hero_only",
+    "title": "[MENU_PRICE_BOARD] 16x9 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "template": "menu_price_board",
+    "orientation": "left",
+    "width": 1024,
+    "height": 576,
+    "hero": "THỰC ĐƠN ĐẶC BIỆT",
+    "subhead": "",
+    "badge": "",
+    "extra_texts": [],
+    "cta": "",
+    "store_info": null,
+    "qr_code": null,
+    "qr_label": null,
+    "style": {
+      "theme_color": "#F59E0B",
+      "text_effect": "plain_elegant",
+      "background_tone": "warm_rustic"
+    },
+    "tag_left": null,
+    "tag_right": null,
+    "store_items": null
+  }
+]

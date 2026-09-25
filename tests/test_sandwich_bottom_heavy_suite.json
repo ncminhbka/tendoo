@@ -1,0 +1,415 @@
+[
+  {
+    "id": "sbh_01_1x1_min",
+    "title": "1:1 Minimal Text - Hero Tối Giản Nổi Bật Cực Đại",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FFD700",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SIÊU SALE 50%",
+      "store_info": "Hotline: 1900 8888",
+      "qr_code": "https://tendoo.ai/sale",
+      "qr_label": "QUÉT MÃ MUA",
+      "scene_prompt": "Luxury golden cosmetic bottle standing on dark marble podium, cinematic lighting, 8k",
+      "corridor_prompt": "Dark luxury studio gradient background, soft gold ambient lighting, clean copy space"
+    }
+  },
+  {
+    "id": "sbh_02_1x1_light",
+    "title": "1:1 Light Text - Poster Quảng Cáo Chuẩn Mực",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "badge": "ƯU ĐÃI ĐẶC BIỆT",
+      "hero": "MUA 1 TẶNG 1 TOÀN MENU",
+      "subhead": "Áp dụng duy nhất cho 100 khách hàng đầu tiên trong tuần lễ vàng",
+      "cta": "ĐẶT HÀNG NGAY",
+      "store_info": "Hotline: 1900 8888 • Số 1 Giang Văn Minh, Ba Đình, Hà Nội",
+      "qr_code": "https://tendoo.ai/order",
+      "qr_label": "QUÉT NHẬN MÃ",
+      "scene_prompt": "Freshly baked artisan croissant and steaming espresso coffee on rustic wooden table, morning soft sunbeam, 8k",
+      "corridor_prompt": "Warm rustic cafe wooden texture, gentle warm bokeh, clean negative space"
+    }
+  },
+  {
+    "id": "sbh_03_1x1_medium",
+    "title": "1:1 Medium Text - Đa Khối Tag & Thông Tin Đầy Đủ",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#00F0FF",
+        "text_effect": "neon",
+        "background_tone": "cyber_neon"
+      },
+      "badge": "BUFFET HẢI SẢN CAO CẤP",
+      "hero": "ĐẠI TIỆC TÔM HÙM NHA TRANG",
+      "subhead": "Thưởng thức hải sản tươi sống nhập khẩu trong không gian sang trọng đẳng cấp 5 sao",
+      "extra_texts": [
+        "Tôm hùm nướng phô mai",
+        "Cua hoàng đế sốt tiêu đen",
+        "Sashimi cá hồi Nauy",
+        "Giảm 20% nhóm từ 4 người"
+      ],
+      "cta": "ĐẶT BÀN GIỮ CHỖ",
+      "store_info": "Hotline: 1900 6868 | 120 Trần Hưng Đạo, Quận 1, TP.HCM | Open: 10:00 - 22:00",
+      "qr_code": "https://tendoo.ai/buffet",
+      "qr_label": "MENU ONLINE",
+      "scene_prompt": "Giant grilled lobster covered in melted golden mozzarella cheese, gourmet culinary plating, moody dark backdrop, 8k",
+      "corridor_prompt": "Futuristic neon blue dining table ambient glow, soft deep blue shadows"
+    }
+  },
+  {
+    "id": "sbh_04_1x1_heavy",
+    "title": "1:1 Heavy Text - Khảo Nghiệm Căng Thẳng Đa Dòng & Chính Sách",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#FF3366",
+        "text_effect": "clean_gradient",
+        "background_tone": "vibrant_sale"
+      },
+      "badge": "LỄ HỘI MUA SẮM LỚN NHẤT NĂM 2026",
+      "hero": "BÙNG NỔ ƯU ĐÃI BLACK FRIDAY TỚI 70%",
+      "subhead": "Hàng ngàn sản phẩm công nghệ, gia dụng và thời trang giảm giá kịch sàn tại hệ thống toàn quốc",
+      "extra_texts": [
+        "Tặng voucher trị giá 500.000 VNĐ cho đơn hàng thanh toán qua VNPAY từ 2 triệu đồng trở lên",
+        "Hỗ trợ trả góp lãi suất 0% qua thẻ tín dụng liên kết ngân hàng thời hạn tới 12 tháng",
+        "Miễn phí vận chuyển hỏa tốc trong 2 giờ nội thành Hà Nội và TP. Hồ Chí Minh"
+      ],
+      "cta": "SĂN DEAL HÔM NAY",
+      "store_info": "Hotline: 1800 6789 | Tòa nhà Keangnam Landmark 72, Mễ Trì, Nam Từ Liêm, Hà Nội | Website: www.tendoo-store.vn | Email: support@tendoo.vn",
+      "qr_code": "https://tendoo.ai/blackfriday",
+      "qr_label": "QUÉT NHẬN DEAL",
+      "scene_prompt": "Sleek modern flagship smartphone next to wireless earbuds floating in vibrant studio red ambient background, 8k",
+      "corridor_prompt": "Vibrant energetic deep crimson red studio backdrop with soft geometric light rays"
+    }
+  },
+  {
+    "id": "sbh_05_9x16_min",
+    "title": "9:16 Minimal Text - Khổ Dọc Story / TikTok Hero Cực Đại",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#FFB800",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "FLASH SALE ĐÊM NAY",
+      "store_info": "Hotline: 1900 9999",
+      "qr_code": "https://tendoo.ai/story",
+      "qr_label": "MUA NGAY",
+      "scene_prompt": "A pair of luxury high-end sneakers hovering with golden glow sparks on black platform, 8k",
+      "corridor_prompt": "Dark vertical studio backdrop, subtle golden particle dust, high contrast copy space"
+    }
+  },
+  {
+    "id": "sbh_06_9x16_light",
+    "title": "9:16 Light Text - Khổ Dọc Quảng Cáo Trà Sữa",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "comfortaa",
+        "theme_color": "#10B981",
+        "text_effect": "clean_gradient",
+        "background_tone": "fresh_organic"
+      },
+      "badge": "MÓN MỚI RA MẮT",
+      "hero": "TRÀ SỮA OOLONG NƯỚNG",
+      "subhead": "Hương vị trà rang thơm lừng quyện cùng lớp kem phô mai béo ngậy đặc biệt",
+      "cta": "MUA NGAY",
+      "store_info": "Chi nhánh 1: 45 Lê Lợi, Q.1 | Chi nhánh 2: 88 Cầu Giấy, HN",
+      "qr_code": "https://tendoo.ai/milktea",
+      "qr_label": "QUÉT MENU",
+      "scene_prompt": "Tall glass cup of iced roasted oolong milk tea with brown sugar boba pearls and cheese foam top, 8k",
+      "corridor_prompt": "Soft mint green and pastel cream studio background, gentle organic leaves bokeh"
+    }
+  },
+  {
+    "id": "sbh_07_9x16_medium",
+    "title": "9:16 Medium Text - Khổ Dọc Spa & Thẩm Mỹ Viện",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EC4899",
+        "text_effect": "3d_gold",
+        "background_tone": "pastel_soft"
+      },
+      "badge": "LIỆU TRÌNH CHUYÊN SÂU",
+      "hero": "TRẺ HÓA DA NANO GOLD",
+      "subhead": "Công nghệ tái sinh tế bào gốc Thụy Sĩ giúp da căng bóng mịn màng sau 60 phút",
+      "extra_texts": [
+        "Giảm nếp nhăn 80%",
+        "Cấp ẩm đa tầng chuyên sâu",
+        "Tặng set dưỡng da trị giá 1.5 triệu"
+      ],
+      "cta": "ĐẶT LỊCH NGAY",
+      "store_info": "Viện Thẩm Mỹ Tendoo Spa | 182 Hai Bà Trưng, P. Đa Kao, Quận 1 | Tel: 028 7300 8888",
+      "qr_code": "https://tendoo.ai/spa",
+      "qr_label": "QUÉT TƯ VẤN",
+      "scene_prompt": "Elegant Asian woman with radiant glowing flawless skin gently closing eyes, luxurious spa atmosphere with soft orchids, 8k",
+      "corridor_prompt": "Soft blush pink and warm ivory studio ambiance, ethereal soft lighting"
+    }
+  },
+  {
+    "id": "sbh_08_9x16_heavy",
+    "title": "9:16 Heavy Text - Khổ Dọc Bất Động Sản Nghỉ Dưỡng",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "MỞ BÁN PHÂN KHU BIỆT THỰ BIỂN",
+      "hero": "VINHOMES ROYAL ISLAND VŨ YÊN",
+      "subhead": "Sở hữu thiên đường nghỉ dưỡng ven sông đẳng cấp thượng lưu với sân golf 36 hố quốc tế",
+      "extra_texts": [
+        "Chiết khấu thanh toán sớm lên đến 12% trực tiếp vào giá bán hợp đồng mua bán",
+        "Ngân hàng hỗ trợ vay 70% với lãi suất 0% và ân hạn nợ gốc trong 24 tháng liên tục",
+        "Tặng gói nội thất hoàng gia nhập khẩu Ý trị giá 500 triệu đồng khi ký cọc trong tháng"
+      ],
+      "cta": "NHẬN BẢNG GIÁ",
+      "store_info": "Văn phòng dự án: Tầng 5 Vincom Center, Lê Thánh Tông, Hải Phòng | Hotline 24/7: 0988 123 456 | Website: www.vinhomesroyalisland.vn",
+      "qr_code": "https://tendoo.ai/vinhomes",
+      "qr_label": "QUÉT TẢI BROSUR",
+      "scene_prompt": "Modern luxury waterfront villa at dusk with warm glowing interior lights, private infinity pool, yachts anchored nearby, 8k",
+      "corridor_prompt": "Deep twilight blue and subtle gold horizon sunset sky, expansive clean negative space"
+    }
+  },
+  {
+    "id": "sbh_09_16x9_min",
+    "title": "16:9 Minimal Text - Khổ Ngang Banner Website Tối Giản",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#3B82F6",
+        "text_effect": "clean_gradient",
+        "background_tone": "cool_tech"
+      },
+      "hero": "CLOUD AI PLATFORM 2026",
+      "store_info": "Hotline: 1900 1234",
+      "qr_code": "https://tendoo.ai/cloud",
+      "qr_label": "TRẢI NGHIỆM",
+      "scene_prompt": "Sleek futuristic server rack with glowing blue cyan fiber optic cables and floating holographic data cubes, 8k",
+      "corridor_prompt": "Deep navy blue technology gradient background with subtle cyber grid lines"
+    }
+  },
+  {
+    "id": "sbh_09b_16x9_light",
+    "title": "16:9 Light Text - Khổ Ngang Khách Sạn & Resort",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#F59E0B",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "badge": "COMBO NGHỈ DƯỠNG CAO CẤP",
+      "hero": "KỲ NGHỈ THƯ THÁI PHÚ QUỐC 3N2Đ",
+      "subhead": "Bao gồm vé máy bay khứ hồi, buffet sáng chuẩn quốc tế và đón tiễn sân bay miễn phí",
+      "cta": "ĐẶT PHÒNG NGAY",
+      "store_info": "Resort: Bãi Dài, Gành Dầu, Phú Quốc | Hotline đặt phòng: 0297 388 9999",
+      "qr_code": "https://tendoo.ai/phuquoc",
+      "qr_label": "QUÉT ĐẶT PHÒNG",
+      "scene_prompt": "Luxury infinity swimming pool overlooking crystal turquoise tropical ocean and coconut palm trees at sunny midday, 8k",
+      "corridor_prompt": "Warm golden tropical daylight gradient, clean blue sky top corridor"
+    }
+  },
+  {
+    "id": "sbh_10_16x9_medium",
+    "title": "16:9 Medium Text - Khổ Ngang Showroom Ô Tô Điện",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#06B6D4",
+        "text_effect": "neon",
+        "background_tone": "cool_tech"
+      },
+      "badge": "XE ĐIỆN THẾ HỆ MỚI",
+      "hero": "KHÁM PHÁ TENDOO EV SEDAN ULTRA",
+      "subhead": "Tăng tốc 0-100km/h chỉ trong 3.2 giây, tầm vận hành vượt trội 650km sau mỗi lần sạc đầy",
+      "extra_texts": [
+        "Bảo hành pin 10 năm không giới hạn",
+        "Tặng trạm sạc nhanh tại nhà 11kW",
+        "Lái thử xe tận nơi hoàn toàn miễn phí"
+      ],
+      "cta": "ĐĂNG KÝ LÁI THỬ",
+      "store_info": "Showroom Tendoo Auto | Số 68 Lê Văn Lương, Thanh Xuân, Hà Nội | Hotline: 0912 345 678",
+      "qr_code": "https://tendoo.ai/ev",
+      "qr_label": "QUÉT LÁI THỬ",
+      "scene_prompt": "Futuristic aerodynamic electric luxury sedan driving on coastal highway at sunset, sleek metallic grey finish, 8k",
+      "corridor_prompt": "Moody atmospheric dusk sky with subtle cyan twilight horizon"
+    }
+  },
+  {
+    "id": "sbh_11_16x9_heavy",
+    "title": "16:9 Heavy Text - Khổ Ngang Khóa Học Chuyển Đổi Số Doanh Nghiệp",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#8B5CF6",
+        "text_effect": "clean_gradient",
+        "background_tone": "cool_tech"
+      },
+      "badge": "CHƯƠNG TRÌNH ĐÀO TẠO GIÁM ĐỐC ĐIỀU HÀNH 2026",
+      "hero": "LÀM CHỦ CÔNG NGHỆ AI & TỰ ĐỘNG HÓA DOANH NGHIỆP",
+      "subhead": "Lộ trình thực chiến 12 tuần giúp tối ưu hóa 60% chi phí vận hành và nhân đôi doanh số bán hàng",
+      "extra_texts": [
+        "Học trực tiếp cùng 5 chuyên gia công nghệ hàng đầu từ Google và Viettel Solution",
+        "Thực hành xây dựng hệ sinh thái AI Agent phục vụ tự động hóa chăm sóc khách hàng 24/7",
+        "Cam kết hoàn tiền 100% nếu học viên không ứng dụng được vào thực tế quản trị công ty"
+      ],
+      "cta": "ĐĂNG KÝ KHÓA HỌC",
+      "store_info": "Học viện Doanh nhân Tendoo | Tầng 18 Tòa nhà Lotte, 54 Liễu Giai, Ba Đình, Hà Nội | Hotline tuyển sinh: 024 3999 8888 | info@tendoo-academy.edu.vn",
+      "qr_code": "https://tendoo.ai/ai-course",
+      "qr_label": "QUÉT ĐĂNG KÝ",
+      "scene_prompt": "Modern high-tech auditorium seminar with executive business people listening to AI innovation keynote, 8k",
+      "corridor_prompt": "Deep dark violet and ultramarine conference hall ambient background with clean negative space"
+    }
+  },
+  {
+    "id": "sbh_12_4x5_min",
+    "title": "4:5 Minimal Text - Khổ Dọc Instagram Feed Tối Giản",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BỘ SƯU TẬP KIM CƯƠNG 2026",
+      "store_info": "Hotline: 0988 888 888",
+      "qr_code": "https://tendoo.ai/diamond",
+      "qr_label": "QUÉT XEM BST",
+      "scene_prompt": "Brilliant cut luxury diamond ring resting on dark reflective obsidian stone, dramatic studio spotlight, 8k",
+      "corridor_prompt": "Deep obsidian black luxury backdrop with subtle golden rim light reflections"
+    }
+  },
+  {
+    "id": "sbh_13_4x5_light",
+    "title": "4:5 Light Text - Khổ Dọc Instagram Cà Phê Đặc Sản",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#F59E0B",
+        "text_effect": "clean_gradient",
+        "background_tone": "warm_rustic"
+      },
+      "badge": "SPECIALTY COFFEE",
+      "hero": "HƯƠNG VỊ CÀ PHÊ NGUYÊN BẢN CẦU ĐẤT",
+      "subhead": "Những hạt Arabica tuyển chọn được rang mộc tỉ mỉ ở nhiệt độ chuẩn xác",
+      "cta": "THỬ NGAY HÔM NAY",
+      "store_info": "Tendoo Roastery | 34 Ngô Thời Nhiệm, Quận 3, TP.HCM | Hotline: 0903 123 789",
+      "qr_code": "https://tendoo.ai/coffee",
+      "qr_label": "QUÉT ĐẶT HÀNG",
+      "scene_prompt": "Artisanal pour over coffee dripper dripping fragrant coffee into glass carafe, warm cozy cafe atmosphere, 8k",
+      "corridor_prompt": "Warm amber rustic wooden coffee shop interior blur, clean copy space"
+    }
+  },
+  {
+    "id": "sbh_14_4x5_medium",
+    "title": "4:5 Medium Text - Khổ Dọc Instagram Phòng Gym Thể Hình",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#EF4444",
+        "text_effect": "neon",
+        "background_tone": "vibrant_sale"
+      },
+      "badge": "GÓI TẬP PREMIUM TOÀN DIỆN",
+      "hero": "BỨT PHÁ GIỚI HẠN THỂ HÌNH",
+      "subhead": "Trải nghiệm không gian rèn luyện chuẩn quốc tế với trang thiết bị Technogym nhập khẩu Ý",
+      "extra_texts": [
+        "Tặng 5 buổi tập cùng huấn luyện viên cá nhân 1-1",
+        "Đo chỉ số cơ thể InBody 770 chuyên sâu miễn phí",
+        "Sử dụng không giới hạn khu vực xông hơi đá muối Himalaya"
+      ],
+      "cta": "NHẬN GÓI TẬP THỬ",
+      "store_info": "Tendoo Fitness & Yoga | Tầng 3 TTTM The Garden, Mễ Trì, Hà Nội | Hotline: 1900 2345",
+      "qr_code": "https://tendoo.ai/gym",
+      "qr_label": "QUÉT ĐĂNG KÝ",
+      "scene_prompt": "Athletic fitness man and woman training with heavy dumbbells in luxury modern gym with dark neon lighting, 8k",
+      "corridor_prompt": "Dark athletic gym interior background with subtle red energetic neon edge accents"
+    }
+  },
+  {
+    "id": "sbh_15_4x5_heavy",
+    "title": "4:5 Heavy Text - Khổ Dọc Tour Du Lịch Nhật Bản Trọn Gói",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "sandwich_bottom_heavy",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EC4899",
+        "text_effect": "3d_gold",
+        "background_tone": "pastel_soft"
+      },
+      "badge": "TOUR CAO CẤP MÙA HOA ANH ĐÀO 2026",
+      "hero": "HÀNH TRÌNH KHÁM PHÁ XỨ SỞ PHÙ TANG 6N5Đ",
+      "subhead": "Chiêm ngưỡng sắc hoa Sakura rực rỡ từ Tokyo hiện đại đến cố đô Kyoto cổ kính",
+      "extra_texts": [
+        "Bay thẳng hàng không quốc gia Vietnam Airlines tiêu chuẩn 4 sao đầy đủ hành lý 46kg",
+        "Nghỉ dưỡng 5 đêm tại hệ thống khách sạn 4-5 sao trung tâm, trải nghiệm tắm khoáng nóng Onsen truyền thống",
+        "Tặng toàn bộ chi phí làm visa Nhật Bản và vé tàu siêu tốc Shinkansen trải nghiệm ngắm núi Phú Sĩ"
+      ],
+      "cta": "ĐĂNG KÝ TOUR SỚM",
+      "store_info": "Công ty Cổ phần Lữ hành Quốc tế Tendoo Travel | Tòa nhà Vincom 72 Lê Thánh Tôn, Bến Nghé, Quận 1, TP.HCM | Tổng đài tư vấn: 1900 6688 | contact@tendoo-travel.com",
+      "qr_code": "https://tendoo.ai/japan-tour",
+      "qr_label": "QUÉT XEM LỊCH TRÌNH",
+      "scene_prompt": "Stunning Mount Fuji surrounded by blooming pink cherry blossom sakura branches in spring, clear morning sky, 8k",
+      "corridor_prompt": "Soft pastel blue spring sky and subtle blossom petal blur backdrop, peaceful ambient copy space"
+    }
+  }
+]

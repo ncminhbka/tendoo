@@ -1,0 +1,35 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Đầu ra render (ảnh sinh ra, log, checkpoint) ---
+output/
+output_*/
+*.log
+
+# --- Weights mô hình: KHÔNG BAO GIỜ commit ---
+*.safetensors
+*.ckpt
+*.pth
+*.bin
+
+# --- Bí mật ---
+.env
+.env.*
+!.env.example
+
+# --- Hệ điều hành / IDE ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# CHỦ Ý: KHÔNG ignore scripts/. Ở repo cũ, `scripts/*` bị ignore toàn bộ khiến
+# 124/132 script nằm ngoài quản lý phiên bản -- trong đó có TOÀN BỘ tầng nghiệm thu
+# 14 template. Repo này theo dõi mọi script; script dùng một lần thì xoá đi, đừng ignore.

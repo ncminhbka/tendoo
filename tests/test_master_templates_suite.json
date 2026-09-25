@@ -1,0 +1,348 @@
+[
+  {
+    "id": "master_01_lframe_suv",
+    "title": "L-Frame Showcase - Mercedes SUV 2026 (Ảnh mẫu 1)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#EAB308",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "KHÁM PHÁ ĐẲNG CẤP SUV THẾ HỆ MỚI 2026",
+      "badge": "ƯU ĐÃI 100 TRIỆU",
+      "subhead": "Tặng gói bảo hiểm thân vỏ & 3 năm bảo dưỡng miễn phí",
+      "extra_texts": [
+        "Từ 2026-09-01 - Đến 2026-09-30"
+      ],
+      "tag_left": "TENDOO MOTORS",
+      "store_info": "Hotline: 1900 8888 | Showroom Phú Mỹ Hưng, Quận 7, TP. HCM | https://tendoo.ai/suv-2026",
+      "qr_code": "https://tendoo.ai/suv-2026",
+      "qr_label": "QUÉT MÃ QR",
+      "scene_prompt": "Luxury modern dark grey SUV driving fast on mountain coastal road at golden sunset, dynamic motion blur on wheels, cinematic 8k",
+      "corridor_prompt": "Dark dramatic sunset mountain sky, deep charcoal copy space at upper-left corner"
+    }
+  },
+  {
+    "id": "master_02_lframe_fashion",
+    "title": "L-Frame Showcase - Áo Khoác Măng Tô Dạ (Ảnh mẫu 2)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#3B82F6",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "ÁO KHOÁC MĂNG TÔ DẠ LÔNG CỪU Ý",
+      "badge": "ƯU ĐÃI ĐẾN 25%",
+      "subhead": "Tặng khăn choàng lụa tơ tằm cao cấp cho hóa đơn từ 3 triệu",
+      "extra_texts": [
+        "Từ 2026-09-01 - Đến 2026-09-25"
+      ],
+      "tag_left": "TENDOO ATELIER",
+      "store_info": "Hotline: 1900 6868 | Tràng Tiền Plaza, Hoàn Kiếm, Hà Nội | https://tendoo.ai/lookbook-2026",
+      "qr_code": "https://tendoo.ai/lookbook-2026",
+      "qr_label": "QUÉT MÃ QR",
+      "scene_prompt": "High fashion Asian female model wearing tailored dark wool overcoat with hands in pockets, studio rim light, moody editorial aesthetic 8k",
+      "corridor_prompt": "Deep textured studio shadow with subtle angled light rays in background"
+    }
+  },
+  {
+    "id": "master_03_grand_opening_cafe",
+    "title": "Grand Opening Banner - Khai Trương Cafe (Prompt 43) 16:9",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "grand_opening_banner",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "badge": "CHÀO MỪNG KHAI TRƯƠNG",
+      "hero": "MUA 1 TẶNG 1 TOÀN MENU",
+      "subhead": "Áp dụng từ 14/05 đến 30/05/2026",
+      "extra_texts": [
+        "Coffee rang mộc chuẩn vị",
+        "Không gian chill check-in cực chất",
+        "Tặng bình giữ nhiệt cao cấp cho đơn từ 150k"
+      ],
+      "cta": "GHÉ NGAY HÔM NAY",
+      "store_info": "Tendoo Coffee Roastery | 120 Pasteur, P. Bến Nghé, Quận 1 | Hotline: 1900 2345",
+      "qr_code": "https://tendoo.ai/opening-coffee",
+      "qr_label": "QUÉT NHẬN DEAL",
+      "scene_prompt": "Artisan cappuccino with latte art in dark ceramic cup on wooden bar table, flying coffee beans, soft steam rising, warm ambient golden lighting 8k",
+      "corridor_prompt": "Warm ambient rustic cafe background with soft bokeh"
+    }
+  },
+  {
+    "id": "master_04_split_left_tech",
+    "title": "Split Left - Đồng Hồ Thông Minh Titan 4:5",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "split_left",
+      "style": {
+        "font": "montserrat",
+        "theme_color": "#06B6D4",
+        "text_effect": "clean_gradient",
+        "background_tone": "cool_tech"
+      },
+      "badge": "SỰ LỰA CHỌN CỦA NHÀ LÃNH ĐẠO",
+      "hero": "NÂNG TẦM THÀNH CÔNG VỚI TITAN WATCH 2026",
+      "subhead": "Vỏ hợp kim titanium chuẩn hàng không vũ trụ, mặt kính sapphire chống trầy xước",
+      "extra_texts": [
+        "Thời lượng pin 14 ngày bền bỉ",
+        "Đo điện tâm đồ ECG và SPO2 chuẩn y tế",
+        "Kháng nước độ sâu 50m chuẩn 5ATM"
+      ],
+      "cta": "ĐẶT HÀNG TRƯỚC",
+      "store_info": "Hotline: 1800 6688 | Showroom: Vincom Landmark 81, TP.HCM",
+      "qr_code": "https://tendoo.ai/titan-watch",
+      "qr_label": "QUÉT MUA",
+      "scene_prompt": "Close-up of premium titanium smartwatch resting on reflective dark glass meeting table, business executive laptop blurred background, cool tones 8k",
+      "corridor_prompt": "Minimal cool navy tech gradient studio negative space on the left"
+    }
+  },
+  {
+    "id": "master_05_split_right_cosmetic",
+    "title": "Split Right - Tinh Chất Dưỡng Trắng Hồng 9:16",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "split_right",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#F43F5E",
+        "text_effect": "3d_gold",
+        "background_tone": "pastel_soft"
+      },
+      "badge": "ĐỘT PHÁ LÀN DA",
+      "hero": "SERUM NANO COLLAGEN TƯƠI",
+      "subhead": "Tái tạo độ đàn hồi và dưỡng da sáng mịn không tì vết chỉ sau 7 ngày",
+      "extra_texts": [
+        "Chiết xuất 100% tế bào gốc hoa hồng tuyết",
+        "Cấp ẩm sâu 72 giờ liên tục",
+        "Cam kết không kích ứng da nhạy cảm"
+      ],
+      "cta": "MUA NGAY",
+      "store_info": "Hotline: 1900 1234 | Hệ thống phân phối toàn quốc",
+      "qr_code": "https://tendoo.ai/serum",
+      "qr_label": "XEM REVIEW",
+      "scene_prompt": "Luxury glass cosmetic dropper bottle floating with clear water splash droplets and delicate pink rose petals on left side, soft lighting 8k",
+      "corridor_prompt": "Soft pastel pink clean studio gradient on right column"
+    }
+  },
+  {
+    "id": "master_06_diagonal_slash_fitness",
+    "title": "Diagonal Slash - Bứt Phá Giới Hạn Thể Hình 1:1",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "diagonal_slash",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#EF4444",
+        "text_effect": "neon",
+        "background_tone": "vibrant_sale"
+      },
+      "badge": "GYM & FITNESS PREMIUM",
+      "hero": "CHINH PHỤC VÓC DÁNG ĐỈNH CAO",
+      "subhead": "Chương trình huấn luyện cá nhân 1-1 với giáo án chuẩn hóa quốc tế",
+      "extra_texts": [
+        "Giảm 30% gói tập năm khi đăng ký theo nhóm",
+        "Tặng 3 buổi PT định hình cơ bắp",
+        "Miễn phí đo chỉ số InBody định kỳ"
+      ],
+      "cta": "ĐĂNG KÝ TẬP THỬ",
+      "store_info": "Tendoo Gym Club | 250 Hoàng Diệu, Đà Nẵng | Tel: 0236 388 9999",
+      "qr_code": "https://tendoo.ai/gym-slash",
+      "qr_label": "QUÉT NHẬN VOUCHER",
+      "scene_prompt": "Muscular athletic fitness man lifting heavy barbell in atmospheric dark gym with neon red rim lights and chalk dust in air, dramatic lighting 8k",
+      "corridor_prompt": "Dynamic diagonal angular dark charcoal copy space on left"
+    }
+  },
+  {
+    "id": "master_07_corner_pod_glamping",
+    "title": "Lifestyle Corner Pod - Nghỉ Dưỡng Săn Mây 16:9",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "lifestyle_corner_pod",
+      "orientation": "bottom_left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#F59E0B",
+        "text_effect": "3d_gold",
+        "background_tone": "warm_rustic"
+      },
+      "badge": "CHỮA LÀNH TÂM HỒN",
+      "hero": "CLOUD RETREAT GLAMPING ĐÀ LẠT",
+      "subhead": "Lều vòm ngắm hoàng hôn giữa rừng thông mộng mơ và thưởng thức BBQ ngoài trời",
+      "extra_texts": [
+        "Giảm 25% khi đặt trước 7 ngày",
+        "Tặng tiệc nướng BBQ rượu vang"
+      ],
+      "cta": "ĐẶT LỀU NGAY",
+      "store_info": "Đường Hoa Hồng, Hồ Tuyền Lâm, Đà Lạt | Hotline: 0988 777 999",
+      "qr_code": "https://tendoo.ai/glamping",
+      "qr_label": "QUÉT ĐẶT CHỖ",
+      "scene_prompt": "Luxury dome glamping tent glowing warmly at dusk in misty Dalat pine forest, outdoor string lights, campfire with young couple, cinematic 8k",
+      "corridor_prompt": "Gentle twilight mist and soft rustic negative space in lower corner"
+    }
+  },
+  {
+    "id": "master_08_feedback_spa",
+    "title": "Customer Feedback Card - Spa Thú Cưng Poodle 1:1",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "customer_feedback_card",
+      "style": {
+        "font": "comfortaa",
+        "theme_color": "#10B981",
+        "text_effect": "clean_gradient",
+        "background_tone": "fresh_organic"
+      },
+      "badge": "ĐÁNH GIÁ 5 SAO",
+      "hero": "SPA THÚ CƯNG 7 BƯỚC CHUẨN HÀN",
+      "subhead": "Boss lột xác thế nào sau 2 giờ thư giãn tại Pet Spa?",
+      "testimonial": "Bé Poodle nhà mình đi spa về thơm nức mũi, lông bồng bềnh như kẹo bông gòn. Các bạn kỹ thuật viên cực kỳ nhẹ nhàng và yêu thương thú cưng!",
+      "reviewer_name": "Chị Mai Lan (Chủ bé Miu Miu)",
+      "extra_texts": [
+        "Sử dụng sữa tắm hữu cơ nhập khẩu",
+        "Cắt tỉa tạo kiểu chuẩn form Hàn Quốc",
+        "Tặng gói ngâm sục Ozon giảm stress"
+      ],
+      "cta": "ĐẶT LỊCH SPA",
+      "store_info": "Tendoo Pet Spa | 78 Xuân Thủy, Cầu Giấy, Hà Nội | Tel: 0912 345 999",
+      "qr_code": "https://tendoo.ai/pet-spa",
+      "qr_label": "QUÉT ĐẶT LỊCH",
+      "scene_prompt": "Super cute fluffy groomed apricot Toy Poodle sitting proudly after bath with stylish neckerchief, bright pastel studio background 8k",
+      "corridor_prompt": "Soft mint pastel clean gradient background with clean copy space"
+    }
+  },
+  {
+    "id": "master_09_before_after_cleaning",
+    "title": "Before After Split - Dọn Dẹp Nhà Cửa 1:1",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "before_after_split",
+      "tag_left": "BEFORE (TRƯỚC)",
+      "tag_right": "AFTER (SAU KHI DỌN)",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#38BDF8",
+        "text_effect": "clean_gradient",
+        "background_tone": "cool_tech"
+      },
+      "hero": "TRẢ LẠI KHÔNG GIAN SỐNG SẠCH BONG",
+      "subhead": "Dịch vụ vệ sinh công nghiệp chuyên sâu diệt khuẩn 99.9% bằng công nghệ sinh học",
+      "extra_texts": [
+        "Giảm ngay 20% khi đặt lịch dọn tổng thể cuối tuần",
+        "Nhân viên đào tạo chuẩn khách sạn 5 sao",
+        "Bảo hành dịch vụ dọn lại miễn phí nếu chưa ưng ý"
+      ],
+      "cta": "ĐẶT DỊCH VỤ",
+      "store_info": "Deep Cleaning Pro | Hotline 24/7: 1900 8989 | Phục vụ toàn quốc",
+      "qr_code": "https://tendoo.ai/cleaning",
+      "qr_label": "QUÉT ĐẶT NHANH",
+      "scene_prompt": "Split screen room: left half cluttered and dusty living room, right half sparkling clean bright minimalist living room with shiny floor and fresh flowers 8k",
+      "corridor_prompt": "Clean gradient corridor at bottom with balanced contrast"
+    }
+  },
+  {
+    "id": "master_10_recruitment_ai_engineer",
+    "title": "Recruitment Board - Tuyển Dụng Senior AI Engineer 9:16",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "recruitment_board",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#A855F7",
+        "text_effect": "neon",
+        "background_tone": "cool_tech"
+      },
+      "badge": "WE ARE HIRING 2026",
+      "hero": "CHIÊU MỘ SENIOR AI RESEARCH ENGINEER",
+      "subhead": "Cùng đội ngũ Tendoo AI kiến tạo thế hệ mô hình tạo sinh hình ảnh đột phá",
+      "extra_texts": [
+        "Mức lương hấp dẫn từ $3,500 - $6,000 + ESOP cổ phần",
+        "Làm việc trực tiếp trên cụm siêu máy tính 64x H100 GPU",
+        "Thời gian làm việc linh hoạt hybrid, tài trợ 100% học bổng hội nghị quốc tế"
+      ],
+      "cta": "ỨNG TUYỂN NGAY",
+      "store_info": "Tendoo AI Lab | Tầng 22 Tòa nhà Viettel, Cầu Giấy, Hà Nội | hr@tendoo.ai",
+      "qr_code": "https://tendoo.ai/careers",
+      "qr_label": "QUÉT GỬI CV",
+      "scene_prompt": "Modern high-tech AI research workstation with multiple 4K vertical monitors displaying neural network graph visualizations and futuristic code, ambient purple cyan glow 8k",
+      "corridor_prompt": "Deep indigo and dark violet technology copy space framing top and bottom"
+    }
+  },
+  {
+    "id": "master_11_step_roadmap_skincare",
+    "title": "Step Process Roadmap - Liệu Trình Trẻ Hóa 4:5",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "step_process_roadmap",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EC4899",
+        "text_effect": "3d_gold",
+        "background_tone": "pastel_soft"
+      },
+      "badge": "LIỆU TRÌNH ĐỘC QUYỀN",
+      "hero": "QUY TRÌNH TÁI SINH LÀN DA 3 BƯỚC",
+      "subhead": "Khắc phục triệt để mọi khuyết điểm thâm sạm và lỗ chân lông to",
+      "extra_texts": [
+        "BƯỚC 1: Thải độc chì & thanh lọc bã nhờn chuyên sâu bằng sóng siêu âm",
+        "BƯỚC 2: Cấy tinh chất tế bào gốc cá hồi vào đa tầng biểu bì da",
+        "BƯỚC 3: Chiếu ánh sáng sinh học Bio-Light khóa ẩm và se khít lỗ chân lông"
+      ],
+      "cta": "NHẬN ƯU ĐÃI SPA",
+      "store_info": "Viện Thẩm Mỹ Tendoo Beauty | 88 Hai Bà Trưng, Quận 1 | Tel: 028 3822 6688",
+      "qr_code": "https://tendoo.ai/skin-steps",
+      "qr_label": "QUÉT TƯ VẤN",
+      "scene_prompt": "Beautiful Asian woman with glowing porcelain skin smiling gently with eyes closed, soft pink camellia flowers, luxury clinical aesthetic 8k",
+      "corridor_prompt": "Ethereal blush pink daylight ambiance, clean copy space"
+    }
+  },
+  {
+    "id": "master_12_luxury_centered_card",
+    "title": "Luxury Centered Card - Thư Tri Ân Khách Hàng VIP 1:1",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "luxury_centered_card",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#D4AF37",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "badge": "LỜI TRI ÂN TỪ TENDOO",
+      "hero": "CẢM ƠN QUÝ KHÁCH ĐÃ ĐỒNG HÀNH",
+      "subhead": "Kính tặng Quý khách đặc quyền hội viên Kim Cương năm 2026",
+      "extra_texts": [
+        "Nhân dịp kỷ niệm 10 năm thành lập, Tendoo xin gửi lời tri ân sâu sắc nhất tới sự tin tưởng và gắn bó của Quý khách hàng.",
+        "Mỗi trải nghiệm và sự hài lòng của Quý vị chính là nguồn động lực to lớn giúp chúng tôi không ngừng hoàn thiện chất lượng dịch vụ đỉnh cao."
+      ],
+      "cta": "KÍCH HOẠT THẺ VIP",
+      "store_info": "Hotline đặc quyền VIP: 1800 9999 | Concierge: vip@tendoo.vn",
+      "qr_code": "https://tendoo.ai/vip-card",
+      "qr_label": "QUÉT NHẬN QUÀ",
+      "scene_prompt": "Dark polished black marble surface with soft golden reflections and dried golden eucalyptus leaves at the edges, luxury minimal background 8k",
+      "corridor_prompt": "Subtle deep dark marble vignette texture"
+    }
+  }
+]

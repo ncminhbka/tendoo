@@ -1,0 +1,400 @@
+[
+  {
+    "id": "lux_01_1x1_center_diamond",
+    "title": "Trang Sức Kim Cương - VIP Thanks Card 1:1 Center",
+    "width": 1024,
+    "height": 1024,
+    "orientation": "center",
+    "badge": "HỘI VIÊN DIAMOND",
+    "rating": 5,
+    "hero": "TRI ÂN THƯỢNG KHÁCH",
+    "subhead": "Trân trọng cảm ơn Quý khách đã luôn đồng hành cùng thương hiệu trang sức cao cấp",
+    "extra_texts": [
+      "Đặc quyền bảo dưỡng trọn đời trang sức kim cương",
+      "Ưu đãi 15% cho BST Tuyệt Tác Mùa Thu mới nhất",
+      "Dịch vụ phòng chờ VIP & Trợ lý cá nhân 1:1"
+    ],
+    "cta": "NHẬN ĐẶC QUYỀN",
+    "store_info": "KIM CƯƠNG HOÀNG GIA | 88 Đồng Khởi, Q.1, TP.HCM | Hotline: 1800 8888",
+    "qr_code": "https://tendoo.ai/vip-diamond",
+    "qr_label": "MÃ QUÀ TẶNG",
+    "style": {
+      "font": "playfair",
+      "theme_color": "#D4AF37",
+      "text_effect": "3d_gold",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_02_9x16_center_watch",
+    "title": "Đồng Hồ Xa Xỉ - Private Exhibition 9:16 Center",
+    "width": 576,
+    "height": 1024,
+    "orientation": "center",
+    "badge": "EXCLUSIVE INVITATION",
+    "rating": 5,
+    "hero": "TRIỂN LÃM ĐỒNG HỒ CAO CẤP",
+    "subhead": "Khám phá các kiệt tác cơ khí thủ công phiên bản giới hạn toàn cầu",
+    "extra_texts": [
+      "Chiêm ngưỡng 10 cỗ máy Tourbillon độc bản",
+      "Gặp gỡ nghệ nhân chế tác bậc thầy Thụy Sĩ"
+    ],
+    "cta": "XÁC NHẬN THAM DỰ",
+    "store_info": "Haute Horlogerie Lounge | Khách sạn Sofitel Metropole, HN",
+    "qr_code": "https://tendoo.ai/watch-expo",
+    "qr_label": "VÉ MỜI VIP",
+    "style": {
+      "font": "cormorant",
+      "theme_color": "#E2B874",
+      "text_effect": "plain_elegant",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_03_16x9_center_resort",
+    "title": "Resort Nghỉ Dưỡng 6 Sao - Luxury Voucher 16:9 Center",
+    "width": 1024,
+    "height": 576,
+    "orientation": "center",
+    "badge": "LUXURY RETREAT",
+    "rating": 5,
+    "hero": "ĐẶC QUYỀN KỲ NGHỈ THƯỢNG LƯU",
+    "subhead": "Không gian biệt thự hướng biển biệt lập với hồ bơi vô cực và quản gia riêng",
+    "extra_texts": [
+      "Tặng 01 liệu trình spa thảo dược cao cấp 90 phút cho 02 khách",
+      "Thưởng thức tiệc tối Fine Dining chuẩn sao Michelin bên bờ biển"
+    ],
+    "cta": "ĐẶT PHÒNG NGAY",
+    "store_info": "Amanoi Sanctuary Ninh Thuận | Hotline: 0259 377 0777",
+    "qr_code": "https://tendoo.ai/amanoi-booking",
+    "qr_label": "VOUCHER VIP",
+    "style": {
+      "font": "cinzel",
+      "theme_color": "#38BDF8",
+      "text_effect": "neon_bloom",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_04_4x5_center_beauty",
+    "title": "Viện Thẩm Mỹ Trẻ Hóa - VIP Membership 4:5 Center",
+    "width": 816,
+    "height": 1024,
+    "orientation": "center",
+    "badge": "GOLDEN CARD MEMBER",
+    "rating": 5,
+    "hero": "TUYỆT TÁC THANH XUÂN",
+    "subhead": "Trải nghiệm liệu trình nâng cơ tế bào gốc công nghệ Thụy Sĩ",
+    "extra_texts": [
+      "Soi da đa phổ & Phân tích cấu trúc vi mô",
+      "Trợ lý chăm sóc da chuyên biệt 24/7",
+      "Bộ quà tặng serum tinh thể ngọc trai"
+    ],
+    "cta": "ĐĂNG KÝ HỘI VIÊN",
+    "store_info": "Royal Aesthetic Clinic | 120 Bà Triệu, Q. Hai Bà Trưng, HN",
+    "qr_code": "https://tendoo.ai/royal-spa",
+    "qr_label": "THẺ THÀNH VIÊN",
+    "style": {
+      "font": "playfair",
+      "theme_color": "#F472B6",
+      "text_effect": "embossed",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_05_1x1_left_supercar",
+    "title": "Supercar Lounge - Private Test Drive 1:1 Left",
+    "width": 1024,
+    "height": 1024,
+    "orientation": "left",
+    "badge": "SUPERCAR CLUB",
+    "rating": 5,
+    "hero": "TRẢI NGHIỆM ĐỈNH CAO TỐC ĐỘ",
+    "subhead": "Chương trình lái thử độc quyền dòng siêu xe thể thao hiệu năng cao",
+    "extra_texts": [
+      "Chuyên gia đường đua hướng dẫn kỹ năng lái",
+      "Trải nghiệm đường chạy khép kín chuẩn F1",
+      "Tiệc rượu vang thượng hạng sau sự kiện"
+    ],
+    "cta": "ĐĂNG KÝ LÁI THỬ",
+    "store_info": "Motorsport Track Saigon | Hotline: 0909 999 888",
+    "qr_code": "https://tendoo.ai/supercar-drive",
+    "qr_label": "ĐẶT LỊCH",
+    "style": {
+      "font": "outfit",
+      "theme_color": "#EF4444",
+      "text_effect": "neon",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_06_9x16_left_perfume",
+    "title": "Nước Hoa Niche - Master Perfumer 9:16 Left",
+    "width": 576,
+    "height": 1024,
+    "orientation": "left",
+    "badge": "HAUTE PARFUMERIE",
+    "rating": 5,
+    "hero": "HƯƠNG SẮC ĐỘC BẢN",
+    "subhead": "Khám phá hương thơm tinh tuyển từ các loài hoa quý vùng Grasse nước Pháp",
+    "extra_texts": [
+      "Chiết xuất 100% tinh dầu trầm hương tự nhiên",
+      "Chạm khắc tên mạ vàng trên thân chai pha lê"
+    ],
+    "cta": "KHÁM PHÁ MÙI HƯƠNG",
+    "store_info": "Maison De Parfum | 24 Tràng Tiền, Hoàn Kiếm, HN",
+    "qr_code": "https://tendoo.ai/niche-perfume",
+    "qr_label": "MÃ ƯU ĐÃI",
+    "style": {
+      "font": "playfair",
+      "theme_color": "#D4AF37",
+      "text_effect": "3d_gold",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_07_16x9_left_yacht",
+    "title": "Du Thuyền Siêu Sang - Sunset Cruise 16:9 Left",
+    "width": 1024,
+    "height": 576,
+    "orientation": "left",
+    "badge": "YACHT CHARTER",
+    "rating": 5,
+    "hero": "HÀNH TRÌNH HOÀNG HÔN VỊNH HẠ LONG",
+    "subhead": "Hải trình đẳng cấp cùng du thuyền hiện đại bậc nhất",
+    "extra_texts": [
+      "Phục vụ tiệc cocktail & hàu nướng trên boong tàu ngắm hoàng hôn",
+      "Đội ngũ thủy thủ đoàn và phục vụ 5 sao túc trực xuyên suốt"
+    ],
+    "cta": "ĐẶT HẢI TRÌNH",
+    "store_info": "Marina Yacht Club Hạ Long | Hotline: 0988 777 666",
+    "qr_code": "https://tendoo.ai/yacht-charter",
+    "qr_label": "HẢI TRÌNH",
+    "style": {
+      "font": "cormorant",
+      "theme_color": "#06B6D4",
+      "text_effect": "plain_elegant",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_08_4x5_left_penthouse",
+    "title": "Bất Động Sản Hạng Sang - Penthouse Sky Villa 4:5 Left",
+    "width": 816,
+    "height": 1024,
+    "orientation": "left",
+    "badge": "SKY VILLA COLLECTION",
+    "rating": 5,
+    "hero": "BIỂU TƯỢNG SỐNG THƯỢNG LƯU",
+    "subhead": "Tầm nhìn 360 độ ôm trọn sông Sài Gòn từ tầng cao nhất tòa tháp biểu tượng",
+    "extra_texts": [
+      "Bàn giao nội thất nhập khẩu từ các thương hiệu Ý",
+      "Thang máy riêng bảo mật sinh trắc học vân tay",
+      "Sân vườn và hồ bơi vô cực riêng trên không"
+    ],
+    "cta": "ĐĂNG KÝ THAM QUAN",
+    "store_info": "The Grand Tower | Khu đô thị Thủ Thiêm, TP. Thủ Đức",
+    "qr_code": "https://tendoo.ai/sky-villa",
+    "qr_label": "SƠ ĐỒ CĂN HỘ",
+    "style": {
+      "font": "cinzel",
+      "theme_color": "#F59E0B",
+      "text_effect": "3d_gold",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_09_1x1_right_supercar",
+    "title": "Supercar Lounge - Private Test Drive 1:1 Right (Mirror)",
+    "width": 1024,
+    "height": 1024,
+    "orientation": "right",
+    "badge": "SUPERCAR CLUB",
+    "rating": 5,
+    "hero": "TRẢI NGHIỆM ĐỈNH CAO TỐC ĐỘ",
+    "subhead": "Chương trình lái thử độc quyền dòng siêu xe thể thao hiệu năng cao",
+    "extra_texts": [
+      "Chuyên gia đường đua hướng dẫn kỹ năng lái",
+      "Trải nghiệm đường chạy khép kín chuẩn F1",
+      "Tiệc rượu vang thượng hạng sau sự kiện"
+    ],
+    "cta": "ĐĂNG KÝ LÁI THỬ",
+    "store_info": "Motorsport Track Saigon | Hotline: 0909 999 888",
+    "qr_code": "https://tendoo.ai/supercar-drive",
+    "qr_label": "ĐẶT LỊCH",
+    "style": {
+      "font": "outfit",
+      "theme_color": "#EF4444",
+      "text_effect": "neon",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_10_9x16_right_perfume",
+    "title": "Nước Hoa Niche - Master Perfumer 9:16 Right (Mirror)",
+    "width": 576,
+    "height": 1024,
+    "orientation": "right",
+    "badge": "HAUTE PARFUMERIE",
+    "rating": 5,
+    "hero": "HƯƠNG SẮC ĐỘC BẢN",
+    "subhead": "Khám phá hương thơm tinh tuyển từ các loài hoa quý vùng Grasse nước Pháp",
+    "extra_texts": [
+      "Chiết xuất 100% tinh dầu trầm hương tự nhiên",
+      "Chạm khắc tên mạ vàng trên thân chai pha lê"
+    ],
+    "cta": "KHÁM PHÁ MÙI HƯƠNG",
+    "store_info": "Maison De Parfum | 24 Tràng Tiền, Hoàn Kiếm, HN",
+    "qr_code": "https://tendoo.ai/niche-perfume",
+    "qr_label": "MÃ ƯU ĐÃI",
+    "style": {
+      "font": "playfair",
+      "theme_color": "#D4AF37",
+      "text_effect": "3d_gold",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_11_16x9_right_yacht",
+    "title": "Du Thuyền Siêu Sang - Sunset Cruise 16:9 Right (Mirror)",
+    "width": 1024,
+    "height": 576,
+    "orientation": "right",
+    "badge": "YACHT CHARTER",
+    "rating": 5,
+    "hero": "HÀNH TRÌNH HOÀNG HÔN VỊNH HẠ LONG",
+    "subhead": "Hải trình đẳng cấp cùng du thuyền hiện đại bậc nhất",
+    "extra_texts": [
+      "Phục vụ tiệc cocktail & hàu nướng trên boong tàu ngắm hoàng hôn",
+      "Đội ngũ thủy thủ đoàn và phục vụ 5 sao túc trực xuyên suốt"
+    ],
+    "cta": "ĐẶT HẢI TRÌNH",
+    "store_info": "Marina Yacht Club Hạ Long | Hotline: 0988 777 666",
+    "qr_code": "https://tendoo.ai/yacht-charter",
+    "qr_label": "HẢI TRÌNH",
+    "style": {
+      "font": "cormorant",
+      "theme_color": "#06B6D4",
+      "text_effect": "plain_elegant",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_12_4x5_right_penthouse",
+    "title": "Bất Động Sản Hạng Sang - Penthouse Sky Villa 4:5 Right (Mirror)",
+    "width": 816,
+    "height": 1024,
+    "orientation": "right",
+    "badge": "SKY VILLA COLLECTION",
+    "rating": 5,
+    "hero": "BIỂU TƯỢNG SỐNG THƯỢNG LƯU",
+    "subhead": "Tầm nhìn 360 độ ôm trọn sông Sài Gòn từ tầng cao nhất tòa tháp biểu tượng",
+    "extra_texts": [
+      "Bàn giao nội thất nhập khẩu từ các thương hiệu Ý",
+      "Thang máy riêng bảo mật sinh trắc học vân tay",
+      "Sân vườn và hồ bơi vô cực riêng trên không"
+    ],
+    "cta": "ĐĂNG KÝ THAM QUAN",
+    "store_info": "The Grand Tower | Khu đô thị Thủ Thiêm, TP. Thủ Đức",
+    "qr_code": "https://tendoo.ai/sky-villa",
+    "qr_label": "SƠ ĐỒ CĂN HỘ",
+    "style": {
+      "font": "cinzel",
+      "theme_color": "#F59E0B",
+      "text_effect": "3d_gold",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_13_1x1_center_minimal",
+    "title": "Private Banking - Wealth Management 1:1 Center Minimal",
+    "width": 1024,
+    "height": 1024,
+    "orientation": "center",
+    "badge": "PRIVATE WEALTH",
+    "hero": "BẢO TOÀN DI SẢN THỊNH VƯỢNG",
+    "subhead": "Giải pháp cấu trúc gia sản và đầu tư toàn cầu dành riêng cho giới tinh hoa",
+    "cta": "TƯ VẤN BẢO MẬT",
+    "store_info": "Global Wealth Advisory | 65 Lê Lợi, Bến Nghé, Q.1",
+    "qr_code": "https://tendoo.ai/private-wealth",
+    "qr_label": "HỒ SƠ NĂNG LỰC",
+    "style": {
+      "font": "bevietnam",
+      "theme_color": "#10B981",
+      "text_effect": "plain_elegant",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_14_9x16_center_rich",
+    "title": "Haute Couture - Fashion Week Gala 9:16 Center Rich",
+    "width": 576,
+    "height": 1024,
+    "orientation": "center",
+    "badge": "GALA NIGHT 2026",
+    "rating": 5,
+    "hero": "ĐÊM HỘI THỜI TRANG ĐỈNH CAO",
+    "subhead": "Nơi hội tụ những bộ sưu tập đắt giá nhất mùa thu đông",
+    "extra_texts": [
+      "Thảm đỏ đón khách VIP & Tiệc cocktail thượng lưu",
+      "Vị trí hàng ghế đầu Front Row dành riêng cho khách mời danh dự"
+    ],
+    "cta": "XÁC NHẬN CHỖ NGỒI",
+    "store_info": "Trung tâm Hội nghị Quốc tế | 11 Lê Hồng Phong, Ba Đình, HN",
+    "qr_code": "https://tendoo.ai/couture-gala",
+    "qr_label": "THẺ VÀO CỬA",
+    "style": {
+      "font": "playfair",
+      "theme_color": "#C084FC",
+      "text_effect": "neon_bloom",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_15_16x9_left_minimal",
+    "title": "Fine Dining - Chef Tasting Menu 16:9 Left Minimal",
+    "width": 1024,
+    "height": 576,
+    "orientation": "left",
+    "badge": "MICHELIN SELECTED",
+    "rating": 5,
+    "hero": "BẢN GIAO HƯỞNG ẨM THỰC NGUYÊN BẢN",
+    "subhead": "Set menu 9 món tinh tuyển do bếp trưởng 3 sao Michelin sáng tạo",
+    "cta": "ĐẶT BÀN TRƯỚC",
+    "store_info": "Le Ciel Restaurant | Tầng 68 Landmark Tower",
+    "qr_code": "https://tendoo.ai/michelin-menu",
+    "qr_label": "MENU VIP",
+    "style": {
+      "font": "cormorant",
+      "theme_color": "#FBBF24",
+      "text_effect": "plain_elegant",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_16_4x5_right_rich",
+    "title": "Boutique Hotel - Royal Suite 4:5 Right Rich (Mirror)",
+    "width": 816,
+    "height": 1024,
+    "orientation": "right",
+    "badge": "ROYAL SUITE",
+    "rating": 5,
+    "hero": "KHÔNG GIAN NGHỈ DƯỠNG HOÀNG GIA",
+    "subhead": "Đắm chìm trong vẻ đẹp kiến trúc tân cổ điển và tiện nghi xa xỉ bậc nhất",
+    "extra_texts": [
+      "Quản gia cá nhân phục vụ bữa sáng tại phòng 24/7",
+      "Xe đưa đón Rolls-Royce sân bay khứ hồi miễn phí",
+      "Rượu vang Champagne Pháp ướp lạnh sẵn khi nhận phòng"
+    ],
+    "cta": "ĐẶT PHÒNG SUITE",
+    "store_info": "The Majestic Palace | 15 Thi Sách, Bến Nghé, Q.1, TP.HCM",
+    "qr_code": "https://tendoo.ai/royal-suite",
+    "qr_label": "ĐẶT PHÒNG",
+    "style": {
+      "font": "playfair",
+      "theme_color": "#D4AF37",
+      "text_effect": "3d_gold",
+      "background_tone": "dark_luxury"
+    }
+  }
+]

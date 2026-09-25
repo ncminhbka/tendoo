@@ -1,0 +1,90 @@
+[
+  {
+    "id": "lux_nocontent_01_1x1_center_diamond",
+    "title": "[NO MESSAGE/FOOTER] Trang Sức Kim Cương - VIP Thanks Card 1:1 Center",
+    "width": 1024,
+    "height": 1024,
+    "orientation": "center",
+    "badge": "HỘI VIÊN DIAMOND",
+    "rating": 5,
+    "hero": "TRI ÂN THƯỢNG KHÁCH",
+    "subhead": "Trân trọng cảm ơn Quý khách đã luôn đồng hành cùng thương hiệu trang sức cao cấp",
+    "extra_texts": [],
+    "cta": null,
+    "store_info": null,
+    "qr_code": null,
+    "qr_label": "MÃ QUÀ TẶNG",
+    "style": {
+      "font": "playfair",
+      "theme_color": "#D4AF37",
+      "text_effect": "3d_gold",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_nocontent_02_9x16_center_watch",
+    "title": "[NO MESSAGE/FOOTER] Đồng Hồ Xa Xỉ - Private Exhibition 9:16 Center",
+    "width": 576,
+    "height": 1024,
+    "orientation": "center",
+    "badge": "EXCLUSIVE INVITATION",
+    "rating": 5,
+    "hero": "TRIỂN LÃM ĐỒNG HỒ CAO CẤP",
+    "subhead": "Khám phá các kiệt tác cơ khí thủ công phiên bản giới hạn toàn cầu",
+    "extra_texts": [],
+    "cta": null,
+    "store_info": null,
+    "qr_code": null,
+    "qr_label": "VÉ MỜI VIP",
+    "style": {
+      "font": "cormorant",
+      "theme_color": "#E2B874",
+      "text_effect": "plain_elegant",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_nocontent_03_16x9_center_resort",
+    "title": "[NO MESSAGE/FOOTER] Resort Nghỉ Dưỡng 6 Sao - Luxury Voucher 16:9 Center",
+    "width": 1024,
+    "height": 576,
+    "orientation": "center",
+    "badge": "LUXURY RETREAT",
+    "rating": 5,
+    "hero": "ĐẶC QUYỀN KỲ NGHỈ THƯỢNG LƯU",
+    "subhead": "Không gian biệt thự hướng biển biệt lập với hồ bơi vô cực và quản gia riêng",
+    "extra_texts": [],
+    "cta": null,
+    "store_info": null,
+    "qr_code": null,
+    "qr_label": "VOUCHER VIP",
+    "style": {
+      "font": "cinzel",
+      "theme_color": "#38BDF8",
+      "text_effect": "neon_bloom",
+      "background_tone": "dark_luxury"
+    }
+  },
+  {
+    "id": "lux_nocontent_04_4x5_center_beauty",
+    "title": "[NO MESSAGE/FOOTER] Viện Thẩm Mỹ Trẻ Hóa - VIP Membership 4:5 Center",
+    "width": 816,
+    "height": 1024,
+    "orientation": "center",
+    "badge": "GOLDEN CARD MEMBER",
+    "rating": 5,
+    "hero": "TUYỆT TÁC THANH XUÂN",
+    "subhead": "Trải nghiệm liệu trình nâng cơ tế bào gốc công nghệ Thụy Sĩ",
+    "extra_texts": [],
+    "cta": null,
+    "store_info": null,
+    "qr_code": null,
+    "qr_label": "THẺ THÀNH VIÊN",
+    "style": {
+      "font": "playfair",
+      "theme_color": "#F472B6",
+      "text_effect": "embossed",
+      "background_tone": "dark_luxury"
+    }
+  }
+]

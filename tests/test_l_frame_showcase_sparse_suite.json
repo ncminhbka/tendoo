@@ -1,0 +1,326 @@
+[
+  {
+    "id": "l_frame_showcase_sparse_1x1_no_qr",
+    "title": "[L_FRAME_SHOWCASE] 1x1 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EAB308",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "KHÁM PHÁ ĐẲNG CẤP SUV THẾ HỆ MỚI 2026",
+      "badge": "ƯU ĐÃI 100 TRIỆU",
+      "subhead": "Tặng gói bảo hiểm thân vỏ & 3 năm bảo dưỡng miễn phí",
+      "extra_texts": [
+        "Từ 2026-09-01 - Đến 2026-09-30"
+      ],
+      "tag_left": "TENDOO MOTORS",
+      "store_info": "Hotline: 1900 8888 | Showroom Phú Mỹ Hưng, Quận 7, TP. HCM | https://tendoo.ai/suv-2026",
+      "qr_code": null,
+      "qr_label": null,
+      "scene_prompt": "Grey luxury SUV Mercedes driving dynamically on mountain serpentine road during sunset, dramatic rim light 8k",
+      "corridor_prompt": "Cinematic dramatic sunset sky over majestic mountain range with dark negative space in upper left"
+    }
+  },
+  {
+    "id": "l_frame_showcase_sparse_1x1_no_store",
+    "title": "[L_FRAME_SHOWCASE] 1x1 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EAB308",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "KHÁM PHÁ ĐẲNG CẤP SUV THẾ HỆ MỚI 2026",
+      "badge": "ƯU ĐÃI 100 TRIỆU",
+      "subhead": "Tặng gói bảo hiểm thân vỏ & 3 năm bảo dưỡng miễn phí",
+      "extra_texts": [
+        "Từ 2026-09-01 - Đến 2026-09-30"
+      ],
+      "tag_left": null,
+      "store_info": null,
+      "qr_code": "https://tendoo.ai/suv-2026",
+      "qr_label": "QUÉT MÃ QR",
+      "scene_prompt": "Grey luxury SUV Mercedes driving dynamically on mountain serpentine road during sunset, dramatic rim light 8k",
+      "corridor_prompt": "Cinematic dramatic sunset sky over majestic mountain range with dark negative space in upper left",
+      "store_items": null,
+      "tag_right": null
+    }
+  },
+  {
+    "id": "l_frame_showcase_sparse_1x1_minimal_hero_only",
+    "title": "[L_FRAME_SHOWCASE] 1x1 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "width": 1024,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#EAB308",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "KHÁM PHÁ ĐẲNG CẤP SUV THẾ HỆ MỚI 2026",
+      "badge": "",
+      "subhead": "",
+      "extra_texts": [],
+      "tag_left": null,
+      "store_info": null,
+      "qr_code": null,
+      "qr_label": null,
+      "scene_prompt": "Grey luxury SUV Mercedes driving dynamically on mountain serpentine road during sunset, dramatic rim light 8k",
+      "corridor_prompt": "Cinematic dramatic sunset sky over majestic mountain range with dark negative space in upper left",
+      "tag_right": null,
+      "cta": "",
+      "store_items": null
+    }
+  },
+  {
+    "id": "l_frame_showcase_sparse_9x16_no_qr",
+    "title": "[L_FRAME_SHOWCASE] 9x16 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#EF4444",
+        "text_effect": "glow_edge",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BỨT PHÁ TỐC ĐỘ VỚI GT SPORT",
+      "badge": "CHÍNH HÃNG",
+      "tag_left": "TENDOO MOTORSPORT",
+      "store_info": "Hotline: 1900 9999 | Landmark 81, TP. HCM",
+      "qr_code": null,
+      "qr_label": null,
+      "scene_prompt": "Red supercar speeding on neon city asphalt with motion blur and headlight light trails, rain wet reflections 8k",
+      "corridor_prompt": "Night city skyline with deep dark atmospheric smoke in top region"
+    }
+  },
+  {
+    "id": "l_frame_showcase_sparse_9x16_no_store",
+    "title": "[L_FRAME_SHOWCASE] 9x16 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#EF4444",
+        "text_effect": "glow_edge",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BỨT PHÁ TỐC ĐỘ VỚI GT SPORT",
+      "badge": "CHÍNH HÃNG",
+      "tag_left": null,
+      "store_info": null,
+      "qr_code": "https://tendoo.ai/gt",
+      "qr_label": "TRẢI NGHIỆM",
+      "scene_prompt": "Red supercar speeding on neon city asphalt with motion blur and headlight light trails, rain wet reflections 8k",
+      "corridor_prompt": "Night city skyline with deep dark atmospheric smoke in top region",
+      "store_items": null,
+      "tag_right": null
+    }
+  },
+  {
+    "id": "l_frame_showcase_sparse_9x16_minimal_hero_only",
+    "title": "[L_FRAME_SHOWCASE] 9x16 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "width": 576,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "bevietnam",
+        "theme_color": "#EF4444",
+        "text_effect": "glow_edge",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "BỨT PHÁ TỐC ĐỘ VỚI GT SPORT",
+      "badge": "",
+      "tag_left": null,
+      "store_info": null,
+      "qr_code": null,
+      "qr_label": null,
+      "scene_prompt": "Red supercar speeding on neon city asphalt with motion blur and headlight light trails, rain wet reflections 8k",
+      "corridor_prompt": "Night city skyline with deep dark atmospheric smoke in top region",
+      "subhead": "",
+      "tag_right": null,
+      "extra_texts": [],
+      "cta": "",
+      "store_items": null
+    }
+  },
+  {
+    "id": "l_frame_showcase_sparse_16x9_no_qr",
+    "title": "[L_FRAME_SHOWCASE] 16x9 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#38BDF8",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SIÊU DU THUYỀN MONACO 100FT",
+      "badge": "ĐỘC BẢN",
+      "tag_left": "MONACO YACHTS",
+      "store_info": "Hotline: 090 999 8888 | Marina Saigon, TP. HCM | https://yachts.tendoo.ai",
+      "qr_code": null,
+      "qr_label": null,
+      "scene_prompt": "Luxury white superyacht sailing on deep blue Mediterranean sea during golden hour, majestic aerial view 8k",
+      "corridor_prompt": "Golden sunset clouds and open sea horizon with calm negative space in top left"
+    }
+  },
+  {
+    "id": "l_frame_showcase_sparse_16x9_no_store",
+    "title": "[L_FRAME_SHOWCASE] 16x9 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#38BDF8",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SIÊU DU THUYỀN MONACO 100FT",
+      "badge": "ĐỘC BẢN",
+      "tag_left": null,
+      "store_info": null,
+      "qr_code": "https://yachts.tendoo.ai",
+      "qr_label": "KHÁM PHÁ",
+      "scene_prompt": "Luxury white superyacht sailing on deep blue Mediterranean sea during golden hour, majestic aerial view 8k",
+      "corridor_prompt": "Golden sunset clouds and open sea horizon with calm negative space in top left",
+      "store_items": null,
+      "tag_right": null
+    }
+  },
+  {
+    "id": "l_frame_showcase_sparse_16x9_minimal_hero_only",
+    "title": "[L_FRAME_SHOWCASE] 16x9 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "width": 1024,
+    "height": 576,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#38BDF8",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "SIÊU DU THUYỀN MONACO 100FT",
+      "badge": "",
+      "tag_left": null,
+      "store_info": null,
+      "qr_code": null,
+      "qr_label": null,
+      "scene_prompt": "Luxury white superyacht sailing on deep blue Mediterranean sea during golden hour, majestic aerial view 8k",
+      "corridor_prompt": "Golden sunset clouds and open sea horizon with calm negative space in top left",
+      "subhead": "",
+      "tag_right": null,
+      "extra_texts": [],
+      "cta": "",
+      "store_items": null
+    }
+  },
+  {
+    "id": "l_frame_showcase_sparse_4x5_no_qr",
+    "title": "[L_FRAME_SHOWCASE] 4x5 - Tắt QR Code (Chỉ Giữ Store Info)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#DC2626",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "VANG ĐỎ BORDEAUX GRAND CRU 2018",
+      "badge": "VINTAGE 2018",
+      "tag_left": "CHÂTEAU DE BORDEAUX",
+      "store_info": "Hotline: 1900 8822 | Khách sạn Park Hyatt Saigon, Quận 1 | https://bordeaux.ai",
+      "qr_code": null,
+      "qr_label": null,
+      "scene_prompt": "Elegant dark red wine bottle with vintage gold label next to filled wine glass, dark oak wood cellar background 8k",
+      "corridor_prompt": "Subtle warm candlelight and dark barrel cellar shadows in upper left"
+    }
+  },
+  {
+    "id": "l_frame_showcase_sparse_4x5_no_store",
+    "title": "[L_FRAME_SHOWCASE] 4x5 - Tắt Thông Tin Cửa Hàng (Chỉ Giữ QR)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#DC2626",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "VANG ĐỎ BORDEAUX GRAND CRU 2018",
+      "badge": "VINTAGE 2018",
+      "tag_left": null,
+      "store_info": null,
+      "qr_code": "https://bordeaux.ai",
+      "qr_label": "THƯỞNG THỨC",
+      "scene_prompt": "Elegant dark red wine bottle with vintage gold label next to filled wine glass, dark oak wood cellar background 8k",
+      "corridor_prompt": "Subtle warm candlelight and dark barrel cellar shadows in upper left",
+      "store_items": null,
+      "tag_right": null
+    }
+  },
+  {
+    "id": "l_frame_showcase_sparse_4x5_minimal_hero_only",
+    "title": "[L_FRAME_SHOWCASE] 4x5 - Hero Tối Giản Cực Đại (Không Store, Không QR, Không Subhead)",
+    "width": 816,
+    "height": 1024,
+    "plan": {
+      "template": "l_frame_showcase",
+      "orientation": "left",
+      "style": {
+        "font": "playfair",
+        "theme_color": "#DC2626",
+        "text_effect": "3d_gold",
+        "background_tone": "dark_luxury"
+      },
+      "hero": "VANG ĐỎ BORDEAUX GRAND CRU 2018",
+      "badge": "",
+      "tag_left": null,
+      "store_info": null,
+      "qr_code": null,
+      "qr_label": null,
+      "scene_prompt": "Elegant dark red wine bottle with vintage gold label next to filled wine glass, dark oak wood cellar background 8k",
+      "corridor_prompt": "Subtle warm candlelight and dark barrel cellar shadows in upper left",
+      "subhead": "",
+      "tag_right": null,
+      "extra_texts": [],
+      "cta": "",
+      "store_items": null
+    }
+  }
+]
