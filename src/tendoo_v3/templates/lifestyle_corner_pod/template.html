@@ -350,10 +350,11 @@
     {% endif %}
   </style>
 </head>
-{% from "components/ui_macros.html" import render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
+{% from "components/ui_macros.html" import render_decor_layer, render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
+    {{ render_decor_layer() }}
 
     <div class="corner-pod">
       <div class="top-section">

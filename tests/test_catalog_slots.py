@@ -50,3 +50,11 @@ def test_template_parses(template):
 @pytest.mark.parametrize("template", sorted(TEMPLATE_CATALOG))
 def test_geometry_drivers_are_known_flags(template):
     assert set(geometry_drivers(template)) <= KNOWN_FLAGS
+
+
+@pytest.mark.parametrize("template", sorted(TEMPLATE_CATALOG))
+def test_decor_layer_reserved_above_background(template):
+    """ROADMAP §10.13: lớp decor (hoạ tiết GĐ 8) phải nằm ngay trên bg-layer ở MỌI template, để
+    GĐ 8 chỉ điền nội dung chứ không phải sửa lại 14 file HTML."""
+    src = (TEMPLATES_DIR / template / "template.html").read_text(encoding="utf-8")
+    assert re.search(r'<div class="bg-layer"></div>\s*\{\{ render_decor_layer\(\) \}\}', src), template

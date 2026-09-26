@@ -127,10 +127,11 @@
     {% endif %}
   </style>
 </head>
-{% from "components/ui_macros.html" import render_badge, render_hero, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta, render_qr %}
+{% from "components/ui_macros.html" import render_decor_layer, render_badge, render_hero, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta, render_qr %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
+    {{ render_decor_layer() }}
 
     <!-- Cụm Đỉnh (Top Band): Badge + Hero + Subhead + FreeText -->
     <div class="sandwich-top-band" style="height:{{ zones.top.height }}px; max-height:{{ zones.top.height }}px; overflow:hidden;">

@@ -188,3 +188,10 @@
     {{ symbol }}
   </span>
 {% endmacro %}
+
+{#- LỚP DECOR (ROADMAP §10.6, §10.13): chỗ chừa sẵn cho hoạ tiết GĐ 8, nằm giữa bg-layer
+    (z-index 1) và lớp chữ (z-index 10). Hiện rỗng -> ảnh không đổi. Style inline vì 8 template
+    migrate kiểu markup-only không include ui_components.css. -#}
+{% macro render_decor_layer() -%}
+<div class="decor-layer" aria-hidden="true" style="position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;"></div>
+{%- endmacro %}

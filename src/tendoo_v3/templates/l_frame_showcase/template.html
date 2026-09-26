@@ -348,10 +348,11 @@
     {% endif %}
   </style>
 </head>
-{% from "components/ui_macros.html" import render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
+{% from "components/ui_macros.html" import render_decor_layer, render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
+    {{ render_decor_layer() }}
 
     <!-- Cụm Tiêu Đề Góc L: Tiêu đề 3D nghiêng thể thao + Badge Ưu Đãi + Lợi ích + Thời hạn -->
     <!-- badge-capsule/subhead-benefit/freetext-block/extra-tag-row KHÔNG khai báo

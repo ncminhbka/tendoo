@@ -852,8 +852,10 @@ hiện tại **chứa được** nội dung S nhưng không **được thiết k
 ### 10.13. Việc rẻ bây giờ, đắt nếu để sau (làm xen trong GĐ 1–6)
 
 1. ✅ **XONG 26/09** — ~~Bổ sung Be Vietnam Pro Regular/Medium/SemiBold/Bold~~ (xem §10.7).
-2. **Chừa lớp decor** (`decor-layer` giữa nền và chữ) trong template — để GĐ 8 không phải sửa lại
-   14 template.
+2. ✅ **XONG 26/09** — ~~Chừa lớp decor~~: macro `render_decor_layer()` (`ui_macros.html`) đặt ngay
+   sau `bg-layer` ở cả 14 template, z-index 5 (nền 1, chữ 10). Hiện rỗng → 379 ảnh giống hệt; đã
+   thử tô tạm: hoạ tiết nằm trên nền, dưới mọi chữ/khung/nút. Test
+   `test_decor_layer_reserved_above_background` giữ vị trí. GĐ 8 chỉ cần thêm tham số nội dung.
 3. **Thu thập bộ tham chiếu** 20–30 poster theo dịp/ngành — cần cho mọi đánh giá GĐ 7–10.
 4. Giữ `render_hero_phrase` làm **lockup gốc**: mọi thay đổi Luật 2 phải tương thích với việc co
    giãn cả khối về sau.
