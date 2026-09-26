@@ -5,6 +5,7 @@
   <title>{{ hero }}</title>
   <style>
     {{ font_face_css }}
+    {% include "components/hero_phrase.css" %}
 
     :root {
       --headline-font: {{ headline_font_css }};
@@ -355,44 +356,21 @@
     {% endif %}
   </style>
 </head>
+{% from "components/ui_macros.html" import render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
 
     <!-- Khối Header Khai Trương Trên Đỉnh -->
     <div class="opening-header-cluster">
-      {% if badge %}
-      <div class="kicker-capsule" data-autofit data-min-font="{{ open_budget.badge.min_font }}" data-max-font="{{ open_budget.badge.max_font }}" data-max-width="{{ width * 0.85 }}" data-max-height="{{ open_budget.badge.max_h }}">{{ badge }}</div>
-      {% endif %}
+      {{ render_badge(badge, budget=open_budget.badge, max_w=width * 0.85, cls='kicker-capsule') }}
 
-      <div class="hero-title" data-autofit data-min-font="{{ open_budget.hero.min_font }}" data-max-font="{{ open_budget.hero.max_font }}" data-max-height="{{ open_budget.hero.max_h }}">{{ hero }}</div>
+      {{ render_hero_phrase(hero, hero_parts, budget=open_budget.hero) }}
 
-      {% if subhead %}
-      <div class="subhead-date" data-autofit data-min-font="{{ open_budget.subhead.min_font }}" data-max-font="{{ open_budget.subhead.max_font }}" data-max-height="{{ open_budget.subhead.max_h }}">{{ subhead }}</div>
-      {% endif %}
+      {{ render_subhead(subhead, budget=open_budget.subhead, cls='subhead-date') }}
 
       <!-- FreeText Dual-Mode -->
-      {% if extra_texts %}
-        {% if is_freetext_block %}
-        <div class="freetext-block" data-autofit data-min-font="{{ open_budget.freetext_block.min_font }}" data-max-font="{{ open_budget.freetext_block.max_font }}" data-max-height="{{ open_budget.freetext_block.max_h }}">
-          {% for line in extra_texts %}
-          <div class="freetext-line">
-            <span class="freetext-bullet">{{ bullet_svg }}</span>
-            <span>{{ line }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="extra-tag-row" data-autofit data-min-font="{{ open_budget.freetext_pills.min_font }}" data-max-font="{{ open_budget.freetext_pills.max_font }}" data-max-height="{{ open_budget.freetext_pills.max_h }}">
-          {% for pill in extra_pills %}
-          <div class="extra-pill">
-            {{ pill.icon_svg }}
-            <span>{{ pill.text }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-      {% endif %}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(open_budget.freetext_block if is_freetext_block else open_budget.freetext_pills), bullet_svg=bullet_svg) }}
     </div>
 
     <!-- Dải Đáy Ngang (Bottom Action Bar) -->
@@ -403,10 +381,7 @@
         {% if cta %}
         <div class="bottom-row-upper">
           <div class="cta-cluster">
-            <div class="cta-btn" data-autofit data-min-font="{{ open_budget.cta.min_font }}" data-max-font="{{ open_budget.cta.max_font }}" data-max-height="{{ open_budget.cta.max_h }}">
-              <span>{{ cta }}</span>
-              <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </div>
+            {{ render_cta(cta, budget=open_budget.cta) }}
           </div>
         </div>
         {% endif %}
@@ -460,10 +435,7 @@
 
         {% if cta %}
         <div class="cta-cluster">
-          <div class="cta-btn" data-autofit data-min-font="{{ open_budget.cta.min_font }}" data-max-font="{{ open_budget.cta.max_font }}" data-max-height="{{ open_budget.cta.max_h }}">
-            <span>{{ cta }}</span>
-            <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </div>
+          {{ render_cta(cta, budget=open_budget.cta) }}
         </div>
         {% endif %}
 
