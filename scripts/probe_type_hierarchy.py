@@ -130,11 +130,24 @@ TEXT_BOXES_JS = r"""
       const node = walker.currentNode, host = node.parentElement;
       if (!node.textContent.trim() || host.closest('svg')) continue;
       const cs = getComputedStyle(host);
+      // Chữ tô gradient (nét trong suốt): màu chữ = trung bình các điểm màu gradient của khối cha cắt theo chữ
+      // (27/09: trước bỏ qua -> "2 TỶ" vàng gradient chìm trên nền mà C3 vẫn đạt).
+      let color = cs.webkitTextFillColor || cs.color;
+      const fa = /rgba?\(([^)]+)\)/.exec(color);
+      if (fa && fa[1].split(/[\s,\/]+/).filter(Boolean).length > 3 && parseFloat(fa[1].split(/[\s,\/]+/).filter(Boolean)[3]) < 0.5) {
+        for (let n = host; n && n !== el.parentElement; n = n.parentElement) {
+          const bi = getComputedStyle(n).backgroundImage || '';
+          if (bi.indexOf('gradient') < 0) continue;
+          const stops = (bi.match(/rgba?\([^)]+\)/g) || []).map(x => x.match(/[\d.]+/g).map(parseFloat)).filter(c => c.length < 4 || c[3] > 0.3);
+          if (stops.length) color = 'rgb(' + [0, 1, 2].map(j => Math.round(stops.reduce((a, c) => a + c[j], 0) / stops.length)).join(',') + ')';
+          break;
+        }
+      }
       const range = document.createRange(); range.selectNodeContents(node);
       for (const r of range.getClientRects()) {
         if (r.width < 2 || r.height < 2) continue;
         out.push({cls: (el.className || '').toString().trim().split(/\s+/)[0], x: r.left, y: r.top, w: r.width, h: r.height,
-                  color: cs.webkitTextFillColor || cs.color, size: parseFloat(cs.fontSize) || 0, weight: parseInt(cs.fontWeight) || 400});
+                  color: color, size: parseFloat(cs.fontSize) || 0, weight: parseInt(cs.fontWeight) || 400});
       }
     }
   }
@@ -176,7 +189,14 @@ def measure_bg_contrast(page) -> List[Dict[str, Any]]:
     page.add_style_tag(content=HIDE_TEXT_CSS)
     # Style inline !important (quầng/đổi màu nhấn của autofit Bước 5) thắng stylesheet !important ->
     # phải ẩn ruột chữ bằng CHÍNH inline style, nếu không chữ còn hiện và bị tính như nền.
+    # Chữ gradient: nét là NỀN của khối cắt theo chữ (background-clip: text) -> ẩn màu chữ vẫn còn nét; phải gỡ
+    # nền + filter của khối đó, nếu không ảnh "nền" chứa chính nét chữ (27/09: C3 chấm hologram với chính nó).
     page.evaluate("""() => document.querySelectorAll('body *').forEach(n => {
+        const cs = getComputedStyle(n);
+        if ((cs.webkitBackgroundClip || cs.backgroundClip) === 'text') {
+          n.style.setProperty('background', 'none', 'important');
+          n.style.setProperty('filter', 'none', 'important');
+        }
         n.style.setProperty('color', 'transparent', 'important');
         n.style.setProperty('-webkit-text-fill-color', 'transparent', 'important'); })""")
     img_sh = np.asarray(Image.open(io.BytesIO(page.screenshot())).convert("RGB")).astype(float)

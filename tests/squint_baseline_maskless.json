@@ -1,31 +1,31 @@
 {
  "diagonal_slash": {
   "n": 3,
-  "c1": 1,
+  "c1": 2,
   "c2": 3,
-  "c3": 1,
+  "c3": 3,
   "c4": 3,
-  "squint": 0,
+  "squint": 2,
   "c5": 2,
-  "pass5": 0
+  "pass5": 2
  },
  "grand_opening_banner": {
   "n": 9,
-  "c1": 1,
+  "c1": 3,
   "c2": 9,
-  "c3": 8,
+  "c3": 9,
   "c4": 8,
-  "squint": 1,
+  "squint": 3,
   "c5": 7,
-  "pass5": 1
+  "pass5": 2
  },
  "sandwich_bottom_heavy": {
   "n": 5,
-  "c1": 1,
+  "c1": 2,
   "c2": 5,
-  "c3": 3,
+  "c3": 4,
   "c4": 4,
-  "squint": 1,
+  "squint": 2,
   "c5": 1,
   "pass5": 1
  },

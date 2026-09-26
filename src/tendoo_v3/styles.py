@@ -453,6 +453,8 @@ HIERARCHY_MIN_RATIO = 1.6     # hero >= 1.6x subhead dù phải hạ subhead dư
 # Trần NỘI DUNG CHÍNH dạng danh sách (bảng giá, các bước): đọc thoải mái trên điện thoại. Đo GĐ 3R: trần cố
 # định 18-19px = 12px trên màn (menu trà sữa, 3 bước chăm sóc da -- user: "chữ quá nhỏ").
 PHONE_LIST_PX = 15.0
+# Trần hero khi có điểm neo `stat` (renderer._apply_stat_anchor_ceiling): con số ngắn được to hơn dòng tiêu đề.
+PHONE_STAT_MAX_PX = 60.0
 PHONE_HERO_MAX_PX = 40.0      # trần hero (~109px ở khung 1024 -- social 1080: tiêu đề 48-96px, poster lớn hơn)
 HERO_HEIGHT_BOOST = 1.6       # nới chiều cao ngân sách hero (tiêu đề trước) -- đo trên suite + 16 poster LLM thật
 PHONE_HERO_FLOOR_PX = 16.0    # sàn CỨNG hero trong ngân sách: tiêu đề dài co xuống được, không bị cắt
@@ -956,7 +958,29 @@ COMMON_AUTOFIT_JS = """
           if (!node.textContent.trim() || host.closest('svg')) continue;
           const cs = getComputedStyle(host);
           const fill = tendooRgba(cs.webkitTextFillColor || cs.color);
-          if (!fill || fill.a < 0.5) continue;  // chữ tô gradient (3d_gold, chrome...) đã có drop-shadow riêng
+          // Chữ tô GRADIENT (3d_gold, chrome...: nét trong suốt, nền khối cha cắt theo chữ): trước đây bỏ qua ->
+          // "2 TỶ" vàng gradient chìm trên nền trung tính mà không ai thấy (27/09, BĐS GPT thật). Ước lượng màu chữ
+          // = trung bình các điểm màu của gradient; KHÔNG đổi màu (giữ hiệu ứng), chỉ quầng/lớp mờ.
+          let gradient = false, gradOwn = false, gradBright = null;
+          if (fill && fill.a < 0.5) {
+            let gcol = null;
+            for (let n = host; n && n !== el.parentElement; n = n.parentElement) {
+              const bi = getComputedStyle(n).backgroundImage || '';
+              if (bi.indexOf('gradient') < 0) continue;
+              const stops = (bi.match(/rgba?\\([^)]+\\)/g) || []).map(tendooRgba).filter(c => c && c.a > 0.3);
+              if (stops.length) {
+                // ĐO bằng trung bình các điểm màu (cùng cách probe chấm C3); LÀM PHẲNG (nếu cần) về điểm SÁNG NHẤT:
+                // hiệu ứng gradient của ta (vàng, chrome, lửa) là kim loại sáng -- mắt đọc chữ là sáng (27/09 flash sale).
+                gcol = [0, 1, 2].map(j => stops.reduce((a, c) => a + c.rgb[j], 0) / stops.length);
+                gradBright = stops.map(c => c.rgb);  // mọi điểm màu -- ứng viên khi phải làm phẳng
+                gradOwn = n === host;
+              }
+              break;
+            }
+            if (!gcol) continue;
+            fill.rgb = gcol; fill.a = 1; gradient = true;
+          }
+          if (!fill || fill.a < 0.5) continue;
           const backs = [];
           for (let n = host; n && !n.classList.contains('poster-canvas') && n !== document.body; n = n.parentElement) {
             const bc = tendooRgba(getComputedStyle(n).backgroundColor);
@@ -987,7 +1011,7 @@ COMMON_AUTOFIT_JS = """
           // đo thật trên ảnh chụp lệch vài phần trăm -> case sát ngưỡng (4.1-4.48) trượt oan.
           // Đo MỌI nút chữ (cả nút đang đạt): quyết màu theo nhóm phải biết cả phần dòng đang ổn.
           if (isFinite(worst)) hosts.set(host, {worst, lText, need, worstBg, lMin, lMax, fill: fill.rgb, fails: worst < need * 1.15,
-            accent: host.closest('.hero-seg--accent'), backsKey: JSON.stringify(backs.map(x => [x.rgb, x.a]))});
+            accent: host.closest('.hero-seg--accent'), gradient, gradOwn, gradBright, backsKey: JSON.stringify(backs.map(x => [x.rgb, x.a]))});
         }
         // QUYẾT MÀU THEO NHÓM, không theo từng nút chữ (27/09, poster cà phê): "30" và "%" là 2 nút trong CÙNG màu
         // nhấn -> nút sau (ô nền khác) ghi đè màu nút trước, con số chìm hẳn; "GIẢM" đảo navy còn "TOÀN BỘ MENU"
@@ -1026,7 +1050,7 @@ COMMON_AUTOFIT_JS = """
             }
             // Nền LẪN sáng-tối (không màu nào đạt): giữ màu nhấn gốc của thương hiệu, để lớp mờ gánh (đổi sang
             // đen/trắng vẫn trượt mà mất luôn màu nhấn -- 27/09 "30%" thành đen trên tường nâu).
-            if (best.s < g.need * 0.85) best = {rgb: g.fill, s: score(g.fill), t: 0};
+            if (best.s < g.need * 0.85 || vs.some(v => v.gradient)) best = {rgb: g.fill, s: score(g.fill), t: 0};
             if (best.t > 0) {
               const col = `rgb(${best.rgb.join(',')})`;
               for (const n of [accent, ...accent.querySelectorAll('*')]) {
@@ -1037,7 +1061,7 @@ COMMON_AUTOFIT_JS = """
             }
             if (best.s >= g.need) return;
             // Quầng/lớp mờ áp MỘT lần lên cả khối màu nhấn.
-            haloHosts.set(accent, {...g, lText: tendooLum(best.rgb), worst: best.s});
+            haloHosts.set(accent, {...g, gradient: vs.some(v => v.gradient), lText: tendooLum(best.rgb), worst: best.s});
             return;
           }
           // Chữ thường chọn SAI cực (Python lấy mẫu 1 dải cố định; dòng thật có thể nằm thấp hơn -- GĐ 3R:
@@ -1050,7 +1074,7 @@ COMMON_AUTOFIT_JS = """
             const [col, r] = rWhite >= rNavy ? ['#FFFFFF', rWhite] : ['#0F172A', rNavy];
             // Dòng NHIỀU đoạn: chỉ đảo khi cực kia thoát được vùng cần lớp mờ (không cực nào đạt -> giữ màu thiết
             // kế + lớp mờ, khỏi kéo đoạn đang ổn sang cực trượt). Một nút: đảo khi tốt hơn rõ như trước (harsh -1 C3).
-            if (r >= g.worst * 1.2 && (members.length === 1 || r >= g.need * 0.85)) {
+            if (!vs.some(v => v.gradient) && r >= g.worst * 1.2 && (members.length === 1 || r >= g.need * 0.85)) {
               members.forEach(([n]) => {
                 n.style.setProperty('color', col, 'important');
                 n.style.setProperty('-webkit-text-fill-color', col, 'important');
@@ -1067,6 +1091,35 @@ COMMON_AUTOFIT_JS = """
           });
         });
         haloHosts.forEach((v, host) => {
+          // Chữ GRADIENT không nhận được quầng/lớp mờ: nét trong suốt lộ nền gradient của khối cha, mà bóng/nền
+          // của chính đoạn chữ vẽ ĐÈ lên nét đó (27/09: "FLASH SALE" lửa thành chữ trắng trên hộp trắng). Không đạt
+          // tương phản -> LÀM PHẲNG về màu sáng nhất của gradient (giữ sắc), rồi xử lý như chữ thường.
+          // Gradient NGAY trên phần tử chữ + thiếu ít: quầng (text-shadow vẽ DƯỚI nét cắt theo chữ) giữ được hiệu ứng.
+          if (v.gradient && v.gradOwn && v.worst >= v.need * 0.85) v = {...v, gradient: false, noScrim: true};
+          if (v.gradient) {
+            // Chọn màu phẳng: ưu tiên một điểm màu CỦA gradient (giữ sắc) đạt >= 0.85x ngưỡng theo minimax ô tối/sáng
+            // nhất; không có thì tốt nhất trong {điểm màu, trắng, navy}. 27/09: làm phẳng luôn về điểm SÁNG nhất ->
+            // chữ vàng trên nền hồng nhạt cần lớp tối 72% = hộp đen to đè cả badge/subhead.
+            const score = rgb => { const l = tendooLum(rgb); return Math.min(lumRatio(l, v.lMin), lumRatio(l, v.lMax)); };
+            const stopsC = v.gradBright || [v.fill];
+            const bestOf = arr => arr.reduce((b, c) => (score(c) > score(b) ? c : b));
+            let pick = bestOf(stopsC);
+            if (score(pick) < v.need * 0.85) pick = bestOf([...stopsC, [255, 255, 255], [15, 23, 42]]);
+            const col = `rgb(${pick.map(Math.round).join(',')})`;
+            for (const n of [host, ...host.querySelectorAll('*')]) {
+              n.style.setProperty('color', col, 'important');
+              n.style.setProperty('-webkit-text-fill-color', col, 'important');
+              n.style.setProperty('background-image', 'none', 'important');
+              n.style.setProperty('-webkit-background-clip', 'border-box', 'important');
+              n.style.setProperty('background-clip', 'border-box', 'important');
+            }
+            const lt = tendooLum(pick);
+            // Làm phẳng về màu TỐI (nền sáng): bỏ bóng/quầng của hiệu ứng kim loại -- bóng nâu quanh chữ nâu = nhoè.
+            if (lt < 0.18) for (const n of [host, host.closest('[data-autofit]')]) if (n) n.style.setProperty('filter', 'none', 'important');
+            v = {...v, lText: lt, worst: Math.min(lumRatio(lt, v.lMin), lumRatio(lt, v.lMax))};
+            report.push({cls: (el.className || '').toString().trim().split(' ')[0], worst: Math.round(v.worst * 100) / 100, flatten: col});
+            if (v.worst >= v.need) return;
+          }
           // Quầng tương phản nhất với CHÍNH màu chữ (điểm giao WCAG ~0.18): chữ tầm trung (xanh dương,
           // đỏ) cần quầng tối -- ngưỡng cũ 0.4 cho quầng trắng, vô dụng trên nền sáng (đo GĐ 5).
           const c = v.lText > 0.18 ? '0,0,0' : '255,255,255';
@@ -1074,12 +1127,12 @@ COMMON_AUTOFIT_JS = """
           // ngưỡng, quầng không đủ. Scrim cục bộ đúng sau dòng chữ (thực hành chuẩn: lớp tối 40-60% chỉ ở phần
           // ảnh sau chữ -- Smashing Magazine, NN/G): làm mờ + phủ nhẹ, mép mềm; đệm bù bằng lề âm -> KHÔNG xê
           // dịch bố cục. Chỉ khi thiếu nhiều (< 0.85 x ngưỡng); thiếu ít thì quầng là đủ.
-          if (v.worst < v.need * 0.85) {
+          if (v.worst < v.need * 0.85 && !v.noScrim) {
             // Chữ thường: dùng cực HỢP với lớp mờ (trắng trên lớp tối, navy trên lớp sáng) -- thực hành "chữ trắng
             // trên dải bảo vệ tối". Độ đậm lớp mờ TÍNH từ ô sáng nhất/tối nhất cần kéo về ngưỡng, không cố định
             // (27/09: chữ vàng hổ phách + lớp tối 42% trên nền sáng vẫn 2.1:1). Màu nhấn giữ màu thương hiệu.
             const darkScrim = c === '0,0,0';
-            if (!host.classList.contains('hero-seg--accent')) {
+            if (!host.classList.contains('hero-seg--accent') && !v.gradient) {
               const col = darkScrim ? '#FFFFFF' : '#0F172A';
               host.style.setProperty('color', col, 'important');
               host.style.setProperty('-webkit-text-fill-color', col, 'important');
@@ -1097,8 +1150,8 @@ COMMON_AUTOFIT_JS = """
             }
             const tint = darkScrim ? `rgba(10,12,18,${alpha.toFixed(2)})` : `rgba(255,255,255,${alpha.toFixed(2)})`;
             host.style.setProperty('background-color', tint, 'important');
-            host.style.setProperty('backdrop-filter', 'blur(6px)', 'important');
-            host.style.setProperty('-webkit-backdrop-filter', 'blur(6px)', 'important');
+            // Không backdrop-filter: vùng làm mờ có MÉP CỨNG hình chữ nhật (27/09, trông như vết nhoè); chỉ lớp phủ
+            // màu + box-shadow toả ra -> mép mềm.
             host.style.setProperty('box-shadow', `0 0 0.5em 0.25em ${tint}`, 'important');
             host.style.setProperty('border-radius', '0.2em', 'important');
             host.style.setProperty('padding', '0.02em 0.2em', 'important');

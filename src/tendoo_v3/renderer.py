@@ -43,6 +43,7 @@ from tendoo_v3.styles import (
     PHONE_HERO_MAX_PX,
     PHONE_HERO_PX,
     PHONE_LIST_PX,
+    PHONE_STAT_MAX_PX,
     PHONE_MIN_PX,
     PHONE_TIER2_PX,
     TIER3_BELOW_SUBHEAD,
@@ -1448,7 +1449,18 @@ _TEMPLATE_BUDGETS = {
 def compute_template_budget(template: str, plan: TendooCreativePlan, zones, width: int, height: int) -> Dict[str, Any]:
     """Ngân sách cỡ chữ cho ĐÚNG template đang render (trước đây tính cả 14 mỗi lần render)."""
     budget = _TEMPLATE_BUDGETS[template](plan, zones, width, height)
-    return _apply_phone_floors(_apply_intent_subhead_cap(budget, template, plan), width)
+    budget = _apply_phone_floors(_apply_intent_subhead_cap(budget, template, plan), width)
+    return _apply_stat_anchor_ceiling(budget, plan, width)
+
+
+def _apply_stat_anchor_ceiling(budget: Dict[str, Any], plan: TendooCreativePlan, width: int) -> Dict[str, Any]:
+    """Hero có điểm neo `stat` (con số/từ khoá ngắn, 1em; chữ dẫn/đuôi 0.38em): trần cỡ PHONE_HERO_MAX_PX (40px
+    trên màn) đặt cho DÒNG tiêu đề đầy đủ khoá luôn con số -- "2 TỶ" 87px trong thẻ 571px (27/09, BĐS GPT thật).
+    Poster sale: con số là chữ to nhất khung. Nới trần lên PHONE_STAT_MAX_PX; chiều cao hộp vẫn chặn."""
+    hero = budget.get("hero")
+    if isinstance(hero, dict) and "max_font" in hero and any(p.get("role") == "stat" for p in plan.hero_parts):
+        hero["max_font"] = max(hero["max_font"], phone_floor(PHONE_STAT_MAX_PX, width))
+    return budget
 
 
 # Khoá ngân sách theo cấp: hero = Cấp 1, subhead = Cấp 2, còn lại (Cấp 3 + nội dung bảng) sàn chung.

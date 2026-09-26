@@ -36,6 +36,11 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   opacity: 0.92;
+  /* Chữ dẫn/đuôi DÀI được tự xuống dòng trong đoạn của nó (flex item mặc định min-width:auto không co dưới bề
+     rộng nội dung) -> không còn khoá cỡ cả cụm theo bề ngang dòng chữ dẫn; điểm neo to lên tới trần chiều cao
+     (27/09: "CĂN HỘ VEN SÔNG CHỈ TỪ" giữ "2 TỶ" ở 87px trong thẻ 571px). */
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Điểm neo cấp 1: giữ trọn 1em, là phần tử duy nhất được phép chiếm thị giác */
