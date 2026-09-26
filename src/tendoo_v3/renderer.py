@@ -38,8 +38,13 @@ from tendoo_v3.icons import (
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
 from tendoo_v3.styles import (
     COMMON_AUTOFIT_JS,
+    PHONE_HERO_FLOOR_PX,
+    PHONE_HERO_PX,
+    PHONE_MIN_PX,
+    PHONE_TIER2_PX,
     TIER3_BELOW_SUBHEAD,
     TIER3_FLOOR_PX,
+    phone_floor,
     get_adaptive_palette,
     get_effect_css,
     svg_filter_defs,
@@ -1415,7 +1420,33 @@ _TEMPLATE_BUDGETS = {
 def compute_template_budget(template: str, plan: TendooCreativePlan, zones, width: int, height: int) -> Dict[str, Any]:
     """Ngân sách cỡ chữ cho ĐÚNG template đang render (trước đây tính cả 14 mỗi lần render)."""
     budget = _TEMPLATE_BUDGETS[template](plan, zones, width, height)
-    return _apply_intent_subhead_cap(budget, template, plan)
+    return _apply_phone_floors(_apply_intent_subhead_cap(budget, template, plan), width)
+
+
+# Khoá ngân sách theo cấp: hero = Cấp 1, subhead = Cấp 2, còn lại (Cấp 3 + nội dung bảng) sàn chung.
+_HERO_BUDGET_KEYS = ("hero",)
+_TIER2_BUDGET_KEYS = ("subhead",)
+
+
+def _apply_phone_floors(budget: Dict[str, Any], width: int) -> Dict[str, Any]:
+    """LUẬT 6 (styles.PHONE_*): nâng SÀN mọi phần tử theo bề ngang khung -- chỉ nâng, không hạ.
+    Trần nâng theo để còn dải cho autofit. Đặt SAU mọi trần theo thứ bậc: đọc được là điều kiện cứng."""
+    for key, entry in budget.items():
+        if not isinstance(entry, dict) or "min_font" not in entry or "max_font" not in entry:
+            continue
+        is_hero = key in _HERO_BUDGET_KEYS
+        # Hero: SÀN CỨNG thấp hơn mục tiêu 28px của squint C5 -- sàn 76.5px (khung 1024) cắt mất 77 tiêu đề
+        # dài (đo 26/09). Autofit vẫn đẩy hero to hết cỡ hộp cho phép; C5 báo khi chưa tới mục tiêu.
+        phone = PHONE_HERO_FLOOR_PX if is_hero else (PHONE_TIER2_PX if key in _TIER2_BUDGET_KEYS else PHONE_MIN_PX)
+        floor = phone_floor(phone, width)
+        old_min = entry["min_font"]
+        entry["min_font"] = max(old_min, floor)
+        entry["max_font"] = max(entry["max_font"], round(entry["min_font"] * (1.35 if is_hero else 1.2), 1))
+        # Hộp chữ cao cố định (CTA 38-46px, store 30-55px...) phải cao theo cỡ chữ mới, nếu không chữ to hơn
+        # bị cắt (đo 26/09: 79 CTA + 57 store-info-col bị cắt). Chỉ nới hộp nhỏ, không đụng hộp theo zone lớn.
+        if not is_hero and entry.get("max_h") and old_min > 0 and entry["min_font"] > old_min and entry["max_h"] < entry["min_font"] * 4:
+            entry["max_h"] = round(entry["max_h"] * entry["min_font"] / old_min, 1)
+    return budget
 
 
 def _apply_intent_subhead_cap(budget: Dict[str, Any], template: str, plan: TendooCreativePlan) -> Dict[str, Any]:

@@ -9,6 +9,7 @@ Thư viện hiệu ứng CSS & Macro đồ họa cao cấp cho Tendoo v3:
 
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, Optional
 
 from tendoo_core.colors import ensure_contrast, get_contrasting_text_color
@@ -439,6 +440,22 @@ from tendoo_v3.icons import render_qr_code_svg, render_star_rating_svg
 # thức chia theo hero đẩy 575/993 chữ Cấp 3 xuống < 13px). Muốn chữ chi tiết to hơn: tăng 0.8.
 TIER3_BELOW_SUBHEAD = 0.8
 TIER3_FLOOR_PX = 13
+# LUẬT 6 -- ĐỌC ĐƯỢC TRÊN ĐIỆN THOẠI (26/09, phản hồi người duyệt "chữ nói chung vẫn nhỏ"): poster xem vừa
+# bề ngang màn hình ~375px, nên sàn cỡ chữ tính theo BỀ NGANG KHUNG, không phải px cố định (13px trên
+# khung 1024 = 4.6px trên màn). Cấp 2 = 12.5 để Cấp 3 (10) vẫn thấp hơn subhead đúng 20% (ngưỡng tường chữ).
+PHONE_VIEW_W = 375
+PHONE_MIN_PX = 10.0
+PHONE_TIER2_PX = 12.5
+PHONE_HERO_PX = 20.0          # MỤC TIÊU hero (squint C5): 28 quá gắt -- poster nha khoa người duyệt khen có câu trích dẫn ~21px trên màn
+RESCUE_MIN_PX = 12          # cứu chữ: cỡ nhỏ nhất khi nội dung quá dày cho sàn Luật 6 (không mất chữ > đọc được)
+HIERARCHY_MIN_RATIO = 1.6     # hero >= 1.6x subhead dù phải hạ subhead dưới sàn mềm 12.5px (không dưới sàn cứng 10px)
+PHONE_HERO_FLOOR_PX = 16.0    # sàn CỨNG hero trong ngân sách: tiêu đề dài co xuống được, không bị cắt
+
+
+def phone_floor(phone_px: float, canvas_w: int) -> float:
+    """Cỡ chữ trên khung `canvas_w` để hiện `phone_px` px khi poster vừa bề ngang màn ~375px."""
+    # Làm tròn LÊN bậc 0.5px: autofit làm tròn XUỐNG 0.5px, sàn 27.3 từng ra 27.0 = 9.9px trên màn.
+    return math.ceil(phone_px * canvas_w / PHONE_VIEW_W * 2) / 2
 TIER1_CLASSES = ("hero-title", "hero-top-title", "quote-hero")
 TIER2_CLASSES = ("subhead-title", "subhead-date", "subhead-benefit")
 TIER3_CLASSES = (
@@ -556,6 +573,22 @@ COMMON_AUTOFIT_JS = """
       let finalFont = Math.floor(bestSize * 2) / 2;
       tendooApplyTypo(el, finalFont);
 
+      // 1b. CỨU CHỮ SỚM (Luật 6): phần tử kẹt ở sàn mà chữ đã bị khung của CHÍNH nó cắt -> tìm lại cỡ trong
+      // [__RESCUE_MIN__, sàn]. Trường hợp chỉ lộ ra khi mọi phần tử đã chốt vị trí (đè chữ khác) do Bước 3c lo.
+      if (bestSize <= minSize + 0.01 && el.scrollHeight > maxH + 1.5 && minSize > __RESCUE_MIN__) {
+        const clip = tendooClipBox(el), rects = tendooTextRects(el);
+        if (clip && rects.some(r => r.bottom > clip.bottom + 1 || r.top < clip.top - 1 || r.right > clip.right + 1 || r.left < clip.left - 1)) {
+          let lo = __RESCUE_MIN__, hi = minSize, best = __RESCUE_MIN__;
+          for (let iter = 0; iter < 8; iter++) {
+            const mid = (lo + hi) / 2;
+            tendooApplyTypo(el, mid);
+            if (el.scrollHeight <= maxH && el.scrollWidth <= maxW + 2.0) { best = mid; lo = mid; } else { hi = mid; }
+          }
+          tendooApplyTypo(el, Math.floor(best * 2) / 2);
+          el.dataset.tendooRescued = '1';
+        }
+      }
+
       // Nếu là container chứa danh sách pills/cards (như .flexible-stack, .extra-tag-row, .steps-grid, .board-col-left, .store-info-col)
       // mà vẫn chớm tràn, tự động co gap và padding của các phần tử con để giữ trọn vẹn 100% nội dung
       if (el.scrollHeight > maxH && el.children.length > 0) {
@@ -646,6 +679,22 @@ COMMON_AUTOFIT_JS = """
       }
       return eff;
     }
+    // 3a. THỨ BẬC THẮNG SÀN MỀM (Luật 6, 26/09): sàn subhead 12.5px-trên-màn đẩy subhead to hơn cả hero bị
+    // hộp khoá (nước hoa: "Hương gỗ ấm áp" > "ELIXIR PARIS"). Subhead co về hero / __HIER_MIN__, KHÔNG dưới sàn
+    // cứng 10px-trên-màn của mọi chữ.
+    const hardFloor = Math.ceil(((document.querySelector('.poster-canvas') || document.body).clientWidth || window.innerWidth) * __PHONE_MIN_RATIO__ * 2) / 2;
+    let heroFont = 0;
+    document.querySelectorAll('__TENDOO_TIER1_SELECTOR__').forEach(el => { heroFont = Math.max(heroFont, tendooEffFont(el)); });
+    if (heroFont > 0) {
+      document.querySelectorAll('__TENDOO_TIER2_SELECTOR__').forEach(el => {
+        const eff = tendooEffFont(el);
+        const tgt = Math.max(hardFloor, heroFont / __HIER_MIN__);
+        if (eff <= tgt) return;
+        const k = tgt / eff;
+        const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
+        el.style.fontSize = Math.max(hardFloor, Math.floor(cur * k * 2) / 2) + 'px';  // làm tròn không được xuyên sàn cứng
+      });
+    }
     let tier2Font = 0;
     document.querySelectorAll('__TENDOO_TIER2_SELECTOR__').forEach(el => {
       tier2Font = Math.max(tier2Font, tendooEffFont(el));
@@ -653,7 +702,8 @@ COMMON_AUTOFIT_JS = """
     if (tier2Font > 0) {
       document.querySelectorAll('__TENDOO_TIER3_SELECTOR__').forEach(el => {
         const eff = tendooEffFont(el);
-        const tgt = Math.max(__TIER3_FLOOR_PX__, tier2Font * __TIER3_BELOW_SUBHEAD__);
+        const canvasW = (document.querySelector('.poster-canvas') || document.body).clientWidth || window.innerWidth;
+        const tgt = Math.max(__TIER3_FLOOR_PX__, Math.ceil(canvasW * __PHONE_MIN_RATIO__ * 2) / 2, tier2Font * __TIER3_BELOW_SUBHEAD__);
         if (eff <= tgt) return;
         const k = tgt / eff;
         const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
@@ -705,6 +755,40 @@ COMMON_AUTOFIT_JS = """
       const r = el.getBoundingClientRect();
       return r.width > 0 && r.height > 0 && !(el.parentElement && el.parentElement.closest('[data-autofit]'));
     });
+    // 3c. CỨU CHỮ (Luật 6, 26/09) -- thứ tự ưu tiên: KHÔNG MẤT CHỮ > đọc được trên điện thoại > thứ bậc.
+    // Chạy SAU khi mọi phần tử đã chốt vị trí (chạy ngay lúc fit từng phần tử thì chưa thấy bị cắt/đè).
+    // Phần tử kẹt ở sàn Luật 6 mà chữ bị CẮT hoặc ĐÈ chữ khác -> tìm lại cỡ trong [__RESCUE_MIN__, sàn];
+    // tràn vào chỗ trống thì giữ (chữ vẫn hiện đủ). Squint C5 sẽ báo poster chưa đọc tốt trên điện thoại.
+    const tendooLost = el => {
+      const clip = tendooClipBox(el), rects = tendooTextRects(el);
+      if (clip && rects.some(r => r.bottom > clip.bottom + 1 || r.top < clip.top - 1 || r.right > clip.right + 1 || r.left < clip.left - 1)) return true;
+      return outerFit.some(o => o !== el && !o.contains(el) && !el.contains(o) &&
+        tendooTextRects(o).some(q => rects.some(r => Math.min(r.right, q.right) - Math.max(r.left, q.left) > 1 && Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top) > 1)));
+    };
+    outerFit.forEach(el => {
+      const maxH = parseFloat(el.dataset.maxHeight), minF = parseFloat(el.dataset.minFont);
+      const font = parseFloat(getComputedStyle(el).fontSize) || 0;
+      if (!(maxH > 0) || !(minF > __RESCUE_MIN__) || !(font <= minF + 0.25) || !(el.scrollHeight > maxH + 1.5) || !tendooLost(el)) return;
+      let lo = __RESCUE_MIN__, hi = minF, best = __RESCUE_MIN__;
+      for (let iter = 0; iter < 8; iter++) {
+        const mid = (lo + hi) / 2;
+        tendooApplyTypo(el, mid);
+        if (el.scrollHeight <= maxH + 1.5 && !tendooLost(el)) { best = mid; lo = mid; } else { hi = mid; }
+      }
+      tendooApplyTypo(el, Math.floor(best * 2) / 2);
+      el.dataset.tendooRescued = '1';
+    });
+    // Hero bị cứu (co nhỏ) -> chữ phụ không được to hơn nó: hạ Cấp 2/3 về hero / 1.2, không dưới __RESCUE_MIN__.
+    const rescuedHero = Array.from(document.querySelectorAll('__TENDOO_TIER1_SELECTOR__')).filter(e => e.dataset.tendooRescued);
+    if (rescuedHero.length) {
+      const hf = Math.max(...rescuedHero.map(tendooEffFont));
+      document.querySelectorAll('__TENDOO_TIER2_SELECTOR__, __TENDOO_TIER3_SELECTOR__').forEach(el => {
+        const eff = tendooEffFont(el), tgt = Math.max(__RESCUE_MIN__, hf / 1.2);
+        if (eff <= tgt) return;
+        const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
+        el.style.fontSize = Math.max(__RESCUE_MIN__, Math.floor(cur * tgt / eff * 2) / 2) + 'px';
+      });
+    }
     const overflowReport = [];
     outerFit.forEach(el => {
       const maxH = parseFloat(el.dataset.maxHeight);
@@ -814,22 +898,33 @@ COMMON_AUTOFIT_JS = """
           // "70%" hồng trên bokeh hồng 1.08:1) -> giữ SẮC, trộn dần về trắng hoặc đen (hướng nào tăng
           // tương phản với nền xấu nhất) tới khi đạt ngưỡng; chỉ khi không đạt mới thêm quầng.
           const accent = host.closest('.hero-seg--accent');  // chữ có thể nằm trong .stat-num/.stat-unit (GĐ 2)
-          if (accent && v.worstBg !== null) {
-            const target = v.need * 1.3;  // JS ước lượng nền lạc quan hơn ảnh chụp thật ~10-35% (đo GĐ 5)
-            const toward = v.worstBg < 0.18 ? [255, 255, 255] : [0, 0, 0];
-            for (let t = 0.1; t <= 1.0001; t += 0.1) {
-              const rgb = v.fill.map((x, j) => Math.round(x * (1 - t) + toward[j] * t));
-              const l = tendooLum(rgb);
-              if ((Math.max(l, v.worstBg) + 0.05) / (Math.min(l, v.worstBg) + 0.05) >= target) {
-                const col = `rgb(${rgb.join(',')})`;
-                for (const n of [accent, ...accent.querySelectorAll('*')]) {
-                  n.style.setProperty('color', col, 'important');
-                  n.style.setProperty('-webkit-text-fill-color', col, 'important');
-                }
-                report.push({cls: 'hero-seg--accent', worst: Math.round(v.worst * 100) / 100, recolor: col});
-                return;
+          if (accent && isFinite(v.lMin)) {
+            // MINIMAX trên CẢ ô tối nhất lẫn ô sáng nhất dưới dòng (26/09: "KHÁCH HÀNG VIP" vắt qua nền tối +
+            // kính sáng -> bản cũ chỉ nhìn ô xấu nhất (kính sáng), trộn vàng về đen -> chìm hẳn trên phần tối).
+            const target = v.need * 1.3;
+            const score = rgb => { const l = tendooLum(rgb);
+              return Math.min((Math.max(l, v.lMin) + 0.05) / (Math.min(l, v.lMin) + 0.05), (Math.max(l, v.lMax) + 0.05) / (Math.min(l, v.lMax) + 0.05)); };
+            let best = {rgb: v.fill, s: score(v.fill), t: 0};
+            for (const toward of [[255, 255, 255], [0, 0, 0]]) {
+              for (let t = 0.1; t <= 1.0001; t += 0.1) {
+                const rgb = v.fill.map((x, j) => Math.round(x * (1 - t) + toward[j] * t));
+                const sc = score(rgb);
+                if (sc >= target && (best.s < target || t < best.t)) { best = {rgb, s: sc, t}; break; }
+                if (best.s < target && sc > best.s * 1.05) best = {rgb, s: sc, t};
               }
             }
+            if (best.t > 0) {
+              const col = `rgb(${best.rgb.join(',')})`;
+              for (const n of [accent, ...accent.querySelectorAll('*')]) {
+                n.style.setProperty('color', col, 'important');
+                n.style.setProperty('-webkit-text-fill-color', col, 'important');
+              }
+              report.push({cls: 'hero-seg--accent', worst: Math.round(v.worst * 100) / 100, recolor: col});
+            }
+            if (best.s >= v.need) return;
+            v.lText = tendooLum(best.rgb);
+            v.worst = best.s;
+            host = accent;
           }
           // Quầng tương phản nhất với CHÍNH màu chữ (điểm giao WCAG ~0.18): chữ tầm trung (xanh dương,
           // đỏ) cần quầng tối -- ngưỡng cũ 0.4 cho quầng trắng, vô dụng trên nền sáng (đo GĐ 5).
@@ -851,6 +946,24 @@ COMMON_AUTOFIT_JS = """
             }
           }
           const c = v.lText > 0.18 ? '0,0,0' : '255,255,255';
+          // LỚP MỜ NHẸ (người duyệt đồng ý 26/09): nền tông TRUNG BÌNH / lẫn sáng-tối -> không màu chữ nào đạt
+          // ngưỡng, quầng không đủ. Scrim cục bộ đúng sau dòng chữ (thực hành chuẩn: lớp tối 40-60% chỉ ở phần
+          // ảnh sau chữ -- Smashing Magazine, NN/G): làm mờ + phủ nhẹ, mép mềm; đệm bù bằng lề âm -> KHÔNG xê
+          // dịch bố cục. Chỉ khi thiếu nhiều (< 0.85 x ngưỡng); thiếu ít thì quầng là đủ.
+          if (v.worst < v.need * 0.85) {
+            const tint = c === '0,0,0' ? 'rgba(10,12,18,0.42)' : 'rgba(255,255,255,0.5)';
+            host.style.setProperty('background-color', tint, 'important');
+            host.style.setProperty('backdrop-filter', 'blur(6px)', 'important');
+            host.style.setProperty('-webkit-backdrop-filter', 'blur(6px)', 'important');
+            host.style.setProperty('box-shadow', `0 0 0.5em 0.25em ${tint}`, 'important');
+            host.style.setProperty('border-radius', '0.2em', 'important');
+            host.style.setProperty('padding', '0.02em 0.2em', 'important');
+            host.style.setProperty('margin-left', '-0.2em', 'important');
+            host.style.setProperty('margin-right', '-0.2em', 'important');
+            host.style.setProperty('-webkit-box-decoration-break', 'clone', 'important');
+            host.style.setProperty('box-decoration-break', 'clone', 'important');
+            report.push({cls: (el.className || '').toString().trim().split(' ')[0], worst: Math.round(v.worst * 100) / 100, scrim: tint});
+          }
           // Quầng đậm dần theo mức thiếu tương phản (worst/need): thiếu ít -> mảnh, thiếu nhiều -> dày.
           const k = Math.min(1, Math.max(0.35, 1 - v.worst / v.need + 0.35));
           const halo = `0 0 1px rgba(${c},1), 0 0 2px rgba(${c},${(0.8 + 0.2 * k).toFixed(2)}), 0 0 0.12em rgba(${c},${(0.6 + 0.35 * k).toFixed(2)}), 0 0 0.3em rgba(${c},${(0.45 + 0.4 * k).toFixed(2)}), 0 0 0.6em rgba(${c},${(0.3 + 0.35 * k).toFixed(2)})`;
@@ -888,6 +1001,6 @@ COMMON_AUTOFIT_JS = """
   }, 150);
 })();
 </script>
-""".replace("__TIER3_FLOOR_PX__", str(TIER3_FLOOR_PX)).replace("__TIER3_BELOW_SUBHEAD__", str(TIER3_BELOW_SUBHEAD)).replace("__TENDOO_TIER2_SELECTOR__", ", ".join("." + c for c in TIER2_CLASSES)).replace(
+""".replace("__RESCUE_MIN__", str(RESCUE_MIN_PX)).replace("__HIER_MIN__", str(HIERARCHY_MIN_RATIO)).replace("__TENDOO_TIER1_SELECTOR__", ", ".join("." + c for c in TIER1_CLASSES)).replace("__PHONE_MIN_RATIO__", str(round(PHONE_MIN_PX / PHONE_VIEW_W, 5))).replace("__TIER3_FLOOR_PX__", str(TIER3_FLOOR_PX)).replace("__TIER3_BELOW_SUBHEAD__", str(TIER3_BELOW_SUBHEAD)).replace("__TENDOO_TIER2_SELECTOR__", ", ".join("." + c for c in TIER2_CLASSES)).replace(
     "__TENDOO_TIER3_SELECTOR__", ", ".join("." + c for c in TIER3_CLASSES)
 )

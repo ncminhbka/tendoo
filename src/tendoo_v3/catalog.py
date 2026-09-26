@@ -361,13 +361,17 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
 # HỒ SƠ INTENT (ROADMAP §3.3): intent quyết định NGƯỠNG tương phản điểm neo (squint test §4.5
 # điều kiện 1). `visual_intents` của mỗi template: phần tử đầu = intent mặc định khi plan không
 # chỉ định. matrix_board: các khối chữ cỡ tương đương, KHÔNG có hero áp đảo -> ngưỡng thấp.
+# contrast_target = cỡ điểm neo / cỡ chữ phụ lớn nhất (squint C1). HIỆU CHỈNH 26/09 theo Luật 6 (§4.6): bản cũ
+# (4.0/3.5/3.0/2.5) đặt khi chữ phụ còn 13-15px; nay subhead >= 12.5px trên màn (34.5px ở khung 1024) nên 4.0
+# đòi hero ~138px -- gần như không template nào chứa. Mức mới theo thực hành poster thương mại (tiêu đề ~2.5-3.5x
+# subhead), sàn cứng 2.24 (= 28/12.5). Kiểm lại khi có bộ tham chiếu (§7.1 H1).
 INTENT_PROFILES: Dict[str, Dict[str, Any]] = {
-    "big_number_deal": {"contrast_target": 4.0, "desc": "Con số/phần trăm áp đảo"},
-    "hook_headline": {"contrast_target": 4.0, "desc": "Cụm từ khoá lớn, không có số"},
-    "product_showcase": {"contrast_target": 4.0, "desc": "Sản phẩm là chính, chữ nép"},
-    "testimonial_trust": {"contrast_target": 3.0, "desc": "Sao + trích dẫn + tên người"},
-    "festive_event": {"contrast_target": 3.5, "desc": "Khai trương, lễ hội, minigame"},
-    "matrix_board": {"contrast_target": 2.5, "desc": "Bảng/lưới/quy trình, các khối cỡ tương đương"},
+    "big_number_deal": {"contrast_target": 3.0, "desc": "Con số/phần trăm áp đảo"},
+    "hook_headline": {"contrast_target": 2.8, "desc": "Cụm từ khoá lớn, không có số"},
+    "product_showcase": {"contrast_target": 2.5, "desc": "Sản phẩm là chính, chữ nép"},
+    "testimonial_trust": {"contrast_target": 2.4, "desc": "Sao + trích dẫn + tên người"},
+    "festive_event": {"contrast_target": 2.8, "desc": "Khai trương, lễ hội, minigame"},
+    "matrix_board": {"contrast_target": 2.0, "desc": "Bảng/lưới/quy trình, các khối cỡ tương đương"},
 }
 
 

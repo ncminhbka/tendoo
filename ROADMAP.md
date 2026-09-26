@@ -477,6 +477,25 @@ buộc thật. Nhờ đó Luật 1 mới có tác dụng. **Hai luật cộng h�
 **Tình trạng hiện tại:** test suite 323 case **chỉ kiểm không-crash**, không kiểm một điều
 kiện nào ở trên. Bằng chứng: 6 case đang tràn thật mà 323/323 vẫn xanh.
 
+
+### 4.6. LUẬT 6 — ĐỌC ĐƯỢC TRÊN ĐIỆN THOẠI (bổ sung 26/09 sau phản hồi người duyệt)
+
+**Lỗ hổng của Luật 1–5:** mọi điều kiện đo TỈ LỆ giữa các chữ, không có điều kiện nào đo cỡ TUYỆT ĐỐI so với
+khổ poster. Sàn 13px đặt theo tư duy giao diện web; poster 1024px xem vừa bề ngang điện thoại (~375px) bị thu
+còn 37% → chữ 13px hiện **4.6px**. Đo 16 poster LLM thật (26/09): hero 5–8% bề ngang (thương mại: 10–14%),
+chữ nhỏ nhất 4.6–6.8px trên màn. Người duyệt: *"cỡ chữ nói chung vẫn nhỏ và chưa nổi bật"*; poster đánh giá
+nha khoa được khen vì KHỐI câu trích dẫn chiếm ~40% khung.
+
+| Cấp | Sàn trên màn 375px | = % bề ngang khung | Khung 1024 |
+| :--- | :--- | :--- | :--- |
+| Mọi chữ (Cấp 3, nội dung) | 10px | 2.67% | 27.3px |
+| Cấp 2 (subhead) | 12.5px (để Cấp 3 thấp hơn đúng 20%) | 3.33% | 34.1px |
+| Cấp 1 (hero) | 28px | 7.5% | 76.5px |
+
+Squint điều kiện 5 (`c5_phone`), "đạt cả 5" = 4 điều kiện cũ + C5. Mốc 26/09 trước khi đổi sàn: **C5 41/395,
+đạt cả 5 19/395**. Hệ quả tất yếu: poster chứa ÍT chữ hơn — nội dung dày phải viết ngắn / đổi template;
+sức chứa (§3.4) và ngưỡng tương phản điểm neo (§3.3, đặt khi chữ phụ còn 13–15px) phải đo/hiệu chỉnh lại.
+
 ---
 
 ## 5. CÂU HỎI 4 — DÙNG CÁC LAYOUT CƠ BẢN NÀO
@@ -647,6 +666,7 @@ Không có deadline cứng. Xếp theo **thứ tự phụ thuộc**, mỗi giai 
 | S1 | GĐ 3R: LLM thật với prompt mới | tỉ lệ qua Cổng 1/2, squint trên plan thật | máy chủ |
 | S2 | GĐ 5: `scripts/bench_maskless.py` | wall-clock thật | máy chủ |
 | H1 | Bộ tham chiếu 20–30 poster thương mại (§10.13) + đánh giá mù GĐ 10 | người chấm | người duyệt |
+| **L6** | **GĐ 11 — Luật 6 (ƯU TIÊN CAO NHẤT, 26/09):** ✅ (1) C5 + sàn theo bề ngang (`styles.PHONE_*`, `renderer._apply_phone_floors`); ✅ (2) làm tròn sàn lên 0.5px; ✅ (3) ngưỡng C1 hiệu chỉnh 3.0/2.8/2.5/2.4/2.8/2.0 (catalog, có suy luận); ✅ (4) mất chữ: hộp chữ nhỏ nới theo cỡ mới + **cứu chữ** (autofit 1b/3c: không mất chữ > đọc được > thứ bậc, xuống tới 12px) + thứ bậc thắng sàn mềm (subhead ≤ hero/1.6, không dưới sàn cứng 10px) — suite: mất chữ 157 → 1 case; ✅ (6) màu nhấn MINIMAX trên ô tối nhất + sáng nhất (ca "KHÁCH HÀNG VIP") + **lớp mờ nhẹ** (blur + phủ 42%, lề âm bù đệm) khi thiếu < 0.85× ngưỡng; ✅ ghép font designer: subhead + chữ dẫn/đuôi hero dùng Be Vietnam Pro (font cá tính chỉ cho điểm neo). 16 poster LLM thật: **C5 1 → 16/16, C4 16/16**. Suite: C5 41 → 165, đạt-cả-5 19 → 61. **Còn:** (5) LLM viết ngắn; hero còn ~1.6× subhead (chưa đủ 3× theo thực hành) → cân lại ngân sách ưu tiên hero; (7) R6 | C5, C4, squint + 16 poster LLM thật (ảnh cache) | local |
 
 ---
 

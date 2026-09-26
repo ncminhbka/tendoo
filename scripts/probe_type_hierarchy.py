@@ -225,6 +225,25 @@ def _box_ratios(boxes, img) -> List[Dict[str, Any]]:
     return out
 
 
+PHONE_W = 375            # bề ngang màn hình điện thoại xem poster vừa khung
+PHONE_MIN_PX = 10.0      # mọi chữ (chú thích nhỏ nhất đọc được)
+PHONE_TIER2_PX = 10.0    # subhead: 12.5 là sàn MỀM của ngân sách, thứ bậc được hạ tới sàn cứng 10
+PHONE_HERO_PX = 20.0     # tiêu đề (cùng mục tiêu styles.PHONE_HERO_PX)
+
+
+def _phone_legible(elements: List[Dict[str, Any]], hero: float, w: int) -> bool:
+    k = PHONE_W / w
+    if hero and hero * k < PHONE_HERO_PX:
+        return False
+    for e in elements:
+        if e["size"] <= 0:
+            continue
+        need = PHONE_TIER2_PX if e["tier"] == 2 else PHONE_MIN_PX
+        if e["size"] * k < need:
+            return False
+    return True
+
+
 def measure_plan(page, plan, w: int, h: int, with_bg: bool = False, harsh_seed: Optional[str] = None,
                  lowdetail_seed: Optional[str] = None, bg_override: Optional[str] = None) -> Dict[str, Any]:
     if bg_override is not None:  # GĐ 3R: ảnh nền THẬT (sinh bằng mô hình ảnh) thay nền giả
@@ -288,6 +307,10 @@ def measure_plan(page, plan, w: int, h: int, with_bg: bool = False, harsh_seed: 
         "c1_anchor": contrast is None or contrast >= target,
         "c2_no_wall": not wall,
         "c4_no_loss": not text_lost,
+        # §4.6 LUẬT 6 -- ĐỌC ĐƯỢC TRÊN ĐIỆN THOẠI (26/09, phản hồi người duyệt: "cỡ chữ nói chung vẫn nhỏ"):
+        # poster xem vừa bề ngang màn hình ~375px -> mọi chữ >= 10px, hero >= 20px trên màn.
+        "c5_phone": _phone_legible(elements, hero, w),
+        "phone_min": round(min((e["size"] for e in elements if e["size"] > 0), default=0) * PHONE_W / w, 1),
     }
     if with_bg:
         bgc = measure_bg_contrast(page)
@@ -297,6 +320,7 @@ def measure_plan(page, plan, w: int, h: int, with_bg: bool = False, harsh_seed: 
             "bg_min": min((b["ratio"] for b in bgc if b.get("ratio")), default=None),
         })
     result["squint_pass"] = result["c1_anchor"] and result["c2_no_wall"] and result["c4_no_loss"] and result.get("c3_bg", True)
+    result["pass5"] = result["squint_pass"] and result["c5_phone"]
     return result
 
 
@@ -343,12 +367,13 @@ def summarize(results: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
             "c1": sum(r["c1_anchor"] for r in rs), "c2": sum(r["c2_no_wall"] for r in rs),
             "c3": sum(r["c3_bg"] for r in rs) if "c3_bg" in rs[0] else None, "c4": sum(r["c4_no_loss"] for r in rs),
             "squint": sum(r["squint_pass"] for r in rs),
+            "c5": sum(r["c5_phone"] for r in rs), "pass5": sum(r["pass5"] for r in rs),
             "top_secondary": ", ".join(f"{k}:{v}" for k, v in sorted(tops.items(), key=lambda kv: -kv[1])[:2]),
         }
     return summ
 
 
-SQUINT_KEYS = ("c1", "c2", "c3", "c4", "squint")
+SQUINT_KEYS = ("c1", "c2", "c3", "c4", "squint", "c5", "pass5")
 
 
 def squint_baseline(summ: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
@@ -364,22 +389,23 @@ def print_table(summ, base=None):
         return f" ({fmt.format(round(delta, 2))})" if delta else ""
 
     hdr = (f"{'template':<24}{'n':>4} {'intent':<18}{'ngưỡng':>6} {'contrast TB':>13} {'đảo':>5}"
-           f" {'C1 neo':>9} {'C2 tường':>9} {'C3 nền':>8} {'C4 chữ':>8} {'ĐẠT CẢ 4':>12}")
+           f" {'C1 neo':>9} {'C2 tường':>9} {'C3 nền':>8} {'C4 chữ':>8} {'ĐẠT CẢ 4':>12} {'C5 đ.thoại':>11} {'ĐẠT CẢ 5':>10}")
     print(hdr)
     print("-" * len(hdr))
     tot = defaultdict(int)
     for tpl, s in summ.items():
-        for k in ("n", "inversions", "c1", "c2", "c3", "c4", "squint"):
+        for k in ("n", "inversions", "c1", "c2", "c3", "c4", "squint", "c5", "pass5"):
             tot[k] += s.get(k) or 0
         c3 = "-" if s.get("c3") is None else str(s["c3"])
         print(
             f"{tpl:<24}{s['n']:>4} {s.get('intent', ''):<18}{s.get('target', ''):>6} {str(s['contrast_mean']) + d('contrast_mean', tpl):>13}"
             f" {s['inversions']:>5} {str(s.get('c1')) + d('c1', tpl):>9} {str(s.get('c2')) + d('c2', tpl):>9} {c3:>8}"
             f" {str(s.get('c4')) + d('c4', tpl):>8} {str(s.get('squint')) + d('squint', tpl):>12}"
+            f" {str(s.get('c5')) + d('c5', tpl):>11} {str(s.get('pass5')) + d('pass5', tpl):>10}"
         )
     print("-" * len(hdr))
     print(f"{'TỔNG':<24}{tot['n']:>4} {'':<18}{'':>6} {'':>13} {tot['inversions']:>5} {tot['c1']:>9} {tot['c2']:>9}"
-          f" {tot['c3']:>8} {tot['c4']:>8} {tot['squint']:>12}")
+          f" {tot['c3']:>8} {tot['c4']:>8} {tot['squint']:>12} {tot['c5']:>11} {tot['pass5']:>10}")
 
 
 def with_oracle_hero_parts(cases: List[tuple], only_changed: bool = False) -> List[tuple]:

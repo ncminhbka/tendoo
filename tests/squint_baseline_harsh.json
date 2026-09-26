@@ -2,50 +2,62 @@
  "before_after_split": {
   "n": 8,
   "c1": 1,
-  "c2": 8,
+  "c2": 3,
   "c3": 8,
   "c4": 8,
-  "squint": 1
+  "squint": 1,
+  "c5": 1,
+  "pass5": 0
  },
  "customer_feedback_card": {
   "n": 9,
   "c1": 0,
-  "c2": 9,
-  "c3": 8,
+  "c2": 6,
+  "c3": 7,
   "c4": 9,
-  "squint": 0
+  "squint": 0,
+  "c5": 4,
+  "pass5": 0
  },
  "diagonal_slash": {
   "n": 7,
-  "c1": 3,
+  "c1": 1,
   "c2": 7,
   "c3": 7,
   "c4": 7,
-  "squint": 3
+  "squint": 1,
+  "c5": 5,
+  "pass5": 0
  },
  "grand_opening_banner": {
   "n": 5,
   "c1": 0,
-  "c2": 5,
+  "c2": 2,
   "c3": 5,
   "c4": 5,
-  "squint": 0
+  "squint": 0,
+  "c5": 2,
+  "pass5": 0
  },
  "l_frame_showcase": {
   "n": 8,
-  "c1": 1,
-  "c2": 8,
+  "c1": 2,
+  "c2": 4,
   "c3": 8,
-  "c4": 8,
-  "squint": 1
+  "c4": 7,
+  "squint": 2,
+  "c5": 2,
+  "pass5": 2
  },
  "lifestyle_corner_pod": {
   "n": 5,
   "c1": 0,
-  "c2": 5,
-  "c3": 3,
+  "c2": 1,
+  "c3": 4,
   "c4": 5,
-  "squint": 0
+  "squint": 0,
+  "c5": 1,
+  "pass5": 0
  },
  "luxury_centered_card": {
   "n": 6,
@@ -53,70 +65,88 @@
   "c2": 6,
   "c3": 6,
   "c4": 6,
-  "squint": 0
+  "squint": 0,
+  "c5": 5,
+  "pass5": 0
  },
  "menu_price_board": {
   "n": 6,
   "c1": 1,
-  "c2": 6,
-  "c3": 6,
+  "c2": 3,
+  "c3": 3,
   "c4": 6,
-  "squint": 1
+  "squint": 1,
+  "c5": 1,
+  "pass5": 1
  },
  "quote_spotlight": {
   "n": 4,
-  "c1": 3,
+  "c1": 0,
   "c2": 4,
   "c3": 4,
   "c4": 4,
-  "squint": 3
+  "squint": 0,
+  "c5": 1,
+  "pass5": 0
  },
  "recruitment_board": {
   "n": 5,
   "c1": 1,
-  "c2": 5,
-  "c3": 3,
+  "c2": 4,
+  "c3": 5,
   "c4": 5,
-  "squint": 1
+  "squint": 1,
+  "c5": 4,
+  "pass5": 1
  },
  "sandwich_bottom_heavy": {
   "n": 6,
   "c1": 0,
-  "c2": 6,
-  "c3": 6,
-  "c4": 5,
-  "squint": 0
+  "c2": 5,
+  "c3": 4,
+  "c4": 6,
+  "squint": 0,
+  "c5": 0,
+  "pass5": 0
  },
  "sandwich_top_heavy": {
   "n": 6,
   "c1": 0,
   "c2": 4,
-  "c3": 5,
+  "c3": 3,
   "c4": 6,
-  "squint": 0
+  "squint": 0,
+  "c5": 3,
+  "pass5": 0
  },
  "split_left": {
   "n": 10,
-  "c1": 3,
+  "c1": 4,
   "c2": 10,
   "c3": 10,
   "c4": 10,
-  "squint": 3
+  "squint": 4,
+  "c5": 3,
+  "pass5": 3
  },
  "split_right": {
   "n": 9,
-  "c1": 2,
+  "c1": 4,
   "c2": 9,
   "c3": 9,
   "c4": 9,
-  "squint": 2
+  "squint": 4,
+  "c5": 3,
+  "pass5": 3
  },
  "step_process_roadmap": {
   "n": 5,
-  "c1": 0,
+  "c1": 1,
   "c2": 5,
-  "c3": 3,
+  "c3": 4,
   "c4": 5,
-  "squint": 0
+  "squint": 1,
+  "c5": 4,
+  "pass5": 1
  }
 }

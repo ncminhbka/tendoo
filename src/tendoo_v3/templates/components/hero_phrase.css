@@ -61,3 +61,19 @@
 .hero-title, .hero-top-title, .quote-hero, .subhead-title {
   text-wrap: balance;
 }
+
+/* GĐ 7 -- GHÉP FONT THEO THỰC HÀNH DESIGNER (26/09): tối đa 2 kiểu chữ -- font CÁ TÍNH chỉ cho điểm neo
+   (stat/hero), chữ phụ dùng font SẠCH dễ đọc; tương phản bằng độ đậm (Black vs SemiBold), không bằng 2 font
+   na ná (Typography Master; Made Good Designs). Đo trên poster LLM thật: dòng mô tả bằng font viết tay/serif
+   mảnh khó đọc ở cỡ điện thoại (cà phê, nước hoa). Câu trích dẫn (.quote-hero) giữ font tiêu đề: nó LÀ điểm neo. */
+.subhead-title, .subhead-date, .subhead-benefit {
+  font-family: var(--ui-font) !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+}
+.hero-seg--prefix, .hero-seg--suffix {
+  font-family: var(--ui-font) !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em;
+}

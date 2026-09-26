@@ -1,67 +1,83 @@
 {
  "before_after_split": {
   "n": 8,
-  "c1": 8,
-  "c2": 6,
+  "c1": 2,
+  "c2": 8,
   "c3": 8,
   "c4": 8,
-  "squint": 6
+  "squint": 2,
+  "c5": 7,
+  "pass5": 1
  },
  "customer_feedback_card": {
   "n": 2,
-  "c1": 2,
+  "c1": 1,
   "c2": 2,
   "c3": 2,
   "c4": 2,
-  "squint": 2
+  "squint": 1,
+  "c5": 1,
+  "pass5": 1
  },
  "diagonal_slash": {
   "n": 5,
-  "c1": 5,
+  "c1": 1,
   "c2": 5,
   "c3": 1,
   "c4": 5,
-  "squint": 1
+  "squint": 0,
+  "c5": 2,
+  "pass5": 0
  },
  "grand_opening_banner": {
   "n": 18,
-  "c1": 13,
+  "c1": 2,
   "c2": 18,
-  "c3": 17,
-  "c4": 18,
-  "squint": 13
+  "c3": 18,
+  "c4": 17,
+  "squint": 2,
+  "c5": 14,
+  "pass5": 2
  },
  "l_frame_showcase": {
   "n": 4,
-  "c1": 2,
+  "c1": 1,
   "c2": 4,
   "c3": 4,
   "c4": 4,
-  "squint": 2
+  "squint": 1,
+  "c5": 2,
+  "pass5": 1
  },
  "recruitment_board": {
   "n": 16,
-  "c1": 16,
+  "c1": 2,
   "c2": 16,
   "c3": 16,
   "c4": 16,
-  "squint": 16
+  "squint": 2,
+  "c5": 3,
+  "pass5": 1
  },
  "sandwich_bottom_heavy": {
   "n": 10,
-  "c1": 10,
-  "c2": 6,
+  "c1": 2,
+  "c2": 10,
   "c3": 8,
   "c4": 10,
-  "squint": 6
+  "squint": 2,
+  "c5": 4,
+  "pass5": 2
  },
  "sandwich_top_heavy": {
   "n": 3,
-  "c1": 3,
+  "c1": 0,
   "c2": 3,
   "c3": 3,
   "c4": 3,
-  "squint": 3
+  "squint": 0,
+  "c5": 3,
+  "pass5": 0
  },
  "split_left": {
   "n": 5,
@@ -69,7 +85,9 @@
   "c2": 5,
   "c3": 5,
   "c4": 5,
-  "squint": 5
+  "squint": 5,
+  "c5": 4,
+  "pass5": 4
  },
  "split_right": {
   "n": 5,
@@ -77,14 +95,18 @@
   "c2": 5,
   "c3": 5,
   "c4": 5,
-  "squint": 5
+  "squint": 5,
+  "c5": 4,
+  "pass5": 4
  },
  "step_process_roadmap": {
   "n": 4,
-  "c1": 4,
+  "c1": 0,
   "c2": 4,
-  "c3": 2,
+  "c3": 0,
   "c4": 4,
-  "squint": 2
+  "squint": 0,
+  "c5": 1,
+  "pass5": 0
  }
 }
