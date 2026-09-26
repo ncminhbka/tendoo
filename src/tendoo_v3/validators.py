@@ -18,7 +18,7 @@ from typing import List
 
 from tendoo_v3.fonts import FONT_ALIASES, FONT_CATALOG
 from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, LIST_LIMITS, MASKLESS_INTENTS, TEXT_WORD_LIMITS, TEMPLATE_CATALOG, resolve_intent
-from tendoo_v3.components import STAMP_FONT_MIN, split_stat, stamp_ring
+from tendoo_v3.components import LOCKUP_REQUIRES, SCRIPT_PREFIX_MAX_WORDS, STAMP_FONT_MIN, resolve_lockup, split_stat, stamp_ring
 from tendoo_v3.schema import TendooCreativePlan
 from tendoo_v3.styles import BACKGROUND_TONES, TEXT_EFFECT_ALIASES, TEXT_EFFECT_INTENTS, TEXT_EFFECTS
 
@@ -126,6 +126,13 @@ def _check_components(plan: TendooCreativePlan) -> List[str]:
             issues.append(f"stat_style '{plan.stat_style}': stat {stats} không có dạng số+đơn vị -- không tách đơn vị")
         if plan.stat_style == "burst" and any(len(t) > 5 for t in stats):
             issues.append(f"stat_style 'burst' hợp với stat ngắn (<= 5 ký tự); {stats} sẽ kéo sao thành elip, cắt mép chữ")
+    if plan.lockup not in (None, "none") and plan.lockup in LOCKUP_REQUIRES:
+        roles = {p.get("role") for p in plan.hero_parts}
+        miss = [r for r in LOCKUP_REQUIRES[plan.lockup] if r not in roles]
+        if miss:
+            issues.append(f"lockup '{plan.lockup}' cần hero_parts có đoạn {miss} -- render dòng ngang")
+        elif resolve_lockup(plan) == "none":
+            issues.append(f"lockup 'script_over_caps': prefix viết tay dài quá {SCRIPT_PREFIX_MAX_WORDS} từ -- render dòng ngang")
     return issues
 
 

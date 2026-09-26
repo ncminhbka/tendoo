@@ -66,6 +66,9 @@ class TendooCreativePlan:
     badge_style: Optional[str] = None
     stat_style: Optional[str] = None
     decor: Optional[str] = None
+    # Lockup GĐ 7c (ROADMAP §10.4, R4): cách XẾP cụm hero_parts (stat_stack / script_over_caps / band).
+    # None = dòng hero_parts nằm ngang như trước.
+    lockup: Optional[str] = None
     # Maskless Mode (GĐ 5, ROADMAP §5.3): bỏ luồng corridor -- chỉ cho poster lấy chữ làm nhân vật
     # chính trên nền ÍT CHI TIẾT (catalog.MASKLESS_INTENTS, Cổng 2 kiểm).
     maskless: bool = False
@@ -194,6 +197,7 @@ class TendooCreativePlan:
             badge_style=data.get("badge_style"),
             stat_style=data.get("stat_style"),
             decor=data.get("decor"),
+            lockup=data.get("lockup"),
             maskless=bool(data.get("maskless", False)),
             style=style,
             # "background_prompt" chấp nhận thêm làm alias: hệ thống prompt LLM từng

@@ -428,6 +428,15 @@ COMPONENT_STYLES: Dict[str, Dict[str, Tuple[str, ...]]] = {
         "none": _ALL_INTENTS,
         "sparkles": ("festive_event", "hook_headline", "big_number_deal"),
     },
+    # Lockup GĐ 7c: 3 kiểu cụm chữ hay gặp nhất trong bộ poster tham chiếu (references/posters, 27/09):
+    # con số xếp chồng ("GIẢM GIÁ / lên đến / 70%"), chữ viết tay đè chữ in hoa ("Tháng của Nàng / NGÀN ƯU ĐÃI"),
+    # dải màu làm nổi ("TUYỂN DỤNG / [NHÂN VIÊN KINH DOANH]").
+    "lockup": {
+        "none": _ALL_INTENTS,
+        "stat_stack": ("big_number_deal", "hook_headline", "festive_event", "product_showcase"),
+        "script_over_caps": ("hook_headline", "festive_event", "product_showcase", "big_number_deal"),
+        "band": ("big_number_deal", "hook_headline", "festive_event", "product_showcase", "matrix_board"),
+    },
 }
 
 def resolve_intent(template: str, requested: Optional[str] = None) -> str:
@@ -463,6 +472,10 @@ _COMPONENT_DESC = {
     "stat_style": {"plain": "mặc định", "unit": "tách đơn vị nhỏ khỏi con số ('50' + '%') -- stat phải là số+đơn vị",
                    "burst": "như unit + nền sao nổ -- CHỈ cho stat ngắn <= 5 ký tự ('70%', '99K')"},
     "decor": {"none": "mặc định", "sparkles": "hạt lấp lánh quanh con số"},
+    "lockup": {"none": "mặc định (hero_parts nằm ngang)",
+               "stat_stack": "xếp chồng: chữ dẫn nhỏ / CON SỐ khổng lồ / chữ đuôi nhỏ -- cần stat (vd 'GIẢM GIÁ LÊN ĐẾN' + '70%')",
+               "script_over_caps": "prefix viết tay nghiêng đè lên stat IN HOA đậm -- prefix 1-3 từ cảm xúc (vd 'Tháng của Nàng' + 'NGÀN ƯU ĐÃI', 'Mua' + 'TẶNG 1')",
+               "band": "stat to + suffix nằm trong dải màu đặc bên dưới -- cần suffix ngắn (vd 'TUYỂN DỤNG' + 'NHÂN VIÊN KINH DOANH')"},
 }
 
 

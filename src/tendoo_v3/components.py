@@ -203,13 +203,39 @@ def accessible_fill(theme: str, min_ratio: float = 4.5) -> Tuple[str, str]:
                 break
     return (best[1], best[2]) if best else (theme, text)
 
+# Đoạn hero_parts mỗi lockup CẦN (thiếu -> không áp, rơi về dòng ngang; Cổng 2 báo).
+LOCKUP_REQUIRES: Dict[str, Tuple[str, ...]] = {
+    "stat_stack": ("stat",),
+    "script_over_caps": ("prefix", "stat"),
+    "band": ("stat", "suffix"),
+}
+SCRIPT_PREFIX_MAX_WORDS = 4  # chữ viết tay dài thành một dòng nghiêng khó đọc (Luật 6)
+
+
+def resolve_lockup(plan: Any) -> str:
+    """Lockup THẬT SỰ áp: tên trong danh mục + hero_parts có đủ vai trò; không thì 'none'."""
+    name = getattr(plan, "lockup", None) or "none"
+    need = LOCKUP_REQUIRES.get(name)
+    if need is None:
+        return "none"
+    roles = {p.get("role") for p in (plan.hero_parts or [])}
+    if not set(need) <= roles:
+        return "none"
+    if name == "script_over_caps":
+        pre = next(p.get("t", "") for p in plan.hero_parts if p.get("role") == "prefix")
+        if len(pre.split()) > SCRIPT_PREFIX_MAX_WORDS:
+            return "none"
+    return name
+
+
 def build_components(plan: Any, zones: Dict[str, Any], width: int, height: int) -> Optional[Dict[str, Any]]:
     """Dữ liệu render linh kiện cho template (biến Jinja `components`), hoặc None nếu plan không
     dùng linh kiện nào -> template giữ nguyên hành vi trước GĐ 2."""
     badge_style = (plan.badge_style or "pill") if plan.badge else "pill"
     stat_style = plan.stat_style or "plain"
     decor = plan.decor or "none"
-    if badge_style == "pill" and stat_style == "plain" and decor == "none":
+    lockup = resolve_lockup(plan)
+    if badge_style == "pill" and stat_style == "plain" and decor == "none" and lockup == "none":
         return None
 
     theme = plan.style.theme_color
@@ -236,10 +262,13 @@ def build_components(plan: Any, zones: Dict[str, Any], width: int, height: int) 
     if decor == "sparkles":
         anchor = ", ".join("." + c for c in TIER1_CLASSES)
         comp["decor_html"] = sparkles_html(plan.hero, theme, anchor) + comp["decor_html"]
+    # stat_stack: con số là điểm neo khổng lồ -> tách đơn vị nhỏ nhấc lên ("70" + "%") như mọi mẫu tham chiếu.
+    if lockup == "stat_stack" and stat_style == "plain" and any(split_stat(p.get("t", "")) for p in plan.hero_parts if p.get("role") == "stat"):
+        stat_style = "unit"
     if stat_style in ("unit", "burst"):
         comp["burst_polygon"] = star_polygon() if stat_style == "burst" else None
 
-    comp.update(badge_style=badge_style, stat_style=stat_style, decor=decor)
+    comp.update(badge_style=badge_style, stat_style=stat_style, decor=decor, lockup=lockup)
     return comp
 
 
@@ -262,4 +291,4 @@ def enrich_hero_parts(hero_parts: List[Dict[str, Any]], stat_style: str) -> List
     return out
 
 
-__all__ = ["STAMP_FONT_MIN", "build_components", "enrich_hero_parts", "find_stamp_box", "sparkles_html", "split_stat", "stamp_ring", "star_polygon"]
+__all__ = ["LOCKUP_REQUIRES", "STAMP_FONT_MIN", "resolve_lockup", "build_components", "enrich_hero_parts", "find_stamp_box", "sparkles_html", "split_stat", "stamp_ring", "star_polygon"]

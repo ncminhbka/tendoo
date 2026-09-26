@@ -90,3 +90,73 @@
 .step-text, .freetext-line, .freetext-block {
   font-family: var(--body-font);
 }
+
+/* ==========================================================================
+   LOCKUP (GĐ 7c, ROADMAP §10.4) -- cụm hero_parts được SẮP ĐẶT như designer, không chỉ nằm ngang.
+   3 kiểu hay gặp nhất trong bộ poster tham chiếu (references/posters, 27/09). Mọi cỡ tính theo em của
+   khối -> autofit co giãn CẢ cụm như một đơn vị (§10.13 mục 4). Mỗi đoạn một dòng (display:block) nên
+   căn trái/giữa/phải theo text-align của template, không cần biết template.
+   ========================================================================== */
+/* line-height 0 ở khối: dải (band, inline-block) nằm trong dòng ẩn danh mang STRUT của khối (cỡ = con số
+   khổng lồ) -> hở ~1 dòng số; mỗi đoạn tự khai line-height. */
+.hero-phrase.lockup { display: block; line-height: 0 !important; }
+.hero-phrase.lockup > .hero-seg { display: block; line-height: 1; }
+
+/* 1. stat_stack: chữ dẫn nhỏ in hoa giãn nét / CON SỐ khổng lồ (đơn vị nhấc lên) / chữ đuôi nhỏ */
+.hero-phrase.lockup--stat_stack > .hero-seg--prefix,
+.hero-phrase.lockup--stat_stack > .hero-seg--suffix {
+  font-size: 0.3em;
+  letter-spacing: 0.14em !important;
+  line-height: 1.2;
+}
+/* Con số (thường 1 dòng, không dấu) được sát 0.92; chữ in hoa có DẤU tiếng Việt cần >= 1.05 (dấu nặng chạm dải,
+   dấu mũ chạm mép -- đo 27/09). */
+.hero-phrase.lockup--stat_stack > .hero-seg--stat { line-height: 0.92; margin: 0.03em 0; }
+
+/* 2. script_over_caps: dòng viết tay nghiêng, màu nhấn, ĐÈ nhẹ lên dòng in hoa đậm bên dưới */
+.hero-phrase.lockup--script_over_caps > .hero-seg--prefix {
+  font-family: {{ script_font_css | default("'Dancing Script', cursive") }} !important;
+  font-size: 0.56em;
+  font-weight: 700 !important;
+  font-style: normal !important;
+  letter-spacing: 0 !important;
+  text-transform: none;
+  opacity: 1;
+  color: {{ theme_color }};
+  -webkit-text-fill-color: {{ theme_color }};
+  background: none;
+  text-shadow: none;
+  transform: rotate(-4deg);
+  transform-origin: left bottom;
+  margin-bottom: -0.16em;
+  position: relative;
+  z-index: 1;
+}
+.hero-phrase.lockup--script_over_caps > .hero-seg--stat {
+  font-family: {{ caps_font_css | default("'Be Vietnam Pro', sans-serif") }};
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+}
+.hero-phrase.lockup--script_over_caps > .hero-seg--suffix { font-size: 0.3em; letter-spacing: 0.12em !important; margin-top: 0.12em; }
+
+/* 3. band: stat to, suffix trong DẢI màu đặc (chữ trên dải đạt WCAG 4.5 -- components.accessible_fill) */
+.hero-phrase.lockup--band > .hero-seg--prefix { font-size: 0.3em; letter-spacing: 0.12em !important; margin-bottom: 0.08em; }
+.hero-phrase.lockup--band > .hero-seg--stat { line-height: 1.05; }
+.hero-phrase.lockup--band > .hero-seg--suffix {
+  display: inline-block;
+  font-size: 0.36em;
+  letter-spacing: 0.05em !important;
+  line-height: 1.15;
+  margin-top: 0.32em;
+  padding: 0.16em 0.6em 0.2em;
+  border-radius: 0.22em;
+  background: {{ components.fill if components else theme_color }} !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  color: {{ components.on_fill if components else '#FFFFFF' }} !important;
+  -webkit-text-fill-color: {{ components.on_fill if components else '#FFFFFF' }} !important;
+  text-shadow: none !important;
+  opacity: 1;
+}

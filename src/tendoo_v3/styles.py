@@ -455,6 +455,8 @@ HIERARCHY_MIN_RATIO = 1.6     # hero >= 1.6x subhead dù phải hạ subhead dư
 PHONE_LIST_PX = 15.0
 # Trần hero khi có điểm neo `stat` (renderer._apply_stat_anchor_ceiling): con số ngắn được to hơn dòng tiêu đề.
 PHONE_STAT_MAX_PX = 60.0
+# Lockup chỉ giữ khi con số đạt >= tỉ lệ này so với xếp ngang (autofit Bước 1 đo cả hai; test_lockup_suite 27/09).
+LOCKUP_KEEP_RATIO = 0.9
 PHONE_HERO_MAX_PX = 40.0      # trần hero (~109px ở khung 1024 -- social 1080: tiêu đề 48-96px, poster lớn hơn)
 HERO_HEIGHT_BOOST = 1.6       # nới chiều cao ngân sách hero (tiêu đề trước) -- đo trên suite + 16 poster LLM thật
 PHONE_HERO_FLOOR_PX = 16.0    # sàn CỨNG hero trong ngân sách: tiêu đề dài co xuống được, không bị cắt
@@ -559,24 +561,38 @@ COMMON_AUTOFIT_JS = """
       }
 
       // Tìm kiếm nhị phân 10 bước: Tìm cỡ chữ LỚN NHẤT CÓ THỂ trong dải [minSize, maxSize]
-      let low = minSize;
-      let high = maxSize;
-      let bestSize = minSize;
-      
-      for (let iter = 0; iter < 10; iter++) {
-        let mid = (low + high) / 2;
-        tendooApplyTypo(el, mid);
-        
-        // Kiểm tra xem có nằm gọn trong bounding box hình học không
-        // Cho phép dung sai 2.0px đối với scrollWidth để không bị nghẽn bởi làm tròn subpixel của width: 100%
-        if (el.scrollHeight <= maxH && el.scrollWidth <= maxW + 2.0) {
-          bestSize = mid;
-          low = mid; // Vừa vặn -> Thử phóng to lên thêm
+      const tendooSearch = () => {
+        let low = minSize, high = maxSize, best = minSize;
+        for (let iter = 0; iter < 10; iter++) {
+          let mid = (low + high) / 2;
+          tendooApplyTypo(el, mid);
+          // Kiểm tra xem có nằm gọn trong bounding box hình học không
+          // Cho phép dung sai 2.0px đối với scrollWidth để không bị nghẽn bởi làm tròn subpixel của width: 100%
+          if (el.scrollHeight <= maxH && el.scrollWidth <= maxW + 2.0) {
+            best = mid;
+            low = mid; // Vừa vặn -> Thử phóng to lên thêm
+          } else {
+            high = mid; // Tràn -> Thu nhỏ lại
+          }
+        }
+        return best;
+      };
+      let bestSize = tendooSearch();
+      // LOCKUP (GĐ 7c): xếp chồng tốn CHIỀU CAO -> ở vùng thấp (16:9) điểm neo nhỏ hẳn đi. ĐO cả hai cách xếp,
+      // chỉ giữ lockup khi con số (1em) đạt >= __LOCKUP_KEEP__ x cỡ khi xếp ngang (27/09, bộ test_lockup_suite).
+      if (el.classList.contains('lockup')) {
+        const lkCls = Array.from(el.classList).filter(c => c === 'lockup' || c.startsWith('lockup--'));
+        lkCls.forEach(c => el.classList.remove(c));
+        const flatSize = tendooSearch();
+        if (bestSize >= flatSize * __LOCKUP_KEEP__) {
+          lkCls.forEach(c => el.classList.add(c));
+          el.dataset.tendooLockup = 'kept';
         } else {
-          high = mid; // Tràn -> Thu nhỏ lại
+          bestSize = flatSize;
+          el.dataset.tendooLockup = 'flat';
         }
       }
-      
+
       // Áp dụng cỡ chữ tối ưu cuối cùng (làm tròn 0.5px)
       let finalFont = Math.floor(bestSize * 2) / 2;
       tendooApplyTypo(el, finalFont);
@@ -1198,6 +1214,6 @@ COMMON_AUTOFIT_JS = """
   }, 150);
 })();
 </script>
-""".replace("__RESCUE_MIN__", str(RESCUE_MIN_PX)).replace("__HIER_MIN__", str(HIERARCHY_MIN_RATIO)).replace("__TENDOO_TIER1_SELECTOR__", ", ".join("." + c for c in TIER1_CLASSES)).replace("__PHONE_MIN_RATIO__", str(round(PHONE_MIN_PX / PHONE_VIEW_W, 5))).replace("__TIER3_FLOOR_PX__", str(TIER3_FLOOR_PX)).replace("__TIER3_BELOW_SUBHEAD__", str(TIER3_BELOW_SUBHEAD)).replace("__TENDOO_TIER2_SELECTOR__", ", ".join("." + c for c in TIER2_CLASSES)).replace(
+""".replace("__RESCUE_MIN__", str(RESCUE_MIN_PX)).replace("__LOCKUP_KEEP__", str(LOCKUP_KEEP_RATIO)).replace("__HIER_MIN__", str(HIERARCHY_MIN_RATIO)).replace("__TENDOO_TIER1_SELECTOR__", ", ".join("." + c for c in TIER1_CLASSES)).replace("__PHONE_MIN_RATIO__", str(round(PHONE_MIN_PX / PHONE_VIEW_W, 5))).replace("__TIER3_FLOOR_PX__", str(TIER3_FLOOR_PX)).replace("__TIER3_BELOW_SUBHEAD__", str(TIER3_BELOW_SUBHEAD)).replace("__TENDOO_TIER2_SELECTOR__", ", ".join("." + c for c in TIER2_CLASSES)).replace(
     "__TENDOO_TIER3_SELECTOR__", ", ".join("." + c for c in TIER3_CLASSES)
 )

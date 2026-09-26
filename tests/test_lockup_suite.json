@@ -1,0 +1,774 @@
+[
+ {
+  "id": "lock_01_stack_sandwich_top_heavy_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "GIẢM GIÁ LÊN ĐẾN 70%",
+   "hero_parts": [
+    {
+     "t": "GIẢM GIÁ LÊN ĐẾN",
+     "role": "prefix"
+    },
+    {
+     "t": "70%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "subhead": "Toàn bộ tai nghe chính hãng",
+   "badge": "SIÊU SALE",
+   "cta": "MUA NGAY",
+   "lockup": "stat_stack",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#E11D48",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_01_stack_sandwich_top_heavy_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "GIẢM GIÁ LÊN ĐẾN 70%",
+   "hero_parts": [
+    {
+     "t": "GIẢM GIÁ LÊN ĐẾN",
+     "role": "prefix"
+    },
+    {
+     "t": "70%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "subhead": "Toàn bộ tai nghe chính hãng",
+   "badge": "SIÊU SALE",
+   "cta": "MUA NGAY",
+   "lockup": "stat_stack",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#E11D48",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_01_stack_sandwich_top_heavy_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "GIẢM GIÁ LÊN ĐẾN 70%",
+   "hero_parts": [
+    {
+     "t": "GIẢM GIÁ LÊN ĐẾN",
+     "role": "prefix"
+    },
+    {
+     "t": "70%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "subhead": "Toàn bộ tai nghe chính hãng",
+   "badge": "SIÊU SALE",
+   "cta": "MUA NGAY",
+   "lockup": "stat_stack",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#E11D48",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_01_stack_sandwich_top_heavy_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "GIẢM GIÁ LÊN ĐẾN 70%",
+   "hero_parts": [
+    {
+     "t": "GIẢM GIÁ LÊN ĐẾN",
+     "role": "prefix"
+    },
+    {
+     "t": "70%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "subhead": "Toàn bộ tai nghe chính hãng",
+   "badge": "SIÊU SALE",
+   "cta": "MUA NGAY",
+   "lockup": "stat_stack",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#E11D48",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_02_stack_split_left_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "split_left",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "ƯU ĐÃI 50% TOÀN BỘ MENU",
+   "hero_parts": [
+    {
+     "t": "ƯU ĐÃI",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "TOÀN BỘ MENU",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Áp dụng tới hết chủ nhật",
+   "cta": "ĐẶT BÀN",
+   "lockup": "stat_stack",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_02_stack_split_left_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "split_left",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "ƯU ĐÃI 50% TOÀN BỘ MENU",
+   "hero_parts": [
+    {
+     "t": "ƯU ĐÃI",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "TOÀN BỘ MENU",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Áp dụng tới hết chủ nhật",
+   "cta": "ĐẶT BÀN",
+   "lockup": "stat_stack",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_02_stack_split_left_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "split_left",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "ƯU ĐÃI 50% TOÀN BỘ MENU",
+   "hero_parts": [
+    {
+     "t": "ƯU ĐÃI",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "TOÀN BỘ MENU",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Áp dụng tới hết chủ nhật",
+   "cta": "ĐẶT BÀN",
+   "lockup": "stat_stack",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_02_stack_split_left_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "split_left",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "ƯU ĐÃI 50% TOÀN BỘ MENU",
+   "hero_parts": [
+    {
+     "t": "ƯU ĐÃI",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "TOÀN BỘ MENU",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Áp dụng tới hết chủ nhật",
+   "cta": "ĐẶT BÀN",
+   "lockup": "stat_stack",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_03_script_sandwich_top_heavy_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "Tháng của Nàng NGÀN ƯU ĐÃI",
+   "hero_parts": [
+    {
+     "t": "Tháng của Nàng",
+     "role": "prefix"
+    },
+    {
+     "t": "NGÀN ƯU ĐÃI",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Voucher 30% cho mọi đơn từ 500K",
+   "cta": "SĂN NGAY",
+   "lockup": "script_over_caps",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#F472B6",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "lock_03_script_sandwich_top_heavy_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "Tháng của Nàng NGÀN ƯU ĐÃI",
+   "hero_parts": [
+    {
+     "t": "Tháng của Nàng",
+     "role": "prefix"
+    },
+    {
+     "t": "NGÀN ƯU ĐÃI",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Voucher 30% cho mọi đơn từ 500K",
+   "cta": "SĂN NGAY",
+   "lockup": "script_over_caps",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#F472B6",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "lock_03_script_sandwich_top_heavy_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "Tháng của Nàng NGÀN ƯU ĐÃI",
+   "hero_parts": [
+    {
+     "t": "Tháng của Nàng",
+     "role": "prefix"
+    },
+    {
+     "t": "NGÀN ƯU ĐÃI",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Voucher 30% cho mọi đơn từ 500K",
+   "cta": "SĂN NGAY",
+   "lockup": "script_over_caps",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#F472B6",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "lock_03_script_sandwich_top_heavy_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "Tháng của Nàng NGÀN ƯU ĐÃI",
+   "hero_parts": [
+    {
+     "t": "Tháng của Nàng",
+     "role": "prefix"
+    },
+    {
+     "t": "NGÀN ƯU ĐÃI",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Voucher 30% cho mọi đơn từ 500K",
+   "cta": "SĂN NGAY",
+   "lockup": "script_over_caps",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#F472B6",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "lock_04_script_diagonal_slash_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "diagonal_slash",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "Cuối tuần PIZZA NGON",
+   "hero_parts": [
+    {
+     "t": "Cuối tuần",
+     "role": "prefix"
+    },
+    {
+     "t": "PIZZA NGON",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Mua 1 tặng 1 mọi size",
+   "cta": "ĐẶT NGAY",
+   "lockup": "script_over_caps",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "anton",
+    "theme_color": "#FACC15",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_04_script_diagonal_slash_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "diagonal_slash",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "Cuối tuần PIZZA NGON",
+   "hero_parts": [
+    {
+     "t": "Cuối tuần",
+     "role": "prefix"
+    },
+    {
+     "t": "PIZZA NGON",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Mua 1 tặng 1 mọi size",
+   "cta": "ĐẶT NGAY",
+   "lockup": "script_over_caps",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "anton",
+    "theme_color": "#FACC15",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_04_script_diagonal_slash_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "diagonal_slash",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "Cuối tuần PIZZA NGON",
+   "hero_parts": [
+    {
+     "t": "Cuối tuần",
+     "role": "prefix"
+    },
+    {
+     "t": "PIZZA NGON",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Mua 1 tặng 1 mọi size",
+   "cta": "ĐẶT NGAY",
+   "lockup": "script_over_caps",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "anton",
+    "theme_color": "#FACC15",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_04_script_diagonal_slash_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "diagonal_slash",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "Cuối tuần PIZZA NGON",
+   "hero_parts": [
+    {
+     "t": "Cuối tuần",
+     "role": "prefix"
+    },
+    {
+     "t": "PIZZA NGON",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Mua 1 tặng 1 mọi size",
+   "cta": "ĐẶT NGAY",
+   "lockup": "script_over_caps",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "anton",
+    "theme_color": "#FACC15",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_05_band_recruitment_board_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "recruitment_board",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "TUYỂN DỤNG NHÂN VIÊN KINH DOANH",
+   "hero_parts": [
+    {
+     "t": "TUYỂN DỤNG",
+     "role": "stat"
+    },
+    {
+     "t": "NHÂN VIÊN KINH DOANH",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Thu nhập 15-18 triệu",
+   "extra_texts": [
+    "Hạn nộp 30/10",
+    "Gửi CV về hr@tendoo.vn"
+   ],
+   "cta": "ỨNG TUYỂN",
+   "lockup": "band",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#2563EB",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ },
+ {
+  "id": "lock_05_band_recruitment_board_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "recruitment_board",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "TUYỂN DỤNG NHÂN VIÊN KINH DOANH",
+   "hero_parts": [
+    {
+     "t": "TUYỂN DỤNG",
+     "role": "stat"
+    },
+    {
+     "t": "NHÂN VIÊN KINH DOANH",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Thu nhập 15-18 triệu",
+   "extra_texts": [
+    "Hạn nộp 30/10",
+    "Gửi CV về hr@tendoo.vn"
+   ],
+   "cta": "ỨNG TUYỂN",
+   "lockup": "band",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#2563EB",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ },
+ {
+  "id": "lock_05_band_recruitment_board_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "recruitment_board",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "TUYỂN DỤNG NHÂN VIÊN KINH DOANH",
+   "hero_parts": [
+    {
+     "t": "TUYỂN DỤNG",
+     "role": "stat"
+    },
+    {
+     "t": "NHÂN VIÊN KINH DOANH",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Thu nhập 15-18 triệu",
+   "extra_texts": [
+    "Hạn nộp 30/10",
+    "Gửi CV về hr@tendoo.vn"
+   ],
+   "cta": "ỨNG TUYỂN",
+   "lockup": "band",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#2563EB",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ },
+ {
+  "id": "lock_05_band_recruitment_board_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "recruitment_board",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "TUYỂN DỤNG NHÂN VIÊN KINH DOANH",
+   "hero_parts": [
+    {
+     "t": "TUYỂN DỤNG",
+     "role": "stat"
+    },
+    {
+     "t": "NHÂN VIÊN KINH DOANH",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Thu nhập 15-18 triệu",
+   "extra_texts": [
+    "Hạn nộp 30/10",
+    "Gửi CV về hr@tendoo.vn"
+   ],
+   "cta": "ỨNG TUYỂN",
+   "lockup": "band",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#2563EB",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ },
+ {
+  "id": "lock_06_band_type_showcase_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "SIÊU SALE GIẢM 50%",
+   "hero_parts": [
+    {
+     "t": "SIÊU SALE",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "GIẢM 50%",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Duy nhất 3 ngày cuối tuần",
+   "cta": "MUA NGAY",
+   "lockup": "band",
+   "maskless": true,
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#22C55E",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_06_band_type_showcase_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "SIÊU SALE GIẢM 50%",
+   "hero_parts": [
+    {
+     "t": "SIÊU SALE",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "GIẢM 50%",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Duy nhất 3 ngày cuối tuần",
+   "cta": "MUA NGAY",
+   "lockup": "band",
+   "maskless": true,
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#22C55E",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_06_band_type_showcase_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "type_showcase",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "SIÊU SALE GIẢM 50%",
+   "hero_parts": [
+    {
+     "t": "SIÊU SALE",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "GIẢM 50%",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Duy nhất 3 ngày cuối tuần",
+   "cta": "MUA NGAY",
+   "lockup": "band",
+   "maskless": true,
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#22C55E",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_06_band_type_showcase_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "SIÊU SALE GIẢM 50%",
+   "hero_parts": [
+    {
+     "t": "SIÊU SALE",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "GIẢM 50%",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Duy nhất 3 ngày cuối tuần",
+   "cta": "MUA NGAY",
+   "lockup": "band",
+   "maskless": true,
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#22C55E",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ }
+]

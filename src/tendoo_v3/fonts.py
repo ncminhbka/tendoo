@@ -255,6 +255,19 @@ FONT_CATALOG: Dict[str, Dict[str, Any]] = {
 # condensed/ultra-black): chỉ cho tiêu đề -- quy tắc ghép font của designer "display cho headline, sans cho
 # thân chữ". Đo thật GĐ 3R: Pacifico cho bảng giá / các bước chăm sóc da -> danh sách khó đọc.
 BODY_SAFE_FONTS = frozenset({"bevietnam", "harabaras", "playfair", "oswald"})
+# Font VIẾT TAY / cọ mềm (lockup script_over_caps dùng làm dòng viết tay; đồng thời không dùng làm dòng in hoa).
+SCRIPT_FONTS = frozenset({"dancing", "clementine", "pacifico", "cookies", "holidays"})
+DEFAULT_SCRIPT_FONT = "dancing"
+
+
+def script_font(headline_key: str) -> Tuple[str, str]:
+    """(font_face_css cần nhúng THÊM, chuỗi font-family) cho dòng viết tay của lockup: font tiêu đề nếu nó
+    đã là viết tay (không nhúng thêm), ngược lại Dancing Script (hỗ trợ đủ dấu tiếng Việt)."""
+    if headline_key in SCRIPT_FONTS:
+        meta = FONT_CATALOG[headline_key]
+        return "", f"'{meta['css_family']}', {meta['fallback']}"
+    meta = FONT_CATALOG[DEFAULT_SCRIPT_FONT]
+    return "\n\n".join(_font_faces(meta)), f"'{meta['css_family']}', {meta['fallback']}"
 
 FONT_ALIASES: Dict[str, str] = {
     "montserrat": "bevietnam",
@@ -437,6 +450,9 @@ def list_font_options() -> List[Dict[str, Any]]:
 
 __all__ = [
     "BODY_SAFE_FONTS",
+    "DEFAULT_SCRIPT_FONT",
+    "SCRIPT_FONTS",
+    "script_font",
     "FONT_ALIASES",
     "FONT_CATALOG",
     "FONTS_DIR",

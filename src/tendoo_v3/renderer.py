@@ -21,7 +21,7 @@ import numpy as np
 from PIL import Image
 
 from tendoo_v3.colors import ensure_contrast
-from tendoo_v3.fonts import BODY_SAFE_FONTS, resolve_font
+from tendoo_v3.fonts import BODY_SAFE_FONTS, SCRIPT_FONTS, resolve_font, script_font
 from tendoo_v3.poster_renderer import PosterRenderer
 from tendoo_v3.catalog import INTENT_PROFILES, LIST_LIMITS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import accessible_fill, build_components, enrich_hero_parts
@@ -2170,6 +2170,15 @@ def build_template_html(
 
     # 6b. Linh kiện đồ hoạ GĐ 2 (None nếu plan không dùng -> template như trước GĐ 2).
     components = build_components(plan, zones, width, height)
+    # Lockup script_over_caps: dòng viết tay cần font viết tay (nhúng thêm nếu tiêu đề không phải); dòng IN HOA
+    # dùng font tiêu đề trừ khi đó là font viết tay (chữ viết tay in hoa khó đọc) -> Be Vietnam Pro Black.
+    script_font_css = caps_font_css = headline_font_css
+    if components and components.get("lockup") == "script_over_caps":
+        extra_face, script_font_css = script_font(canonical_font)
+        if extra_face:
+            font_face_css = font_face_css + "\n\n" + extra_face
+    if canonical_font in SCRIPT_FONTS:
+        caps_font_css = "'Be Vietnam Pro', 'Montserrat', sans-serif"
 
     # 7. Render context
     context = {
@@ -2180,6 +2189,8 @@ def build_template_html(
         "height": height,
         "bg_data_uri": bg_data_uri,
         "font_face_css": font_face_css,
+        "script_font_css": script_font_css,
+        "caps_font_css": caps_font_css,
         "headline_font_css": headline_font_css,
         # Thân chữ (các bước, danh sách, chip): theo font tiêu đề nếu đó là font văn bản, còn font trưng bày
         # (script/cọ/ultra) thì về font UI.
