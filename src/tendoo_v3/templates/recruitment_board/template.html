@@ -5,6 +5,7 @@
   <title>{{ hero }}</title>
   <style>
     {{ font_face_css }}
+    {% include "components/hero_phrase.css" %}
 
     :root {
       --headline-font: {{ headline_font_css }};
@@ -371,18 +372,15 @@
     {% endif %}
   </style>
 </head>
+{% from "components/ui_macros.html" import render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
 
     <div class="recruitment-header">
-      {% if badge %}
-      <div class="badge-capsule" data-autofit data-min-font="{{ recruit_budget.badge.min_font }}" data-max-font="{{ recruit_budget.badge.max_font }}" data-max-width="{{ (zones.header.width * 0.85) if zones.header else width * 0.8 }}" data-max-height="{{ recruit_budget.badge.max_h }}">{{ badge }}</div>
-      {% endif %}
-      <div class="hero-title" data-autofit data-min-font="{{ recruit_budget.hero.min_font }}" data-max-font="{{ recruit_budget.hero.max_font }}" data-max-height="{{ recruit_budget.hero.max_h }}">{{ hero }}</div>
-      {% if subhead %}
-      <div class="subhead-title" data-autofit data-min-font="{{ recruit_budget.subhead.min_font }}" data-max-font="{{ recruit_budget.subhead.max_font }}" data-max-height="{{ recruit_budget.subhead.max_h }}">{{ subhead }}</div>
-      {% endif %}
+      {{ render_badge(badge, budget=recruit_budget.badge, max_w=(zones.header.width * 0.85) if zones.header else width * 0.8, cls='badge-capsule', ui_font=false) }}
+      {{ render_hero_phrase(hero, hero_parts, budget=recruit_budget.hero) }}
+      {{ render_subhead(subhead, budget=recruit_budget.subhead) }}
     </div>
 
     <div class="board-card">
@@ -390,48 +388,15 @@
         <div class="col-title">
           <span>QUYỀN LỢI & ĐIỀU KIỆN</span>
         </div>
-        {% if extra_pills %}
-        <div class="extra-tag-row" data-autofit data-min-font="{{ recruit_budget.extra.min_font }}" data-max-font="{{ recruit_budget.extra.max_font }}" data-max-height="{{ recruit_budget.extra.max_h }}">
-          {% for pill in extra_pills %}
-          <div class="extra-item">
-            {{ pill.icon_svg }}
-            <span>{{ pill.text }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
+        {{ render_freetext(extra_texts, extra_pills, is_block=false, budget=recruit_budget.extra, pill_cls='extra-item') }}
       </div>
 
       {% if is_portrait_narrow %}
       <div class="board-bottom-split">
         <div class="board-col-mid">
-          {% if cta %}
-          <div class="cta-btn" data-autofit data-min-font="{{ recruit_budget.cta.min_font }}" data-max-font="{{ recruit_budget.cta.max_font }}" data-max-height="{{ recruit_budget.cta.max_h }}">
-            <span>{{ cta }}</span>
-            <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              {% if orientation in ('right', 'top_right', 'bottom_right') %}
-              <polyline points="15 18 9 12 15 6"></polyline>
-              {% else %}
-              <polyline points="9 18 15 12 9 6"></polyline>
-              {% endif %}
-            </svg>
-          </div>
-          {% endif %}
+          {{ render_cta(cta, budget=recruit_budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right'), ui_font=false) }}
 
-          {% if store_items %}
-          <div class="store-info-col" data-autofit data-min-font="{{ recruit_budget.store.min_font }}" data-max-font="{{ recruit_budget.store.max_font }}" data-max-height="{{ recruit_budget.store.max_h }}">
-            {% for item in store_items %}
-            <div class="store-item">
-              {{ item.icon_svg }}
-              <span>{{ item.text }}</span>
-            </div>
-            {% endfor %}
-          </div>
-          {% elif store_info %}
-          <div class="store-item">
-            <span>{{ store_info }}</span>
-          </div>
-          {% endif %}
+          {{ render_store(store_items, store_info, budget=recruit_budget.store, is_col=true, bare_single=true) }}
         </div>
 
         {% if qr_svg %}
@@ -444,33 +409,9 @@
       </div>
       {% else %}
       <div class="board-col-mid">
-        {% if cta %}
-        <div class="cta-btn" data-autofit data-min-font="{{ recruit_budget.cta.min_font }}" data-max-font="{{ recruit_budget.cta.max_font }}" data-max-height="{{ recruit_budget.cta.max_h }}">
-          <span>{{ cta }}</span>
-          <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            {% if orientation in ('right', 'top_right', 'bottom_right') %}
-            <polyline points="15 18 9 12 15 6"></polyline>
-            {% else %}
-            <polyline points="9 18 15 12 9 6"></polyline>
-            {% endif %}
-          </svg>
-        </div>
-        {% endif %}
+        {{ render_cta(cta, budget=recruit_budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right'), ui_font=false) }}
 
-        {% if store_items %}
-        <div class="store-info-col" data-autofit data-min-font="{{ recruit_budget.store.min_font }}" data-max-font="{{ recruit_budget.store.max_font }}" data-max-height="{{ recruit_budget.store.max_h }}">
-          {% for item in store_items %}
-          <div class="store-item">
-            {{ item.icon_svg }}
-            <span>{{ item.text }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% elif store_info %}
-        <div class="store-item">
-          <span>{{ store_info }}</span>
-        </div>
-        {% endif %}
+        {{ render_store(store_items, store_info, budget=recruit_budget.store, is_col=true, bare_single=true) }}
       </div>
 
       {% if qr_svg %}
