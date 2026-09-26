@@ -22,9 +22,9 @@
 {% endmacro %}
 
 {# 2. RENDER HERO TITLE #}
-{% macro render_hero(hero, budget=none, extra_cls='', max_w=none) %}
+{% macro render_hero(hero, budget=none, extra_cls='', max_w=none, cls='hero-title') %}
   {% if hero %}
-    <div class="hero-title {{ extra_cls }}"
+    <div class="{{ cls }} {{ extra_cls }}"
          data-autofit
          data-min-font="{{ budget.min_font if (budget and budget.min_font) else 20 }}"
          data-max-font="{{ budget.max_font if (budget and budget.max_font) else 80 }}"
@@ -44,9 +44,9 @@
 
    `hero_parts` đã được schema.py cưỡng chế khớp nguyên văn với `hero` trước khi tới
    đây, nên không có đường nào markup làm sai chính tả nội dung gốc. #}
-{% macro render_hero_phrase(hero, hero_parts, budget=none, extra_cls='', max_w=none) %}
+{% macro render_hero_phrase(hero, hero_parts, budget=none, extra_cls='', max_w=none, cls='hero-title') %}
   {% if hero_parts %}
-    <div class="hero-title hero-phrase {{ extra_cls }}"
+    <div class="{{ cls }} hero-phrase {{ extra_cls }}"
          data-autofit
          data-min-font="{{ budget.min_font if (budget and budget.min_font) else 20 }}"
          data-max-font="{{ budget.max_font if (budget and budget.max_font) else 80 }}"
@@ -57,7 +57,7 @@
       {%- endfor -%}
     </div>
   {% else %}
-    {{ render_hero(hero, budget=budget, extra_cls=extra_cls, max_w=max_w) }}
+    {{ render_hero(hero, budget=budget, extra_cls=extra_cls, max_w=max_w, cls=cls) }}
   {% endif %}
 {% endmacro %}
 
