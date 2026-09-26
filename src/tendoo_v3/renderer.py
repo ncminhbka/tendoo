@@ -38,7 +38,9 @@ from tendoo_v3.icons import (
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
 from tendoo_v3.styles import (
     COMMON_AUTOFIT_JS,
+    HERO_HEIGHT_BOOST,
     PHONE_HERO_FLOOR_PX,
+    PHONE_HERO_MAX_PX,
     PHONE_HERO_PX,
     PHONE_MIN_PX,
     PHONE_TIER2_PX,
@@ -1442,6 +1444,13 @@ def _apply_phone_floors(budget: Dict[str, Any], width: int) -> Dict[str, Any]:
         old_min = entry["min_font"]
         entry["min_font"] = max(old_min, floor)
         entry["max_font"] = max(entry["max_font"], round(entry["min_font"] * (1.35 if is_hero else 1.2), 1))
+        if is_hero:
+            # TIÊU ĐỀ TRƯỚC (thực hành poster: tiêu đề >= 3x chữ phụ, chiếm 25-40% chiều cao cụm chữ). Chữ phụ
+            # nay to theo Luật 6 nên phần chiều cao cũ dành cho hero (44-68%) không đủ để nó áp đảo: nới trần
+            # cỡ + chiều cao; autofit vẫn chỉ phóng tới mức VỪA, cứu chữ lo phần tràn.
+            entry["max_font"] = max(entry["max_font"], phone_floor(PHONE_HERO_MAX_PX, width))
+            if entry.get("max_h"):
+                entry["max_h"] = round(entry["max_h"] * HERO_HEIGHT_BOOST, 1)
         # Hộp chữ cao cố định (CTA 38-46px, store 30-55px...) phải cao theo cỡ chữ mới, nếu không chữ to hơn
         # bị cắt (đo 26/09: 79 CTA + 57 store-info-col bị cắt). Chỉ nới hộp nhỏ, không đụng hộp theo zone lớn.
         if not is_hero and entry.get("max_h") and old_min > 0 and entry["min_font"] > old_min and entry["max_h"] < entry["min_font"] * 4:

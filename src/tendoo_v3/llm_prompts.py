@@ -16,6 +16,7 @@ from tendoo_v3.catalog import (
     build_llm_font_prompt,
     build_llm_intent_prompt,
     MASKLESS_INTENTS,
+    TEXT_WORD_LIMITS,
 )
 from tendoo_v3.styles import BACKGROUND_TONES
 
@@ -181,6 +182,13 @@ DANH MỤC TÔNG NỀN (style.background_tone -- CHỈ chọn 1 trong các giá 
    - `scene_prompt` BẮT BUỘC là nền ÍT CHI TIẾT phủ cả khung: gradient mượt, bokeh mờ, bụi/hạt sáng li ti, khói mỏng, chất liệu phẳng (giấy, lụa, đá mài mịn). CẤM vật thể/sản phẩm/người, cấm hoạ tiết dày đặc -- nền rậm khiến chữ khó đọc hơn cả khi có mask.
    - Có sản phẩm/chủ thể cần thể hiện -> KHÔNG dùng maskless (bỏ hẳn trường này).
 
+10. POSTER ÍT CHỮ -- ĐỌC ĐƯỢC TRÊN ĐIỆN THOẠI (poster xem vừa màn ~375px: chữ phải to, nên MỖI chữ thêm vào làm mọi chữ khác nhỏ đi):
+   - `hero` <= {TEXT_WORD_LIMITS["hero"]} từ (lý tưởng 2-5). `subhead` 1 câu <= {TEXT_WORD_LIMITS["subhead"]} từ. `badge` <= {TEXT_WORD_LIMITS["badge"]} từ. `cta` <= {TEXT_WORD_LIMITS["cta"]} từ (động từ mạnh: "ĐẶT NGAY", "MUA NGAY").
+   - `extra_texts` tối đa {TEXT_WORD_LIMITS["extra_count"]} dòng, mỗi dòng <= {TEXT_WORD_LIMITS["extra_item"]} từ -- chọn ý MẠNH nhất, bỏ ý phụ; KHÔNG liệt kê mọi thứ trong brief.
+   - Rút gọn chứ không bỏ sự thật: giữ con số, tên riêng, hạn chót, hotline; bỏ tính từ thừa.
+   - KHÔNG LẶP: badge/subhead/extra_texts không nhắc lại con số hay cụm đã có trong hero (vd hero đã có "30%" thì badge không ghi "30%").
+   - Điểm neo `stat`: nếu hero có con số/%/giá thì stat LÀ con số đó (vd "MỪNG XUÂN SALE 50%" -> stat "50%", KHÔNG phải "SALE").
+
 {build_llm_intent_prompt()}
 
 {build_llm_component_prompt()}
@@ -201,7 +209,7 @@ QUY TẮC BẮT BUỘC VỀ ĐẦU RA:
     {{"t": "CÀ PHÊ PHA PHIN", "role": "stat", "emphasis": "accent"}},
     {{"t": "ĐẬM VỊ", "role": "suffix"}}
   ],
-  "subhead": "Hạt cà phê Robusta rang mộc truyền thống Buôn Ma Thuột",
+  "subhead": "Robusta rang mộc Buôn Ma Thuột",
   "badge": "NGUYÊN CHẤT 100%",
   "extra_texts": ["Hương thơm nồng nàn", "Rang củi thủ công"],
   "cta": "THƯỞNG THỨC NGAY",

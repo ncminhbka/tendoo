@@ -449,6 +449,8 @@ PHONE_TIER2_PX = 12.5
 PHONE_HERO_PX = 20.0          # MỤC TIÊU hero (squint C5): 28 quá gắt -- poster nha khoa người duyệt khen có câu trích dẫn ~21px trên màn
 RESCUE_MIN_PX = 12          # cứu chữ: cỡ nhỏ nhất khi nội dung quá dày cho sàn Luật 6 (không mất chữ > đọc được)
 HIERARCHY_MIN_RATIO = 1.6     # hero >= 1.6x subhead dù phải hạ subhead dưới sàn mềm 12.5px (không dưới sàn cứng 10px)
+PHONE_HERO_MAX_PX = 40.0      # trần hero (~109px ở khung 1024 -- social 1080: tiêu đề 48-96px, poster lớn hơn)
+HERO_HEIGHT_BOOST = 1.6       # nới chiều cao ngân sách hero (tiêu đề trước) -- đo trên suite + 16 poster LLM thật
 PHONE_HERO_FLOOR_PX = 16.0    # sàn CỨNG hero trong ngân sách: tiêu đề dài co xuống được, không bị cắt
 
 
@@ -778,6 +780,40 @@ COMMON_AUTOFIT_JS = """
       tendooApplyTypo(el, Math.floor(best * 2) / 2);
       el.dataset.tendooRescued = '1';
     });
+    // 3d. CHỮ RA NGOÀI KHUNG POSTER (26/09: hero to lên đẩy cột chữ 16:9 tràn mép trên, cắt mất nhãn giá --
+    // Cổng 4 cũ không thấy vì mỗi phần tử vẫn vừa hộp của chính nó). Co dần HERO (phần tử lớn nhất, 6%/bước)
+    // tới khi mọi chữ nằm trong khung; không xuống dưới sàn cứng hero.
+    const canvasEl = document.querySelector('.poster-canvas') || document.body;
+    const cR = canvasEl.getBoundingClientRect();
+    const offCanvas = () => outerFit.some(el => tendooTextRects(el).some(r =>
+      r.top < cR.top - 1 || r.bottom > cR.bottom + 1 || r.left < cR.left - 1 || r.right > cR.right + 1));
+    const heroEls = Array.from(document.querySelectorAll('__TENDOO_TIER1_SELECTOR__'));
+    for (let step = 0; step < 14 && heroEls.length && offCanvas(); step++) {
+      let shrunk = false;
+      heroEls.forEach(h => {
+        const cur = parseFloat(getComputedStyle(h).fontSize) || 0;
+        const floor = Math.max(__RESCUE_MIN__, (parseFloat(h.dataset.minFont) || 0) * 0.75);
+        if (cur * 0.94 >= floor) { tendooApplyTypo(h, Math.floor(cur * 0.94 * 2) / 2); h.dataset.tendooRescued = '1'; shrunk = true; }
+      });
+      if (!shrunk) break;
+    }
+    // Hero đã về sàn mà vẫn tràn khung (nội dung quá dày cho khổ này) -> co dần MỌI chữ khác, không dưới
+    // __RESCUE_MIN__. Không mất chữ đứng trên đọc-tốt (C5 sẽ báo).
+    for (let step = 0; step < 16 && offCanvas(); step++) {
+      let shrunk = false;
+      outerFit.forEach(el => {
+        if (heroEls.includes(el)) return;
+        const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
+        if (cur * 0.94 >= __RESCUE_MIN__) {
+          tendooApplyTypo(el, Math.floor(cur * 0.94 * 2) / 2);
+          el.querySelectorAll('*').forEach(ch => {
+            if (ch.style.fontSize && ch.style.fontSize.endsWith('px')) ch.style.fontSize = (Math.floor(parseFloat(ch.style.fontSize) * 0.94 * 2) / 2) + 'px';
+          });
+          shrunk = true;
+        }
+      });
+      if (!shrunk) break;
+    }
     // Hero bị cứu (co nhỏ) -> chữ phụ không được to hơn nó: hạ Cấp 2/3 về hero / 1.2, không dưới __RESCUE_MIN__.
     const rescuedHero = Array.from(document.querySelectorAll('__TENDOO_TIER1_SELECTOR__')).filter(e => e.dataset.tendooRescued);
     if (rescuedHero.length) {
@@ -794,6 +830,12 @@ COMMON_AUTOFIT_JS = """
       const maxH = parseFloat(el.dataset.maxHeight);
       const minF = parseFloat(el.dataset.minFont);
       const font = parseFloat(getComputedStyle(el).fontSize) || 0;
+      // Chữ nằm ngoài khung poster = MẤT CHỮ, dù phần tử vẫn vừa hộp của nó (bị khối cha đẩy ra ngoài).
+      if (tendooTextRects(el).some(r => r.top < cR.top - 1 || r.bottom > cR.bottom + 1 || r.left < cR.left - 1 || r.right > cR.right + 1)) {
+        overflowReport.push({cls: (el.className || '').toString().trim().split(' ')[0], verdict: 'clipped', font: font, minFont: minF,
+                             maxH: maxH, scrollH: el.scrollHeight, text: (el.textContent || '').trim().slice(0, 60), offCanvas: true});
+        return;
+      }
       if (!(maxH > 0) || !(font <= minF + 0.25) || !(el.scrollHeight > maxH + 1.5)) return;
       const rects = tendooTextRects(el);
       const clip = tendooClipBox(el);

@@ -17,7 +17,7 @@ import logging
 from typing import List
 
 from tendoo_core.fonts import FONT_ALIASES, FONT_CATALOG
-from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, LIST_LIMITS, MASKLESS_INTENTS, TEMPLATE_CATALOG, resolve_intent
+from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, LIST_LIMITS, MASKLESS_INTENTS, TEXT_WORD_LIMITS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import STAMP_FONT_MIN, split_stat, stamp_ring
 from tendoo_v3.schema import TendooCreativePlan
 from tendoo_v3.styles import BACKGROUND_TONES, TEXT_EFFECT_ALIASES, TEXT_EFFECT_INTENTS, TEXT_EFFECTS
@@ -62,6 +62,13 @@ def check_plan(plan: TendooCreativePlan) -> List[str]:
         if missing:
             issues.append(f"template '{plan.template}' thiếu field chuyên biệt {missing} -- poster có thể lệch bản chất template")
 
+    L = TEXT_WORD_LIMITS
+    for f in ("hero", "subhead", "badge", "cta"):
+        n = len(str(getattr(plan, f, "") or "").split())
+        if n > L[f]:
+            issues.append(f"{f} {n} từ > {L[f]} -- poster ít chữ: chữ sẽ co về sàn, hero kém nổi bật (Luật 6)")
+    if len(plan.extra_texts) > L["extra_count"] or any(len(x.split()) > L["extra_item"] for x in plan.extra_texts):
+        issues.append(f"extra_texts nên <= {L['extra_count']} dòng, mỗi dòng <= {L['extra_item']} từ (Luật 6)")
     for f, limit in LIST_LIMITS.items():
         items = getattr(plan, f, None) or []
         if len(items) > limit:

@@ -385,6 +385,10 @@ LIST_LIMITS: Dict[str, int] = {"extra_texts": 6, "steps": 6}
 # matrix_board (khối chữ nhỏ dày đặc -- cần nền tĩnh có bảo đảm).
 MASKLESS_INTENTS: Tuple[str, ...] = ("big_number_deal", "hook_headline", "festive_event")
 
+# Giới hạn số TỪ mỗi field (Luật 6 + thực hành poster: ít chữ, mỗi ý 1 dòng). Chữ đọc được trên điện thoại
+# chiếm chỗ gấp ~2x trước -> nội dung dài làm mọi chữ co về sàn và hero mất nổi bật. Prompt dạy LLM, Cổng 2 báo.
+TEXT_WORD_LIMITS: Dict[str, int] = {"hero": 7, "subhead": 10, "badge": 4, "cta": 4, "extra_item": 6, "extra_count": 3}
+
 # Linh kiện đồ hoạ GĐ 2 (ROADMAP §4.4) -- danh mục ĐÓNG, mỗi lựa chọn khai báo intent được dùng
 # (Luật 4: tránh "neon rơi vào thiệp mời VIP"). Lựa chọn đầu tiên của mỗi nhóm là mặc định và
 # giữ nguyên ảnh trước GĐ 2. Xử lý render: components.py.

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ hero }}</title>
+  <style>
+    {{ font_face_css }}
+    {% include "components/ui_components.css" %}
+
+    /* TYPE SHOWCASE (R6, ROADMAP §10.8 band S): poster LẤY CHỮ LÀM NHÂN VẬT CHÍNH -- sale thuần chữ, chúc
+       mừng, thông báo lớn. Cụm tiêu đề XẾP DỌC ở tâm khung: chữ dẫn nhỏ in hoa / điểm neo khổng lồ chiếm trọn
+       bề ngang / chữ đuôi -- lockup cổ điển của poster sale (thay vì 1 dòng ngang nhồi chữ dẫn + số + chữ đuôi,
+       nơi con số chỉ được ~1/3 bề ngang). Bằng chứng: 2 poster thuần chữ từ LLM thật (Black Friday, Tết) để
+       chữ nhỏ trên đỉnh, 3/4 khung trống (GĐ 3R). Nền: ít chi tiết (maskless) hoặc vùng giữa được chừa. */
+    :root { --headline-font: {{ headline_font_css }}; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+    html, body { width: {{ width }}px; height: {{ height }}px; overflow: hidden; background: #0B0F19;
+                 font-family: var(--headline-font, 'Be Vietnam Pro', sans-serif); position: relative; }
+    .poster-canvas { position: relative; width: {{ width }}px; height: {{ height }}px; overflow: hidden; }
+    .bg-layer { position: absolute; inset: 0; background-image: url('{{ bg_data_uri }}'); background-size: cover;
+                background-position: center; z-index: 1; }
+
+    .showcase-stack {
+      position: absolute;
+      left: {{ zones.center.x1 }}px; top: {{ zones.center.y1 }}px;
+      width: {{ zones.center.width }}px; height: {{ zones.center.height }}px;
+      z-index: 10;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: {{ (height * 0.018) | round(1) }}px;
+      text-align: center;
+    }
+
+    .hero-title {
+      width: 100%;
+      font-weight: 900;
+      line-height: 1.0;
+      letter-spacing: -0.01em;
+      color: {{ header_text_primary }};
+      text-shadow: {{ '0 4px 24px rgba(0, 0, 0, 0.55)' if header_is_dark else 'none' }};
+      {{ header_effect_css }}
+    }
+    /* Lockup dọc: mỗi đoạn hero_parts một hàng -> điểm neo dùng được TRỌN bề ngang cột. */
+    .hero-title.hero-phrase { flex-direction: column; align-items: center; gap: 0.04em; }
+    .hero-title .hero-seg--stat { line-height: 0.92; }
+    .hero-title .hero-seg--prefix, .hero-title .hero-seg--suffix { font-size: 0.3em; letter-spacing: 0.12em; }
+
+    .subhead-title {
+      max-width: 88%;
+      line-height: 1.3;
+      color: {{ header_text_secondary }};
+      text-shadow: {{ '0 1px 3px rgba(0, 0, 0, 0.7)' if subhead_is_dark else 'none' }};
+    }
+
+    .badge-pill {
+      font-family: var(--ui-font);
+      display: inline-flex; align-items: center;
+      padding: 0.35em 1.2em;
+      font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+      color: {{ palette.badge_text }}; background: {{ palette.badge_bg }};
+      border-radius: 9999px;
+    }
+
+    .showcase-footer {
+      position: absolute;
+      left: {{ zones.footer.x1 }}px; top: {{ zones.footer.y1 }}px;
+      width: {{ zones.footer.width }}px; height: {{ zones.footer.height }}px;
+      z-index: 10;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: {{ (height * 0.012) | round(1) }}px;
+    }
+    .cta-btn {
+      font-family: var(--ui-font);
+      display: inline-flex; align-items: center; gap: 0.5em;
+      padding: 0.5em 1.5em;
+      background: {{ palette.cta_bg }}; color: {{ palette.cta_text }};
+      font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+      border-radius: 9999px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+      white-space: normal; text-shadow: none;
+    }
+    .cta-btn svg { width: 1.1em; height: 1.1em; }
+    .store-info-row {
+      font-family: var(--ui-font);
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3em 0.9em;
+      color: {{ header_text_secondary }};
+      max-width: 100%;
+    }
+    .store-item { display: inline-flex; align-items: center; gap: 0.4em; font-size: inherit; font-weight: 600; }
+    .store-item svg { width: 1.1em; height: 1.1em; color: {{ palette.on_card_accent }}; flex-shrink: 0; }
+  </style>
+</head>
+{% from "components/ui_macros.html" import render_decor_layer, render_badge, render_hero_phrase, render_subhead, render_store, render_cta with context %}
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    {{ render_decor_layer() }}
+    <div class="showcase-stack">
+      {{ render_badge(badge, budget=budget.badge) }}
+      {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
+      {{ render_subhead(subhead, budget=budget.subhead) }}
+    </div>
+    {% if cta or store_items or store_info %}
+    <div class="showcase-footer">
+      {{ render_cta(cta, budget=budget.cta, arrow='right') }}
+      {{ render_store(store_items, store_info, budget=budget.store, is_col=false, bare_single=true) }}
+    </div>
+    {% endif %}
+  </div>
+  {{ autofit_js }}
+</body>
+</html>
