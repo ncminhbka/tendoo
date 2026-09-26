@@ -5,13 +5,10 @@
   <title>{{ hero }}</title>
   <style>
     {{ font_face_css }}
+    {% include "components/ui_components.css" %}
 
     :root {
       --headline-font: {{ headline_font_css }};
-      /* Font nghệ thuật chỉ dành cho hero/subhead -- UI phụ (badge/pill/store/cta)
-         dùng font sans-serif dễ đọc riêng, xem giải thích đầy đủ ở
-         sandwich_top_heavy/template.html. */
-      --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
     }
 
     * {
@@ -267,6 +264,14 @@
       word-break: break-word;
     }
 
+    /* Trung hoà thuộc tính component (ui_components.css) mà CSS riêng template này KHÔNG
+       có -- giữ ảnh render như trước khi dùng macro. */
+    .hero-title, .subhead-title, .freetext-block, .store-info-col { max-width: none; }
+    .cta-btn { white-space: normal; text-shadow: none; }
+    .cta-btn svg { width: 1.15em; height: 1.15em; }
+    /* Badge nay autofit (trước: 14px cố định) -- autofit gán letter-spacing -0.5px inline. */
+    .badge-pill { letter-spacing: 1.2px !important; }
+
     /* Thích ứng 9:16 narrow portrait */
     {% if is_portrait_narrow %}
     .split-column-right {
@@ -324,66 +329,25 @@
     {% endif %}
   </style>
 </head>
+{% from "components/ui_macros.html" import render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
     <div class="split-column-right">
       <div class="top-stack">
-        {% if badge %}
-        <div class="badge-pill">{{ badge }}</div>
-        {% endif %}
-        <div class="hero-title" data-autofit data-min-font="{{ split_budget.hero.min_font if split_budget else 18 }}" data-max-font="{{ split_budget.hero.max_font if split_budget else 68 }}" data-max-height="{{ split_budget.hero.max_h if split_budget else zones.content.height * 0.38 }}">{{ hero }}</div>
-        {% if subhead %}
-        <div class="subhead-title" data-autofit data-min-font="{{ split_budget.subhead.min_font if split_budget else 11 }}" data-max-font="{{ split_budget.subhead.max_font if split_budget else 26 }}" data-max-height="{{ split_budget.subhead.max_h if split_budget else zones.content.height * 0.20 }}">{{ subhead }}</div>
-        {% endif %}
+        {{ render_badge(badge) }}
+        {{ render_hero_phrase(hero, hero_parts, budget=split_budget.hero) }}
+        {{ render_subhead(subhead, budget=split_budget.subhead) }}
       </div>
 
       <!-- FreeText Dual-Mode -->
-      {% if extra_texts %}
-        {% if is_freetext_block %}
-        <div class="freetext-block" data-autofit data-min-font="{{ split_budget.extra.min_font if split_budget else 10 }}" data-max-font="{{ split_budget.extra.max_font if split_budget else 18 }}" data-max-height="{{ split_budget.extra.max_h if split_budget else zones.content.height * 0.22 }}">
-          {% for line in extra_texts %}
-          <div class="freetext-line">
-            <span class="freetext-bullet">{{ bullet_svg }}</span>
-            <span>{{ line }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="flexible-stack" data-autofit data-min-font="{{ split_budget.extra.min_font if split_budget else 11 }}" data-max-font="{{ split_budget.extra.max_font if split_budget else 18 }}" data-max-height="{{ split_budget.extra.max_h if split_budget else zones.content.height * 0.22 }}">
-          {% for pill in extra_pills %}
-          <div class="extra-item">
-            {{ pill.icon_svg }}
-            <span>{{ pill.text }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-      {% endif %}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=split_budget.extra, bullet_svg=bullet_svg, row_cls='flexible-stack', pill_cls='extra-item') }}
 
       <div class="bottom-stack">
         {% if is_landscape_wide %}
           <div class="bottom-col-actions">
-            {% if cta %}
-            <div class="cta-btn" data-autofit data-min-font="{{ split_budget.cta.min_font if split_budget else 13 }}" data-max-font="{{ split_budget.cta.max_font if split_budget else 20 }}" data-max-height="{{ split_budget.cta.max_h if split_budget else 46 }}">
-              <span>{{ cta }}</span>
-              <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            </div>
-            {% endif %}
-            {% if store_items %}
-            <div class="store-info-col" data-autofit data-min-font="{{ split_budget.store.min_font if split_budget else 11 }}" data-max-font="{{ split_budget.store.max_font if split_budget else 14 }}" data-max-height="{{ split_budget.store.max_h if split_budget else 78 }}">
-              {% for item in store_items %}
-              <div class="store-item">
-                {{ item.icon_svg }}
-                <span>{{ item.text }}</span>
-              </div>
-              {% endfor %}
-            </div>
-            {% elif store_info %}
-            <div class="store-item" data-autofit data-min-font="{{ split_budget.store.min_font if split_budget else 11 }}" data-max-font="{{ split_budget.store.max_font if split_budget else 14 }}">
-              <span>{{ store_info }}</span>
-            </div>
-            {% endif %}
+            {{ render_cta(cta, budget=split_budget.cta, arrow='left') }}
+            {{ render_store(store_items, store_info, budget=split_budget.store, is_col=true, bare_single=true) }}
           </div>
           {% if qr_svg %}
           <div class="bottom-col-qr">{{ qr_svg }}</div>
@@ -392,26 +356,8 @@
           {% if qr_svg %}
           <div style="align-self:flex-end; margin-bottom:2px;">{{ qr_svg }}</div>
           {% endif %}
-          {% if cta %}
-          <div class="cta-btn" data-autofit data-min-font="{{ split_budget.cta.min_font if split_budget else 13 }}" data-max-font="{{ split_budget.cta.max_font if split_budget else 22 }}" data-max-height="{{ split_budget.cta.max_h if split_budget else 50 }}">
-            <span>{{ cta }}</span>
-            <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </div>
-          {% endif %}
-          {% if store_items %}
-          <div class="store-info-col" data-autofit data-min-font="{{ split_budget.store.min_font if split_budget else 12 }}" data-max-font="{{ split_budget.store.max_font if split_budget else 15 }}" data-max-height="{{ split_budget.store.max_h if split_budget else 95 }}">
-            {% for item in store_items %}
-            <div class="store-item">
-              {{ item.icon_svg }}
-              <span>{{ item.text }}</span>
-            </div>
-            {% endfor %}
-          </div>
-          {% elif store_info %}
-          <div class="store-item" data-autofit data-min-font="{{ split_budget.store.min_font if split_budget else 12 }}" data-max-font="{{ split_budget.store.max_font if split_budget else 15 }}">
-            <span>{{ store_info }}</span>
-          </div>
-          {% endif %}
+          {{ render_cta(cta, budget=split_budget.cta, arrow='left') }}
+          {{ render_store(store_items, store_info, budget=split_budget.store, is_col=true, bare_single=true) }}
         {% endif %}
       </div>
     </div>

@@ -76,7 +76,7 @@
 {% endmacro %}
 
 {# 4. RENDER FREETEXT DUAL-MODE (Semantic Pills vs Freetext Block) #}
-{% macro render_freetext(extra_texts, extra_pills, is_block=false, budget=none, bullet_svg='', extra_cls='', max_w=none) %}
+{% macro render_freetext(extra_texts, extra_pills, is_block=false, budget=none, bullet_svg='', extra_cls='', max_w=none, row_cls='extra-tag-row', pill_cls='extra-pill') %}
   {% if extra_texts %}
     {% if is_block %}
       <div class="freetext-block {{ extra_cls }}"
@@ -97,7 +97,7 @@
         {% endfor %}
       </div>
     {% else %}
-      <div class="extra-tag-row {{ extra_cls }}"
+      <div class="{{ row_cls }} {{ extra_cls }}"
            data-autofit
            data-min-font="{{ budget.min_font if (budget and budget.min_font) else 11 }}"
            data-max-font="{{ budget.max_font if (budget and budget.max_font) else 16 }}"
@@ -105,14 +105,14 @@
            {% if max_w %}data-max-width="{{ max_w }}"{% endif %}>
         {% if extra_pills %}
           {% for pill in extra_pills %}
-            <div class="extra-pill">
+            <div class="{{ pill_cls }}">
               {% if pill.icon_svg %}{{ pill.icon_svg }}{% endif %}
               <span>{{ pill.text }}</span>
             </div>
           {% endfor %}
         {% else %}
           {% for text in extra_texts %}
-            <div class="extra-pill">
+            <div class="{{ pill_cls }}">
               <span>{{ text }}</span>
             </div>
           {% endfor %}
@@ -123,8 +123,17 @@
 {% endmacro %}
 
 {# 5. RENDER STORE INFO (Hotline / Địa chỉ cửa hàng) #}
-{% macro render_store(store_items, store_info, budget=none, extra_cls='', is_col=true, max_w=none) %}
-  {% if store_items or store_info %}
+{% macro render_store(store_items, store_info, budget=none, extra_cls='', is_col=true, max_w=none, bare_single=false) %}
+  {% if bare_single and not store_items and store_info %}
+    {# 1 dòng store_info không có item: .store-item tự autofit, trần chiều cao = cha (không data-max-height) #}
+    <div class="store-item {{ extra_cls }}"
+         data-autofit
+         data-min-font="{{ budget.min_font if (budget and budget.min_font) else 12 }}"
+         data-max-font="{{ budget.max_font if (budget and budget.max_font) else 21 }}"
+         {% if max_w %}data-max-width="{{ max_w }}"{% endif %}>
+      <span>{{ store_info }}</span>
+    </div>
+  {% elif store_items or store_info %}
     <div class="{{ 'store-info-col' if is_col else 'store-info-row' }} {{ extra_cls }}"
          data-autofit
          data-min-font="{{ budget.min_font if (budget and budget.min_font) else 12 }}"
@@ -149,7 +158,7 @@
 {% endmacro %}
 
 {# 6. RENDER CTA BUTTON (Nút kêu gọi hành động) #}
-{% macro render_cta(cta, budget=none, extra_cls='', max_w=none) %}
+{% macro render_cta(cta, budget=none, extra_cls='', max_w=none, arrow='right') %}
   {% if cta %}
     <div class="cta-btn {{ extra_cls }}"
          data-autofit
@@ -159,7 +168,7 @@
          {% if max_w %}data-max-width="{{ max_w }}"{% endif %}
          style="font-family: var(--ui-font); flex-shrink: 0;">
       <span style="font-size: inherit;">{{ cta }}</span>
-      <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="{{ '15 18 9 12 15 6' if arrow == 'left' else '9 18 15 12 9 6' }}"></polyline></svg>
     </div>
   {% endif %}
 {% endmacro %}
