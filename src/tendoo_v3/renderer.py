@@ -24,6 +24,7 @@ from tendoo_core.colors import ensure_contrast
 from tendoo_core.fonts import resolve_font
 from tendoo_core.poster_renderer import PosterRenderer
 from tendoo_v3.catalog import TEMPLATE_CATALOG
+from tendoo_v3.components import build_components, enrich_hero_parts
 from tendoo_v3.geometry import compute_density_score, geometry_drivers, get_zones
 from tendoo_v3.icons import (
     BULLET_SPARKLE_SVG,
@@ -38,6 +39,7 @@ from tendoo_v3.styles import (
     COMMON_AUTOFIT_JS,
     get_adaptive_palette,
     get_effect_css,
+    svg_filter_defs,
 )
 
 logger = logging.getLogger(__name__)
@@ -2045,8 +2047,13 @@ def build_template_html(
         logger.error(f"[Renderer] Không nạp được template '{template_file}' ({e!r}) -> dùng sandwich_top_heavy thay thế")
         jinja_tpl = _JINJA_ENV.get_template("sandwich_top_heavy/template.html")
 
+    # 6b. Linh kiện đồ hoạ GĐ 2 (None nếu plan không dùng -> template như trước GĐ 2).
+    components = build_components(plan, zones, width, height)
+
     # 7. Render context
     context = {
+        "components": components,
+        "svg_filter_defs": svg_filter_defs(plan.style.text_effect, (budget.get("hero") or {}).get("max_font") or 60),
         "budget": budget,
         "width": width,
         "height": height,
@@ -2073,7 +2080,7 @@ def build_template_html(
         "card_chrome_text": card_chrome_text,
         "card_chrome_accent": card_chrome_accent,
         "hero": plan.hero,
-        "hero_parts": plan.hero_parts,
+        "hero_parts": enrich_hero_parts(plan.hero_parts, components["stat_style"]) if components else plan.hero_parts,
         "subhead": plan.subhead,
         "badge": plan.badge,
         "tag_left": plan.tag_left,

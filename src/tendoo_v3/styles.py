@@ -19,7 +19,41 @@ from tendoo_core.fonts import resolve_font
 TEXT_EFFECTS = (
     "3d_gold", "neon", "neon_bloom", "chrome", "fire", "shadow",
     "embossed", "chromatic", "hologram", "plain_elegant",
+    "metal_emboss", "glossy_gel",
 )
+# Chất liệu bằng SVG filter (GĐ 2, ROADMAP §4.4: feSpecularLighting + feDistantLight) -- chiếu
+# sáng lên chính nét chữ màu nhấn, khác 3d_gold/chrome (gradient phủ, không có khối nổi).
+# Tham số chọn bằng mắt trên dải thử 110px (scratch 26/09); `blur_em`/`scale_em` tính theo cỡ
+# hero để filter co giãn cùng autofit (px cố định làm chữ nhỏ bết, chữ to phẳng).
+SVG_FILTER_EFFECTS: Dict[str, Dict[str, Any]] = {
+    "metal_emboss": {"blur_em": 0.018, "scale_em": 0.027, "light": "#FFF4C2", "exponent": 28, "k3": 0.7},
+    "glossy_gel": {"blur_em": 0.045, "scale_em": 0.073, "light": "#FFFFFF", "exponent": 12, "k3": 1.0},
+}
+# Luật 4 (§4.4): intent được dùng. Chưa khai báo cho 10 hiệu ứng cũ -- việc riêng, cần duyệt.
+TEXT_EFFECT_INTENTS: Dict[str, tuple] = {
+    "metal_emboss": ("big_number_deal", "hook_headline", "product_showcase", "festive_event"),
+    "glossy_gel": ("big_number_deal", "hook_headline", "festive_event"),
+}
+
+
+def svg_filter_defs(effect_name: Optional[str], hero_font_px: float) -> str:
+    """Khối <svg><filter id="tk-material"> cho hiệu ứng chất liệu, rỗng nếu hiệu ứng không cần."""
+    eff = TEXT_EFFECT_ALIASES.get((effect_name or "").lower().strip(), (effect_name or "").lower().strip())
+    cfg = SVG_FILTER_EFFECTS.get(eff)
+    if not cfg:
+        return ""
+    blur = max(0.8, cfg["blur_em"] * hero_font_px)
+    scale = max(1.5, cfg["scale_em"] * hero_font_px)
+    return (
+        '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="tk-material" x="-10%" y="-30%" '
+        'width="120%" height="160%" color-interpolation-filters="sRGB">'
+        f'<feGaussianBlur in="SourceAlpha" stdDeviation="{blur:.2f}" result="b"/>'
+        f'<feSpecularLighting in="b" surfaceScale="{scale:.2f}" specularConstant="1.2" specularExponent="{cfg["exponent"]}" '
+        f'lighting-color="{cfg["light"]}" result="s"><feDistantLight azimuth="225" elevation="50"/></feSpecularLighting>'
+        '<feComposite in="s" in2="SourceAlpha" operator="in" result="si"/>'
+        f'<feComposite in="SourceGraphic" in2="si" operator="arithmetic" k1="0" k2="1" k3="{cfg["k3"]}" k4="0"/>'
+        "</filter></svg>"
+    )
 # Alias thường dùng từ prompt/LLM.
 TEXT_EFFECT_ALIASES = {
     "gold_metallic": "3d_gold",
@@ -64,6 +98,18 @@ def get_effect_css(
     eff = (effect_name or "plain_elegant").lower().strip()
 
     eff = TEXT_EFFECT_ALIASES.get(eff, eff)
+
+    if eff in SVG_FILTER_EFFECTS:
+        # Nét chữ màu nhấn phẳng để filter chiếu sáng; defs `#tk-material` do renderer chèn vào
+        # lớp decor (svg_filter_defs). Bóng đổ nhẹ hơn trên nền sáng.
+        shadow = "0 4px 8px rgba(0, 0, 0, 0.6)" if is_dark else "0 3px 6px rgba(15, 23, 42, 0.28)"
+        return f"""
+            color: {theme_color};
+            -webkit-text-fill-color: {theme_color};
+            background: none;
+            text-shadow: none !important;
+            filter: url(#tk-material) drop-shadow({shadow});
+            """
 
     if is_dark:
         # ==========================================
@@ -401,6 +447,12 @@ CONTENT_CLASSES = ("menu-list", "steps-grid", "testimonial-quote")
 COMMON_AUTOFIT_JS = """
 <script>
 (function() {
+  // Hạ cờ ngay đầu trang: Playwright `set_content` GIỮ NGUYÊN đối tượng window, nên khi một
+  // page render nhiều poster liên tiếp (probe, visual_diff, bánh cóc squint) cờ "xong" của poster
+  // TRƯỚC còn nguyên -> lệnh chờ trả về ngay, chụp/đo trước lượt fit cuối (phát hiện 26/09 khi
+  // hạt lấp lánh GĐ 2 -- vẽ ở lượt cuối -- không bao giờ lên ảnh).
+  window.__tendooAutofitDone = false;
+  window.__tendooOverflow = [];
   // Cỡ chữ + line-height + letter-spacing gán CÙNG MỘT CHỖ, dùng cho cả lúc dò (binary
   // search) lẫn lúc gán kết quả -- trước đây letter-spacing -0.5px chỉ gán SAU khi dò xong,
   // nên chữ lúc đo rộng hơn chữ lúc hiển thị và autofit chọn cỡ nhỏ hơn cần thiết (lỗi này
@@ -676,6 +728,10 @@ COMMON_AUTOFIT_JS = """
     const ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
     ready.then(function() {
       fitElements();
+      // Móc cho linh kiện cần vị trí chữ ĐÃ CHỐT (GĐ 2: hạt lấp lánh quanh hero). Chạy trước cờ
+      // "xong" nên ảnh chụp luôn có nó; linh kiện không đổi kích thước chữ -> không cần fit lại.
+      if (typeof window.__tendooAfterFit === 'function') window.__tendooAfterFit();
+      window.__tendooAfterFit = undefined;  // không để poster sau (cùng window) chạy nhầm móc cũ
       window.__tendooAutofitDone = true;
     });
   }, 150);

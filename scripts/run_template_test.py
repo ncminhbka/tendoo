@@ -153,7 +153,14 @@ def parse_case_to_plan(case: Dict[str, Any], default_template: str) -> Tuple[Ten
         style=style_obj,
         scene_prompt=src.get("scene_prompt", ""),
         corridor_prompt=src.get("corridor_prompt", ""),
+        visual_intent=src.get("visual_intent"),
+        badge_style=src.get("badge_style"),
+        stat_style=src.get("stat_style"),
+        decor=src.get("decor"),
     )
+    if src.get("hero_parts"):
+        # Qua đúng chốt nguyên văn (Cổng 1) của đường LLM thật -- lệch chữ thì markup bị vứt.
+        plan.hero_parts = TendooCreativePlan.from_dict({"hero": plan.hero, "hero_parts": src["hero_parts"]}).hero_parts
     return plan, width, height
 
 

@@ -1,0 +1,261 @@
+[
+ {
+  "id": "kit_01_1x1_ribbon_unit_metal",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#F59E0B",
+    "text_effect": "metal_emboss",
+    "background_tone": "dark_luxury"
+   },
+   "hero": "SIÊU SALE 50%",
+   "hero_parts": [
+    {
+     "t": "SIÊU SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "stat_style": "unit",
+   "badge": "ƯU ĐÃI CÓ HẠN",
+   "badge_style": "ribbon",
+   "subhead": "Áp dụng toàn hệ thống tới hết chủ nhật",
+   "cta": "MUA NGAY",
+   "store_info": "Hotline: 1900 8888"
+  }
+ },
+ {
+  "id": "kit_02_9x16_burst_capsule",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "style": {
+    "font": "anton",
+    "theme_color": "#EF4444",
+    "text_effect": "3d_gold",
+    "background_tone": "dark_luxury"
+   },
+   "hero": "GIẢM TỚI 70% TOÀN BỘ MENU",
+   "hero_parts": [
+    {
+     "t": "GIẢM TỚI",
+     "role": "prefix"
+    },
+    {
+     "t": "70%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "TOÀN BỘ MENU",
+     "role": "suffix"
+    }
+   ],
+   "stat_style": "burst",
+   "badge": "MỚI | CHỈ 3 NGÀY",
+   "badge_style": "capsule",
+   "subhead": "Cuối tuần vàng tại mọi chi nhánh",
+   "cta": "ĐẶT BÀN NGAY"
+  }
+ },
+ {
+  "id": "kit_03_16x9_stamp_unit",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "split_left",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#22C55E",
+    "text_effect": "shadow",
+    "background_tone": "dark_luxury"
+   },
+   "hero": "GIẢM NGAY -30% MÁY LỌC KHÔNG KHÍ",
+   "hero_parts": [
+    {
+     "t": "GIẢM NGAY",
+     "role": "prefix"
+    },
+    {
+     "t": "-30%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "MÁY LỌC KHÔNG KHÍ",
+     "role": "suffix"
+    }
+   ],
+   "stat_style": "unit",
+   "badge": "ƯU ĐÃI CÓ HẠN",
+   "badge_style": "stamp",
+   "subhead": "Bảo hành chính hãng 24 tháng",
+   "cta": "XEM NGAY"
+  }
+ },
+ {
+  "id": "kit_04_1x1_diag_burst_sparkles",
+  "width": 1024,
+  "height": 1024,
+  "orientation": "left",
+  "plan": {
+   "template": "diagonal_slash",
+   "style": {
+    "font": "gotham",
+    "theme_color": "#FACC15",
+    "text_effect": "chrome",
+    "background_tone": "dark_luxury"
+   },
+   "hero": "FLASH SALE 99K",
+   "hero_parts": [
+    {
+     "t": "FLASH SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "99K",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "stat_style": "burst",
+   "decor": "sparkles",
+   "badge": "CHỈ HÔM NAY",
+   "badge_style": "ribbon",
+   "subhead": "Đồng giá toàn bộ phụ kiện",
+   "cta": "SĂN NGAY"
+  }
+ },
+ {
+  "id": "kit_05_9x16_opening_stamp_sparkles",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "grand_opening_banner",
+   "style": {
+    "font": "holidays",
+    "theme_color": "#E11D48",
+    "text_effect": "3d_gold",
+    "background_tone": "cinema_red"
+   },
+   "hero": "KHAI TRƯƠNG GIẢM 50%",
+   "hero_parts": [
+    {
+     "t": "KHAI TRƯƠNG GIẢM",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "stat_style": "unit",
+   "decor": "sparkles",
+   "badge": "KHAI TRƯƠNG",
+   "badge_style": "stamp",
+   "subhead": "Tặng quà cho 100 khách đầu tiên",
+   "store_info": "123 Nguyễn Huệ, Quận 1"
+  }
+ },
+ {
+  "id": "kit_06_4x5_split_capsule",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "split_right",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#3B82F6",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   },
+   "hero": "CHỈ TỪ 12 TRIỆU",
+   "hero_parts": [
+    {
+     "t": "CHỈ TỪ",
+     "role": "prefix"
+    },
+    {
+     "t": "12 TRIỆU",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "stat_style": "unit",
+   "badge": "TRẢ GÓP | 0%",
+   "badge_style": "capsule",
+   "subhead": "Laptop mỏng nhẹ cho dân văn phòng",
+   "cta": "ĐẶT TRƯỚC"
+  }
+ },
+ {
+  "id": "kit_07_16x9_sbh_ribbon_gel",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "sandwich_bottom_heavy",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#F97316",
+    "text_effect": "glossy_gel",
+    "background_tone": "warm_rustic"
+   },
+   "hero": "MUA 1 TẶNG 1",
+   "hero_parts": [
+    {
+     "t": "MUA 1",
+     "role": "prefix"
+    },
+    {
+     "t": "TẶNG 1",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "badge": "CUỐI TUẦN",
+   "badge_style": "ribbon",
+   "subhead": "Áp dụng cho toàn bộ đồ uống size L",
+   "cta": "GHÉ QUÁN"
+  }
+ },
+ {
+  "id": "kit_08_9x16_lframe_stamp",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "l_frame_showcase",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#D4AF37",
+    "text_effect": "3d_gold",
+    "background_tone": "dark_luxury"
+   },
+   "hero": "BỘ SƯU TẬP MỚI -20%",
+   "hero_parts": [
+    {
+     "t": "BỘ SƯU TẬP MỚI",
+     "role": "prefix"
+    },
+    {
+     "t": "-20%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "stat_style": "unit",
+   "badge": "HÀNG MỚI VỀ",
+   "badge_style": "stamp",
+   "subhead": "Trang sức bạc Ý thủ công",
+   "store_info": "Hotline: 0909 123 456"
+  }
+ }
+]

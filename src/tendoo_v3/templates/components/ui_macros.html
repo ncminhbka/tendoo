@@ -7,16 +7,19 @@
    ============================================================================== #}
 
 {# 1. RENDER BADGE PILL (Tự biến mất nếu rỗng) #}
+{#- components (GĐ 2, đọc từ context -- mọi template import macro `with context`): badge_style
+    ribbon/capsule đổi hình dạng tại chỗ; stamp rời badge khỏi dòng chảy, vẽ trong decor-layer. -#}
 {% macro render_badge(badge, budget=none, extra_cls='', max_w=none, cls='badge-pill', ui_font=true) %}
-  {% if badge %}
-    <div class="{{ cls }} {{ extra_cls }}"
+  {% set bstyle = components.badge_style if components else 'pill' %}
+  {% if badge and bstyle != 'stamp' %}
+    <div class="{{ cls }} {{ extra_cls }}{{ ' badge--' ~ bstyle if bstyle != 'pill' else '' }}"
          data-autofit
          data-min-font="{{ budget.min_font if (budget and budget.min_font) else 11 }}"
          data-max-font="{{ budget.max_font if (budget and budget.max_font) else 14 }}"
          data-max-height="{{ budget.max_h if (budget and budget.max_h) else 28 }}"
          {% if max_w %}data-max-width="{{ max_w }}"{% endif %}
          style="{{ 'font-family: var(--ui-font); ' if ui_font else '' }}flex-shrink: 0;">
-      <span style="font-size: inherit;">{{ badge }}</span>
+      {% if bstyle == 'capsule' %}<span class="cap-l">{{ components.capsule[0] }}</span><span class="cap-r">{{ components.capsule[1] }}</span>{% else %}<span style="font-size: inherit;">{{ badge }}</span>{% endif %}
     </div>
   {% endif %}
 {% endmacro %}
@@ -52,8 +55,11 @@
          data-max-font="{{ budget.max_font if (budget and budget.max_font) else 80 }}"
          data-max-height="{{ budget.max_h if (budget and budget.max_h) else 160 }}"
          {% if max_w %}data-max-width="{{ max_w }}"{% endif %}>
+      {%- set sst = components.stat_style if components else 'plain' -%}
       {%- for seg in hero_parts -%}
-        <span class="hero-seg hero-seg--{{ seg.role }}{{ ' hero-seg--accent' if seg.emphasis == 'accent' else '' }}">{{ seg.t }}</span>
+        <span class="hero-seg hero-seg--{{ seg.role }}{{ ' hero-seg--accent' if seg.emphasis == 'accent' else '' }}{{ ' hero-seg--burst' if (seg.role == 'stat' and sst == 'burst') else '' }}">
+          {%- if seg.unit %}<span class="stat-num">{{ seg.num }}</span><span class="stat-unit{{ ' stat-unit--word' if seg.unit_word else '' }}">{{ seg.unit }}</span>{% else %}{{ seg.t }}{% endif -%}
+        </span>
       {%- endfor -%}
     </div>
   {% else %}
@@ -190,8 +196,8 @@
 {% endmacro %}
 
 {#- LỚP DECOR (ROADMAP §10.6, §10.13): chỗ chừa sẵn cho hoạ tiết GĐ 8, nằm giữa bg-layer
-    (z-index 1) và lớp chữ (z-index 10). Hiện rỗng -> ảnh không đổi. Style inline vì 8 template
+    (z-index 1) và lớp chữ (z-index 10). GĐ 2: chứa con dấu + hạt lấp lánh (components.decor_html). Style inline vì 8 template
     migrate kiểu markup-only không include ui_components.css. -#}
 {% macro render_decor_layer() -%}
-<div class="decor-layer" aria-hidden="true" style="position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;"></div>
+<div class="decor-layer" aria-hidden="true" style="position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;">{% if components %}{{ components.decor_html }}{% endif %}{{ svg_filter_defs or '' }}</div>
 {%- endmacro %}

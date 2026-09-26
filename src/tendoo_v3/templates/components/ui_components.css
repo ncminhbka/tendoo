@@ -254,3 +254,4 @@
 }
 
 {% include "components/hero_phrase.css" %}
+{% include "components/kit.css" %}

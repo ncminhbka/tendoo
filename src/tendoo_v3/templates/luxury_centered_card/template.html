@@ -5,6 +5,7 @@
   <style>
     {{ font_face_css }}
     {% include "components/hero_phrase.css" %}
+    {% include "components/kit.css" %}
     :root {
       /* Font UI phụ (badge/cta/store/message list) tách khỏi font nghệ thuật
          headline -- xem giải thích đầy đủ ở sandwich_top_heavy/template.html. */
@@ -349,7 +350,7 @@
     {% endif %}
   </style>
 </head>
-{% from "components/ui_macros.html" import render_decor_layer, render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
+{% from "components/ui_macros.html" import render_decor_layer, render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta with context %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>

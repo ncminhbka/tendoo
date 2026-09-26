@@ -8,7 +8,7 @@ Danh mục Template (Catalog) kèm Gợi ý (Hints) và Hướng dẫn cho LLM:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # `slots` (GĐ 0B, ROADMAP §6.2): nguồn sự thật DUY NHẤT về field nào template THỰC SỰ hiển
@@ -326,6 +326,28 @@ INTENT_PROFILES: Dict[str, Dict[str, Any]] = {
     "matrix_board": {"contrast_target": 2.5, "desc": "Bảng/lưới/quy trình, các khối cỡ tương đương"},
 }
 
+
+# Linh kiện đồ hoạ GĐ 2 (ROADMAP §4.4) -- danh mục ĐÓNG, mỗi lựa chọn khai báo intent được dùng
+# (Luật 4: tránh "neon rơi vào thiệp mời VIP"). Lựa chọn đầu tiên của mỗi nhóm là mặc định và
+# giữ nguyên ảnh trước GĐ 2. Xử lý render: components.py.
+_ALL_INTENTS = tuple(INTENT_PROFILES)
+COMPONENT_STYLES: Dict[str, Dict[str, Tuple[str, ...]]] = {
+    "badge_style": {
+        "pill": _ALL_INTENTS,
+        "ribbon": ("big_number_deal", "hook_headline", "product_showcase", "festive_event"),
+        "capsule": ("big_number_deal", "hook_headline", "product_showcase", "matrix_board"),
+        "stamp": ("big_number_deal", "product_showcase", "festive_event"),
+    },
+    "stat_style": {
+        "plain": _ALL_INTENTS,
+        "unit": ("big_number_deal", "hook_headline", "product_showcase", "festive_event"),
+        "burst": ("big_number_deal", "festive_event"),
+    },
+    "decor": {
+        "none": _ALL_INTENTS,
+        "sparkles": ("festive_event", "hook_headline", "big_number_deal"),
+    },
+}
 
 def resolve_intent(template: str, requested: Optional[str] = None) -> str:
     """Intent hiệu lực: intent plan yêu cầu nếu template chấp nhận, nếu không -> mặc định template."""

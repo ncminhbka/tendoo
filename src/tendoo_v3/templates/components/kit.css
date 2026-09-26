@@ -1,0 +1,125 @@
+{#- ==========================================================================
+   LINH KIỆN ĐỒ HOẠ GĐ 2 (ROADMAP §4.4) -- components.py quyết định, file này chỉ vẽ.
+   Cả file nằm trong `{% if components %}`: plan không dùng linh kiện -> không sinh 1 byte CSS
+   nào -> poster y hệt trước GĐ 2. Mọi cỡ dùng `em` để co theo font-size autofit gán cho cha.
+   Modifier dùng !important vì phải thắng CSS riêng của 14 template (mỗi template tự vẽ badge).
+   ========================================================================== -#}
+{% if components %}
+/* Bóng đổ đa tầng -- giá trị theo Open Props shadow tokens (MIT, open-props.style), đổi tiền tố
+   --tk- để không va biến CSS của template. */
+:root {
+  --tk-shadow-color: 220 40% 2%;
+  --tk-shadow-strength: 25%;
+  --tk-shadow-2: 0 3px 5px -2px hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 3%)),
+                 0 7px 14px -5px hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 5%));
+  --tk-shadow-3: 0 -1px 3px 0 hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 2%)),
+                 0 1px 2px -5px hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 2%)),
+                 0 2px 5px -5px hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 4%)),
+                 0 4px 12px -5px hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 5%)),
+                 0 12px 15px -5px hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 7%));
+  --tk-shadow-4: 0 -2px 5px 0 hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 2%)),
+                 0 1px 1px -2px hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 3%)),
+                 0 2px 2px -2px hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 3%)),
+                 0 5px 5px -2px hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 4%)),
+                 0 9px 9px -2px hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 5%)),
+                 0 16px 16px -2px hsl(var(--tk-shadow-color) / calc(var(--tk-shadow-strength) + 6%));
+}
+
+{% if components.badge_style == 'ribbon' %}
+/* Dải băng đuôi nheo: khối màu nhấn phẳng, 2 đầu cắt chữ V bằng clip-path. */
+.badge--ribbon {
+  background: {{ theme_color }} !important;
+  color: {{ components.on_theme }} !important;
+  -webkit-text-fill-color: {{ components.on_theme }} !important;
+  text-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 0.4em 1.3em !important;
+  letter-spacing: 0.08em !important;
+  font-weight: 800 !important;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 0.6em) 50%, 100% 100%, 0 100%, 0.6em 50%);
+}
+.badge--ribbon::before, .badge--ribbon::after { display: none !important; }
+{% endif %}
+
+{% if components.badge_style == 'capsule' %}
+/* Viên nang 2 màu "NHÃN | GIÁ TRỊ": nửa trái tối trung tính, nửa phải màu nhấn. */
+.badge--capsule {
+  display: inline-flex !important;
+  align-items: stretch;
+  gap: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 999px !important;
+  overflow: hidden;
+  box-shadow: var(--tk-shadow-3) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  text-shadow: none !important;
+}
+.badge--capsule::before, .badge--capsule::after { display: none !important; }
+.badge--capsule .cap-l, .badge--capsule .cap-r {
+  font-size: inherit;
+  line-height: 1.15;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+.badge--capsule .cap-l {
+  background: rgba(15, 23, 42, 0.92);
+  color: #FFFFFF;
+  -webkit-text-fill-color: #FFFFFF;
+  padding: 0.38em 0.7em 0.38em 1em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.badge--capsule .cap-r {
+  background: {{ theme_color }};
+  color: {{ components.on_theme }};
+  -webkit-text-fill-color: {{ components.on_theme }};
+  padding: 0.38em 1em 0.38em 0.7em;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+{% endif %}
+
+{% if components.stat_style in ('unit', 'burst') %}
+/* Hero Stat: đơn vị nhỏ nhấc lên ngang đỉnh chữ số ("50" + "%"), con số được trọn chiều cao.
+   vertical-align tính theo cỡ của chính đơn vị (0.46em của stat): nhấc ~0.88em đưa đỉnh "%"
+   ngang đỉnh chữ số (chiều cao chữ số ~0.72em stat = 1.57em đơn vị; đỉnh đơn vị ~0.72em). */
+.stat-num { font-size: 1em; }
+.stat-unit {
+  font-size: 0.46em;
+  vertical-align: 0.88em;
+  margin-left: 0.04em;
+  letter-spacing: 0;
+}
+/* Đơn vị là chữ (TRIỆU, NGHÌN, VNĐ): giữ đường chân chữ, to hơn ký hiệu một chút. */
+.stat-unit--word {
+  font-size: 0.5em;
+  vertical-align: baseline;
+  margin-left: 0;
+}
+{% endif %}
+
+{% if components.stat_style == 'burst' %}
+/* Sao nổ sau con số: nền màu nhấn cắt hình sao 24 cánh, chữ màu tương phản với nền đó. */
+.hero-seg--burst {
+  background: {{ theme_color }} !important;
+  color: {{ components.on_theme }} !important;
+  -webkit-text-fill-color: {{ components.on_theme }} !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  text-shadow: none !important;
+  padding: 0.3em 0.45em 0.24em;
+  clip-path: {{ components.burst_polygon }};
+  /* Sao CHIẾM chỗ thật trong dòng (đổi lấy chút cỡ hero). Đã thử lề âm cho sao tràn ra ngoài:
+     giữ được cỡ hero nhưng sao đè lên badge + subhead (squint C3 bắt được) -> bỏ. */
+  margin: 0 0.05em;
+}
+{% endif %}
+{% endif %}

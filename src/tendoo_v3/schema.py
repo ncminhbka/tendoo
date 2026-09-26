@@ -61,6 +61,11 @@ class TendooCreativePlan:
     # Ý đồ thị giác (ROADMAP §3.3) -- quyết định ngưỡng tương phản squint test. None = intent mặc
     # định của template (catalog `visual_intents[0]`). LLM điền ở GĐ 3.
     visual_intent: Optional[str] = None
+    # Linh kiện đồ hoạ GĐ 2 (ROADMAP §4.4, danh mục `catalog.COMPONENT_STYLES`, xử lý ở
+    # components.py). None = mặc định (pill / plain / none) -> poster y hệt trước GĐ 2.
+    badge_style: Optional[str] = None
+    stat_style: Optional[str] = None
+    decor: Optional[str] = None
 
     style: StyleConfig = field(default_factory=StyleConfig)
 
@@ -183,6 +188,9 @@ class TendooCreativePlan:
             steps=steps,
             orientation=data.get("orientation"),
             visual_intent=data.get("visual_intent"),
+            badge_style=data.get("badge_style"),
+            stat_style=data.get("stat_style"),
+            decor=data.get("decor"),
             style=style,
             # "background_prompt" chấp nhận thêm làm alias: hệ thống prompt LLM từng
             # dùng tên này trước khi thống nhất về "scene_prompt" (2026-09-15) -- giữ
