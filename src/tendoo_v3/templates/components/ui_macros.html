@@ -62,9 +62,9 @@
 {% endmacro %}
 
 {# 3. RENDER SUBHEAD (Sắc nét tự nhiên, không lem mờ quầng đen trên nền sáng) #}
-{% macro render_subhead(subhead, budget=none, extra_cls='', max_w=none) %}
+{% macro render_subhead(subhead, budget=none, extra_cls='', max_w=none, cls='subhead-title') %}
   {% if subhead %}
-    <div class="subhead-title {{ extra_cls }}"
+    <div class="{{ cls }} {{ extra_cls }}"
          data-autofit
          data-min-font="{{ budget.min_font if (budget and budget.min_font) else 12 }}"
          data-max-font="{{ budget.max_font if (budget and budget.max_font) else 26 }}"
