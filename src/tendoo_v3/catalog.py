@@ -20,6 +20,11 @@ from typing import Any, Dict, List, Optional
 # `default_orientation`: template có biến thể hướng (trái/phải/góc) -- hàm zone nhận `orientation`,
 # mặc định giá trị này khi plan không chỉ định. Không khai báo = template không có hướng.
 # `visual_intents`: intent template phục vụ (phần tử đầu = mặc định), xem INTENT_PROFILES.
+# `capacity_chars` / `capacity_chars_safe` (GĐ 1, ĐO bằng scripts/calibrate_capacity.py 26/09 -- không tuyên bố):
+#   số ký tự nội dung tối đa theo tỉ lệ khung hình mà poster còn (a) giữ tương phản điểm neo >= ngưỡng intent
+#   VÀ không mất chữ / (b) chỉ không mất chữ. Đo với hero PHẲNG + chính sách cỡ chữ hiện tại: (a) phần lớn chỉ
+#   13 ký tự (= chỉ có hero) vì tỉ lệ trần hero/trần subhead < ngưỡng -- ĐO CHÍNH SÁCH, chưa đo hình học
+#   (ROADMAP §3.4 bản đo lần 2). Cổng 3 hiện chỉ nên dùng (b) làm giới hạn cứng.
 # `required`: template được chọn mà thiếu field này thì poster lệch bản chất (Cổng 2 cảnh báo).
 # Các thuộc tính slot khác trong ví dụ §6.2 (supports_markup, max_items) CHƯA khai
 # báo: chưa có code nào đọc chúng, và chưa có số đo cho max_items.
@@ -30,6 +35,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "split_left_full",
         "visual_intents": ["product_showcase", "big_number_deal"],
+        "capacity_chars": {"1:1": 13, "9:16": 95, "16:9": 13, "4:5": 13},
+        "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 611, "4:5": 699},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -47,6 +54,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "split_right_full",
         "visual_intents": ["product_showcase", "big_number_deal"],
+        "capacity_chars": {"1:1": 13, "9:16": 95, "16:9": 13, "4:5": 13},
+        "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 611, "4:5": 699},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -64,6 +73,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "sandwich_standard",
         "visual_intents": ["big_number_deal", "hook_headline", "product_showcase"],
+        "capacity_chars": {"1:1": 154, "9:16": 13, "16:9": 64, "4:5": 154},
+        "capacity_chars_safe": {"1:1": 699, "9:16": 681, "16:9": 611, "4:5": 699},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -81,6 +92,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "sandwich_standard",
         "visual_intents": ["big_number_deal", "hook_headline", "product_showcase"],
+        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 699, "4:5": 699},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -99,6 +112,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "bottom_band",
         "default_orientation": "left",
         "visual_intents": ["testimonial_trust"],
+        "capacity_chars": {"1:1": 21, "9:16": 21, "16:9": 21, "4:5": 21},
+        "capacity_chars_safe": {"1:1": 694, "9:16": 565, "16:9": 694, "4:5": 694},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -119,6 +134,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "luxury_card",
         "default_orientation": "center",
         "visual_intents": ["hook_headline"],
+        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 699, "4:5": 699},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -138,6 +155,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "corner_bl",
         "default_orientation": "bottom_left",
         "visual_intents": ["product_showcase", "hook_headline"],
+        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars_safe": {"1:1": 570, "9:16": 570, "16:9": 570, "4:5": 570},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -156,6 +175,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "top_band",
         "default_orientation": "left",
         "visual_intents": ["matrix_board"],
+        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars_safe": {"1:1": 322, "9:16": 224, "16:9": 322, "4:5": 322},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -174,6 +195,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "diagonal_slash",
         "default_orientation": "left",
         "visual_intents": ["big_number_deal", "product_showcase"],
+        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars_safe": {"1:1": 570, "9:16": 570, "16:9": 224, "4:5": 570},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -192,6 +215,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "feedback_card",
         "default_orientation": "left",
         "visual_intents": ["testimonial_trust"],
+        "capacity_chars": {"1:1": 99, "9:16": 99, "16:9": 0, "4:5": 99},
+        "capacity_chars_safe": {"1:1": 656, "9:16": 482, "16:9": 656, "4:5": 656},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -213,6 +238,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "bottom_band",
         "default_orientation": "left",
         "visual_intents": ["matrix_board"],
+        "capacity_chars": {"1:1": 0, "9:16": 0, "16:9": 0, "4:5": 0},
+        "capacity_chars_safe": {"1:1": 784, "9:16": 784, "16:9": 784, "4:5": 784},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -232,6 +259,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "l_frame",
         "default_orientation": "left",
         "visual_intents": ["product_showcase"],
+        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars_safe": {"1:1": 686, "9:16": 686, "16:9": 686, "4:5": 686},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -250,6 +279,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "menu_price_board",
         "default_orientation": "left",
         "visual_intents": ["matrix_board"],
+        "capacity_chars": {"1:1": 356, "9:16": 185, "16:9": 53, "4:5": 185},
+        "capacity_chars_safe": {"1:1": 511, "9:16": 511, "16:9": 511, "4:5": 511},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -267,6 +298,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "festive_center",
         "visual_intents": ["festive_event"],
+        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 699, "4:5": 699},
         "slots": {
             "hero": {},
             "subhead": {},

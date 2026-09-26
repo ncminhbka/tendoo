@@ -42,3 +42,12 @@ def test_budget_fn_returns_hero(template):
     zones = {k: _zone_to_ctx(v) for k, v in get_zones(template, 1024, 1024).items()}
     budget = compute_template_budget(template, plan, zones, 1024, 1024)
     assert budget.get("hero", {}).get("max_font"), f"{template}: ngân sách không có hero.max_font"
+
+
+@pytest.mark.parametrize("template", TEMPLATES)
+def test_capacity_declared_for_every_aspect(template):
+    info = TEMPLATE_CATALOG[template]
+    for key in ("capacity_chars", "capacity_chars_safe"):
+        assert set(info[key]) == set(info["aspect_ratios"]), f"{template}.{key} thiếu tỉ lệ khung hình"
+    for asp, n in info["capacity_chars"].items():
+        assert 0 <= n <= info["capacity_chars_safe"][asp], f"{template} {asp}: sức chứa thẩm mỹ > an toàn"

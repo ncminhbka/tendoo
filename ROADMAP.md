@@ -285,6 +285,33 @@ Band sức chứa (ranh giới sẽ chốt bằng bản đo lần 2):
 > template bị chính SUBHEAD ghim trần**, tức cùng một nguyên nhân đã chứng minh là sửa được.
 > **Không được dùng bảng này để quyết định xây template mới.** Phải đo lại sau §4.1 + §4.2.
 
+**Bản đo LẦN 2 (26/09, GĐ 1 — `scripts/calibrate_capacity.py`):** thang nội dung tất định 16 bậc (13 → ~780 ký tự, chỉ dùng field có trong `slots`), 14 template × 4 khung hình, style cố định (Be Vietnam Pro, plain_elegant). Số ký tự = điểm gãy (bậc cuối trước lần trượt đầu tiên), khoảng min–max qua 4 khung hình:
+
+| template | intent (ngưỡng) | An toàn | Thẩm mỹ — hiện tại | + `hero_parts` | + `hero_parts` + trần subhead theo intent |
+| :--- | :--- | ---: | ---: | ---: | ---: |
+| `before_after_split` | testimonial_trust (3.0) | 565–694 | 21 | 21 | 365–694 |
+| `customer_feedback_card` | testimonial_trust (3.0) | 482–656 | 0–99 | 0–99 | 0–656 |
+| `diagonal_slash` | big_number_deal (4.0) | 224–570 | 13 | 13 | 396–699 |
+| `grand_opening_banner` | festive_event (3.5) | 699 | 13 | 13 | 64–699 |
+| `l_frame_showcase` | product_showcase (4.0) | 686 | 13 | 13 | 211–357 |
+| `lifestyle_corner_pod` | product_showcase (4.0) | 570 | 13 | 13 | 570 |
+| `luxury_centered_card` | hook_headline (4.0) | 699 | 13 | 13 | 681–699 |
+| `menu_price_board` | matrix_board (2.5) | 511 | 53–356 | 511 | 511 |
+| `recruitment_board` | matrix_board (2.5) | 224–322 | 13 | 154 | 154 |
+| `sandwich_bottom_heavy` | big_number_deal (4.0) | 699 | 13 | 13 | 95–699 |
+| `sandwich_top_heavy` | big_number_deal (4.0) | 611–699 | 13–154 | 64–699 | 64–699 |
+| `split_left` | product_showcase (4.0) | 611–699 | 13–95 | 13–95 | 699 |
+| `split_right` | product_showcase (4.0) | 611–699 | 13–95 | 13–95 | 699 |
+| `step_process_roadmap` | matrix_board (2.5) | 784 | 0 | 0 | 0 |
+
+**Đọc bảng:**
+1. **An toàn** (không mất chữ) rất cao, 224–784 ký tự — nhưng ở mức đó autofit co mọi thứ về sàn: chỉ dùng làm **giới hạn cứng**.
+2. **Thẩm mỹ hiện tại** gần như bằng 0 (13 = chỉ có hero). Tương phản điểm neo **gần như không đổi theo lượng chữ** (vd luxury giữ 3.63x từ bậc 1 đến bậc 10): nó bị khoá bởi **tỉ lệ trần hero / trần subhead** đặt sẵn trong từng hàm ngân sách (< ngưỡng). Tức là bảng vẫn **đo chính sách**, như cảnh báo của bản đo lần 1.
+3. Riêng `hero_parts` chỉ mở khoá `sandwich_top_heavy` (template duy nhất đã có trần subhead = hero/4 từ 0A) và bảng matrix. **Cần CẢ HAI**: `hero_parts` (hero to ra, Luật 2) + trần subhead = trần hero ÷ ngưỡng intent → hầu hết template chứa vài trăm ký tự vẫn đạt ngưỡng. Xác nhận bằng số đo điều ROADMAP gọi là "hai luật cộng hưởng".
+4. **Nhưng** trần subhead theo intent áp RIÊNG LẺ (hero phẳng) đã được thử trên 379 case suite: C1 62→94 nhưng C2 tường chữ 213→138, subhead <14px 0→24, tổng đạt 4 điều kiện chỉ 51→54 — **ngõ cụt thu nhỏ chữ phụ, lần thứ hai** (lần đầu: 0A+). ⇒ **Quyết định để GĐ 3**: bật trần subhead theo intent CÙNG LÚC với `hero_parts` từ LLM thật, đo lại C1–C4 + cỡ chữ tối thiểu.
+5. `step_process_roadmap` = 0 ở mọi kịch bản: hero trần 52px quá nhỏ so với khối các bước — vấn đề hình học riêng, cần xem ở GĐ 6.
+6. Catalog đã ghi `capacity_chars` (thẩm mỹ, chính sách hiện tại) và `capacity_chars_safe`. **Cổng 3 hiện chỉ nên dùng `capacity_chars_safe`.**
+
 ### 3.5. Khi nào mới được xây template mới
 
 Đúng một điều kiện: **bản đồ phủ sóng lần 2 cho thấy một ô (họ mask × intent × band) trống,
@@ -577,9 +604,9 @@ Không có deadline cứng. Xếp theo **thứ tự phụ thuộc**, mỗi giai 
 | **0A+** | Lan Luật 1 ra 13 hàm budget còn lại; vá đảo ngược thứ bậc Cấp 2 vs Cấp 3 (extra/cta/badge) | Không còn phần tử Cấp 3 nào to hơn Cấp 2 trên cả 212 case | ✅ **XONG 26/09** — 0/379 case đảo bậc (từ 53), cỡ chữ phụ giữ nguyên ngoài 53 case đó; **không** dùng công thức chia theo hero (xem kết quả đo cuối §4.1) |
 | **0B** | `catalog.py` declarative (§6.2); migrate 13 template sang component layer; Cổng 2+3 | ~~Thêm template mới chỉ chạm **2 file**~~ → **sửa 26/09 (người duyệt đồng ý):** thêm template chạm **4 file** (template.html, catalog.py, hàm zone, hàm ngân sách), **không còn điểm chạm ẩn**, thiếu chỗ nào test báo đúng chỗ đó; 4 set cờ hard-code bị xoá. Xuống 2 file = gom 14 hàm budget/zone về khai báo — §8 xếp SAU GĐ 1 | ✅ **XONG 26/09** (trừ Cổng 3: chờ capacity GĐ 1). Điểm chạm ẩn đã bỏ: 14 lời gọi budget + chuỗi if/elif + 13 biến tên riêng trong renderer (nay bảng `_TEMPLATE_BUDGETS`, template đọc chung biến `budget`, chỉ tính budget của template đang render); tuple tên template trong `get_zones` (nay `default_orientation` trong catalog). HTML + mask 379 case giống hệt từng byte; `tests/test_template_registry.py` kiểm đủ bộ (đã thử cố tình thiếu -> đỏ đúng chỗ). **Trước đó:** ✅ 0B-3 (26/09): **14/14 template dùng macro chung** → cả 14 có `hero_parts` (Luật 2; trước chỉ 1). 8 template migrate kiểu *markup-only* (giữ CSS riêng, chỉ include `hero_phrase.css`) cho ảnh **giống hệt từng điểm ảnh**; 6 template migrate sớm hơn (include toàn bộ component CSS + trung hoà) khác ≤4.7% do badge nay autofit, đã duyệt từng loại. **Hợp nhất CSS phần tử giữa các template CHƯA làm** — là quyết định thiết kế (đổi ảnh), cần người duyệt. ✅ 0B-2 Cổng 2 (xem §2.5). ✅ 0B-1 (26/09): `slots` khai báo cho 14 template (lấy từ template.html, có test giữ đồng bộ), 4 set cờ `_HAS_*_TEMPLATES` đã xoá, 3 bản sao cách tính cờ gom về `renderer.compute_geometry_flags` — HTML + mask của 379 case **giống hệt từng byte** trước/sau. ⚠️ Cổng 3 cần `capacity_chars` **đo ở GĐ 1** — 0B chỉ dựng được khung, chưa có số để reroute |
 | **0C** | Cổng 4 — phát hiện tràn lúc chạy (`window.__tendoo_overflow` + `page.evaluate`) | 6 case tràn hiện tại bị bắt và phân loại đúng (thật / báo động giả) | ✅ **XONG 26/09** (làm TRƯỚC 0B-3 theo §8: cần lưới phát hiện tràn trước khi viết lại HTML 13 template). Trên 379 case: 17 phần tử / 15 case vượt ngân sách → **2 mất chữ thật** (`sbh_11_16x9_heavy` ×2 suite: dòng email dải đỉnh bị cắt nửa) + 15 báo động giả. Đối chiếu bằng mắt 8/17 phần tử, khớp 8/8. Test `test_no_new_text_loss` chốt danh sách |
-| **1** | Squint test tự động hoá (§4.5) vào CI; đo lại bản đồ phủ sóng **lần 2** theo đúng profile intent | Có bảng sức chứa thật ⇒ điền `capacity_chars` vào catalog | 🔄 **Đang làm.** ✅ 1A+1B (26/09): squint 4 điều kiện đo trong `probe_type_hierarchy.py --bg` với ngưỡng theo intent (`catalog.INTENT_PROFILES`, `visual_intents` mỗi template, `plan.visual_intent`); điều kiện 2 định nghĩa lại (≥3 phần tử ±20% thuộc ≥2 CẤP khác nhau); điều kiện 3 đo WCAG trên nền chụp thật (ẩn chữ). CI bánh cóc `tests/squint_baseline.json`. **Mốc: 51/379 đạt cả 4** — C1 neo 62, C2 tường 213, C3 nền 353, C4 chữ 377. Kèm sửa: `get_contrasting_text_color` ngưỡng cứng 0.40 → chọn màu tương phản cao hơn (CTA trắng/hồng 2.65:1 → chữ đậm ~7:1; 136 poster đổi màu chữ nút/badge); nền giả test nay theo tông (tông sáng lần đầu được test trên nền sáng). ⏳ 1C: đo sức chứa |
+| **1** | Squint test tự động hoá (§4.5) vào CI; đo lại bản đồ phủ sóng **lần 2** theo đúng profile intent | Có bảng sức chứa thật ⇒ điền `capacity_chars` vào catalog | ✅ **XONG 26/09.** ✅ 1A+1B (26/09): squint 4 điều kiện đo trong `probe_type_hierarchy.py --bg` với ngưỡng theo intent (`catalog.INTENT_PROFILES`, `visual_intents` mỗi template, `plan.visual_intent`); điều kiện 2 định nghĩa lại (≥3 phần tử ±20% thuộc ≥2 CẤP khác nhau); điều kiện 3 đo WCAG trên nền chụp thật (ẩn chữ). CI bánh cóc `tests/squint_baseline.json`. **Mốc: 51/379 đạt cả 4** — C1 neo 62, C2 tường 213, C3 nền 353, C4 chữ 377. Kèm sửa: `get_contrasting_text_color` ngưỡng cứng 0.40 → chọn màu tương phản cao hơn (CTA trắng/hồng 2.65:1 → chữ đậm ~7:1; 136 poster đổi màu chữ nút/badge); nền giả test nay theo tông (tông sáng lần đầu được test trên nền sáng). ✅ 1C (26/09): `scripts/calibrate_capacity.py`, `capacity_chars` + `capacity_chars_safe` cho 14 template × 4 khung hình trong catalog; bảng + phân tích ở §3.4 bản đo lần 2. **DoD đạt về hình thức, nhưng sức chứa thẩm mỹ bị khoá bởi chính sách cỡ chữ** → quyết định trần subhead theo intent dời sang GĐ 3 (cùng `hero_parts` thật) |
 | **2** | Linh kiện UI: Hero Stat, Ribbon, Split Capsule, Open Props shadows, SVG filters, `<textPath>` | Render mẫu đạt 4 điều kiện §4.5 với đủ các hiệu ứng | |
-| **3** | Đưa `hero_parts` + `visual_intent` vào system prompt LLM; hạ hint xuống 1 dòng/template | Poster sinh từ brief thật (không phải plan viết tay) đạt §4.5 | |
+| **3** | Đưa `hero_parts` + `visual_intent` vào system prompt LLM; hạ hint xuống 1 dòng/template; **bật trần subhead = trần hero ÷ ngưỡng intent cùng lúc** (số đo §3.4 lần 2) | Poster sinh từ brief thật (không phải plan viết tay) đạt §4.5; đo lại sức chứa thẩm mỹ với `hero_parts` thật | |
 | **4** | Siết tương phản nền: worst-case patch + ngưỡng bật scrim | Chữ đạt WCAG AA cả trên nền có vệt sáng cục bộ | |
 | **5** | Maskless Mode + **đo** tốc độ thật | Poster thuần chữ đạt §4.5; có số wall-clock thật | |
 | **6** | Template mới — **chỉ cho các ô trống mà bản đồ lần 2 chỉ ra** | Mỗi cái: 2 file + 16-case suite đạt §4.5 | Dự kiến 3–5 cái, không phải 24. Band S showcase chuyển sang GĐ 9 (§10.8) |
