@@ -295,7 +295,10 @@ def _read_and_encode_font(file_path_str: str) -> str:
 def _font_faces(meta: Dict[str, Any]) -> List[str]:
     """Các khối @font-face (Base64) của 1 họ font. Họ có "weights" -> 1 khối/độ đậm THẬT để
     Chromium chọn đúng file thay vì tô đậm giả; họ 1 file -> 1 khối `font-weight: normal`."""
-    files = meta.get("weights") or {"normal": meta["file"]}
+    # Họ 1 file: khai báo PHẠM VI 100 900 thay vì `normal` (400) -- CSS xin 900 cho hero thì Chromium
+    # KHÔNG tô đậm giả lên font vốn đã đậm (Anton, Gotham Ultra...); font variable (Oswald, Playfair,
+    # Dancing Script) còn được độ đậm THẬT theo trục wght (GĐ 7b, R3).
+    files = meta.get("weights") or {"100 900": meta["file"]}
     family, faces = meta["css_family"], []
     for weight, fname in files.items():
         fmt = "woff2" if fname.endswith(".woff2") else meta["format"]

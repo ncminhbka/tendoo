@@ -638,9 +638,9 @@ Không có deadline cứng. Xếp theo **thứ tự phụ thuộc**, mỗi giai 
 
 | # | Việc | Đo bằng gì | Ở đâu |
 | :-- | :--- | :--- | :--- |
-| R1 | GĐ 6(c): sandwich_top/bottom 16:9 sức chứa thẩm mỹ 64/95 — chẩn đoán như 6A | `calibrate_capacity --oracle` | local |
+| R1 | ✅ 26/09 sandwich_top_heavy 16:9: dải đầu 27% → 30% (33% tốt hơn nhưng mask vượt trần cứng 50%) — thẩm mỹ 64 → 95, an toàn 396 → 611. 16:9 vẫn là khung chật nhất (hero 56 vs subhead 15 ở nội dung dày); sandwich_bottom 95 giữ nguyên | `calibrate_capacity --oracle` | local |
 | R2 | ✅ 26/09 GĐ 7a: ngắt dòng theo nghĩa — `text-wrap: balance` (hero/subhead/quote) + khoảng trắng không ngắt (`hero_markup.bind_nonbreaking`: số+đơn vị mọi nơi; từ ghép thông dụng ở subhead/quote). `probe_line_breaks.py` trên 436 khối nhiều dòng: chữ mồ côi 172 → 82, khối lởm chởm 135 → 9, số+đơn vị bị tách 4 → 0, từ ghép bị tách 116 → 106. **Đánh đổi đo được:** nối cứng từ ghép trong HERO làm cột hẹp (split/diagonal) thu nhỏ hero (split_left tương phản 3.42 → 2.93) → hero chưa nối từ ghép; việc tiếp: JS thử nối sau autofit, giữ nếu hero co ≤ 10% | local |
-| R3 | GĐ 7b: font headline 1 độ đậm bị Chromium tô đậm giả khi CSS xin 900 | so ảnh; đếm font thiếu độ đậm | local |
+| R3 | ✅ 26/09 GĐ 7b: họ font 1 file khai báo `font-weight: 100 900` (trước `normal`) → hết tô đậm giả khi CSS xin 900; 3 font variable được độ đậm thật. 129/395 ảnh đổi (hero sắc nét hơn); squint đạt-cả-4 giữ 98, C2 −1 (luxury) — chấp nhận, ghi nhận | so ảnh + squint | local |
 | R4 | GĐ 7c: lockup — bộ sắp xếp cụm hero_parts có sẵn (xếp chồng, số bên trái, chữ dẫn nghiêng...) | squint + bộ mẫu | local |
 | R5 | GĐ 8: style pack theo dịp + hoạ tiết trong decor-layer | squint + nhìn | local |
 | R6 | GĐ 9: template showcase band S + định tuyến S/M/L/XL ở Cổng 3 | squint + sức chứa | local |
