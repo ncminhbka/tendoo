@@ -55,3 +55,15 @@ def test_intent_membership():
     assert check_plan(_plan(visual_intent="big_number_deal")) == []
     assert any("không có trong danh mục" in i for i in check_plan(_plan(visual_intent="xyz")))
     assert any("không hợp template" in i for i in check_plan(_plan(visual_intent="matrix_board")))
+
+
+
+def test_gate2_flags_list_items_beyond_render_limit():
+    """Trước GĐ 4 renderer cắt extra_texts/steps quá trần mà không ai báo."""
+    from tendoo_v3.catalog import LIST_LIMITS
+    from tendoo_v3.validators import content_chars
+
+    n = LIST_LIMITS["extra_texts"]
+    plan = TendooCreativePlan(template="split_left", hero="SALE", extra_texts=[f"Dòng {i}" for i in range(n + 2)])
+    assert any("MẤT" in i and f"Dòng {n}" in i for i in check_plan(plan))
+    assert content_chars(plan) == len("SALE") + sum(len(f"Dòng {i}") for i in range(n))

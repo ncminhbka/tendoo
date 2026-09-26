@@ -494,7 +494,15 @@ COMMON_AUTOFIT_JS = """
       const parent = el.parentElement;
       if (!parent) return;
       let maxH = parent.clientHeight;
+      // Bề rộng KHẢ DỤNG của cha, không phải bề rộng hiện tại: nhiều template bọc hero trong
+      // khối co theo nội dung (flex/inline-block) -> cha hẹp vì con nhỏ, con nhỏ vì cha hẹp;
+      // đo 26/09: 45/379 hero kẹt ở cỡ CSS ban đầu dù còn dư chiều cao (step_process 11/21,
+      // recruitment 11/22). Cho con rộng "vô hạn" để cha giãn tới giới hạn thật của nó, đọc
+      // rồi trả lại. Cha có bề rộng cố định thì con số không đổi.
+      const prevWidth = el.style.width;
+      el.style.width = '100000px';
       let maxW = parent.clientWidth;
+      el.style.width = prevWidth;
       if (el.dataset.maxHeight) maxH = parseFloat(el.dataset.maxHeight);
       if (el.dataset.maxWidth) maxW = parseFloat(el.dataset.maxWidth);
 

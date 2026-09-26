@@ -514,11 +514,13 @@ def _recruitment_board(
     # ~29px -- TUYỆT ĐỐI không đụng nhánh has_qr=True). Khi không QR, col-left/col-mid
     # tự nhiên chỉ cần 83-111px (1:1/4:5/16:9) hoặc tổng col-left+bottom-split ~164px
     # (9:16, layout cột dọc riêng) -- co board_h với margin an toàn rộng (~20-45px).
+    # GĐ 4 (26/09): header 15%/18% -> 20%/22% (cùng lý do step_process_roadmap: hero bị chiều cao
+    # khoá). Đạt đủ 4 điều kiện squint 2 -> 12/22 (hero phẳng), 16/16 (hero_parts); không mất chữ.
     aspect = w / h
     density = max(0.35, min(1.0, density))
     density = 0.80 + (density - 0.35) / (1.0 - 0.35) * (1.0 - 0.80)
     if aspect < 0.7:  # 9:16 Narrow Portrait
-        head_h = 0.15
+        head_h = 0.20
         if has_qr:
             # 0.20 từng đo thấy tràn thật ~7-10px qua Playwright (board-card scrollHeight
             # 224 > clientHeight 215 ở case recruit_10_9x16_left_bullet, 3 dòng extra
@@ -533,7 +535,7 @@ def _recruitment_board(
             # (~164.5px tổng cộng gap) -- 0.195 (199.7px) dư ~35px margin an toàn.
             board_h = 0.195
     elif aspect >= 1.5:  # 16:9 Wide Landscape
-        head_h = 0.18
+        head_h = 0.22
         if has_qr:
             board_h = 0.22
         else:
@@ -541,7 +543,7 @@ def _recruitment_board(
             # (109.4px) dư ~18px margin an toàn.
             board_h = 0.19
     else:  # 1:1, 4:5
-        head_h = 0.15
+        head_h = 0.20
         if has_qr:
             board_h = 0.17
         else:
@@ -555,7 +557,9 @@ def _recruitment_board(
 
 
 def _step_process_roadmap(w: float, h: float, orientation: str = "left", has_qr: bool = True) -> Dict[str, Rect]:
-    # .top-header thanh mảnh ở đỉnh: cao 15% (badge + hero + subhead)
+    # .top-header ở đỉnh: cao 20% (22% ở 16:9) -- GĐ 4 (26/09) nâng từ 15%/18%: hero tiêu đề dài
+    # bị chiều cao khoá ở 36-41px < 2.5x subhead 19.5px -> C1 0/21; nay hero ~49.5px, C1 11/21,
+    # đạt đủ 4 điều kiện 0 -> 9/21, không mất chữ (probe_type_hierarchy --template step_process_roadmap).
     # .roadmap-platform bệ quy trình tinh gọn: cao 16.5% ở 1:1/4:5 để triệt tiêu khoảng trống thừa
     # Khoảng giữa (>68% chiều cao poster) HOÀN TOÀN MỞ CHO ẢNH GYM/FITNESS/SPA/SẢN PHẨM!
     #
@@ -568,7 +572,7 @@ def _step_process_roadmap(w: float, h: float, orientation: str = "left", has_qr:
     # -- TUYỆT ĐỐI không đụng.
     aspect = w / h
     if aspect < 0.7:  # 9:16 Narrow Portrait
-        head_h = 0.15
+        head_h = 0.20
         if has_qr:
             # 0.22 từng đo thấy tràn thật ~15-17px: steps-grid (2x2 khi 4 bước) + gap 8px +
             # roadmap-bottom-split (cta/store cột + qr-kiosk badge+QR) + padding 22px cộng
@@ -581,10 +585,10 @@ def _step_process_roadmap(w: float, h: float, orientation: str = "left", has_qr:
             # tổ hợp số bước/độ dài).
             plat_h = 0.19
     elif aspect >= 1.5:  # 16:9 Wide Landscape
-        head_h = 0.18
+        head_h = 0.22
         plat_h = 0.22
     else:  # 1:1, 4:5
-        head_h = 0.15
+        head_h = 0.20
         plat_h = 0.165
 
     header = _frac(0.04, 0.0, 0.96, head_h, w, h)

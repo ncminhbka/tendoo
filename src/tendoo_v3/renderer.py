@@ -23,7 +23,7 @@ from PIL import Image
 from tendoo_core.colors import ensure_contrast
 from tendoo_core.fonts import resolve_font
 from tendoo_core.poster_renderer import PosterRenderer
-from tendoo_v3.catalog import INTENT_PROFILES, TEMPLATE_CATALOG, resolve_intent
+from tendoo_v3.catalog import INTENT_PROFILES, LIST_LIMITS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import build_components, enrich_hero_parts
 from tendoo_v3.geometry import compute_density_score, geometry_drivers, get_zones
 from tendoo_v3.icons import (
@@ -51,9 +51,9 @@ logger = logging.getLogger(__name__)
 # tự sinh thêm không gian, nên số lượng phần tử vẫn phải có trần hợp lý làm lưới an
 # toàn cuối cùng (đã đo thấy thật: extra-tag-row/board-col-left không giới hạn số
 # dòng có thể đẩy nội dung tràn ra ngoài vùng đã dành cho nó).
-MAX_EXTRA_TEXTS = 6
+MAX_EXTRA_TEXTS = LIST_LIMITS["extra_texts"]
 MAX_STORE_ITEMS = 4
-MAX_STEPS = 6
+MAX_STEPS = LIST_LIMITS["steps"]
 
 
 def compute_type_scale_ratio(style: StyleConfig) -> float:

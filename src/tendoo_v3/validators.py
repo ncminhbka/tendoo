@@ -17,7 +17,7 @@ import logging
 from typing import List
 
 from tendoo_core.fonts import FONT_ALIASES, FONT_CATALOG
-from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, TEMPLATE_CATALOG, resolve_intent
+from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, LIST_LIMITS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import STAMP_FONT_MIN, split_stat, stamp_ring
 from tendoo_v3.schema import TendooCreativePlan
 from tendoo_v3.styles import BACKGROUND_TONES, TEXT_EFFECT_ALIASES, TEXT_EFFECT_INTENTS, TEXT_EFFECTS
@@ -39,7 +39,11 @@ def content_chars(plan: TendooCreativePlan) -> int:
         v = getattr(plan, f, None)
         if f in ("qr_code", "rating") or not v:
             continue
-        n += sum(len(x) for x in v) if isinstance(v, list) else len(str(v))
+        if isinstance(v, list):
+            v = v[: LIST_LIMITS.get(f, len(v))]  # phần vượt trần không lên poster
+            n += sum(len(x) for x in v)
+        else:
+            n += len(str(v))
     return n
 
 
@@ -57,6 +61,11 @@ def check_plan(plan: TendooCreativePlan) -> List[str]:
         missing = [f for f, spec in slots.items() if spec.get("required") and not getattr(plan, f, None)]
         if missing:
             issues.append(f"template '{plan.template}' thiếu field chuyên biệt {missing} -- poster có thể lệch bản chất template")
+
+    for f, limit in LIST_LIMITS.items():
+        items = getattr(plan, f, None) or []
+        if len(items) > limit:
+            issues.append(f"{f} có {len(items)} dòng, poster chỉ hiển thị {limit} dòng đầu -- MẤT {items[limit:]}")
 
     if plan.visual_intent is not None:
         if plan.visual_intent not in INTENT_PROFILES:

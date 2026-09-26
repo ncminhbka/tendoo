@@ -13,6 +13,8 @@ from tendoo_v3.validators import content_chars
 LONG = ["Miễn phí giao hàng nội thành cho mọi đơn hàng trong tháng", "Tặng quà cho 100 khách hàng đầu tiên mỗi ngày",
         "Tích điểm đổi quà hấp dẫn cho thành viên thân thiết", "Bảo hành chính hãng 12 tháng trên toàn quốc",
         "Trả góp lãi suất 0% qua thẻ tín dụng", "Đổi trả miễn phí trong 7 ngày nếu lỗi nhà sản xuất"]
+# Dòng dài ~110 ký tự: chỉ 6 dòng đầu được đếm (LIST_LIMITS), nên vượt sức chứa phải nhờ độ dài.
+LONG = [x + ", áp dụng tại toàn bộ hệ thống cửa hàng và kênh trực tuyến chính thức" for x in LONG]
 
 
 def _plan(template, n_extra=0, **kw):
@@ -27,12 +29,12 @@ def test_nearest_aspect(given, expected):
 
 
 def test_plan_within_capacity_is_untouched():
-    plan = _plan("lifestyle_corner_pod", n_extra=2)
+    plan = _plan("lifestyle_corner_pod", n_extra=1)
     assert route_template(plan, "1:1") == (plan, None)
 
 
 def test_overflowing_plan_moves_to_bigger_template_same_intent_no_text_lost():
-    plan = _plan("lifestyle_corner_pod", n_extra=12, orientation="top_left", cta="MUA NGAY", store_info="Hotline: 1900 8888")
+    plan = _plan("lifestyle_corner_pod", n_extra=5, orientation="top_left", cta="MUA NGAY", store_info="Hotline: 1900 8888")
     chars = content_chars(plan)
     assert chars > capacity("lifestyle_corner_pod", "1:1", "capacity_chars_safe")
     routed, why = route_template(plan, "1:1")
@@ -46,16 +48,16 @@ def test_overflowing_plan_moves_to_bigger_template_same_intent_no_text_lost():
 
 def test_specialized_template_is_never_left_or_entered():
     """recruitment_board và menu_price_board cùng intent matrix_board, nhưng tuyển dụng -> menu là sai loại."""
-    plan = _plan("recruitment_board", n_extra=12)
+    plan = _plan("recruitment_board", n_extra=6)
     routed, why = route_template(plan, "9:16")
     assert routed is plan and "chuyên biệt" in why
     for _ in range(3):
-        routed, _ = route_template(_plan("split_left", n_extra=18), "16:9")
+        routed, _ = route_template(_plan("split_left", n_extra=6), "16:9")
         assert not TEMPLATE_CATALOG[routed.template].get("specialized")
 
 
 def test_no_candidate_keeps_plan_and_reports_gap():
-    plan = _plan("grand_opening_banner", n_extra=18)  # festive_event: chỉ 1 template phục vụ
+    plan = _plan("grand_opening_banner", n_extra=6)  # festive_event: chỉ 1 template phục vụ
     routed, why = route_template(plan, "1:1")
     assert routed is plan and "LỖ HỔNG" in why
 

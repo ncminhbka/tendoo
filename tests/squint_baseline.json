@@ -65,11 +65,11 @@
  },
  "recruitment_board": {
   "n": 22,
-  "c1": 0,
+  "c1": 13,
   "c2": 22,
   "c3": 20,
   "c4": 22,
-  "squint": 0
+  "squint": 12
  },
  "sandwich_bottom_heavy": {
   "n": 24,
@@ -105,10 +105,10 @@
  },
  "step_process_roadmap": {
   "n": 21,
-  "c1": 0,
+  "c1": 11,
   "c2": 21,
   "c3": 18,
   "c4": 21,
-  "squint": 0
+  "squint": 9
  }
 }

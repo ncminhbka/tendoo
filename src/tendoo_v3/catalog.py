@@ -349,6 +349,11 @@ INTENT_PROFILES: Dict[str, Dict[str, Any]] = {
 }
 
 
+# Trần số dòng của field dạng danh sách -- renderer cắt phần thừa (mask/CSS mỗi zone là khối cố
+# định, autofit chỉ co chữ chứ không sinh thêm chỗ). Cổng 2 cảnh báo khi vượt (trước GĐ 4: cắt
+# âm thầm), Cổng 3 chỉ đếm phần hiển thị.
+LIST_LIMITS: Dict[str, int] = {"extra_texts": 6, "steps": 6}
+
 # Linh kiện đồ hoạ GĐ 2 (ROADMAP §4.4) -- danh mục ĐÓNG, mỗi lựa chọn khai báo intent được dùng
 # (Luật 4: tránh "neon rơi vào thiệp mời VIP"). Lựa chọn đầu tiên của mỗi nhóm là mặc định và
 # giữ nguyên ảnh trước GĐ 2. Xử lý render: components.py.

@@ -640,9 +640,10 @@ Không có deadline cứng. Xếp theo **thứ tự phụ thuộc**, mỗi giai 
 | :--- | :--- | :--- |
 | Bản đồ sức chứa lần 1 bị hiểu nhầm là kết luận cuối | **Cao** | Đã ghi cảnh báo ngay trong §3.4; cấm dùng để quyết định xây template |
 | Kết quả GĐ 3 dựa trên "LLM lý tưởng" tất định (`hero_markup`), chưa phải LLM thật | **Cao** | Chạy LLM thật trên máy chủ với prompt mới; so tỉ lệ qua Cổng 1 + squint với oracle. Oracle chỉ phủ 21% hero (ước lượng thấp) |
-| `hero_parts` xuống dòng chiếm chiều cao của subhead ở `recruitment_board` (C2 22 → 10 trên bộ oracle) | Trung bình | Việc hình học riêng: cấp thêm chiều cao hero khi có hero_parts, hoặc giới hạn độ dài suffix |
-| Renderer âm thầm bỏ `extra_texts` quá `MAX_EXTRA_TEXTS` (6) — Cổng 2 không báo, Cổng 3 vẫn đếm | Trung bình | Thêm cảnh báo Cổng 2 khi vượt; hoặc Cổng 3 đổi template khi số dòng vượt |
-| `step_process_roadmap` sức chứa thẩm mỹ 0 ở mọi khung | Trung bình | Hero bị ô bước lấn chiều cao — sửa ngân sách chiều cao, đo lại |
+| ~~`hero_parts` xuống dòng chiếm chiều cao của subhead ở `recruitment_board`~~ | ✅ Đã sửa 26/09 | Chẩn đoán lúc đầu SAI (không phải chiều cao): autofit lấy bề rộng HIỆN TẠI của khối cha co-theo-nội-dung làm trần → hero kẹt ở cỡ CSS ban đầu (vòng lặp cha hẹp vì con nhỏ). Nay đo bề rộng KHẢ DỤNG của cha. Bộ oracle: đạt-cả-4 41 → 56/80, C2 56 → 72 |
+| ~~Renderer âm thầm bỏ `extra_texts` quá 6 dòng~~ | ✅ Đã sửa 26/09 | `catalog.LIST_LIMITS` dùng chung renderer/Cổng 2/Cổng 3: Cổng 2 báo dòng nào MẤT, Cổng 3 chỉ đếm phần hiển thị |
+| ~~`step_process_roadmap` C1 0/21~~ | ✅ Đã sửa 26/09 | Dải đầu 15% quá thấp cho hero dài 2 dòng (36–41px < 2.5× subhead). Nâng 15%/18% → 20%/22% cho step_process + recruitment: đạt-cả-4 step 0 → 9/21, recruitment 2 → 12/22 |
+| `customer_feedback_card` C1 1/33 | Trung bình | Nâng dải đầu 14% → 18% chỉ +0.16 tương phản, 0 case mới → đã hoàn tác. Câu hỏi thiết kế: điểm neo của thẻ đánh giá là hero hay CÂU TRÍCH DẪN (đang là nội dung, 27–35px)? Cần người duyệt |
 | Ngưỡng 4x áp nhầm cho `matrix_board` | **Cao** | `contrast_target` khai báo theo intent, không phải hằng số toàn cục |
 | Gom 14 hàm budget về 1 hàm chung gây hồi quy hàng loạt | Trung bình | Làm sau 0C (đã có cổng phát hiện tràn) và sau khi CI có §4.5; migrate từng cái, đo từng cái |
 | LLM cắt `hero_parts` sai chỗ (gán `stat` cho cụm không phải cái móc) | Trung bình | Không làm sai chữ (Cổng 1 bảo đảm); chỉ giảm thẩm mỹ. Đo qua §4.5 điều kiện 1 |
