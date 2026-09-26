@@ -2071,6 +2071,9 @@ def build_template_html(
     try:
         jinja_tpl = _JINJA_ENV.get_template(template_file)
     except Exception as e:
+        # Fail-safe vẫn ra poster, nhưng KHÔNG được im lặng: trước đây lỗi cú pháp trong 1
+        # template khiến poster âm thầm render bằng template KHÁC hẳn, không dấu vết.
+        logger.error(f"[Renderer] Không nạp được template '{template_file}' ({e!r}) -> dùng sandwich_top_heavy thay thế")
         jinja_tpl = _JINJA_ENV.get_template("sandwich_top_heavy/template.html")
 
     # Unified budget mapping for all templates

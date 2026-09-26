@@ -40,5 +40,13 @@ def test_slots_match_template_html(template):
 
 
 @pytest.mark.parametrize("template", sorted(TEMPLATE_CATALOG))
+def test_template_parses(template):
+    # renderer rơi về sandwich_top_heavy khi template lỗi cú pháp -> poster SAI template.
+    from tendoo_v3.renderer import _JINJA_ENV
+
+    _JINJA_ENV.get_template(f"{template}/template.html")
+
+
+@pytest.mark.parametrize("template", sorted(TEMPLATE_CATALOG))
 def test_geometry_drivers_are_known_flags(template):
     assert set(geometry_drivers(template)) <= KNOWN_FLAGS

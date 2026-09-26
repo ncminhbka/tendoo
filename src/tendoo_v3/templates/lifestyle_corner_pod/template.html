@@ -5,6 +5,18 @@
   <title>{{ hero }}</title>
   <style>
     {{ font_face_css }}
+    {% include "components/ui_components.css" %}
+    /* Trung hoà thuộc tính component mà CSS riêng template KHÔNG khai báo -- đặt TRƯỚC
+       CSS template để mọi khai báo của template (kể cả khai báo có điều kiện Jinja) luôn thắng. */
+    .hero-title { max-width: unset; }
+    .subhead-title { max-width: unset; }
+    .extra-tag-row { justify-content: unset; align-items: unset; max-width: unset; margin-top: unset; }
+    .extra-pill { backdrop-filter: unset; box-shadow: unset; }
+    .freetext-block { max-width: unset; backdrop-filter: unset; box-shadow: unset; text-align: unset; margin-top: unset; }
+    .store-info-col { align-items: unset; max-width: unset; flex-shrink: unset; }
+    .store-item { backdrop-filter: unset; box-shadow: unset; }
+    .cta-btn { text-shadow: unset; }
+    .qr-col { display: unset; align-items: unset; justify-content: unset; }
 
     :root {
       --headline-font: {{ headline_font_css }};
@@ -338,78 +350,30 @@
     {% endif %}
   </style>
 </head>
+{% from "components/ui_macros.html" import render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
 
     <div class="corner-pod">
       <div class="top-section">
-        {% if badge %}
-        <div class="badge-pill" data-autofit data-min-font="{{ lifestyle_budget.badge.min_font }}" data-max-font="{{ lifestyle_budget.badge.max_font }}" data-max-width="{{ (zones.pod.width * 0.9) if zones.pod else width * 0.4 }}" data-max-height="{{ lifestyle_budget.badge.max_h }}">{{ badge }}</div>
-        {% endif %}
-        <div class="hero-title" data-autofit data-min-font="{{ lifestyle_budget.hero.min_font }}" data-max-font="{{ lifestyle_budget.hero.max_font }}" data-max-height="{{ lifestyle_budget.hero.max_h }}">{{ hero }}</div>
-        {% if subhead %}
-        <div class="subhead-title" data-autofit data-min-font="{{ lifestyle_budget.subhead.min_font }}" data-max-font="{{ lifestyle_budget.subhead.max_font }}" data-max-height="{{ lifestyle_budget.subhead.max_h }}">{{ subhead }}</div>
-        {% endif %}
+        {{ render_badge(badge, budget=lifestyle_budget.badge, max_w=(zones.pod.width * 0.9) if zones.pod else width * 0.4) }}
+        {{ render_hero_phrase(hero, hero_parts, budget=lifestyle_budget.hero) }}
+        {{ render_subhead(subhead, budget=lifestyle_budget.subhead) }}
       </div>
 
       <!-- FreeText Dual-Mode -->
-      {% if extra_texts %}
-        {% if is_freetext_block %}
-        <div class="freetext-block" data-autofit data-min-font="{{ lifestyle_budget.freetext_block.min_font }}" data-max-font="{{ lifestyle_budget.freetext_block.max_font }}" data-max-height="{{ lifestyle_budget.freetext_block.max_h }}">
-          {% for line in extra_texts %}
-          <div class="freetext-line">
-            <span class="freetext-bullet">{{ bullet_svg }}</span>
-            <span>{{ line }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="extra-tag-row" data-autofit data-min-font="{{ lifestyle_budget.freetext_pills.min_font }}" data-max-font="{{ lifestyle_budget.freetext_pills.max_font }}" data-max-height="{{ lifestyle_budget.freetext_pills.max_h }}">
-          {% for pill in extra_pills %}
-          <div class="extra-pill">
-            {{ pill.icon_svg }}
-            <span>{{ pill.text }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-      {% endif %}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(lifestyle_budget.freetext_block if is_freetext_block else lifestyle_budget.freetext_pills), bullet_svg=bullet_svg) }}
 
       {% if cta or qr_svg or store_items or store_info %}
       <div class="footer-row">
         <div class="cta-qr-group">
-          {% if cta %}
-          <div class="cta-btn" data-autofit data-min-font="{{ lifestyle_budget.cta.min_font }}" data-max-font="{{ lifestyle_budget.cta.max_font }}" data-max-height="{{ lifestyle_budget.cta.max_h }}">
-            <span>{{ cta }}</span>
-            <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              {% if orientation in ('bottom_right', 'right', 'top_right') %}
-              <polyline points="15 18 9 12 15 6"></polyline>
-              {% else %}
-              <polyline points="9 18 15 12 9 6"></polyline>
-              {% endif %}
-            </svg>
-          </div>
-          {% endif %}
+          {{ render_cta(cta, budget=lifestyle_budget.cta, arrow=('left' if orientation in ('bottom_right', 'right', 'top_right') else 'right')) }}
           {% if qr_svg %}
           <div class="qr-col">{{ qr_svg }}</div>
           {% endif %}
         </div>
-
-        {% if store_items %}
-        <div class="store-info-col" data-autofit data-min-font="{{ lifestyle_budget.store.min_font }}" data-max-font="{{ lifestyle_budget.store.max_font }}" data-max-height="{{ lifestyle_budget.store.max_h }}">
-          {% for item in store_items %}
-          <div class="store-item">
-            {{ item.icon_svg }}
-            <span>{{ item.text }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% elif store_info %}
-        <div class="store-item">
-          <span>{{ store_info }}</span>
-        </div>
-        {% endif %}
+        {{ render_store(store_items, store_info, budget=lifestyle_budget.store, is_col=true, bare_single=true) }}
       </div>
       {% endif %}
     </div>
