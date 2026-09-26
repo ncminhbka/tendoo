@@ -119,6 +119,7 @@ nào thực sự dùng field nào".
 | Mask, geometry | ROADMAP §3.2, §5 |
 | Hiệu ứng, thư viện JS/CSS | ROADMAP §4.4 (có danh sách thư viện **đã bị loại** kèm lý do) |
 | Test | ROADMAP §4.5 — test phải kiểm thẩm mỹ, không chỉ kiểm không-crash |
+| Lockup, style pack, hoạ tiết, font mới (typography nghệ thuật) | ROADMAP §10 — tầm nhìn GĐ 7–10, việc nên làm sớm ở §10.13 |
 
 ---
 

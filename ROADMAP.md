@@ -294,6 +294,8 @@ Dự đoán (chưa đo, ghi ra để sau này đối chiếu): vùng **S/M phủ
 diagonal, luxury — 8–9 template), vùng **XL mỏng** (chỉ recruitment/menu/step). Nếu đúng,
 số template cần xây là **3–5 cái, gần như toàn bộ ở band XL**, không phải 24.
 
+> **Bổ sung 26/09 (§10.8):** thêm điều kiện thứ hai — **khoảng cách thẩm mỹ so với bộ tham chiếu**. Dự đoán "S/M phủ dày" đúng về *phủ sóng* nhưng sai về *thẩm mỹ*: template hiện tại chứa được nội dung band S nhưng không được thiết kế cho S. Vì vậy được phép xây **template showcase band S** (GĐ 9) dù bản đồ không báo ô trống.
+
 ---
 
 ## 4. CÂU HỎI 3 — ĐẢM BẢO THẨM MỸ THẾ NÀO
@@ -580,7 +582,11 @@ Không có deadline cứng. Xếp theo **thứ tự phụ thuộc**, mỗi giai 
 | **3** | Đưa `hero_parts` + `visual_intent` vào system prompt LLM; hạ hint xuống 1 dòng/template | Poster sinh từ brief thật (không phải plan viết tay) đạt §4.5 | |
 | **4** | Siết tương phản nền: worst-case patch + ngưỡng bật scrim | Chữ đạt WCAG AA cả trên nền có vệt sáng cục bộ | |
 | **5** | Maskless Mode + **đo** tốc độ thật | Poster thuần chữ đạt §4.5; có số wall-clock thật | |
-| **6** | Template mới — **chỉ cho các ô trống mà bản đồ lần 2 chỉ ra** | Mỗi cái: 2 file + 16-case suite đạt §4.5 | Dự kiến 3–5 cái, không phải 24 |
+| **6** | Template mới — **chỉ cho các ô trống mà bản đồ lần 2 chỉ ra** | Mỗi cái: 2 file + 16-case suite đạt §4.5 | Dự kiến 3–5 cái, không phải 24. Band S showcase chuyển sang GĐ 9 (§10.8) |
+| **7** | Nền tảng typography: độ đậm font, font thư pháp VN, engine lockup, ngắt dòng theo nghĩa (§10.11) | xem §10.11 | Tầm nhìn |
+| **8** | Style pack + thư viện hoạ tiết (§10.11) | xem §10.11 | Tầm nhìn |
+| **9** | Template showcase band S + định tuyến S/M/L/XL (§10.11) | xem §10.11 | Tầm nhìn |
+| **10** | Dùng được thật: biến thể, brand kit, xuất in, đánh giá mù (§10.11) | xem §10.11 | Tầm nhìn |
 
 ---
 
@@ -621,3 +627,201 @@ Không có deadline cứng. Xếp theo **thứ tự phụ thuộc**, mỗi giai 
   declarative làm nguồn sự thật duy nhất cho prompt, validate, geometry, hợp đồng và CI.
 - **Số template cần xây thêm: dự kiến 3–5, không phải 24** — và chỉ xây sau khi bản đồ phủ
   sóng lần 2 chỉ ra ô trống thật.
+- **Tầm nhìn xa (§10):** GĐ 0–6 là **mức sàn** (không lỗi, đúng thứ bậc) — chỉ giải quyết ~1/3 khoảng cách tới poster thương mại. Mức trần cần **4 lớp**: layout (có sẵn) × **lockup** (cụm chữ nghệ thuật co giãn cả khối) × **style pack** (font-pairing, màu, hoạ tiết theo dịp) × **ornament**; band S đi vào **template showcase** tối giản; thước đo chính là **đánh giá mù bởi người** so với bộ tham chiếu.
+
+---
+
+## 10. TẦM NHÌN XA — HỆ THỐNG TYPOGRAPHY NGHỆ THUẬT (GĐ 7–10)
+
+> **Bổ sung 26/09/2026.** GĐ 0–6 bảo đảm **mức sàn**: không tràn, không sai chữ, đúng thứ bậc.
+> Mục này đặt **mức trần**: poster đẹp ngang poster thương mại do designer làm (bộ tham chiếu
+> hạt giống: "Đậm Đà Hương Việt", "Quà Tặng Đoàn Viên", "Trà Sữa — Ngon không cần phải chờ
+> đợi", "Cơm Tấm SALE", "Joyful Bát Tràng"). Thứ tự thi công GĐ 0–6 **giữ nguyên**; GĐ 7–10
+> xây trên nó.
+
+### 10.0. Giả định và phạm vi
+
+- **Giả định:** FLUX luôn sinh ảnh đẹp và chừa đúng vùng trống theo mask. Mục này **chỉ** bàn
+  typography — chữ, cụm chữ, hoạ tiết đi kèm chữ.
+- Nguyên tắc bất biến vẫn giữ: chữ 100% HTML/CSS/SVG, không bao giờ để diffusion vẽ chữ;
+  không sửa nội dung bắt buộc; mọi phát biểu về cỡ chữ phải đo qua Chromium.
+
+### 10.1. Làm xong GĐ 0–6 thì đạt tới đâu
+
+| Yếu tố làm nên bộ tham chiếu | GĐ 0–6 có không |
+| :--- | :--- |
+| Thứ bậc rõ, hero áp đảo | ✅ Luật 1, Luật 2, `hero_parts` |
+| Con dấu "KHUYẾN MÃI 30%", ruy băng, lấp lánh, chữ uốn cung | 🟡 Một phần (GĐ 2) |
+| Không khí theo dịp (màu + font + hoạ tiết Trung thu, Tết…) | 🟡 Mới là ý tưởng "style pack" (§3.1), không có giai đoạn |
+| Tiêu đề viết tay/thư pháp, **ghép 2–3 kiểu chữ** có vai trò | ❌ |
+| Vệt cọ, đèn lồng, mây, ngoặc góc, **mũi tên chú thích** | ❌ |
+| Tối giản — ít phần tử, nhiều khoảng thở | ❌ Ngược hướng: template hiện tại tối ưu để **chứa nhiều** (pill, thẻ, QR) |
+
+**Kết luận: GĐ 0–6 giải quyết khoảng 1/3.** Phần còn lại không phải "thêm vài hiệu ứng" — nó
+đòi đổi **cách hệ thống nghĩ về chữ** (10.2).
+
+### 10.2. Chẩn đoán gốc: "đổ đầy hộp" vs "cụm chữ được thiết kế"
+
+Kiến trúc hiện tại: `geometry.py` chia vùng thành các **hộp chữ nhật** → mỗi phần tử (hero,
+subhead, pill…) **tự autofit độc lập** để đầy hộp của nó → thứ bậc được giữ bằng trần ngân sách
+từng phần tử. Hệ quả tất yếu:
+
+1. Các khối chữ **cùng bề ngang, xếp dọc** — nhìn như một cột văn bản, không như một bố cục.
+2. Thứ bậc là **hệ quả của phép chia chiều cao**, không phải của thiết kế — nên phải vá bằng
+   Luật 1, `_apply_tier_caps`, bước giữ thứ bậc trong JS (0A+).
+3. Mọi tiêu đề được xử lý như nhau: khối ngang, căn thẳng — kể cả khi font là thư pháp.
+4. "Linh kiện" là pill/thẻ kính — ngôn ngữ của **giao diện ứng dụng**, không phải ấn phẩm.
+
+Poster của designer làm ngược lại: tiêu đề + phụ đề + con số là **một cụm được thiết kế sẵn**
+(lockup) với tỉ lệ nội bộ cố định — "Đậm Đà" viết tay chồng lên "Hương Việt", "30%" nằm trong
+con dấu kẹp giữa hai ruy băng — rồi **cả cụm được co giãn như một khối** cho vừa vùng trống.
+Thứ bậc nằm sẵn trong thiết kế của cụm, không phải tính ra từ ngân sách.
+
+### 10.3. Kiến trúc đích — 4 lớp độc lập, tổ hợp ra đa dạng
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│ 1. LAYOUT (đã có)      — chữ nằm VÙNG nào (họ mask, 14 template)       │
+│ 2. LOCKUP (mới)        — cụm chữ nghệ thuật trong vùng đó              │
+│ 3. STYLE PACK (mới)    — font-pairing, bảng màu, bộ hoạ tiết theo dịp  │
+│ 4. ORNAMENT (mới)      — hoạ tiết SVG neo vào lockup/vùng              │
+└───────────────────────────────────────────────────────────────────────┘
+   Đa dạng = tổ hợp: ~10 layout × ~12 lockup × ~8 style pack
+   → hàng trăm "vẻ ngoài" khác nhau mà không phải viết hàng trăm template.
+```
+
+Mỗi lớp khai báo **tương thích** (lockup cần vùng tỉ lệ nào, chứa tối đa bao nhiêu ký tự, có
+cần `stat` không; style pack hợp intent/dịp nào) — Python chọn tổ hợp hợp lệ, LLM chỉ gợi ý,
+đúng nguyên tắc §2.4. Đây là cách **đa dạng mà không nổ số template**.
+
+### 10.4. Lockup — trái tim của hệ thống mới
+
+**Định nghĩa.** Một component HTML/SVG nhận các vai trò chữ (hero, hero_parts, subhead, stat,
+kicker, tagline) và sắp chúng theo một bố cục có **tỉ lệ nội bộ cố định**. `render_hero_phrase`
+(Luật 2) chính là lockup đầu tiên — các lockup sau mở rộng từ nó.
+
+**Co giãn cả khối** thay cho autofit từng phần tử: binary search trên **một hệ số tỉ lệ duy
+nhất** cho cả cụm → tỉ lệ hero:subhead:stat giữ nguyên ở mọi khung 1:1/9:16/16:9/4:5 → thứ bậc
+đúng **theo thiết kế**, không cần trần ngân sách từng phần tử. Luật 1 vẫn dùng cho template
+thông tin cỡ L/XL.
+
+**Danh mục khởi đầu (rút trực tiếp từ bộ tham chiếu):**
+
+| Lockup | Mô tả | Lấy từ |
+| :--- | :--- | :--- |
+| `script_over_caps` | Chữ viết tay lớn chồng lên/đè cạnh chữ in hoa giãn nét | Đậm Đà Hương Việt, Joyful Bát Tràng |
+| `script_two_line` | Tiêu đề thư pháp 2 dòng, ngắt theo nghĩa, dòng 2 thụt lề | Quà Tặng Đoàn Viên |
+| `bracket_title` | Tiêu đề in đậm trong ngoặc góc + tagline viết tay bên dưới | Trà Sữa |
+| `stat_seal_ribbon` | Con số trong con dấu tròn, 2 ruy băng hai bên | Đậm Đà Hương Việt (30%) |
+| `brush_sale` | Chữ trên vệt cọ + dòng "UP TO 50% OFF" nhiều cỡ | Cơm Tấm SALE |
+| `inline_price` | Câu dẫn viết tay + giá "100k" to chen giữa dòng | Quà Tặng Đoàn Viên |
+| `stacked_editorial` | Kicker in hoa nhỏ + tiêu đề lớn + tagline nghiêng | chung |
+
+Mỗi lockup khai báo trong catalog: vai trò bắt buộc/tuỳ chọn, `capacity_chars` (**đo** bằng
+probe, như §3.4), tỉ lệ vùng chấp nhận, font-role cần (display/script/caps).
+
+**Ngắt dòng theo nghĩa.** Thư pháp đẹp phụ thuộc chỗ xuống dòng ("Đậm Đà / Hương Việt", không
+"Đậm Đà Hương / Việt"). LLM đề xuất điểm ngắt như đã cắt `hero_parts`; **Cổng 1** mở rộng để
+kiểm nguyên văn — sai là vứt, render theo ngắt tự động.
+
+### 10.5. Style pack và brand kit
+
+Một style pack là **dữ liệu**, không phải template:
+- **Font-pairing theo vai trò**: `display` (tiêu đề), `script` (tagline/điểm nhấn), `caps`
+  (kicker in hoa giãn nét), `text` (thông tin nhỏ). Không quá 3 họ font/poster.
+- **Bảng màu** 60-30-10 (Luật 3) gắn dịp: Trung thu cam–vàng trên nền tối, Tết đỏ–vàng…
+- **Bộ hoạ tiết** được phép dùng + **hiệu ứng chữ** được phép (Luật 4 gắn intent).
+- Khởi đầu 6–8 pack: Trung thu, Tết, F&B sale, Cafe/trà sữa, Spa–làm đẹp, Công nghệ, Sang
+  trọng, Tuyển dụng.
+
+**Brand kit** của người dùng (logo, màu, font thương hiệu) **ghi đè** style pack — điều kiện để
+doanh nghiệp thực sự dùng được.
+
+### 10.6. Thư viện hoạ tiết (ornament)
+
+- SVG tĩnh, **có seed** (tất định — cùng plan ra cùng ảnh; bài học render không tất định ở
+  0B-3), tự vẽ hoặc có giấy phép rõ ràng.
+- **Neo vào lockup/vùng**, không trôi tự do: `behind` (vệt cọ sau chữ), `around` (ngoặc góc),
+  `flank` (ruy băng hai bên), `scatter` (lấp lánh trong vùng trống), `callout` (mũi tên chú
+  thích — xem rủi ro 10.12).
+- **Không bao giờ đè chữ**: đo DOM bằng cơ chế của Cổng 4 (hộp chữ ∩ hộp hoạ tiết).
+- Thuộc **lớp decor** nằm giữa `bg-layer` và lớp chữ trong template (nên chừa sớm, xem 10.13).
+
+### 10.7. Nền tảng font — hiện trạng ĐO ĐƯỢC (26/09) và việc cần làm
+
+- ✅ **19/19 font có đủ ký tự dấu tiếng Việt** (kiểm bằng fontTools: Đ, Ệ, Ợ, Ữ, Ặ, Ổ, Ỹ, Ư, Ơ…).
+- ❌ **16/19 font chỉ có 1 độ đậm**; chỉ Dancing Script, Oswald, Playfair là variable font.
+- ❌ **Font UI "Be Vietnam Pro" chỉ nhúng bản Black (900)** trong khi CSS yêu cầu 600/800 cho
+  subhead, pill, store → trình duyệt dùng Black cho tất cả → chữ phụ đặc, nặng. Typography tinh
+  tế cần tối thiểu Regular/Medium/SemiBold/Bold (Be Vietnam Pro là OFL, miễn phí).
+- ❌ Chỉ khoảng 4 font viết tay/thư pháp; bộ tham chiếu cần nhiều phong cách hơn (thư pháp mềm,
+  cọ khô, viết tay thanh mảnh).
+- Cần: probe **va chạm dấu** (dấu chồng tầng của Ệ/Ợ đụng nét dòng trên ở font thư pháp — đo hộp
+  glyph qua Chromium); kiểm **giấy phép thương mại** của bộ font SVN trước khi thương mại hoá.
+
+### 10.8. Định tuyến theo lượng chữ — ý tưởng S/M/L/XL quay lại đúng vai
+
+| Band | Nội dung | Đích |
+| :--- | :--- | :--- |
+| **S** | Ít chữ, không đòi nhét hết | **Template "showcase"** tối giản: 1 lockup nghệ thuật + hoạ tiết, không pill/thẻ |
+| **M** | Thêm 2–4 dòng phụ | Lockup + khối thông tin gọn |
+| **L/XL** | Nhiều thông tin | 14 template thông tin hiện có (Luật 1, ngân sách) |
+
+Cổng 3 (§2.5) là **bộ định tuyến**: đếm ký tự thật, tra capacity đo được, chọn band. Người dùng
+có thể ghi đè ("tôi muốn nhét hết"). Đây chính là ý tưởng ban đầu "template chuyên biệt theo
+lượng chữ" — nhưng xây **có số đo** thay vì tuyên bố, và xây ở chỗ có giá trị thẩm mỹ cao nhất:
+**band S**. Dự đoán ở §3.5 ("S/M phủ dày") đúng về *phủ sóng* nhưng sai về *thẩm mỹ*: template
+hiện tại **chứa được** nội dung S nhưng không **được thiết kế cho** S.
+
+### 10.9. "Người dùng thực sự dùng được"
+
+- **Biến thể typography rẻ**: đổi lockup/style pack **không cần chạy lại diffusion** (chữ là
+  HTML) → sinh 4–6 phương án trong vài giây trên cùng 1 ảnh nền để người dùng chọn.
+- **Sửa chữ rồi render lại** ngay (nguyên văn, không qua LLM).
+- **Xuất in**: `device_scale_factor` cho A4/A3 300dpi, ngoài PNG màn hình.
+- **Tất định**: cùng plan + seed → cùng poster (đã đạt cho lớp chữ ở 0B-3).
+- **Không bao giờ sai chữ, không mất chữ** — Cổng 1, 2, 4 vẫn là điều kiện cứng.
+
+### 10.10. Đo cái đẹp — thành thật về giới hạn
+
+- **Mức sàn (tự động, CI):** 4 điều kiện §4.5, Cổng 4, test tất định. Không đổi.
+- **Mức trần (không có thước đo tự động đáng tin):**
+  - **Bộ tham chiếu** 20–30 poster thương mại theo dịp/ngành (5 poster ở đầu mục là hạt giống).
+  - **Đánh giá mù theo cặp** bởi người: poster của ta vs poster tham chiếu cùng brief — đo tỉ lệ
+    "không phân biệt được / ưng hơn". Đây là thước đo chính của GĐ 7–10.
+  - Chỉ số phụ tự động: số họ font ≤ 3, số phần tử chữ, tỉ lệ khoảng trống, thẳng hàng lưới, hoạ
+    tiết không đè chữ.
+  - **VLM chấm điểm** (mô hình thị giác) chỉ dùng **sau khi** đã hiệu chỉnh khớp với chấm của
+    người trên bộ tham chiếu — chưa hiệu chỉnh thì không dùng để quyết định.
+- **Điều kiện 2 của §4.5 (tường chữ) phải định nghĩa lại** trước GĐ 7 (§8): lockup cố ý đặt nhiều
+  phần tử cùng cỡ trong một cấp.
+
+### 10.11. Lộ trình GĐ 7–10
+
+| GĐ | Nội dung | Nghiệm thu |
+| :-- | :--- | :--- |
+| **7** | **Nền tảng typography**: bổ sung độ đậm + 4–6 font thư pháp/viết tay VN; probe va chạm dấu; engine lockup co giãn cả khối; 3 lockup đầu (`script_over_caps`, `stat_seal_ribbon`, `bracket_title`); ngắt dòng theo nghĩa + Cổng 1 mở rộng | 0 va chạm dấu trên bộ font × câu mẫu; tỉ lệ nội bộ lockup lệch ≤ 5% qua 4 khung hình; 0 mất chữ (Cổng 4) |
+| **8** | **Style pack + hoạ tiết**: 6–8 pack; thư viện SVG neo theo lockup, có seed | Mỗi pack render đủ 4 khung hình; 0 hoạ tiết đè chữ; tất định |
+| **9** | **Template showcase band S + định tuyến**: 3–5 layout tối giản cho lockup; Cổng 3 định tuyến S/M/L/XL theo capacity đo được | Nội dung S đi vào showcase; có số liệu đánh giá mù đầu tiên vs bộ tham chiếu |
+| **10** | **Dùng được thật**: biến thể typography không chạy lại diffusion, brand kit, xuất in 300dpi, sửa chữ render lại; vòng đánh giá người định kỳ | Tỉ lệ đánh giá mù đạt mục tiêu đặt ra sau vòng đầu ở GĐ 9 |
+
+### 10.12. Rủi ro riêng của tầm nhìn này
+
+| Rủi ro | Mức | Giảm thiểu |
+| :--- | :--- | :--- |
+| Font thư pháp VN chất lượng cao hiếm, giấy phép thương mại đắt/không rõ | **Cao** | Kiểm giấy phép TRƯỚC khi thiết kế lockup phụ thuộc font; ưu tiên OFL; có ngân sách mua font |
+| Không có thước đo đẹp tự động → dễ "tự khen" | **Cao** | Đánh giá mù bởi người là tiêu chí nghiệm thu chính; VLM chỉ sau hiệu chỉnh |
+| Tổ hợp layout × lockup × pack nổ số case test | Trung bình | Ma trận tương thích khai báo; test lấy mẫu có seed + toàn bộ tổ hợp của band S |
+| Mũi tên chú thích và chữ đan với chủ thể cần **biết vị trí sản phẩm trong ảnh** — hệ thống hiện chỉ biết vùng trống | Trung bình | Để sau GĐ 10; cần bước định vị chủ thể trên server (phân đoạn ảnh) — thành phần mới |
+| Lockup thư pháp + tiếng Việt dài dễ gãy xấu | Trung bình | `capacity_chars` đo cho từng lockup; quá sức chứa → Cổng 3 chuyển lockup/band |
+| Bộ lọc SVG/hiệu ứng nặng làm chậm render CPU | Thấp | Đo wall-clock từng hiệu ứng; trần thời gian render trong CI |
+
+### 10.13. Việc rẻ bây giờ, đắt nếu để sau (làm xen trong GĐ 1–6)
+
+1. **Bổ sung Be Vietnam Pro Regular/Medium/SemiBold/Bold** — sửa độ "nặng" của mọi chữ phụ trên
+   14 template; miễn phí (OFL). Phải so ảnh trước/sau vì đổi toàn bộ chữ phụ.
+2. **Chừa lớp decor** (`decor-layer` giữa nền và chữ) trong template — để GĐ 8 không phải sửa lại
+   14 template.
+3. **Thu thập bộ tham chiếu** 20–30 poster theo dịp/ngành — cần cho mọi đánh giá GĐ 7–10.
+4. Giữ `render_hero_phrase` làm **lockup gốc**: mọi thay đổi Luật 2 phải tương thích với việc co
+   giãn cả khối về sau.
