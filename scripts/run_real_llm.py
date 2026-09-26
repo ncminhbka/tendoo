@@ -152,7 +152,7 @@ def main() -> None:
                     row["image_error"] = f"{type(e).__name__}: {str(e)[:160]}"
                     continue
                 r = measure_plan(page, plan, w, h, with_bg=True, bg_override=bg)
-                row.update({k: r.get(k) for k in ("contrast", "contrast_target", "c1_anchor", "c2_no_wall", "c3_bg", "c4_no_loss", "squint_pass")})
+                row.update({k: r.get(k) for k in ("contrast", "contrast_target", "c1_anchor", "c2_no_wall", "c3_bg", "c4_no_loss", "c5_phone", "squint_pass", "pass5", "phone_min")})
                 page.set_viewport_size({"width": w, "height": h})
                 page.set_content(build_template_html(plan, bg, w, h), wait_until="load")
                 page.wait_for_function("window.__tendooAutofitDone === true", timeout=8000)
@@ -168,7 +168,7 @@ def main() -> None:
     for r in report:
         if r["status"] != "success":
             print(f"  ! {r['id']}: {plans[r['id']].get('error')}")
-        sq = "" if "c1_anchor" not in r else ("  squint " + "".join("✓" if r.get(k) else "✗" for k in ("c1_anchor", "c2_no_wall", "c3_bg", "c4_no_loss")) + f" tp={r.get('contrast')}")
+        sq = "" if "c1_anchor" not in r else ("  squint " + "".join("✓" if r.get(k) else "✗" for k in ("c1_anchor", "c2_no_wall", "c3_bg", "c4_no_loss", "c5_phone")) + f" tp={r.get('contrast')}")
         print(f"  {r['id']:<26} {r['status'] or '':<8} {r['template']:<22} {str(r['intent']):<18} parts={'✓' if r['parts_kept'] else ('✗' if r['raw_parts'] else '-')}"
               f" {r['components'] or ''}{' maskless' if r['maskless'] else ''}{sq}{('  G2: ' + '; '.join(r['gate2'])[:120]) if r['gate2'] else ''}{('  ' + r['image_error']) if r.get('image_error') else ''}")
 

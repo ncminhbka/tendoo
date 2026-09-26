@@ -662,7 +662,7 @@ Không có deadline cứng. Xếp theo **thứ tự phụ thuộc**, mỗi giai 
 | R3 | ✅ 26/09 GĐ 7b: họ font 1 file khai báo `font-weight: 100 900` (trước `normal`) → hết tô đậm giả khi CSS xin 900; 3 font variable được độ đậm thật. 129/395 ảnh đổi (hero sắc nét hơn); squint đạt-cả-4 giữ 98, C2 −1 (luxury) — chấp nhận, ghi nhận | so ảnh + squint | local |
 | R4 | GĐ 7c: lockup — bộ sắp xếp cụm hero_parts có sẵn (xếp chồng, số bên trái, chữ dẫn nghiêng...) | squint + bộ mẫu | local |
 | R5 | GĐ 8: style pack theo dịp + hoạ tiết trong decor-layer | squint + nhìn | local |
-| R6 | GĐ 9: template showcase band S + định tuyến S/M/L/XL ở Cổng 3 | squint + sức chứa | local |
+| R6 | ✅ 27/09 `type_showcase` (poster lấy chữ làm chính): lockup DỌC ở tâm khung (chữ dẫn nhỏ in hoa / điểm neo khổng lồ ~40% bề ngang / chữ đuôi), subhead UI font, CTA + cửa hàng dải đáy; intent big_number_deal/hook_headline/festive_event, hợp maskless. Suite 16 case: **đạt cả 5 điều kiện 16/16** (nền thường và nền maskless). Sức chứa thẩm mỹ 365/365/109/365. Prompt: poster thuần chữ → ưu tiên type_showcase. Định tuyến S/M/L/XL tự động: chưa (LLM chọn) | squint + sức chứa | local |
 | S1 | GĐ 3R: LLM thật với prompt mới | tỉ lệ qua Cổng 1/2, squint trên plan thật | máy chủ |
 | S2 | GĐ 5: `scripts/bench_maskless.py` | wall-clock thật | máy chủ |
 | H1 | Bộ tham chiếu 20–30 poster thương mại (§10.13) + đánh giá mù GĐ 10 | người chấm | người duyệt |

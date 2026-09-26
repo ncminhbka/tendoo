@@ -181,6 +181,7 @@ DANH MỤC TÔNG NỀN (style.background_tone -- CHỈ chọn 1 trong các giá 
    - Đặt `"maskless": true`, `visual_intent` thuộc: {", ".join(repr(i) for i in MASKLESS_INTENTS)}.
    - `scene_prompt` BẮT BUỘC là nền ÍT CHI TIẾT phủ cả khung: gradient mượt, bokeh mờ, bụi/hạt sáng li ti, khói mỏng, chất liệu phẳng (giấy, lụa, đá mài mịn). CẤM vật thể/sản phẩm/người, cấm hoạ tiết dày đặc -- nền rậm khiến chữ khó đọc hơn cả khi có mask.
    - Có sản phẩm/chủ thể cần thể hiện -> KHÔNG dùng maskless (bỏ hẳn trường này).
+   - Poster thuần chữ -> ƯU TIÊN `template = "type_showcase"` (con số/từ khoá khổng lồ ở tâm khung); `hero_parts` bắt buộc khi có con số.
 
 10. POSTER ÍT CHỮ -- ĐỌC ĐƯỢC TRÊN ĐIỆN THOẠI (poster xem vừa màn ~375px: chữ phải to, nên MỖI chữ thêm vào làm mọi chữ khác nhỏ đi):
    - `hero` <= {TEXT_WORD_LIMITS["hero"]} từ (lý tưởng 2-5). `subhead` 1 câu <= {TEXT_WORD_LIMITS["subhead"]} từ. `badge` <= {TEXT_WORD_LIMITS["badge"]} từ. `cta` <= {TEXT_WORD_LIMITS["cta"]} từ (động từ mạnh: "ĐẶT NGAY", "MUA NGAY").

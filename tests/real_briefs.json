@@ -1,18 +1,204 @@
 [
- {"id": "b01_promo_coffee_1x1", "aspect": "1:1", "form": {"category": "promo", "title": "Giảm 30% toàn bộ menu cà phê", "discount": "30%", "applied_product": "Áp dụng tại mọi chi nhánh tới hết chủ nhật", "store_info": "Tendoo Coffee | Hotline: 1900 6868"}, "prompt": "Poster khuyến mãi quán cà phê, không khí ấm cúng buổi sáng"},
- {"id": "b02_flash_sale_9x16", "aspect": "9:16", "form": {"category": "promo", "title": "Flash sale 99K", "discount": "Đồng giá 99K", "applied_product": "Toàn bộ phụ kiện điện thoại"}, "prompt": "Flash sale đêm nay, phong cách năng động, nổi bật con số"},
- {"id": "b03_opening_spa_4x5", "aspect": "4:5", "form": {"category": "opening", "title": "Khai trương Tendoo Spa", "opening_promo": "Giảm 50% dịch vụ đầu tiên", "opening_date": "Từ 01/10 đến 07/10", "booking_contact": "Hotline 0909 123 456"}, "prompt": "Banner khai trương spa sang trọng, tông hồng nhẹ"},
- {"id": "b04_feedback_dental_1x1", "aspect": "1:1", "form": {"category": "feedback", "feedback_target": "Nha khoa Tendoo", "feedback_quote": "Bác sĩ nhẹ tay, tư vấn kỹ, niềng răng xong tôi tự tin cười mỗi ngày.", "customer_name": "Minh Anh - Nhân viên văn phòng", "feedback_rating": 5}, "prompt": "Poster đánh giá khách hàng, lấy câu nói của khách làm trọng tâm"},
- {"id": "b05_recruit_ai_16x9", "aspect": "16:9", "form": {"category": "recruitment", "job_position": "Kỹ sư AI cao cấp", "job_desc": "Xây dựng hệ thống thị giác máy tính cho sản phẩm thương mại", "apply_deadline": "Hạn nộp 30/10", "apply_method": "Gửi CV về hr@tendoo.ai"}, "prompt": "Tuyển dụng công nghệ, hiện đại, tông xanh đậm"},
- {"id": "b06_menu_bubbletea_9x16", "aspect": "9:16", "form": {"category": "product_intro", "title": "Menu trà sữa"}, "prompt": "Tạo menu quán trà sữa: Trà sữa trân châu 35.000đ, Trà đào cam sả 39.000đ, Sữa tươi trân châu đường đen 42.000đ, Trà vải hoa hồng 45.000đ"},
- {"id": "b07_guide_skincare_1x1", "aspect": "1:1", "form": {"category": "guide", "title": "Quy trình chăm sóc da 3 bước", "guide_steps": "Làm sạch sâu\nCân bằng độ ẩm\nKhoá ẩm và chống nắng"}, "prompt": "Hướng dẫn chăm sóc da, tông pastel nhẹ nhàng"},
- {"id": "b08_luxury_watch_4x5", "aspect": "4:5", "form": {"category": "product_intro", "product_name": "Đồng hồ Titan S7", "price": "Chỉ từ 12 triệu", "product_desc": "Mặt kính sapphire, vỏ titan nguyên khối"}, "prompt": "Quảng cáo đồng hồ cao cấp, sản phẩm chiếm phần lớn khung hình, chữ gọn một góc"},
- {"id": "b09_textonly_sale_1x1", "aspect": "1:1", "form": {"category": "promo", "title": "Black Friday giảm tới 70%", "discount": "70%", "applied_product": "Toàn bộ cửa hàng, duy nhất 3 ngày"}, "prompt": "Poster thuần chữ, không cần sản phẩm, nền bokeh vàng lấp lánh sang trọng"},
- {"id": "b10_opening_bakery_16x9", "aspect": "16:9", "form": {"category": "opening", "title": "Tưng bừng khai trương tiệm bánh", "opening_promo": "Mua 1 tặng 1 bánh sừng bò", "opening_date": "Chủ nhật 05/10", "booking_contact": "123 Nguyễn Huệ, Quận 1"}, "prompt": "Khai trương tiệm bánh, không khí rộn ràng, nhiều ưu đãi: Tặng voucher 50K, Check-in nhận quà"},
- {"id": "b11_feedback_fitness_9x16", "aspect": "9:16", "form": {"category": "feedback", "feedback_target": "Tendoo Fitness", "feedback_quote": "Giảm 8kg sau 12 tuần nhờ HLV kèm sát từng buổi.", "customer_name": "Thu Trang - Học viên", "feedback_rating": 5, "special_offer": "Tặng 1 tuần tập thử"}, "prompt": "Review phòng gym, năng động"},
- {"id": "b12_product_sneaker_16x9", "aspect": "16:9", "form": {"category": "product_intro", "product_name": "Sneaker Nitro Run", "price": "1.290.000đ", "product_desc": "Đế đệm khí, siêu nhẹ cho chạy bộ đường dài", "highlights": "Miễn phí đổi size\nBảo hành 6 tháng"}, "prompt": "Quảng cáo giày chạy bộ, phong cách thể thao cắt chéo"},
- {"id": "b13_promo_realestate_4x5", "aspect": "4:5", "form": {"category": "promo", "title": "Căn hộ ven sông chỉ từ 2 tỷ", "discount": "Chiết khấu 12%", "applied_product": "Thanh toán sớm, hỗ trợ vay 70%", "store_info": "Hotline: 0988 123 456 | Nhà mẫu: 45 Lê Lợi, Quận 3"}, "prompt": "Bất động sản cao cấp, thông tin dày đặc"},
- {"id": "b14_vip_invite_1x1", "aspect": "1:1", "form": {"category": "promo", "title": "Đêm tri ân khách hàng VIP", "applied_product": "Tối thứ bảy 18/10, Khách sạn Majestic"}, "prompt": "Thiệp mời VIP sang trọng, thẻ chính giữa, tông vàng đen"},
- {"id": "b15_textonly_tet_9x16", "aspect": "9:16", "form": {"category": "promo", "title": "Mừng xuân sale 50%", "discount": "50%", "applied_product": "Toàn bộ quà Tết"}, "prompt": "Poster Tết thuần chữ, không có sản phẩm, nền đỏ bụi vàng lấp lánh"},
- {"id": "b16_pod_perfume_1x1", "aspect": "1:1", "form": {"category": "product_intro", "product_name": "Nước hoa Elixir Paris", "product_desc": "Hương gỗ ấm áp, lưu hương 12 giờ"}, "prompt": "Nước hoa sang trọng, chữ gom ở góc dưới bên trái"}
+ {
+  "id": "b01_promo_coffee_1x1",
+  "aspect": "1:1",
+  "form": {
+   "category": "promo",
+   "title": "Giảm 30% toàn bộ menu cà phê",
+   "discount": "30%",
+   "applied_product": "Áp dụng tại mọi chi nhánh tới hết chủ nhật",
+   "store_info": "Tendoo Coffee | Hotline: 1900 6868"
+  },
+  "prompt": "Poster khuyến mãi quán cà phê, không khí ấm cúng buổi sáng"
+ },
+ {
+  "id": "b02_flash_sale_9x16",
+  "aspect": "9:16",
+  "form": {
+   "category": "promo",
+   "title": "Flash sale 99K",
+   "discount": "Đồng giá 99K",
+   "applied_product": "Toàn bộ phụ kiện điện thoại"
+  },
+  "prompt": "Flash sale đêm nay, phong cách năng động, nổi bật con số"
+ },
+ {
+  "id": "b03_opening_spa_4x5",
+  "aspect": "4:5",
+  "form": {
+   "category": "opening",
+   "title": "Khai trương Tendoo Spa",
+   "opening_promo": "Giảm 50% dịch vụ đầu tiên",
+   "opening_date": "Từ 01/10 đến 07/10",
+   "booking_contact": "Hotline 0909 123 456"
+  },
+  "prompt": "Banner khai trương spa sang trọng, tông hồng nhẹ"
+ },
+ {
+  "id": "b04_feedback_dental_1x1",
+  "aspect": "1:1",
+  "form": {
+   "category": "feedback",
+   "feedback_target": "Nha khoa Tendoo",
+   "feedback_quote": "Bác sĩ nhẹ tay, tư vấn kỹ, niềng răng xong tôi tự tin cười mỗi ngày.",
+   "customer_name": "Minh Anh - Nhân viên văn phòng",
+   "feedback_rating": 5
+  },
+  "prompt": "Poster đánh giá khách hàng, lấy câu nói của khách làm trọng tâm"
+ },
+ {
+  "id": "b05_recruit_ai_16x9",
+  "aspect": "16:9",
+  "form": {
+   "category": "recruitment",
+   "job_position": "Kỹ sư AI cao cấp",
+   "job_desc": "Xây dựng hệ thống thị giác máy tính cho sản phẩm thương mại",
+   "apply_deadline": "Hạn nộp 30/10",
+   "apply_method": "Gửi CV về hr@tendoo.ai"
+  },
+  "prompt": "Tuyển dụng công nghệ, hiện đại, tông xanh đậm"
+ },
+ {
+  "id": "b06_menu_bubbletea_9x16",
+  "aspect": "9:16",
+  "form": {
+   "category": "product_intro",
+   "title": "Menu trà sữa"
+  },
+  "prompt": "Tạo menu quán trà sữa: Trà sữa trân châu 35.000đ, Trà đào cam sả 39.000đ, Sữa tươi trân châu đường đen 42.000đ, Trà vải hoa hồng 45.000đ"
+ },
+ {
+  "id": "b07_guide_skincare_1x1",
+  "aspect": "1:1",
+  "form": {
+   "category": "guide",
+   "title": "Quy trình chăm sóc da 3 bước",
+   "guide_steps": "Làm sạch sâu\nCân bằng độ ẩm\nKhoá ẩm và chống nắng"
+  },
+  "prompt": "Hướng dẫn chăm sóc da, tông pastel nhẹ nhàng"
+ },
+ {
+  "id": "b08_luxury_watch_4x5",
+  "aspect": "4:5",
+  "form": {
+   "category": "product_intro",
+   "product_name": "Đồng hồ Titan S7",
+   "price": "Chỉ từ 12 triệu",
+   "product_desc": "Mặt kính sapphire, vỏ titan nguyên khối"
+  },
+  "prompt": "Quảng cáo đồng hồ cao cấp, sản phẩm chiếm phần lớn khung hình, chữ gọn một góc"
+ },
+ {
+  "id": "b09_textonly_sale_1x1",
+  "aspect": "1:1",
+  "form": {
+   "category": "promo",
+   "title": "Black Friday giảm tới 70%",
+   "discount": "70%",
+   "applied_product": "Toàn bộ cửa hàng, duy nhất 3 ngày"
+  },
+  "prompt": "Poster thuần chữ, không cần sản phẩm, nền bokeh vàng lấp lánh sang trọng"
+ },
+ {
+  "id": "b10_opening_bakery_16x9",
+  "aspect": "16:9",
+  "form": {
+   "category": "opening",
+   "title": "Tưng bừng khai trương tiệm bánh",
+   "opening_promo": "Mua 1 tặng 1 bánh sừng bò",
+   "opening_date": "Chủ nhật 05/10",
+   "booking_contact": "123 Nguyễn Huệ, Quận 1"
+  },
+  "prompt": "Khai trương tiệm bánh, không khí rộn ràng, nhiều ưu đãi: Tặng voucher 50K, Check-in nhận quà"
+ },
+ {
+  "id": "b11_feedback_fitness_9x16",
+  "aspect": "9:16",
+  "form": {
+   "category": "feedback",
+   "feedback_target": "Tendoo Fitness",
+   "feedback_quote": "Giảm 8kg sau 12 tuần nhờ HLV kèm sát từng buổi.",
+   "customer_name": "Thu Trang - Học viên",
+   "feedback_rating": 5,
+   "special_offer": "Tặng 1 tuần tập thử"
+  },
+  "prompt": "Review phòng gym, năng động"
+ },
+ {
+  "id": "b12_product_sneaker_16x9",
+  "aspect": "16:9",
+  "form": {
+   "category": "product_intro",
+   "product_name": "Sneaker Nitro Run",
+   "price": "1.290.000đ",
+   "product_desc": "Đế đệm khí, siêu nhẹ cho chạy bộ đường dài",
+   "highlights": "Miễn phí đổi size\nBảo hành 6 tháng"
+  },
+  "prompt": "Quảng cáo giày chạy bộ, phong cách thể thao cắt chéo"
+ },
+ {
+  "id": "b13_promo_realestate_4x5",
+  "aspect": "4:5",
+  "form": {
+   "category": "promo",
+   "title": "Căn hộ ven sông chỉ từ 2 tỷ",
+   "discount": "Chiết khấu 12%",
+   "applied_product": "Thanh toán sớm, hỗ trợ vay 70%",
+   "store_info": "Hotline: 0988 123 456 | Nhà mẫu: 45 Lê Lợi, Quận 3"
+  },
+  "prompt": "Bất động sản cao cấp, thông tin dày đặc"
+ },
+ {
+  "id": "b14_vip_invite_1x1",
+  "aspect": "1:1",
+  "form": {
+   "category": "promo",
+   "title": "Đêm tri ân khách hàng VIP",
+   "applied_product": "Tối thứ bảy 18/10, Khách sạn Majestic"
+  },
+  "prompt": "Thiệp mời VIP sang trọng, thẻ chính giữa, tông vàng đen"
+ },
+ {
+  "id": "b15_textonly_tet_9x16",
+  "aspect": "9:16",
+  "form": {
+   "category": "promo",
+   "title": "Mừng xuân sale 50%",
+   "discount": "50%",
+   "applied_product": "Toàn bộ quà Tết"
+  },
+  "prompt": "Poster Tết thuần chữ, không có sản phẩm, nền đỏ bụi vàng lấp lánh"
+ },
+ {
+  "id": "b16_pod_perfume_1x1",
+  "aspect": "1:1",
+  "form": {
+   "category": "product_intro",
+   "product_name": "Nước hoa Elixir Paris",
+   "product_desc": "Hương gỗ ấm áp, lưu hương 12 giờ"
+  },
+  "prompt": "Nước hoa sang trọng, chữ gom ở góc dưới bên trái"
+ },
+ {
+  "id": "b17_recruit_barista_9x16",
+  "aspect": "9:16",
+  "form": {
+   "category": "recruitment",
+   "job_position": "Barista",
+   "job_desc": "Pha chế và phục vụ tại chuỗi cà phê",
+   "apply_deadline": "Hạn 15/10",
+   "apply_method": "Nhắn Zalo 0909 888 777"
+  },
+  "prompt": "Tuyển dụng barista, trẻ trung, năng động"
+ },
+ {
+  "id": "b18_guide_carwash_4x5",
+  "aspect": "4:5",
+  "form": {
+   "category": "guide",
+   "title": "Rửa xe chuẩn 4 bước",
+   "guide_steps": "Tráng bọt tuyết\nRửa tay chi tiết\nSấy khô\nPhủ bóng nano"
+  },
+  "prompt": "Quy trình rửa xe chuyên nghiệp, tông xanh lạnh"
+ }
 ]

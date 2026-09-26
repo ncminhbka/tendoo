@@ -1,0 +1,514 @@
+[
+ {
+  "id": "show_01_1x1_bf",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "BLACK FRIDAY GIẢM TỚI 70%",
+   "visual_intent": "big_number_deal",
+   "maskless": true,
+   "style": {
+    "font": "anton",
+    "theme_color": "#FACC15",
+    "text_effect": "3d_gold",
+    "background_tone": "dark_luxury"
+   },
+   "hero_parts": [
+    {
+     "t": "BLACK FRIDAY GIẢM TỚI",
+     "role": "prefix"
+    },
+    {
+     "t": "70%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Toàn bộ cửa hàng, duy nhất 3 ngày",
+   "badge": "SIÊU SALE",
+   "cta": "MUA NGAY"
+  }
+ },
+ {
+  "id": "show_02_9x16_bf",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "BLACK FRIDAY GIẢM TỚI 70%",
+   "visual_intent": "big_number_deal",
+   "maskless": true,
+   "style": {
+    "font": "anton",
+    "theme_color": "#FACC15",
+    "text_effect": "3d_gold",
+    "background_tone": "dark_luxury"
+   },
+   "hero_parts": [
+    {
+     "t": "BLACK FRIDAY GIẢM TỚI",
+     "role": "prefix"
+    },
+    {
+     "t": "70%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "cta": "MUA NGAY"
+  }
+ },
+ {
+  "id": "show_03_16x9_bf",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "BLACK FRIDAY GIẢM TỚI 70%",
+   "visual_intent": "big_number_deal",
+   "maskless": true,
+   "style": {
+    "font": "anton",
+    "theme_color": "#FACC15",
+    "text_effect": "3d_gold",
+    "background_tone": "dark_luxury"
+   },
+   "hero_parts": [
+    {
+     "t": "BLACK FRIDAY GIẢM TỚI",
+     "role": "prefix"
+    },
+    {
+     "t": "70%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Toàn bộ cửa hàng, duy nhất 3 ngày",
+   "badge": "SIÊU SALE",
+   "cta": "MUA NGAY"
+  }
+ },
+ {
+  "id": "show_04_4x5_bf",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "BLACK FRIDAY GIẢM TỚI 70%",
+   "visual_intent": "big_number_deal",
+   "maskless": true,
+   "style": {
+    "font": "anton",
+    "theme_color": "#FACC15",
+    "text_effect": "3d_gold",
+    "background_tone": "dark_luxury"
+   },
+   "hero_parts": [
+    {
+     "t": "BLACK FRIDAY GIẢM TỚI",
+     "role": "prefix"
+    },
+    {
+     "t": "70%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Toàn bộ cửa hàng, duy nhất 3 ngày",
+   "cta": "MUA NGAY"
+  }
+ },
+ {
+  "id": "show_05_1x1_tet",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "MỪNG XUÂN SALE 50%",
+   "visual_intent": "festive_event",
+   "maskless": true,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#FACC15",
+    "text_effect": "shadow",
+    "background_tone": "cinema_red"
+   },
+   "hero_parts": [
+    {
+     "t": "MỪNG XUÂN SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Quà Tết cho cả gia đình",
+   "cta": "ĐẶT QUÀ NGAY"
+  }
+ },
+ {
+  "id": "show_06_9x16_tet",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "MỪNG XUÂN SALE 50%",
+   "visual_intent": "festive_event",
+   "maskless": true,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#FACC15",
+    "text_effect": "shadow",
+    "background_tone": "cinema_red"
+   },
+   "hero_parts": [
+    {
+     "t": "MỪNG XUÂN SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "cta": "ĐẶT QUÀ NGAY"
+  }
+ },
+ {
+  "id": "show_07_16x9_tet",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "MỪNG XUÂN SALE 50%",
+   "visual_intent": "festive_event",
+   "maskless": true,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#FACC15",
+    "text_effect": "shadow",
+    "background_tone": "cinema_red"
+   },
+   "hero_parts": [
+    {
+     "t": "MỪNG XUÂN SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Quà Tết cho cả gia đình",
+   "cta": "ĐẶT QUÀ NGAY",
+   "store_info": "Hotline: 1900 6868"
+  }
+ },
+ {
+  "id": "show_08_4x5_tet",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "MỪNG XUÂN SALE 50%",
+   "visual_intent": "festive_event",
+   "maskless": true,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#FACC15",
+    "text_effect": "shadow",
+    "background_tone": "cinema_red"
+   },
+   "hero_parts": [
+    {
+     "t": "MỪNG XUÂN SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Quà Tết cho cả gia đình",
+   "cta": "ĐẶT QUÀ NGAY",
+   "store_info": "Hotline: 1900 6868"
+  }
+ },
+ {
+  "id": "show_09_1x1_open",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "KHAI TRƯƠNG CHI NHÁNH MỚI",
+   "visual_intent": "festive_event",
+   "maskless": true,
+   "style": {
+    "font": "playfair",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   },
+   "hero_parts": [
+    {
+     "t": "KHAI TRƯƠNG",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "CHI NHÁNH MỚI",
+     "role": "suffix"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Chủ nhật 05/10 tại 123 Nguyễn Huệ",
+   "badge": "GRAND OPENING"
+  }
+ },
+ {
+  "id": "show_10_9x16_open",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "KHAI TRƯƠNG CHI NHÁNH MỚI",
+   "visual_intent": "festive_event",
+   "maskless": true,
+   "style": {
+    "font": "playfair",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   },
+   "hero_parts": [
+    {
+     "t": "KHAI TRƯƠNG",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "CHI NHÁNH MỚI",
+     "role": "suffix"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text"
+  }
+ },
+ {
+  "id": "show_11_16x9_open",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "KHAI TRƯƠNG CHI NHÁNH MỚI",
+   "visual_intent": "festive_event",
+   "maskless": true,
+   "style": {
+    "font": "playfair",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   },
+   "hero_parts": [
+    {
+     "t": "KHAI TRƯƠNG",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "CHI NHÁNH MỚI",
+     "role": "suffix"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Chủ nhật 05/10 tại 123 Nguyễn Huệ",
+   "badge": "GRAND OPENING",
+   "store_info": "123 Nguyễn Huệ, Quận 1"
+  }
+ },
+ {
+  "id": "show_12_4x5_open",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "KHAI TRƯƠNG CHI NHÁNH MỚI",
+   "visual_intent": "festive_event",
+   "maskless": true,
+   "style": {
+    "font": "playfair",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   },
+   "hero_parts": [
+    {
+     "t": "KHAI TRƯƠNG",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "CHI NHÁNH MỚI",
+     "role": "suffix"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Chủ nhật 05/10 tại 123 Nguyễn Huệ",
+   "store_info": "123 Nguyễn Huệ, Quận 1"
+  }
+ },
+ {
+  "id": "show_13_1x1_thanks",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "CẢM ƠN 10.000 KHÁCH HÀNG",
+   "visual_intent": "hook_headline",
+   "maskless": true,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#38BDF8",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   },
+   "hero_parts": [
+    {
+     "t": "CẢM ƠN",
+     "role": "prefix"
+    },
+    {
+     "t": "10.000",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "KHÁCH HÀNG",
+     "role": "suffix"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Tri ân bằng ưu đãi 20% cả tháng",
+   "cta": "NHẬN ƯU ĐÃI"
+  }
+ },
+ {
+  "id": "show_14_9x16_thanks",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "CẢM ƠN 10.000 KHÁCH HÀNG",
+   "visual_intent": "hook_headline",
+   "maskless": true,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#38BDF8",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   },
+   "hero_parts": [
+    {
+     "t": "CẢM ƠN",
+     "role": "prefix"
+    },
+    {
+     "t": "10.000",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "KHÁCH HÀNG",
+     "role": "suffix"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "cta": "NHẬN ƯU ĐÃI"
+  }
+ },
+ {
+  "id": "show_15_16x9_thanks",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "CẢM ƠN 10.000 KHÁCH HÀNG",
+   "visual_intent": "hook_headline",
+   "maskless": true,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#38BDF8",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   },
+   "hero_parts": [
+    {
+     "t": "CẢM ƠN",
+     "role": "prefix"
+    },
+    {
+     "t": "10.000",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "KHÁCH HÀNG",
+     "role": "suffix"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Tri ân bằng ưu đãi 20% cả tháng",
+   "cta": "NHẬN ƯU ĐÃI"
+  }
+ },
+ {
+  "id": "show_16_4x5_thanks",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "hero": "CẢM ƠN 10.000 KHÁCH HÀNG",
+   "visual_intent": "hook_headline",
+   "maskless": true,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#38BDF8",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   },
+   "hero_parts": [
+    {
+     "t": "CẢM ƠN",
+     "role": "prefix"
+    },
+    {
+     "t": "10.000",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "KHÁCH HÀNG",
+     "role": "suffix"
+    }
+   ],
+   "scene_prompt": "Soft bokeh and fine glitter dust over a smooth gradient, zero text",
+   "subhead": "Tri ân bằng ưu đãi 20% cả tháng",
+   "cta": "NHẬN ƯU ĐÃI"
+  }
+ }
+]

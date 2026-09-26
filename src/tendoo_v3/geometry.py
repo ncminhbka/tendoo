@@ -731,6 +731,19 @@ def _quote_spotlight(w: float, h: float, orientation: str = "left") -> Dict[str,
         return {"column": _frac(1.0 - frac_w, 0.0, 1.0, 1.0, w, h)}
     return {"column": _frac(0.0, 0.0, frac_w, 1.0, w, h)}
 
+
+def _type_showcase(w: float, h: float, has_footer: bool = True) -> Dict[str, Rect]:
+    # Type Showcase (R6): cụm chữ ở TÂM khung (8%-92% ngang), dải đáy cho CTA/cửa hàng. Nền là chủ thể phụ
+    # (bokeh/hoạ tiết) -- maskless là mặc định hợp lý; nếu có mask, vùng giữa được chừa.
+    aspect = w / h
+    if aspect >= 1.5:  # 16:9
+        center = _frac(0.10, 0.06, 0.90, 0.78 if has_footer else 0.94, w, h)
+        footer = _frac(0.10, 0.80, 0.90, 0.96, w, h)
+    else:
+        center = _frac(0.08, 0.08, 0.92, 0.80 if has_footer else 0.92, w, h)
+        footer = _frac(0.08, 0.82, 0.92, 0.95, w, h)
+    return {"center": center, "footer": footer}
+
 _GEOMETRY_FUNCS: Dict[str, Callable[..., Dict[str, Rect]]] = {
     "split_left": _split_left,
     "split_right": _split_right,
@@ -747,6 +760,7 @@ _GEOMETRY_FUNCS: Dict[str, Callable[..., Dict[str, Rect]]] = {
     "grand_opening_banner": _grand_opening_banner,
     "menu_price_board": _menu_price_board,
     "quote_spotlight": _quote_spotlight,
+    "type_showcase": _type_showcase,
 }
 
 

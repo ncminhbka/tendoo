@@ -1362,6 +1362,22 @@ def compute_quote_spotlight_budget(plan: TendooCreativePlan, column_height: floa
         "store": {"max_h": 60.0, "min_font": 13.0, "max_font": 14.0},
     }
 
+
+def compute_type_showcase_budget(plan: TendooCreativePlan, center_height: float, width: int, height: int) -> Dict[str, Dict[str, float]]:
+    """`type_showcase` (R6): tiêu đề nhận PHẦN LỚN chiều cao vùng giữa (lockup dọc), trần cỡ rất cao --
+    đây là poster mà chữ LÀ nhân vật chính. Chữ phụ theo sàn Luật 6."""
+    has_badge, has_sub = bool(plan.badge), bool(plan.subhead)
+    hero_share = 0.78 - (0.08 if has_badge else 0) - (0.16 if has_sub else 0)
+    return {
+        "badge": {"max_h": round(center_height * 0.09, 1), "min_font": 14.0, "max_font": 26.0},
+        # Trần = 40% bề ngang: điểm neo 2-4 ký tự ("70%", "50%") lấp đầy bề ngang cột; autofit dừng ở mức VỪA.
+        # (Trần theo px-trên-màn 60 cho 9:16 chỉ 92px -- "50%" lọt thỏm giữa khung dọc, đo 27/09.)
+        "hero": {"max_h": round(center_height * hero_share, 1), "min_font": 30.0, "max_font": round(width * 0.40, 1)},
+        "subhead": {"max_h": round(center_height * 0.16, 1), "min_font": 16.0, "max_font": 44.0},
+        "cta": {"max_h": 60.0, "min_font": 16.0, "max_font": 34.0},
+        "store": {"max_h": 60.0, "min_font": 14.0, "max_font": 28.0},
+    }
+
 def _zone_h(zones: Dict[str, Dict[str, float]], name: str, default: float) -> float:
     return zones.get(name, {}).get("height", default)
 
@@ -1410,6 +1426,8 @@ _TEMPLATE_BUDGETS = {
         plan=plan, top_cluster_height=_zone_h(z, "top_cluster", h * 0.40), width=w, height=h),
     "lifestyle_corner_pod": lambda plan, z, w, h: compute_lifestyle_corner_pod_budget(
         plan=plan, pod_height=_zone_h(z, "pod", h * 0.48), width=w, height=h),
+    "type_showcase": lambda plan, z, w, h: compute_type_showcase_budget(
+        plan=plan, center_height=_zone_h(z, "center", h * 0.7), width=w, height=h),
     "quote_spotlight": lambda plan, z, w, h: compute_quote_spotlight_budget(
         plan=plan, column_height=_zone_h(z, "column", h), width=w, height=h),
     "customer_feedback_card": lambda plan, z, w, h: compute_customer_feedback_budget(
@@ -1828,6 +1846,7 @@ HEADER_ZONE_KEY_BY_TEMPLATE: Dict[str, str] = {
     "diagonal_slash": "content",
     "l_frame_showcase": "top_cluster",
     "quote_spotlight": "column",
+    "type_showcase": "center",
 }
 
 # Zone dùng làm mốc đo độ chói nền THẬT cho TOÀN BỘ nội dung bên trong "card" của 5
