@@ -4,18 +4,8 @@
   <meta charset="UTF-8">
   <style>
     {{font_face_css}}
-    :root {
-      /* Font nghệ thuật chỉ dành cho hero/subhead -- UI phụ (badge/pill/store/cta)
-         dùng font sans-serif dễ đọc riêng, xem giải thích đầy đủ ở
-         sandwich_top_heavy/template.html. */
-      --ui-font: 'Be Vietnam Pro', 'Montserrat', 'Plus Jakarta Sans', sans-serif;
-    }
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-font-smoothing: antialiased;
-    }
+    {% include "components/ui_components.css" %}
+
     body, html {
       width: {{width}}px;
       height: {{height}}px;
@@ -67,62 +57,6 @@
       flex-shrink: 1;
     }
 
-    .badge-pill {
-      font-family: var(--ui-font);
-      display: inline-flex;
-      align-items: center;
-      padding: 0.35em 1.25em;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 1.1px;
-      text-transform: uppercase;
-      color: {{ palette.badge_text }};
-      background: {{ palette.badge_bg }};
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      border-radius: 9999px;
-      box-shadow: 0 3px 12px {{theme_color}}66, 0 1px 3px rgba(0, 0, 0, 0.4);
-      margin-bottom: 2px;
-      flex-shrink: 0;
-    }
-
-    .store-info-row {
-      font-family: var(--ui-font);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-      font-size: 14.5px;
-    }
-
-    .store-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45em;
-      padding: 0.32em 0.85em;
-      background: rgba(10, 15, 28, 0.72);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 9999px;
-      font-size: inherit;
-      font-weight: 600;
-      color: #E2E8F0;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      max-width: 100%;
-      line-height: 1.25;
-    }
-
-    .store-item svg {
-      width: 1.15em;
-      height: 1.15em;
-      color: {{ palette.on_card_accent }};
-      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
-      flex-shrink: 0;
-    }
-
-    .store-item span {
-      word-break: break-word;
-    }
-
     .top-qr-col {
       display: flex;
       align-items: center;
@@ -167,97 +101,6 @@
       gap: 3.5px;
     }
 
-    .hero-title {
-      font-size: 48px;
-      font-weight: 900;
-      line-height: 1.22;
-      letter-spacing: -0.5px;
-      word-break: keep-all;
-      max-width: 96%;
-      color: {{ header_text_primary }};
-      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.92), 0 0 4px rgba(0, 0, 0, 0.95);
-      {{ header_effect_css }}
-    }
-
-    .subhead-title {
-      font-size: 18px;
-      font-weight: 600;
-      line-height: 1.35;
-      color: {{ header_text_secondary }};
-      {{ subhead_effect_css }}
-      max-width: 94%;
-    }
-
-    /* Dual-Mode FreeText: 1. Semantic Pills Row (cho từ khóa ngắn) */
-    .extra-tag-row {
-      font-family: var(--ui-font);
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: center;
-      gap: 6px;
-      max-width: 92%;
-      font-size: 13px;
-      margin-top: 1px;
-    }
-
-    .extra-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45em;
-      padding: 0.35em 0.95em;
-      background: rgba(15, 23, 42, 0.72);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 9999px;
-      font-size: inherit;
-      font-weight: 600;
-      color: #fff;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
-      line-height: 1.2;
-    }
-
-    .extra-pill svg {
-      width: 1.15em;
-      height: 1.15em;
-      color: {{ palette.on_card_accent if palette.on_card_accent else (palette.accent if palette.accent else theme_color) }};
-      flex-shrink: 0;
-    }
-
-    /* Dual-Mode FreeText: 2. Freetext Card / Bullet Pod (cho câu dài, lưu ý KM) */
-    .freetext-block {
-      font-family: var(--ui-font);
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      max-width: 92%;
-      background: rgba(10, 15, 28, 0.68);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 10px;
-      padding: 4px 14px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-      text-align: left;
-      margin-top: 1px;
-      font-size: 12px;
-    }
-
-    .freetext-line {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      font-size: inherit;
-      line-height: 1.22;
-      color: #F1F5F9;
-    }
-
-    .freetext-bullet {
-      color: {{ palette.on_card_accent if palette.on_card_accent else (palette.accent if palette.accent else theme_color) }};
-      font-size: 0.85em;
-      font-family: Arial, 'Segoe UI Symbol', sans-serif;
-      flex-shrink: 0;
-    }
-
     /* Hàng nút CTA ở đáy */
     .cta-row {
       display: flex;
@@ -267,24 +110,21 @@
       margin-top: 2px;
     }
 
-    .cta-btn {
-      font-family: var(--ui-font);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5em;
-      padding: 0.5em 1.35em;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-      color: {{palette.cta_text}};
-      background: {{palette.cta_bg}};
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 9999px;
-      box-shadow: 0 4px 18px {{theme_color}}77, 0 2px 6px rgba(0, 0, 0, 0.4);
-      white-space: nowrap;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
+    /* Override component (ui_components.css) -- CHỈ các thuộc tính template này khác
+       mặc định, giữ nguyên số đo cũ để ảnh render không đổi. font-size/line-height của
+       phần tử autofit do JS gán inline nên không cần khai báo lại. */
+    /* !important: autofit JS gán letter-spacing -0.5px inline cho chữ <= 32px, làm dồn
+       chữ hoa giãn nét của badge (trước khi migrate badge ở đây không autofit). */
+    .badge-pill { padding: 0.35em 1.25em; font-size: 14px; letter-spacing: 1.1px !important; }
+    .cta-btn svg { width: 1.15em; height: 1.15em; }
+    .sandwich-top-bar .store-info-row { gap: 6px; }
+    .sandwich-bottom-platform .hero-title { max-width: 96%; }
+    .sandwich-bottom-platform .subhead-title { max-width: 94%; }
+    .extra-tag-row { margin-top: 1px; }
+    .extra-pill { padding: 0.35em 0.95em; }
+    .freetext-block { gap: 2px; border-radius: 10px; padding: 4px 14px; margin-top: 1px; }
+    .freetext-line { line-height: 1.22; }
+    .cta-btn { padding: 0.5em 1.35em; }
 
     /* =========================================================================
        THÍCH ỨNG ĐẶC BIỆT CHO 9:16 (NARROW PORTRAIT: w <= 600px)
@@ -355,6 +195,7 @@
     {% endif %}
   </style>
 </head>
+{% from "components/ui_macros.html" import render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
@@ -362,26 +203,11 @@
     <!-- Dải Băng Ngang Trên Đỉnh (Top Bar): Badge + Store Info + QR Code -->
     <div class="sandwich-top-bar" style="height:{{ zones.top.height }}px; max-height:{{ zones.top.height }}px; overflow:hidden;">
       <div class="top-left-group">
-        {% if badge %}
-        <div class="badge-pill">{{ badge }}</div>
-        {% endif %}
-        {% if store_items %}
-        <div class="store-info-row" data-autofit data-min-font="{{ bottom_budget.store.min_font if bottom_budget and bottom_budget.store else 13 }}" data-max-font="{{ bottom_budget.store.max_font if bottom_budget and bottom_budget.store else 21 }}" data-max-width="{{ zones.top.width * 0.78 }}" data-max-height="{{ bottom_budget.store.max_h if bottom_budget and bottom_budget.store else (zones.top.height * (0.55 if badge else 0.75)) }}">
-          {% for item in store_items %}
-          <div class="store-item">
-            {{ item.icon_svg }}
-            <span>{{ item.text }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% elif store_info %}
-        <div class="store-item" data-autofit data-min-font="{{ bottom_budget.store.min_font if bottom_budget and bottom_budget.store else 13 }}" data-max-font="{{ bottom_budget.store.max_font if bottom_budget and bottom_budget.store else 21 }}">
-          <span>{{ store_info }}</span>
-        </div>
-        {% endif %}
+        {{ render_badge(badge) }}
+        {{ render_store(store_items, store_info, budget=bottom_budget.store, is_col=false, max_w=zones.top.width * 0.78) }}
       </div>
 
-      <!-- QR Code ở góc trên bên phải -->
+      <!-- QR Code ở góc trên bên phải (khung QR riêng của template, không dùng render_qr) -->
       {% if qr_svg %}
       <div class="top-qr-col">
         {{ qr_svg }}
@@ -391,41 +217,12 @@
 
     <!-- Bệ Đỡ Ở Đáy (Bottom Platform): Hero Title + Subhead + FreeText + CTA -->
     <div class="sandwich-bottom-platform" style="height:{{ zones.bottom.height }}px; max-height:{{ zones.bottom.height }}px; overflow:hidden;">
-      <div class="hero-title" data-autofit data-min-font="{{ bottom_budget.hero.min_font }}" data-max-font="{{ bottom_budget.hero.max_font }}" data-max-width="{{ zones.bottom.width * 0.96 }}" data-max-height="{{ bottom_budget.hero.max_h }}">{{ hero }}</div>
-
-      {% if subhead %}
-      <div class="subhead-title" data-autofit data-min-font="{{ bottom_budget.subhead.min_font }}" data-max-font="{{ bottom_budget.subhead.max_font }}" data-max-width="{{ zones.bottom.width * 0.94 }}" data-max-height="{{ bottom_budget.subhead.max_h }}">{{ subhead }}</div>
-      {% endif %}
-
-      <!-- Block FreeText Dual-Mode: Semantic Pills hoặc Freetext Card -->
-      {% if extra_texts %}
-        {% if is_freetext_block %}
-        <div class="freetext-block" data-autofit data-min-font="{{ bottom_budget.extra.min_font }}" data-max-font="{{ bottom_budget.extra.max_font }}" data-max-width="{{ zones.bottom.width * 0.92 }}" data-max-height="{{ bottom_budget.extra.max_h }}">
-          {% for line in extra_texts %}
-          <div class="freetext-line">
-            <span class="freetext-bullet">{{ bullet_svg }}</span>
-            <span>{{ line }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="extra-tag-row" data-autofit data-min-font="{{ bottom_budget.extra.min_font }}" data-max-font="{{ bottom_budget.extra.max_font }}" data-max-width="{{ zones.bottom.width * 0.92 }}" data-max-height="{{ bottom_budget.extra.max_h }}">
-          {% for pill in extra_pills %}
-          <div class="extra-pill">
-            {{ pill.icon_svg }}
-            <span>{{ pill.text }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-      {% endif %}
-
+      {{ render_hero_phrase(hero, hero_parts, budget=bottom_budget.hero, max_w=zones.bottom.width * 0.96) }}
+      {{ render_subhead(subhead, budget=bottom_budget.subhead, max_w=zones.bottom.width * 0.94) }}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=bottom_budget.extra, bullet_svg=bullet_svg, max_w=zones.bottom.width * 0.92) }}
       {% if cta %}
       <div class="cta-row">
-        <div class="cta-btn" data-autofit data-min-font="{{ bottom_budget.cta.min_font }}" data-max-font="{{ bottom_budget.cta.max_font }}" data-max-width="{{ zones.bottom.width * 0.85 }}" data-max-height="{{ bottom_budget.cta.max_h }}">
-          <span>{{ cta }}</span>
-          <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
+        {{ render_cta(cta, budget=bottom_budget.cta, max_w=zones.bottom.width * 0.85) }}
       </div>
       {% endif %}
     </div>
