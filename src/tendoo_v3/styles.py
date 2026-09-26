@@ -109,6 +109,7 @@ def get_effect_css(
             -webkit-text-fill-color: {theme_color};
             background: none;
             text-shadow: none !important;
+            --tk-material-filter: url(#tk-material) drop-shadow({shadow});
             filter: url(#tk-material) drop-shadow({shadow});
             """
 
@@ -1074,7 +1075,27 @@ COMMON_AUTOFIT_JS = """
           // ảnh sau chữ -- Smashing Magazine, NN/G): làm mờ + phủ nhẹ, mép mềm; đệm bù bằng lề âm -> KHÔNG xê
           // dịch bố cục. Chỉ khi thiếu nhiều (< 0.85 x ngưỡng); thiếu ít thì quầng là đủ.
           if (v.worst < v.need * 0.85) {
-            const tint = c === '0,0,0' ? 'rgba(10,12,18,0.42)' : 'rgba(255,255,255,0.5)';
+            // Chữ thường: dùng cực HỢP với lớp mờ (trắng trên lớp tối, navy trên lớp sáng) -- thực hành "chữ trắng
+            // trên dải bảo vệ tối". Độ đậm lớp mờ TÍNH từ ô sáng nhất/tối nhất cần kéo về ngưỡng, không cố định
+            // (27/09: chữ vàng hổ phách + lớp tối 42% trên nền sáng vẫn 2.1:1). Màu nhấn giữ màu thương hiệu.
+            const darkScrim = c === '0,0,0';
+            if (!host.classList.contains('hero-seg--accent')) {
+              const col = darkScrim ? '#FFFFFF' : '#0F172A';
+              host.style.setProperty('color', col, 'important');
+              host.style.setProperty('-webkit-text-fill-color', col, 'important');
+              v.lText = darkScrim ? 1.0 : tendooLum([15, 23, 42]);
+            }
+            let alpha;
+            if (darkScrim) {
+              const lbReq = (v.lText + 0.05) / v.need - 0.05, lTint = tendooLum([10, 12, 18]);
+              alpha = v.lMax > lbReq ? (v.lMax - lbReq) / (v.lMax - lTint) : 0;
+              alpha = Math.min(0.72, Math.max(0.42, alpha));
+            } else {
+              const lbReq = v.need * (v.lText + 0.05) - 0.05;
+              alpha = v.lMin < lbReq ? (lbReq - v.lMin) / (1 - v.lMin) : 0;
+              alpha = Math.min(0.8, Math.max(0.5, alpha));
+            }
+            const tint = darkScrim ? `rgba(10,12,18,${alpha.toFixed(2)})` : `rgba(255,255,255,${alpha.toFixed(2)})`;
             host.style.setProperty('background-color', tint, 'important');
             host.style.setProperty('backdrop-filter', 'blur(6px)', 'important');
             host.style.setProperty('-webkit-backdrop-filter', 'blur(6px)', 'important');

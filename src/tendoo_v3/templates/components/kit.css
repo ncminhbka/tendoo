@@ -121,5 +121,10 @@
      giữ được cỡ hero nhưng sao đè lên badge + subhead (squint C3 bắt được) -> bỏ. */
   margin: 0 0.05em;
 }
+/* Hiệu ứng CHẤT LIỆU (glossy_gel/metal_emboss = filter SVG trên cả .hero-title) + sao nổ: vệt bóng gel phủ lên
+   chữ navy trong sao -> xám nhạt, mất tương phản (27/09, khai trương tiệm bánh GPT thật). Sao nổ đã là mảng đồ hoạ
+   mạnh -> chuyển filter từ khối tiêu đề xuống các đoạn KHÔNG phải sao. */
+.hero-title:has(.hero-seg--burst) { filter: none !important; }
+.hero-title:has(.hero-seg--burst) > .hero-seg:not(.hero-seg--burst) { filter: var(--tk-material-filter, none); }
 {% endif %}
 {% endif %}

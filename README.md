@@ -81,7 +81,7 @@ Máy dev (không GPU) chạy được toàn bộ tầng render chữ. Tầng dif
 
 ```bash
 # Render một poster (dùng nền giả lập, không cần GPU)
-PYTHONPATH=src python scripts/test_sandwich_top_heavy.py
+PYTHONPATH=src python scripts/run_template_test.py --template sandwich_top_heavy
 
 # Toàn bộ test
 PYTHONPATH=src python -m pytest tests/ -q
