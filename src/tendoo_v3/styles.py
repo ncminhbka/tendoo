@@ -463,7 +463,7 @@ TIER2_CLASSES = ("subhead-title", "subhead-date", "subhead-benefit")
 TIER3_CLASSES = (
     "badge-pill", "badge-capsule", "kicker-tag", "kicker-capsule", "cta-btn",
     "store-info-row", "store-info-col", "store-details-row", "store-text", "store-item",
-    "extra-tag-row", "freetext-block", "flexible-stack", "extra-pills-wrap",
+    "extra-tag-row", "freetext-block", "flexible-stack", "extra-pills-wrap", "showcase-chips",
     "message-container", "reviewer-info",
 )
 CONTENT_CLASSES = ("menu-list", "steps-grid", "testimonial-quote")
@@ -621,7 +621,7 @@ COMMON_AUTOFIT_JS = """
     // cộng dồn qua nhiều lần fitElements() gọi lại; (2) nâng sàn cứng 9.5 -> 11.5 (sát đúng
     // sàn Label-tier 12px hệ thống, chỉ chừa margin nhỏ cho đúng nghĩa "giải pháp cuối cùng
     // chống tràn" chứ không phải mức bình thường).
-    const pillContainers = document.querySelectorAll('.flexible-stack, .extra-tag-row, .steps-grid, .board-col-left, .store-info-col, .store-info-row, .store-details-row, .extra-pills-wrap, .freetext-block, .menu-list, .message-container');
+    const pillContainers = document.querySelectorAll('.flexible-stack, .extra-tag-row, .showcase-chips, .steps-grid, .board-col-left, .store-info-col, .store-info-row, .store-details-row, .extra-pills-wrap, .freetext-block, .menu-list, .message-container');
     pillContainers.forEach(container => {
       if (container.dataset.tendooAntiClipDone === '1') return;
       const maxAllowedH = container.dataset.maxHeight ? parseFloat(container.dataset.maxHeight) : container.clientHeight;
@@ -735,8 +735,15 @@ COMMON_AUTOFIT_JS = """
         if (!node.textContent.trim() || node.parentElement.closest('svg')) continue;
         const range = document.createRange();
         range.selectNodeContents(node);
+        // Hộp của Range = vùng NỘI DUNG của font (ascent+descent), với font script/display (Pacifico...) cao hơn
+        // hẳn dòng -> nhô ra ngoài hộp cha dù nét chữ không bị cắt (27/09: menu Pacifico bị báo "mất chữ" vì nhô
+        // 4px). Thu về HỘP DÒNG (line-height) trước khi so với vùng cắt/chồng lấn.
+        const lh = parseFloat(getComputedStyle(node.parentElement).lineHeight);
         for (const r of range.getClientRects()) {
-          if (r.width > 0 && r.height > 0) rects.push(r);
+          if (!(r.width > 0 && r.height > 0)) continue;
+          const slack = lh > 0 ? Math.max(0, (r.height - lh) / 2) : 0;
+          rects.push({left: r.left, right: r.right, top: r.top + slack, bottom: r.bottom - slack,
+                      width: r.width, height: r.height - 2 * slack});
         }
       }
       return rects;
@@ -785,9 +792,37 @@ COMMON_AUTOFIT_JS = """
     // tới khi mọi chữ nằm trong khung; không xuống dưới sàn cứng hero.
     const canvasEl = document.querySelector('.poster-canvas') || document.body;
     const cR = canvasEl.getBoundingClientRect();
-    const offCanvas = () => outerFit.some(el => tendooTextRects(el).some(r =>
-      r.top < cR.top - 1 || r.bottom > cR.bottom + 1 || r.left < cR.left - 1 || r.right > cR.right + 1));
+    // Bị cắt = ngoài khung poster HOẶC ngoài vùng hiển thị của khối cha overflow!=visible (27/09: dòng mô tả
+    // nước hoa lọt dưới đáy corner-pod overflow:hidden -- không vượt ngân sách chính nó nên Cổng 4 cũ bỏ sót).
+    const tendooCut = el => {
+      const clip = tendooClipBox(el);
+      return tendooTextRects(el).some(r =>
+        r.top < cR.top - 1 || r.bottom > cR.bottom + 1 || r.left < cR.left - 1 || r.right > cR.right + 1 ||
+        (clip && (r.bottom > clip.bottom + 1 || r.top < clip.top - 1 || r.right > clip.right + 1 || r.left < clip.left - 1)));
+    };
+    const offCanvas = () => outerFit.some(tendooCut);
     const heroEls = Array.from(document.querySelectorAll('__TENDOO_TIER1_SELECTOR__'));
+    // (i) Chữ PHỤ co trước, chỉ tới sàn ngân sách của chính nó (đã gồm sàn Luật 6) -> giữ tầng bậc: hero vẫn
+    // là điểm neo (27/09: co hero trước làm poster nước hoa hero ~ badge, tp 1.2).
+    const shrinkOthers = floorOf => {
+      let shrunk = false;
+      outerFit.forEach(el => {
+        if (heroEls.includes(el)) return;
+        const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
+        if (cur * 0.94 >= floorOf(el)) {
+          tendooApplyTypo(el, Math.floor(cur * 0.94 * 2) / 2);
+          el.querySelectorAll('*').forEach(ch => {
+            if (ch.style.fontSize && ch.style.fontSize.endsWith('px')) ch.style.fontSize = (Math.floor(parseFloat(ch.style.fontSize) * 0.94 * 2) / 2) + 'px';
+          });
+          shrunk = true;
+        }
+      });
+      return shrunk;
+    };
+    for (let step = 0; step < 16 && offCanvas(); step++) {
+      if (!shrinkOthers(el => Math.max(__RESCUE_MIN__, parseFloat(el.dataset.minFont) || 0))) break;
+    }
+    // (ii) Rồi mới tới hero.
     for (let step = 0; step < 14 && heroEls.length && offCanvas(); step++) {
       let shrunk = false;
       heroEls.forEach(h => {
@@ -797,22 +832,10 @@ COMMON_AUTOFIT_JS = """
       });
       if (!shrunk) break;
     }
-    // Hero đã về sàn mà vẫn tràn khung (nội dung quá dày cho khổ này) -> co dần MỌI chữ khác, không dưới
+    // (iii) Hero đã về sàn mà vẫn tràn khung (nội dung quá dày cho khổ này) -> co tiếp MỌI chữ khác, không dưới
     // __RESCUE_MIN__. Không mất chữ đứng trên đọc-tốt (C5 sẽ báo).
     for (let step = 0; step < 16 && offCanvas(); step++) {
-      let shrunk = false;
-      outerFit.forEach(el => {
-        if (heroEls.includes(el)) return;
-        const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
-        if (cur * 0.94 >= __RESCUE_MIN__) {
-          tendooApplyTypo(el, Math.floor(cur * 0.94 * 2) / 2);
-          el.querySelectorAll('*').forEach(ch => {
-            if (ch.style.fontSize && ch.style.fontSize.endsWith('px')) ch.style.fontSize = (Math.floor(parseFloat(ch.style.fontSize) * 0.94 * 2) / 2) + 'px';
-          });
-          shrunk = true;
-        }
-      });
-      if (!shrunk) break;
+      if (!shrinkOthers(() => __RESCUE_MIN__)) break;
     }
     // Hero bị cứu (co nhỏ) -> chữ phụ không được to hơn nó: hạ Cấp 2/3 về hero / 1.2, không dưới __RESCUE_MIN__.
     const rescuedHero = Array.from(document.querySelectorAll('__TENDOO_TIER1_SELECTOR__')).filter(e => e.dataset.tendooRescued);
@@ -830,8 +853,8 @@ COMMON_AUTOFIT_JS = """
       const maxH = parseFloat(el.dataset.maxHeight);
       const minF = parseFloat(el.dataset.minFont);
       const font = parseFloat(getComputedStyle(el).fontSize) || 0;
-      // Chữ nằm ngoài khung poster = MẤT CHỮ, dù phần tử vẫn vừa hộp của nó (bị khối cha đẩy ra ngoài).
-      if (tendooTextRects(el).some(r => r.top < cR.top - 1 || r.bottom > cR.bottom + 1 || r.left < cR.left - 1 || r.right > cR.right + 1)) {
+      // Chữ bị cắt (ngoài khung poster / khối cha overflow ẩn) = MẤT CHỮ, dù phần tử vẫn vừa hộp của nó.
+      if (tendooCut(el)) {
         overflowReport.push({cls: (el.className || '').toString().trim().split(' ')[0], verdict: 'clipped', font: font, minFont: minF,
                              maxH: maxH, scrollH: el.scrollHeight, text: (el.textContent || '').trim().slice(0, 60), offCanvas: true});
         return;

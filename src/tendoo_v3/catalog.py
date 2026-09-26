@@ -55,7 +55,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
     "type_showcase": {
         "name": "Chữ Tâm Điểm (Showcase)",
         "llm_hint": "Poster LẤY CHỮ LÀM CHÍNH (sale thuần chữ, chúc mừng, thông báo): con số/từ khoá khổng lồ ở tâm khung, ít chữ; hợp maskless.",
-        "hint": "Lockup dọc ở giữa: chữ dẫn nhỏ / điểm neo khổng lồ / chữ đuôi, subhead ngắn, badge đỉnh, CTA + cửa hàng ở đáy. Không extra_texts. Dùng khi không có sản phẩm/chủ thể cần giữ.",
+        "hint": "Lockup dọc ở giữa: chữ dẫn nhỏ / điểm neo khổng lồ / chữ đuôi, subhead ngắn, badge đỉnh, hàng chip ngắn (extra_texts) dưới subhead, CTA + cửa hàng ở đáy. Dùng khi không có sản phẩm/chủ thể cần giữ.",
         "has_mask": True,
         "mask_preset": "center_type",
         "visual_intents": ["big_number_deal", "hook_headline", "festive_event"],
@@ -65,6 +65,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
             "hero": {},
             "subhead": {},
             "badge": {},
+            "extra_texts": {},
             "cta": {"drives_geometry": ('has_footer',)},
             "store_info": {"drives_geometry": ('has_footer',)},
         },

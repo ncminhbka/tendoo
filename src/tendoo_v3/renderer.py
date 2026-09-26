@@ -825,7 +825,10 @@ def compute_menu_price_board_budget(
         "badge": {"max_h": 40.0 if has_badge else 0.0, "min_font": 11.5, "max_font": 16.0},
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
         "subhead": {"max_h": round(subhead_h, 1), "min_font": 13.0, "max_font": subhead_max_f},
-        "menu_list": {"max_h": round(menu_h, 1), "min_font": 14.0, "max_font": 19.0},
+        # Trần theo px-trên-điện-thoại (Luật 6): 19px cố định = 12px trên màn khi khung 9:16 rộng 576 -- bảng giá
+        # 4 món lọt thỏm, nửa cột trống (GĐ 3R v5, menu trà sữa). 15px-trên-màn: danh sách đọc thoải mái, vẫn
+        # nhỏ hơn hẳn tiêu đề; autofit co theo chiều cao khi nhiều món.
+        "menu_list": {"max_h": round(menu_h, 1), "min_font": 14.0, "max_font": max(19.0, phone_floor(15.0, width))},
         "cta": {"max_h": cta_h, "min_font": cta_min_f, "max_font": cta_max_f},
         "store": {"max_h": store_h, "min_font": store_min_f, "max_font": store_max_f},
     }, plan)
@@ -1366,9 +1369,11 @@ def compute_quote_spotlight_budget(plan: TendooCreativePlan, column_height: floa
 def compute_type_showcase_budget(plan: TendooCreativePlan, center_height: float, width: int, height: int) -> Dict[str, Dict[str, float]]:
     """`type_showcase` (R6): tiêu đề nhận PHẦN LỚN chiều cao vùng giữa (lockup dọc), trần cỡ rất cao --
     đây là poster mà chữ LÀ nhân vật chính. Chữ phụ theo sàn Luật 6."""
-    has_badge, has_sub = bool(plan.badge), bool(plan.subhead)
-    hero_share = 0.78 - (0.08 if has_badge else 0) - (0.16 if has_sub else 0)
+    has_badge, has_sub, has_extra = bool(plan.badge), bool(plan.subhead), bool(plan.extra_texts)
+    hero_share = 0.78 - (0.08 if has_badge else 0) - (0.16 if has_sub else 0) - (0.10 if has_extra else 0)
     return {
+        # Hàng chip ngắn dưới subhead ("TOÀN BỘ CỬA HÀNG · 3 NGÀY"): Cấp 3, trần theo cap Cấp 3 chung.
+        "extra": {"max_h": round(center_height * 0.10, 1), "min_font": 12.0, "max_font": 24.0},
         "badge": {"max_h": round(center_height * 0.09, 1), "min_font": 14.0, "max_font": 26.0},
         # Trần = 40% bề ngang: điểm neo 2-4 ký tự ("70%", "50%") lấp đầy bề ngang cột; autofit dừng ở mức VỪA.
         # (Trần theo px-trên-màn 60 cho 9:16 chỉ 92px -- "50%" lọt thỏm giữa khung dọc, đo 27/09.)

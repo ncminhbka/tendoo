@@ -78,8 +78,9 @@
 
     .menu-column {
       position: absolute;
-      top: 0;
-      bottom: 0;
+      /* Vị trí + cỡ lấy từ zone (9:16 là dải trên full ngang, các khổ khác là cột full cao). */
+      top: {{ zones.content.y1 if zones.content else 0 }}px;
+      height: {{ zones.content.height if zones.content else height }}px;
       width: {{ zones.content.width if zones.content else width * 0.44 }}px;
       max-height: 100%;
       z-index: 10;
@@ -150,7 +151,7 @@
     }
 
     /* Bảng Món/Giá: category > tên món > giá (docs/DESIGN_PRINCIPLES.md mục 8) --
-       1 serif cho giá (var(--price-font)), 1 sans-serif cho tên món (var(--headline-font)),
+       1 serif cho giá (var(--price-font)), 1 sans-serif cho tên món (var(--ui-font)),
        dot-leader cổ điển đúng chuẩn ngành nhà hàng nối tên món với giá. */
     .menu-list {
       display: flex;
@@ -162,15 +163,19 @@
 
     .menu-row {
       display: flex;
-      align-items: baseline;
+      /* Tên món dài xuống dòng -> giá + dấu chấm dẫn bám DÒNG CUỐI của tên (chuẩn bảng giá in), không treo ở dòng đầu. */
+      align-items: flex-end;
       gap: 6px;
       width: 100%;
       font-size: inherit;
     }
 
     .menu-item-name {
-      font-family: var(--headline-font);
-      font-weight: 700;
+      /* Tên món = chữ ĐỌC, không phải chữ trưng bày: luôn font UI (sans). Trước dùng --headline-font, giả định
+         headline là sans -- LLM thật chọn Pacifico cho quán trà sữa -> cả bảng giá thành chữ viết tay khó đọc
+         (27/09). Font trưng bày chỉ cho tiêu đề (quy tắc ghép font: display cho headline, sans cho thân). */
+      font-family: var(--ui-font);
+      font-weight: 600;
       /* GĐ 4: trước gán cứng #fff + bóng đen -> chữ trắng trên nền pastel (đo GĐ 1). Nay theo màu
          chữ thích ứng của vùng nội dung, bóng chỉ khi nền tối; vệt sáng cục bộ do Bước 5 autofit lo. */
       color: {{ header_text_primary }};
@@ -180,7 +185,8 @@
          Playwright DOM-measurement coi là tràn, và về bản chất vẫn là mất chữ). */
       white-space: normal;
       overflow-wrap: break-word;
-      flex-shrink: 1;
+      flex: 0 1 auto;
+      max-width: 78%;
       min-width: 0;
     }
 
@@ -188,6 +194,7 @@
       flex: 1 1 auto;
       min-width: 10px;
       height: 0.55em;
+      margin-bottom: 0.3em;
       align-self: flex-end;
       border-bottom: 2px dotted {{ 'rgba(255, 255, 255, 0.38)' if header_is_dark else 'rgba(15, 23, 42, 0.32)' }};
     }
@@ -281,8 +288,9 @@
     /* Thích ứng 9:16 narrow portrait */
     {% if is_portrait_narrow %}
     .menu-column {
-      padding: 24px 16px;
-      gap: 28px;
+      /* Dải trên full ngang: lề ~7% bề ngang cho cột chữ thoáng như bảng giá in. */
+      padding: 32px {{ (width * 0.07) | round(1) }}px 20px;
+      gap: 24px;
     }
     .menu-list {
       gap: 5px;

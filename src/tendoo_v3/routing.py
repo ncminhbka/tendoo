@@ -23,6 +23,7 @@ from tendoo_v3.validators import CONTENT_FIELDS, content_chars
 
 logger = logging.getLogger(__name__)
 
+SHOWCASE = "type_showcase"
 ASPECTS = {"1:1": 1.0, "9:16": 9 / 16, "16:9": 16 / 9, "4:5": 4 / 5}
 
 
@@ -57,6 +58,13 @@ def route_template(plan: TendooCreativePlan, aspect: str, key: Optional[str] = N
         return plan, None
     chars = content_chars(plan)
     intent = resolve_intent(plan.template, plan.visual_intent)
+    # Phủ quyết THUẦN CHỮ (GĐ 3R v5: brief "poster thuần chữ" -> LLM chọn split_left + maskless -> chữ dồn một
+    # nửa khung, nửa kia trống). Maskless = không có chủ thể cần chừa chỗ -> lockup ở tâm khung (type_showcase).
+    if (plan.maskless and plan.template != SHOWCASE and intent in TEMPLATE_CATALOG[SHOWCASE].get("visual_intents", [])
+            and _fits_all_fields(plan, SHOWCASE) and capacity(SHOWCASE, aspect, key) >= chars):
+        why = f"[Cổng 3] plan maskless (thuần chữ) ở '{plan.template}' -> đổi sang '{SHOWCASE}' (lockup giữa khung)"
+        logger.info(why)
+        return replace(plan, template=SHOWCASE, orientation=None), why
     # Phủ quyết MẤT CHỮ (GĐ 3R: LLM thật đặt `cta` vào l_frame_showcase vốn không có chỗ cho cta):
     # đổi sang template cùng intent hiển thị đủ mọi field, còn chứa nổi. Không có -> giữ, Cổng 2 báo.
     if not TEMPLATE_CATALOG[plan.template].get("specialized") and not _fits_all_fields(plan, plan.template):

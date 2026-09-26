@@ -51,6 +51,13 @@
       text-shadow: {{ '0 1px 3px rgba(0, 0, 0, 0.7)' if subhead_is_dark else 'none' }};
     }
 
+    /* Chip viền mảnh: thông tin phụ đi kèm (phạm vi, thời hạn) -- nhẹ hơn badge để không tranh điểm neo. */
+    .showcase-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4em 0.6em; max-width: 92%;
+                      font-family: var(--ui-font); }
+    .showcase-chip { padding: 0.25em 0.9em; border: 1.5px solid currentColor; border-radius: 9999px;
+                     font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+                     color: {{ header_text_secondary }}; }
+
     .badge-pill {
       font-family: var(--ui-font);
       display: inline-flex; align-items: center;
@@ -88,7 +95,7 @@
     .store-item svg { width: 1.1em; height: 1.1em; color: {{ palette.on_card_accent }}; flex-shrink: 0; }
   </style>
 </head>
-{% from "components/ui_macros.html" import render_decor_layer, render_badge, render_hero_phrase, render_subhead, render_store, render_cta with context %}
+{% from "components/ui_macros.html" import render_decor_layer, render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta with context %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
@@ -97,6 +104,7 @@
       {{ render_badge(badge, budget=budget.badge) }}
       {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
       {{ render_subhead(subhead, budget=budget.subhead) }}
+      {{ render_freetext(extra_texts, none, budget=budget.extra, row_cls='showcase-chips', pill_cls='showcase-chip') }}
     </div>
     {% if cta or store_items or store_info %}
     <div class="showcase-footer">

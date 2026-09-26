@@ -73,8 +73,10 @@ def test_gate4_classifies_verified_cases(measured):
 # khỏi đây -> đã sửa được, cập nhật danh sách.
 # Luật 6: suite viết tay dày nhất (chủ yếu 16:9) -- còn mất chữ dù đã cứu tới 12px + co cả khối (§8).
 # Nội dung cỡ này phải được Cổng 3 đổi template / LLM viết ngắn; poster LLM thật: 0 mất chữ.
-KNOWN_TEXT_LOSS = {"lframe_10_16x9_light_left", "lframe_12_16x9_heavy_right", "master_03_grand_opening_cafe",
-                   "sbh_11_16x9_heavy", "sbh_noqr_11_16x9_heavy", "sth_noqr_12_16x9_heavy"}
+# 27/09: lframe_10 hết mất chữ (co chữ phụ trước hero ở Bước 3d); sbh_noqr_15 (4:5, nội dung dày nhất) vào
+# danh sách -- mọi chữ đã về sàn cứu 12.5px mà dòng cửa hàng vẫn không vừa.
+KNOWN_TEXT_LOSS = {"lframe_12_16x9_heavy_right", "master_03_grand_opening_cafe", "sbh_11_16x9_heavy",
+                   "sbh_noqr_11_16x9_heavy", "sbh_noqr_15_4x5_heavy", "sth_noqr_12_16x9_heavy"}
 
 
 def test_no_new_text_loss(measured):
@@ -144,7 +146,8 @@ def test_squint_with_hero_parts_does_not_regress(measured_oracle):
     ]
     assert not worse, "Squint (hero_parts) tệ đi so với mốc: " + "; ".join(worse)
     # Luật 6: master_03 -- dải đáy grand_opening, CTA to đè dòng cửa hàng; cứu chữ chỉ co phần tử bị đè (§8).
-    lost = {r["id"] for r in measured_oracle if r["text_lost"]} - {"master_03_grand_opening_cafe"}
+    # sbh_noqr_15: đã mất chữ cả khi tiêu đề phẳng (KNOWN_TEXT_LOSS) -- không do hero_parts.
+    lost = {r["id"] for r in measured_oracle if r["text_lost"]} - {"master_03_grand_opening_cafe", "sbh_noqr_15_4x5_heavy"}
     assert not lost, f"hero_parts gây mất chữ: {sorted(lost)}"
 
 

@@ -136,4 +136,37 @@ def log_plan_issues(plan: TendooCreativePlan) -> List[str]:
     return issues
 
 
-__all__ = ["CONTENT_FIELDS", "check_plan", "content_chars", "log_plan_issues"]
+def _norm(text: str) -> str:
+    return " ".join("".join(ch if ch.isalnum() or ch == "%" else " " for ch in (text or "").casefold()).split())
+
+
+def dedupe_plan(plan: TendooCreativePlan) -> TendooCreativePlan:
+    """Bỏ chữ LẶP LẠI giữa các ô (GĐ 3R v5: LLM thật đặt badge "BLACK FRIDAY" trên hero "BLACK FRIDAY GIẢM TỚI
+    70%", và 2 chip lặp nguyên văn subhead). Designer không in một ý hai lần -- lặp làm loãng điểm neo và
+    tốn chỗ của chữ chính. Chỉ XOÁ ô phụ trùng (badge, extra_texts, subhead trùng hẳn hero); không sửa chữ."""
+    from dataclasses import replace
+    hero, sub = _norm(plan.hero), _norm(plan.subhead or "")
+    changes = {}
+    badge = _norm(plan.badge or "")
+    if badge and len(badge) >= 3 and (badge in hero or badge == sub):
+        changes["badge"] = None
+    if sub and sub == hero:
+        changes["subhead"] = None
+        sub = ""
+    if plan.extra_texts:
+        kept, seen = [], set()
+        for t in plan.extra_texts:
+            n = _norm(t)
+            if not n or n in seen or (len(n) >= 3 and (n in hero or n in sub or n == badge)):
+                continue
+            seen.add(n)
+            kept.append(t)
+        if len(kept) != len(plan.extra_texts):
+            changes["extra_texts"] = kept
+    if changes:
+        logger.info("[Cổng 2] bỏ chữ lặp: %s", ", ".join(changes))
+        return replace(plan, **changes)
+    return plan
+
+
+__all__ = ["CONTENT_FIELDS", "check_plan", "content_chars", "dedupe_plan", "log_plan_issues"]

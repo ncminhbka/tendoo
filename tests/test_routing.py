@@ -77,3 +77,29 @@ def test_template_that_drops_a_field_is_vetoed():
     routed, why = route_template(plan, "4:5")
     assert routed.template != "l_frame_showcase" and "cta" in TEMPLATE_CATALOG[routed.template]["slots"]
     assert "không hiển thị hết" in why
+
+
+def test_maskless_text_only_plan_goes_to_type_showcase():
+    # GĐ 3R v5: "poster thuần chữ" -> LLM chọn split_left + maskless -> chữ dồn nửa khung, nửa kia trống.
+    p = _plan("split_left", n_extra=0, maskless=True, visual_intent="big_number_deal",
+              extra_texts=["TOÀN BỘ CỬA HÀNG"], subhead="Duy nhất 3 ngày")
+    routed, why = route_template(p, "1:1")
+    assert routed.template == "type_showcase" and "maskless" in why
+
+
+def test_mask_plan_is_not_forced_to_type_showcase():
+    p = _plan("split_left", visual_intent="big_number_deal", subhead="Duy nhất 3 ngày")
+    routed, _ = route_template(p, "1:1")
+    assert routed.template == "split_left"
+
+
+def test_dedupe_drops_repeated_copy_only():
+    from tendoo_v3.validators import dedupe_plan
+
+    p = _plan("split_left", hero="BLACK FRIDAY GIẢM TỚI 70%", badge="Black Friday", subhead="Toàn bộ cửa hàng, duy nhất 3 ngày",
+              extra_texts=["TOÀN BỘ CỬA HÀNG", "DUY NHẤT 3 NGÀY", "Miễn phí giao hàng", "miễn phí giao hàng!"])
+    d = dedupe_plan(p)
+    assert d.badge is None and d.extra_texts == ["Miễn phí giao hàng"]
+    assert d.hero == p.hero and d.subhead == p.subhead
+    q = _plan("split_left", badge="HOT", extra_texts=["Tặng quà"])
+    assert dedupe_plan(q) is q

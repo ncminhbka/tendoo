@@ -2,31 +2,31 @@
  "before_after_split": {
   "n": 8,
   "c1": 1,
-  "c2": 3,
+  "c2": 5,
   "c3": 8,
   "c4": 8,
   "squint": 1,
-  "c5": 1,
+  "c5": 2,
   "pass5": 0
  },
  "customer_feedback_card": {
   "n": 9,
   "c1": 0,
-  "c2": 7,
+  "c2": 8,
   "c3": 9,
   "c4": 9,
   "squint": 0,
-  "c5": 4,
+  "c5": 5,
   "pass5": 0
  },
  "diagonal_slash": {
   "n": 7,
   "c1": 2,
-  "c2": 6,
+  "c2": 7,
   "c3": 7,
   "c4": 7,
   "squint": 2,
-  "c5": 4,
+  "c5": 5,
   "pass5": 2
  },
  "grand_opening_banner": {
@@ -52,8 +52,8 @@
  "lifestyle_corner_pod": {
   "n": 5,
   "c1": 0,
-  "c2": 3,
-  "c3": 3,
+  "c2": 1,
+  "c3": 5,
   "c4": 5,
   "squint": 0,
   "c5": 1,
@@ -72,11 +72,11 @@
  "menu_price_board": {
   "n": 6,
   "c1": 2,
-  "c2": 4,
-  "c3": 2,
+  "c2": 5,
+  "c3": 3,
   "c4": 6,
   "squint": 2,
-  "c5": 2,
+  "c5": 3,
   "pass5": 2
  },
  "quote_spotlight": {
@@ -86,7 +86,7 @@
   "c3": 4,
   "c4": 4,
   "squint": 0,
-  "c5": 0,
+  "c5": 1,
   "pass5": 0
  },
  "recruitment_board": {
@@ -101,23 +101,23 @@
  },
  "sandwich_bottom_heavy": {
   "n": 6,
-  "c1": 0,
+  "c1": 1,
   "c2": 5,
-  "c3": 5,
+  "c3": 6,
   "c4": 5,
-  "squint": 0,
+  "squint": 1,
   "c5": 0,
   "pass5": 0
  },
  "sandwich_top_heavy": {
   "n": 6,
   "c1": 1,
-  "c2": 5,
-  "c3": 3,
+  "c2": 4,
+  "c3": 6,
   "c4": 5,
-  "squint": 0,
+  "squint": 1,
   "c5": 2,
-  "pass5": 0
+  "pass5": 1
  },
  "split_left": {
   "n": 10,

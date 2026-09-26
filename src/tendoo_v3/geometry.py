@@ -706,8 +706,11 @@ def _menu_price_board(w: float, h: float, orientation: str = "left") -> Dict[str
     # trái/phải) nhưng rộng hơn 1 chút vì nội dung dạng list cần nhiều chỗ ngang hơn để
     # tên món + giá không bị bó hẹp. Vẫn luôn <= 50% diện tích theo yêu cầu.
     if w / h < 0.7:  # 9:16 Narrow Portrait
-        frac_w = 0.50
-    elif w / h >= 1.5:  # 16:9 Wide Landscape
+        # DẢI TRÊN full ngang (50% chiều cao), đồ uống/món ở nửa dưới -- bố cục menu dọc chuẩn. Cột 50% bề ngang
+        # (288px ở khung 576) quá hẹp cho dòng "tên món ..... giá": tên nào cũng xuống 2-3 dòng, giá lạc dòng
+        # (GĐ 3R v5, menu trà sữa). Diện tích vẫn đúng 50% (giới hạn mask).
+        return {"content": _frac(0.0, 0.0, 1.0, 0.50, w, h)}
+    if w / h >= 1.5:  # 16:9 Wide Landscape
         frac_w = 0.40
     else:  # 1:1, 4:5
         frac_w = 0.44
