@@ -390,7 +390,36 @@ CONTENT_CLASSES = ("menu-list", "steps-grid", "testimonial-quote")
 COMMON_AUTOFIT_JS = """
 <script>
 (function() {
+  // Cỡ chữ + line-height + letter-spacing gán CÙNG MỘT CHỖ, dùng cho cả lúc dò (binary
+  // search) lẫn lúc gán kết quả -- trước đây letter-spacing -0.5px chỉ gán SAU khi dò xong,
+  // nên chữ lúc đo rộng hơn chữ lúc hiển thị và autofit chọn cỡ nhỏ hơn cần thiết (lỗi này
+  // bị che tình cờ vì lượt fitElements() sau thừa hưởng -0.5px lượt trước để lại).
+  function tendooApplyTypo(el, size) {
+    el.style.fontSize = size + 'px';
+    // Chữ nhỏ / nhiều dòng tự động nén line-height để không chiếm diện tích dọc
+    el.style.lineHeight = size < 26 ? '1.15' : (size < 36 ? '1.2' : '1.3');
+    // Chữ co về gần sàn (<= 32px): co nhẹ kerning; lớn hơn thì trả về giá trị CSS.
+    el.style.letterSpacing = size <= 32 ? '-0.5px' : '';
+  }
+
   function fitElements() {
+    // 0. MỖI LƯỢT BẮT ĐẦU TỪ TRẠNG THÁI SẠCH. fitElements() chạy 2-3 lượt/trang (tuỳ thời
+    // điểm DOMContentLoaded/load) và các bước dưới ghi style inline (letter-spacing -0.5px,
+    // gap/padding co lại, font-size con...) mà lượt sau KHÔNG gỡ -> kết quả phụ thuộc số
+    // lượt đã chạy. Đo 26/09: 5/21 case grand_opening_banner ra cỡ chữ khác nhau giữa các
+    // lần render cùng 1 plan. Lưu style gốc ở lượt đầu, khôi phục trước mỗi lượt sau.
+    document.querySelectorAll('body *').forEach(n => {
+      if (!n.dataset) return;
+      if (!('tendooOrigStyle' in n.dataset)) {
+        n.dataset.tendooOrigStyle = n.getAttribute('style') || '';
+      } else if (n.dataset.tendooOrigStyle) {
+        n.setAttribute('style', n.dataset.tendooOrigStyle);
+      } else {
+        n.removeAttribute('style');
+      }
+      delete n.dataset.tendooAntiClipDone;
+    });
+
     // 1. Tự động co giãn kích cỡ 2 chiều bằng thuật toán Binary Search Fill-to-Bounds
     const autofitEls = document.querySelectorAll('[data-autofit]');
     autofitEls.forEach(el => {
@@ -434,16 +463,7 @@ COMMON_AUTOFIT_JS = """
       
       for (let iter = 0; iter < 10; iter++) {
         let mid = (low + high) / 2;
-        el.style.fontSize = mid + 'px';
-        
-        // Dynamic Line-Height: Chữ nhỏ / nhiều dòng tự động nén line-height để không chiếm diện tích dọc
-        if (mid < 26) {
-          el.style.lineHeight = '1.15';
-        } else if (mid < 36) {
-          el.style.lineHeight = '1.2';
-        } else {
-          el.style.lineHeight = '1.3';
-        }
+        tendooApplyTypo(el, mid);
         
         // Kiểm tra xem có nằm gọn trong bounding box hình học không
         // Cho phép dung sai 2.0px đối với scrollWidth để không bị nghẽn bởi làm tròn subpixel của width: 100%
@@ -457,19 +477,7 @@ COMMON_AUTOFIT_JS = """
       
       // Áp dụng cỡ chữ tối ưu cuối cùng (làm tròn 0.5px)
       let finalFont = Math.floor(bestSize * 2) / 2;
-      el.style.fontSize = finalFont + 'px';
-      if (finalFont < 26) {
-        el.style.lineHeight = '1.15';
-      } else if (finalFont < 36) {
-        el.style.lineHeight = '1.2';
-      } else {
-        el.style.lineHeight = '1.3';
-      }
-
-      // Dynamic Letter-Spacing: Nếu text phải co về gần sàn (dưới 32px), co nhẹ kerning
-      if (finalFont <= 32) {
-        el.style.letterSpacing = '-0.5px';
-      }
+      tendooApplyTypo(el, finalFont);
 
       // Nếu là container chứa danh sách pills/cards (như .flexible-stack, .extra-tag-row, .steps-grid, .board-col-left, .store-info-col)
       // mà vẫn chớm tràn, tự động co gap và padding của các phần tử con để giữ trọn vẹn 100% nội dung
@@ -642,8 +650,6 @@ COMMON_AUTOFIT_JS = """
       });
     });
     window.__tendooOverflow = overflowReport;
-
-    window.__tendooAutofitDone = true;
   }
 
   if (document.readyState === 'complete') {
@@ -652,7 +658,16 @@ COMMON_AUTOFIT_JS = """
     window.addEventListener('load', fitElements);
     document.addEventListener('DOMContentLoaded', fitElements);
   }
-  setTimeout(fitElements, 150);
+  // Cờ "xong" CHỈ bật sau lượt CUỐI (font đã sẵn sàng + lượt dự phòng 150ms). Trước đây
+  // mỗi lượt đều bật cờ ngay -> PosterRenderer có thể chụp/đo ở trạng thái lượt đầu,
+  // đo 26/09: 8/21 case grand_opening_banner cho cỡ chữ khác nhau giữa các lần chạy.
+  setTimeout(function() {
+    const ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+    ready.then(function() {
+      fitElements();
+      window.__tendooAutofitDone = true;
+    });
+  }, 150);
 })();
 </script>
 """.replace("__TENDOO_TIER2_SELECTOR__", ", ".join("." + c for c in TIER2_CLASSES)).replace(
