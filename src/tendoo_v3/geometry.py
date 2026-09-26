@@ -22,6 +22,8 @@ from __future__ import annotations
 
 from typing import Callable, Dict, Optional, Tuple
 
+from tendoo_v3.catalog import TEMPLATE_CATALOG
+
 Rect = Tuple[float, float, float, float]  # (x1, y1, x2, y2) tính bằng px
 
 
@@ -746,26 +748,19 @@ _DENSITY_AWARE_TEMPLATES: set = set()
 # 16 case/template TRƯỚC KHI bật lại bất kỳ template nào vào set này.
 
 
-# Template có 1 zone "chrome" (badge/store_info/QR) riêng biệt, kích thước phụ thuộc
-# tường minh vào has_qr -- xem _sandwich_bottom_heavy(). Khác _DENSITY_AWARE_TEMPLATES
-# (1 điểm số density chung, đã CHỨNG MINH SAI): đây là boolean cờ hiện diện thật của
-# đúng 1 field (qr_code), branch tường minh + đo Playwright riêng cho từng template,
-# không dùng công thức chung.
-# Mỗi field-cờ chỉ áp cho ĐÚNG template thực sự dùng field đó làm driver kích thước
-# chính -- không dùng chung 1 "has_qr" cho mọi template (customer_feedback_card cần
-# `has_footer` = qr HOẶC cta HOẶC store, vì tự riêng QR không phải driver ở đó, xem
-# compute_customer_feedback_budget()).
-_HAS_QR_TEMPLATES = {
-    "sandwich_bottom_heavy",
-    "sandwich_top_heavy",
-    "step_process_roadmap",
-    "recruitment_board",
-    "grand_opening_banner",
-    "lifestyle_corner_pod",
-}
-_HAS_FOOTER_TEMPLATES = {"customer_feedback_card", "luxury_centered_card", "before_after_split", "lifestyle_corner_pod"}
-_HAS_MESSAGE_TEMPLATES = {"luxury_centered_card"}
-_HAS_FREETEXT_TEMPLATES = {"grand_opening_banner", "lifestyle_corner_pod", "l_frame_showcase"}
+# Cờ hiện diện (has_qr/has_footer/has_message/has_freetext) mà hàm zone của template nhận
+# -- khai báo trong catalog.py (`slots[...]["drives_geometry"]`), thay cho 4 set hard-code
+# cũ. Khác _DENSITY_AWARE_TEMPLATES (1 điểm số density chung, đã CHỨNG MINH SAI): đây là
+# boolean hiện diện thật của đúng field làm driver kích thước chính, mỗi template tự khai
+# báo field nào (customer_feedback_card: has_footer = qr HOẶC cta HOẶC store, vì riêng QR
+# không phải driver ở đó -- xem compute_customer_feedback_budget()).
+def geometry_drivers(template: str) -> Dict[str, Tuple[str, ...]]:
+    """{cờ: các slot kích hoạt cờ đó} theo khai báo trong catalog."""
+    out: Dict[str, Tuple[str, ...]] = {}
+    for slot, spec in TEMPLATE_CATALOG.get(template, {}).get("slots", {}).items():
+        for flag in spec.get("drives_geometry", ()):
+            out[flag] = out.get(flag, ()) + (slot,)
+    return out
 
 
 def get_zones(
@@ -788,23 +783,17 @@ def get_zones(
     Mặc định 1.0 (kích thước tối đa, hành vi CŨ y hệt) cho mọi lời gọi chưa truyền
     density -- tương thích ngược hoàn toàn.
 
-    `has_qr`/`has_footer`/`has_message` (bool | None) chỉ có tác dụng với template
-    trong `_HAS_QR_TEMPLATES`/`_HAS_FOOTER_TEMPLATES`/`_HAS_MESSAGE_TEMPLATES` tương
-    ứng. `None` (mặc định, chưa truyền) -> coi như True (kích thước tối đa, hành vi
-    CŨ y hệt) -- tương thích ngược hoàn toàn."""
+    `has_qr`/`has_footer`/`has_message`/`has_freetext` (bool | None) chỉ có tác dụng với
+    template khai báo cờ đó trong catalog (xem geometry_drivers()). `None` (mặc định,
+    chưa truyền) -> coi như True (kích thước tối đa, hành vi CŨ y hệt)."""
     fn = _GEOMETRY_FUNCS.get(template)
     if fn is None:
         return {}
     density_kwarg = {"density": density} if template in _DENSITY_AWARE_TEMPLATES else {}
-    presence_kwarg: Dict[str, bool] = {}
-    if template in _HAS_MESSAGE_TEMPLATES:
-        presence_kwarg["has_message"] = True if has_message is None else has_message
-    if template in _HAS_QR_TEMPLATES:
-        presence_kwarg["has_qr"] = True if has_qr is None else has_qr
-    if template in _HAS_FOOTER_TEMPLATES:
-        presence_kwarg["has_footer"] = True if has_footer is None else has_footer
-    if template in _HAS_FREETEXT_TEMPLATES:
-        presence_kwarg["has_freetext"] = True if has_freetext is None else has_freetext
+    given = {"has_qr": has_qr, "has_footer": has_footer, "has_message": has_message, "has_freetext": has_freetext}
+    presence_kwarg: Dict[str, bool] = {
+        flag: True if given[flag] is None else given[flag] for flag in geometry_drivers(template)
+    }
     if template == "lifestyle_corner_pod":
         return fn(
             float(width), float(height), orientation=orientation or "bottom_left", **density_kwarg, **presence_kwarg
@@ -816,4 +805,4 @@ def get_zones(
     return fn(float(width), float(height), **presence_kwarg)
 
 
-__all__ = ["Rect", "get_zones"]
+__all__ = ["Rect", "geometry_drivers", "get_zones"]

@@ -60,7 +60,7 @@ from tendoo_v3.llm_planner import (
     LLM_BACKEND,
 )
 from tendoo_v3.qr import generate_qr_base64
-from tendoo_v3.renderer import build_template_html, compute_plan_content_density, pil_to_base64_data_uri, render_plan_to_poster
+from tendoo_v3.renderer import build_template_html, compute_geometry_flags, compute_plan_content_density, pil_to_base64_data_uri, render_plan_to_poster
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
 from tendoo_v3.styles import palette_from_color_harmony
 from tendoo_v3.velocity_blending import (
@@ -644,10 +644,7 @@ async def _run_variant_pipeline(
         height=height,
         orientation=plan.orientation,
         density=compute_plan_content_density(plan),
-        has_qr=bool(plan.qr_code),
-        has_footer=bool(plan.qr_code or plan.cta or plan.store_info),
-        has_message=bool(plan.extra_texts),
-        has_freetext=bool(plan.extra_texts),
+        **compute_geometry_flags(plan),
     )
     mask_img = Image.fromarray((mask_np * 255).astype(np.uint8), mode="L")
 

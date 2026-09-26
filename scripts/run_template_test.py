@@ -510,7 +510,7 @@ def run_test_suite_for_template(
             f.write(html_content)
 
         # 3. Mask calculation
-        from tendoo_v3.renderer import compute_plan_content_density
+        from tendoo_v3.renderer import compute_geometry_flags, compute_plan_content_density
         density = compute_plan_content_density(plan)
         mask = generate_template_mask(
             template=plan.template,
@@ -518,10 +518,7 @@ def run_test_suite_for_template(
             height=h,
             orientation=plan.orientation,
             density=density,
-            has_qr=bool(plan.qr_code),
-            has_footer=bool(plan.qr_code or plan.cta or plan.store_info),
-            has_message=bool(plan.extra_texts),
-            has_freetext=bool(plan.extra_texts),
+            **compute_geometry_flags(plan),
         )
         mask_area_pct = float(np.sum(mask > 0.5) / (w * h) * 100.0)
         save_mask_preview(mask, output_mask)

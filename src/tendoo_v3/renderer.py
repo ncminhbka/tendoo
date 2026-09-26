@@ -23,7 +23,7 @@ from tendoo_core.colors import ensure_contrast
 from tendoo_core.fonts import resolve_font
 from tendoo_core.poster_renderer import PosterRenderer
 from tendoo_v3.catalog import TEMPLATE_CATALOG
-from tendoo_v3.geometry import compute_density_score, get_zones
+from tendoo_v3.geometry import compute_density_score, geometry_drivers, get_zones
 from tendoo_v3.icons import (
     BULLET_SPARKLE_SVG,
     get_icon_svg,
@@ -1353,6 +1353,18 @@ def compute_plan_content_density(plan: TendooCreativePlan, store_items: Optional
     )
 
 
+def compute_geometry_flags(plan: TendooCreativePlan, template: Optional[str] = None) -> Dict[str, bool]:
+    """Cờ hiện diện cho `get_zones()`/`generate_template_mask()`, suy từ khai báo
+    `slots[...]["drives_geometry"]` trong catalog: cờ = True nếu BẤT KỲ slot kích hoạt nó
+    có nội dung. Dùng chung cho CSS (build_template_html) VÀ mask (demo_server) -- trước
+    đây mỗi nơi tự viết lại `has_footer=bool(qr or cta or store)`..., lệch 1 chỗ là mask
+    vẽ sai vùng so với chữ thật."""
+    return {
+        flag: any(bool(getattr(plan, slot, None)) for slot in slots)
+        for flag, slots in geometry_drivers(template or plan.template).items()
+    }
+
+
 def _zone_to_ctx(rect) -> Dict[str, float]:
     x1, y1, x2, y2 = rect
     return {
@@ -1768,10 +1780,7 @@ def build_template_html(
             height,
             orientation=plan.orientation,
             density=content_density,
-            has_qr=bool(plan.qr_code),
-            has_footer=bool(plan.qr_code or plan.cta or plan.store_info),
-            has_message=bool(plan.extra_texts),
-            has_freetext=bool(plan.extra_texts),
+            **compute_geometry_flags(plan, tpl_name),
         ).items()
     }
 

@@ -102,9 +102,9 @@ def generate_template_mask(
     plan/run -- mask và CSS đọc chung `get_zones()` nên phải cùng 1 density mới khớp
     nhau, nếu không mask sẽ vẽ 1 vùng khác kích thước với card CSS thật đã render.
 
-    `has_qr`: tương tự -- PHẢI khớp `bool(plan.qr_code)` đã dùng khi render CSS (xem
-    `geometry.py::_PRESENCE_AWARE_TEMPLATES`), nếu không mask top-bar của
-    sandwich_bottom_heavy sẽ lệch kích thước với box CSS thật.
+    `has_qr`/`has_footer`/`has_message`/`has_freetext`: tương tự -- PHẢI khớp cờ đã dùng
+    khi render CSS; truyền `**renderer.compute_geometry_flags(plan)` (cùng hàm
+    build_template_html dùng), nếu không mask sẽ lệch kích thước với box CSS thật.
     """
     if template == "diagonal_slash":
         mask_img = Image.new("L", (width, height), 0)

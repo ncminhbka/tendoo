@@ -383,7 +383,7 @@ def main():
                 palette_override = None
 
             # 2. Continuous mask (has_freetext PHẢI khớp bool(plan.extra_texts) như
-            # build_template_html tự tính nội bộ -- xem geometry.py::_HAS_FREETEXT_TEMPLATES).
+            # build_template_html tự tính nội bộ -- xem catalog.py slots[...]["drives_geometry"]).
             mask_np = generate_template_mask(
                 template=plan.template,
                 width=w,

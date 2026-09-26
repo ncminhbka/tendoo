@@ -571,7 +571,7 @@ Không có deadline cứng. Xếp theo **thứ tự phụ thuộc**, mỗi giai 
 | :-- | :--- | :--- | :--- |
 | **0A** | Tầng markup ngữ nghĩa (`hero_parts` + `.hero-phrase` + macro) và thang cỡ chữ poster cho `sandwich_top_heavy` | Tương phản 1.62x → 4.10x, 0 tràn, test xanh | ✅ **XONG 25/09** |
 | **0A+** | Lan Luật 1 ra 13 hàm budget còn lại; vá đảo ngược thứ bậc Cấp 2 vs Cấp 3 (extra/cta/badge) | Không còn phần tử Cấp 3 nào to hơn Cấp 2 trên cả 212 case | ✅ **XONG 26/09** — 0/379 case đảo bậc (từ 53), cỡ chữ phụ giữ nguyên ngoài 53 case đó; **không** dùng công thức chia theo hero (xem kết quả đo cuối §4.1) |
-| **0B** | `catalog.py` declarative (§6.2); migrate 13 template sang component layer; Cổng 2+3 | Thêm template mới chỉ chạm **2 file**; 4 set cờ hard-code bị xoá | |
+| **0B** | `catalog.py` declarative (§6.2); migrate 13 template sang component layer; Cổng 2+3 | Thêm template mới chỉ chạm **2 file**; 4 set cờ hard-code bị xoá | 🔄 **Đang làm.** ✅ 0B-1 (26/09): `slots` khai báo cho 14 template (lấy từ template.html, có test giữ đồng bộ), 4 set cờ `_HAS_*_TEMPLATES` đã xoá, 3 bản sao cách tính cờ gom về `renderer.compute_geometry_flags` — HTML + mask của 379 case **giống hệt từng byte** trước/sau. ⚠️ Cổng 3 cần `capacity_chars` **đo ở GĐ 1** — 0B chỉ dựng được khung, chưa có số để reroute |
 | **0C** | Cổng 4 — phát hiện tràn lúc chạy (`window.__tendoo_overflow` + `page.evaluate`) | 6 case tràn hiện tại bị bắt và phân loại đúng (thật / báo động giả) | |
 | **1** | Squint test tự động hoá (§4.5) vào CI; đo lại bản đồ phủ sóng **lần 2** theo đúng profile intent | Có bảng sức chứa thật ⇒ điền `capacity_chars` vào catalog | |
 | **2** | Linh kiện UI: Hero Stat, Ribbon, Split Capsule, Open Props shadows, SVG filters, `<textPath>` | Render mẫu đạt 4 điều kiện §4.5 với đủ các hiệu ứng | |
@@ -594,6 +594,7 @@ Không có deadline cứng. Xếp theo **thứ tự phụ thuộc**, mỗi giai 
 | `from_dict()` nhận `style` là object thì âm thầm rơi về mặc định | Thấp | Lỗi sai-thầm-lặng, đã ghi nhận, vá ở 0B |
 | §4.5 điều kiện 2 ("≥3 phần tử trong ±20%") mâu thuẫn với chính thứ bậc 3 tầng: poster có ≥3 chi tiết Cấp 3 (hotline + địa chỉ + CTA…) gần như luôn vi phạm. Đo 26/09: **195/379** case vi phạm ở baseline, **205/379** sau 0A+ (chữ phụ bị co về cùng cỡ subhead) | **Cao** | Định nghĩa lại trước GĐ 1 (vd chỉ xét giữa các CẤP khác nhau, không xét trong cùng Cấp 3) — nếu đưa nguyên văn vào CI sẽ chặn hơn nửa số poster |
 | Khi subhead bị chiều cao khoá nhỏ, 0A+ kéo cả hotline/CTA xuống theo (vd `sth_03_1x1_medium`: subhead 15px ⇒ store/cta 18–19.5 → 15px) | Trung bình | Chưa sửa. Đòn bẩy đúng là cấp thêm chiều cao cho subhead/hero, không phải nới Cấp 3 |
+| Field LLM trả về nhưng template không có chỗ hiển thị bị **mất âm thầm** — vd `l_frame_showcase` không có `cta` trong template, không case test nào có cta cho template này. Thấy được nhờ `slots` (0B-1) | **Cao** | Cổng 2 (0B-2): log cảnh báo khi plan có field ngoài `slots`; quyết định thiết kế (thêm chỗ cho CTA hay cấm LLM chọn) là việc của người duyệt |
 | 15 case tràn thật mà `run_template_test.py` báo PASS (store-info kẹt sàn 14px, `sbh_11_16x9_heavy`, `lframe_*_9x16`…) — có từ trước 0A+, 0A+ không đổi | Trung bình | Liệt kê được bằng `probe_type_hierarchy.py --show overflows`; vá ở GĐ 0C |
 
 ---
