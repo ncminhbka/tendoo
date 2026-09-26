@@ -123,7 +123,7 @@ def _sandwich_top_heavy(w: float, h: float, has_qr: bool = True) -> Dict[str, Re
             bottom_start = 0.81
         else:
             bottom_start = 0.84
-        top_frac = 0.27
+        top_frac = 0.30  # R1 (26/09): 0.27 = 155px quá chật cho badge+hero+subhead+freetext (hero 43px, C1 2.87); 0.33 tốt hơn nhưng mask vượt trần 50% (yêu cầu cứng; 0.31 = 50.15% do blur) -> 0.30
     elif w / h < 0.7:  # 9:16 Narrow Portrait
         top_frac = 0.31
         if has_qr:

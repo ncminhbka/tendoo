@@ -24,7 +24,13 @@ HOOK_PHRASES = (
     "KHAI TRƯƠNG", "TUYỂN DỤNG", "CHIÊU MỘ", "MIỄN PHÍ", "ĐỒNG GIÁ", "SALE", "TUYỂN",
 )
 # Đơn vị/chữ đi kèm con số, gộp vào cùng đoạn stat ("7 BƯỚC", "5 SAO", "6 TUẦN").
-_UNIT_WORDS = {"BƯỚC", "SAO", "NGÀY", "TUẦN", "THÁNG", "GIỜ", "LẦN", "HỐ", "FT", "TRIỆU", "NGHÌN", "NGÀN", "TỶ", "ĐỒNG", "VNĐ", "K"}
+UNIT_WORDS = {"BƯỚC", "SAO", "NGÀY", "TUẦN", "THÁNG", "GIỜ", "LẦN", "HỐ", "FT", "TRIỆU", "NGHÌN", "NGÀN", "TỶ", "ĐỒNG", "VNĐ", "K", "%"}
+_UNIT_WORDS = UNIT_WORDS
+# Từ ghép 2 âm tiết thông dụng trong quảng cáo -- tách qua 2 dòng ("CÀ | PHÊ") đọc như 2 từ rời.
+# Danh sách THU HẸP có chủ đích (không phải từ điển): dùng để giữ liền khi ngắt dòng (GĐ 7a) và
+# để probe_line_breaks.py đếm lỗi. Cụm 3 âm tiết ghi dạng đủ, tách thành các cặp liền kề.
+_COMPOUND_PHRASES = "ƯU ĐÃI|KHUYẾN MÃI|GIẢM GIÁ|MIỄN PHÍ|KHAI TRƯƠNG|SẢN PHẨM|KHÁCH HÀNG|CỬA HÀNG|DỊCH VỤ|CHẤT LƯỢNG|CAO CẤP|THỜI TRANG|CÔNG NGHỆ|TRẢI NGHIỆM|CÀ PHÊ|TRÀ SỮA|ẨM THỰC|NHÀ HÀNG|THỰC ĐƠN|HẢI SẢN|BẢO HÀNH|CHÍNH HÃNG|GIAO HÀNG|TOÀN QUỐC|HỆ THỐNG|TUYỂN DỤNG|NHÂN VIÊN|CHUYÊN VIÊN|KỸ SƯ|DOANH NGHIỆP|THƯƠNG HIỆU|BỘ SƯU TẬP|SANG TRỌNG|ĐẲNG CẤP|THƯỢNG LƯU|HOÀNG GIA|NGHỈ DƯỠNG|DU LỊCH|KỲ NGHỈ|LÀM ĐẸP|THẨM MỸ|LÀN DA|CHĂM SÓC|LIỆU TRÌNH|SỨC KHỎE|PHÒNG KHÁM|NHA KHOA|BÁC SĨ|HỌC VIÊN|KHÓA HỌC|ĐÀO TẠO|QUY TRÌNH|GIẢI PHÁP|TRÍ TUỆ|NHÂN TẠO|ĐIỆN THOẠI|ĐỒNG HỒ|NƯỚC HOA|MỸ PHẨM|TRANG SỨC|KIM CƯƠNG|BIỆT THỰ|CĂN HỘ|BẤT ĐỘNG SẢN|NỘI THẤT|KHÔNG GIAN|THIÊN NHIÊN|TỰ NHIÊN|NGUYÊN BẢN|THỦ CÔNG|ĐỘC QUYỀN|ĐẶC BIỆT|HẤP DẪN|TUYỆT VỜI|HOÀN HẢO|TẬN TÂM|UY TÍN|HÀI LÒNG|TIN DÙNG|ĐẶT HÀNG|MUA SẮM|ĐĂNG KÝ|LIÊN HỆ|THÀNH VIÊN|TÍCH ĐIỂM|QUÀ TẶNG|SỐ LƯỢNG|CÓ HẠN|CUỐI TUẦN|HÔM NAY|ĐÊM NAY|MÙA HÈ|MÙA THU|GIÁNG SINH|TRUNG THU|NĂM MỚI|LỄ HỘI|SỰ KIỆN|TRIỂN LÃM|HỘI NGHỊ|THỂ THAO|THỂ HÌNH|VÓC DÁNG|TƯƠI SÁNG|RẠNG RỠ|THANH LỊCH|TINH TẾ|HIỆN ĐẠI|THÔNG MINH|SIÊU TỐC|ĐỈNH CAO|BÙNG NỔ|TƯNG BỪNG|CHÀO ĐÓN|TRI ÂN|CẢM ƠN|HÀ NỘI|SÀI GÒN|ĐÀ NẴNG|ĐÀ LẠT|PHÚ QUỐC|NHA TRANG".split("|")
+COMPOUNDS = {f"{a} {b}" for ph in _COMPOUND_PHRASES for a, b in zip(ph.split(), ph.split()[1:])}
 # Con số "đáng làm neo": có ký hiệu (%, K, Đ, +, X, HZ...) hoặc dạng 3N2Đ / 24/7 / 1:1 / 99.9.
 _NUM_TOKEN = re.compile(r"^[-–+]?\d[\d.,:/]*(%|K|Đ|đ|\+|X|HZ|FT|N\d+Đ|H)?$", re.IGNORECASE)
 _YEAR = re.compile(r"^(19|20)\d\d$")  # năm ("2026") là thông tin, không phải điểm neo
@@ -76,4 +82,4 @@ def suggest_hero_parts(hero: str) -> List[Dict[str, Any]]:
     return parts
 
 
-__all__ = ["HOOK_PHRASES", "suggest_hero_parts"]
+__all__ = ["COMPOUNDS", "HOOK_PHRASES", "UNIT_WORDS", "suggest_hero_parts"]

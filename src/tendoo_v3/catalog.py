@@ -101,8 +101,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "sandwich_standard",
         "visual_intents": ["big_number_deal", "hook_headline", "product_showcase"],
-        "capacity_chars": {"1:1": 699, "9:16": 681, "16:9": 64, "4:5": 699},
-        "capacity_chars_safe": {"1:1": 699, "9:16": 681, "16:9": 396, "4:5": 699},
+        "capacity_chars": {"1:1": 699, "9:16": 681, "16:9": 95, "4:5": 699},
+        "capacity_chars_safe": {"1:1": 699, "9:16": 681, "16:9": 611, "4:5": 699},
         "slots": {
             "hero": {},
             "subhead": {},
