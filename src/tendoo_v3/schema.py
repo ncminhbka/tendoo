@@ -66,6 +66,9 @@ class TendooCreativePlan:
     badge_style: Optional[str] = None
     stat_style: Optional[str] = None
     decor: Optional[str] = None
+    # Maskless Mode (GĐ 5, ROADMAP §5.3): bỏ luồng corridor -- chỉ cho poster lấy chữ làm nhân vật
+    # chính trên nền ÍT CHI TIẾT (catalog.MASKLESS_INTENTS, Cổng 2 kiểm).
+    maskless: bool = False
 
     style: StyleConfig = field(default_factory=StyleConfig)
 
@@ -191,6 +194,7 @@ class TendooCreativePlan:
             badge_style=data.get("badge_style"),
             stat_style=data.get("stat_style"),
             decor=data.get("decor"),
+            maskless=bool(data.get("maskless", False)),
             style=style,
             # "background_prompt" chấp nhận thêm làm alias: hệ thống prompt LLM từng
             # dùng tên này trước khi thống nhất về "scene_prompt" (2026-09-15) -- giữ

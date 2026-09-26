@@ -147,6 +147,42 @@ def generate_harsh_backdrop_data_uri(
     img.save(buf, format="JPEG", quality=85)
     return f"data:image/jpeg;base64,{base64.b64encode(buf.getvalue()).decode('ascii')}"
 
+
+def generate_lowdetail_backdrop_data_uri(
+    width: int, height: int, theme_hex: str = "#FF3366", background_tone: str = "dark_luxury", seed: str = ""
+) -> str:
+    """Nền giả MASKLESS (GĐ 5, ROADMAP §5.3): nền ÍT CHI TIẾT đúng loại prompt maskless cho phép
+    (gradient + bokeh mềm + bụi sáng li ti) phủ CẢ khung -- không có vùng tĩnh nào dưới chữ như khi
+    có corridor. Tất định theo `seed`."""
+    import random
+    import zlib
+
+    from PIL import ImageFilter
+
+    base = Image.open(io.BytesIO(base64.b64decode(generate_mock_backdrop_data_uri(width, height, theme_hex, background_tone).split(",", 1)[1]))).convert("RGB")
+    rng = random.Random(zlib.crc32(f"lowdetail|{seed}|{width}x{height}".encode("utf-8")))
+    light_tone = background_tone in LIGHT_BACKGROUND_TONES
+    short = min(width, height)
+    th = tuple(int(theme_hex[i:i + 2], 16) for i in (1, 3, 5)) if len(theme_hex) >= 7 else (255, 200, 120)
+    bokeh = Image.new("RGB", (width, height), (0, 0, 0))
+    amask = Image.new("L", (width, height), 0)
+    db, dm = ImageDraw.Draw(bokeh), ImageDraw.Draw(amask)
+    for _ in range(rng.randint(14, 22)):  # đốm bokeh mềm khắp khung
+        r = short * rng.uniform(0.03, 0.12)
+        x, y = rng.uniform(0, width), rng.uniform(0, height)
+        col = th if rng.random() < 0.5 else ((255, 236, 200) if not light_tone else (255, 255, 255))
+        db.ellipse([x - r, y - r, x + r, y + r], fill=col)
+        dm.ellipse([x - r, y - r, x + r, y + r], fill=rng.randint(60, 140))
+    for _ in range(int(width * height / 2500)):  # bụi sáng li ti
+        x, y, r = rng.uniform(0, width), rng.uniform(0, height), rng.uniform(0.6, 1.8)
+        db.ellipse([x - r, y - r, x + r, y + r], fill=(255, 245, 220))
+        dm.ellipse([x - r, y - r, x + r, y + r], fill=rng.randint(80, 200))
+    amask = amask.filter(ImageFilter.GaussianBlur(short * 0.012))
+    img = Image.composite(bokeh, base, amask)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=85)
+    return f"data:image/jpeg;base64,{base64.b64encode(buf.getvalue()).decode('ascii')}"
+
 def parse_case_to_plan(case: Dict[str, Any], default_template: str) -> Tuple[TendooCreativePlan, int, int]:
     """Phân tích case thành TendooCreativePlan bất kể schema nested hay flat."""
     width = case.get("width", 1024)

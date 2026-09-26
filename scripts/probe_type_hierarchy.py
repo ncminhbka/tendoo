@@ -48,7 +48,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from playwright.sync_api import sync_playwright
 
-from run_template_test import generate_harsh_backdrop_data_uri, generate_mock_backdrop_data_uri, parse_case_to_plan
+from run_template_test import generate_harsh_backdrop_data_uri, generate_lowdetail_backdrop_data_uri, generate_mock_backdrop_data_uri, parse_case_to_plan
 from tendoo_v3.catalog import INTENT_PROFILES, resolve_intent
 from tendoo_v3.renderer import build_template_html
 from tendoo_v3.styles import CONTENT_CLASSES, TIER1_CLASSES, TIER2_CLASSES, TIER3_CLASSES
@@ -174,7 +174,13 @@ def measure_bg_contrast(page) -> List[Dict[str, Any]]:
 
     boxes = page.evaluate(TEXT_BOXES_JS)
     page.add_style_tag(content=HIDE_TEXT_CSS)
+    # Style inline !important (quầng/đổi màu nhấn của autofit Bước 5) thắng stylesheet !important ->
+    # phải ẩn ruột chữ bằng CHÍNH inline style, nếu không chữ còn hiện và bị tính như nền.
+    page.evaluate("""() => document.querySelectorAll('body *').forEach(n => {
+        n.style.setProperty('color', 'transparent', 'important');
+        n.style.setProperty('-webkit-text-fill-color', 'transparent', 'important'); })""")
     img_sh = np.asarray(Image.open(io.BytesIO(page.screenshot())).convert("RGB")).astype(float)
+    page.evaluate("() => document.querySelectorAll('body *').forEach(n => n.style.setProperty('text-shadow', 'none', 'important'))")
     page.add_style_tag(content=HIDE_SHADOW_CSS)
     img_plain = np.asarray(Image.open(io.BytesIO(page.screenshot())).convert("RGB")).astype(float)
     a = _box_ratios(boxes, img_sh)
@@ -219,8 +225,11 @@ def _box_ratios(boxes, img) -> List[Dict[str, Any]]:
     return out
 
 
-def measure_plan(page, plan, w: int, h: int, with_bg: bool = False, harsh_seed: Optional[str] = None) -> Dict[str, Any]:
-    if harsh_seed is not None:  # GĐ 4: nền có vệt sáng / mảng tối cục bộ
+def measure_plan(page, plan, w: int, h: int, with_bg: bool = False, harsh_seed: Optional[str] = None,
+                 lowdetail_seed: Optional[str] = None) -> Dict[str, Any]:
+    if lowdetail_seed is not None:  # GĐ 5: nền maskless ít chi tiết phủ cả khung
+        bg = generate_lowdetail_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone, seed=lowdetail_seed)
+    elif harsh_seed is not None:  # GĐ 4: nền có vệt sáng / mảng tối cục bộ
         bg = generate_harsh_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone, seed=harsh_seed)
     else:
         bg = generate_mock_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone)
@@ -289,9 +298,10 @@ def measure_plan(page, plan, w: int, h: int, with_bg: bool = False, harsh_seed: 
     return result
 
 
-def measure_case(page, case: Dict[str, Any], template: str, with_bg: bool = False, harsh: bool = False) -> Dict[str, Any]:
+def measure_case(page, case: Dict[str, Any], template: str, with_bg: bool = False, harsh: bool = False, maskless: bool = False) -> Dict[str, Any]:
     plan, w, h = parse_case_to_plan(case, default_template=template)
-    return {"id": case["id"], **measure_plan(page, plan, w, h, with_bg=with_bg, harsh_seed=case["id"] if harsh else None)}
+    return {"id": case["id"], **measure_plan(page, plan, w, h, with_bg=with_bg, harsh_seed=case["id"] if harsh else None,
+                                             lowdetail_seed=case["id"] if maskless else None)}
 
 
 def load_cases(template: Optional[str]) -> List[tuple]:
@@ -397,6 +407,7 @@ def main():
     ap.add_argument("--show", choices=["inversions", "overflows", "unknown", "squint"], default=None, help="In chi tiết case vi phạm")
     ap.add_argument("--bg", action="store_true", help="Đo thêm §4.5 điều kiện 3 (tương phản nền thật, chậm ~2x)")
     ap.add_argument("--harsh", action="store_true", help="GĐ 4: nền giả có vệt sáng / mảng tối cục bộ (cần --bg)")
+    ap.add_argument("--maskless", action="store_true", help="GĐ 5: chỉ case có intent cho phép maskless, trên nền ít chi tiết phủ cả khung")
     ap.add_argument("--every", type=int, default=1, help="Chỉ đo 1/N case (lấy đều, tất định) -- mốc nền khắc nghiệt dùng 4")
     ap.add_argument("--oracle", action="store_true", help="GĐ 3: chỉ đo các case mà 'LLM lý tưởng' (hero_markup.suggest_hero_parts) tách được hero_parts")
     ap.add_argument("--write-baseline", default=None, help="Ghi mốc squint (bánh cóc CI), vd tests/squint_baseline.json -- cần --bg")
@@ -405,6 +416,10 @@ def main():
     cases = load_cases(args.template)
     if args.oracle:
         cases = with_oracle_hero_parts(cases, only_changed=True)
+    if args.maskless:
+        from tendoo_v3.catalog import MASKLESS_INTENTS, resolve_intent
+
+        cases = [(s, tp, c) for s, tp, c in cases if resolve_intent(tp, c.get("plan", c).get("visual_intent")) in MASKLESS_INTENTS]
     cases = cases[:: max(1, args.every)]
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -415,7 +430,7 @@ def main():
         page = browser.new_page()
         for i, (suite, tpl, case) in enumerate(cases, 1):
             try:
-                r = measure_case(page, case, tpl, with_bg=args.bg, harsh=args.harsh)
+                r = measure_case(page, case, tpl, with_bg=args.bg, harsh=args.harsh, maskless=args.maskless)
                 r["suite"] = suite
                 results.append(r)
             except Exception as ex:

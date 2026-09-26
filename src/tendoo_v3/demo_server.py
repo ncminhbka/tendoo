@@ -65,6 +65,7 @@ from tendoo_v3.schema import StyleConfig, TendooCreativePlan
 from tendoo_v3.styles import palette_from_color_harmony
 from tendoo_v3.velocity_blending import (
     denoise_regional_velocity_blended,
+    denoise_scene_only,
     generate_mock_backdrop,
     load_and_encode_ref_image,
 )
@@ -646,6 +647,8 @@ async def _run_variant_pipeline(
         density=compute_plan_content_density(plan),
         **compute_geometry_flags(plan),
     )
+    if getattr(plan, "maskless", False):
+        mask_np = np.zeros_like(mask_np)  # Maskless (GĐ 5): không có vùng corridor
     mask_img = Image.fromarray((mask_np * 255).astype(np.uint8), mode="L")
 
     # Sinh nền hình ảnh (Diffusion hoặc Mock)
@@ -676,10 +679,13 @@ async def _run_variant_pipeline(
                     ctx_scene = ctx_scene.unsqueeze(0).to(DEVICE_DIT)
                     ctx_scene_ids = ctx_scene_ids.unsqueeze(0).to(DEVICE_DIT)
 
-                    ctx_corridor = TEXT_ENCODER([prompt_corr]).to(torch.bfloat16)
-                    ctx_corridor, ctx_corridor_ids = prc_txt(ctx_corridor[0])
-                    ctx_corridor = ctx_corridor.unsqueeze(0).to(DEVICE_DIT)
-                    ctx_corridor_ids = ctx_corridor_ids.unsqueeze(0).to(DEVICE_DIT)
+                    # Maskless Mode (GĐ 5, ROADMAP §5.3): bỏ hẳn luồng corridor -- không mã hoá prompt corridor.
+                    use_maskless = bool(getattr(plan, "maskless", False))
+                    if not use_maskless:
+                        ctx_corridor = TEXT_ENCODER([prompt_corr]).to(torch.bfloat16)
+                        ctx_corridor, ctx_corridor_ids = prc_txt(ctx_corridor[0])
+                        ctx_corridor = ctx_corridor.unsqueeze(0).to(DEVICE_DIT)
+                        ctx_corridor_ids = ctx_corridor_ids.unsqueeze(0).to(DEVICE_DIT)
 
                     w_lat, h_lat = width // 16, height // 16
                     mask_scaled = Image.fromarray((mask_np * 255).astype(np.uint8)).resize(
@@ -731,19 +737,31 @@ async def _run_variant_pipeline(
                     timesteps = get_schedule(num_steps=num_steps, image_seq_len=img_total.shape[1])
 
                     t0_dit = time.time()
-                    out_blended = denoise_regional_velocity_blended(
-                        model=DIT_MODEL,
-                        img=img_total,
-                        img_ids=img_ids_total,
-                        txt_scene=ctx_scene,
-                        txt_scene_ids=ctx_scene_ids,
-                        txt_corridor=ctx_corridor,
-                        txt_corridor_ids=ctx_corridor_ids,
-                        spatial_mask=mask_flat,
-                        timesteps=timesteps,
-                        guidance=guidance,
-                        num_canvas_tokens=img_tokens.shape[1],
-                    )
+                    if use_maskless:
+                        out_blended = denoise_scene_only(
+                            model=DIT_MODEL,
+                            img=img_total,
+                            img_ids=img_ids_total,
+                            txt_scene=ctx_scene,
+                            txt_scene_ids=ctx_scene_ids,
+                            timesteps=timesteps,
+                            guidance=guidance,
+                            num_canvas_tokens=img_tokens.shape[1],
+                        )
+                    else:
+                        out_blended = denoise_regional_velocity_blended(
+                            model=DIT_MODEL,
+                            img=img_total,
+                            img_ids=img_ids_total,
+                            txt_scene=ctx_scene,
+                            txt_scene_ids=ctx_scene_ids,
+                            txt_corridor=ctx_corridor,
+                            txt_corridor_ids=ctx_corridor_ids,
+                            spatial_mask=mask_flat,
+                            timesteps=timesteps,
+                            guidance=guidance,
+                            num_canvas_tokens=img_tokens.shape[1],
+                        )
                     dur_dit = time.time() - t0_dit
                     logger.info(f"  [DiT Finished] Variant #{variant_idx} Euler ODE {num_steps} steps in {dur_dit:.2f}s")
 

@@ -788,7 +788,7 @@ COMMON_AUTOFIT_JS = """
           const size = parseFloat(cs.fontSize) || 0, weight = parseInt(cs.fontWeight) || 400;
           const need = (size >= 24 || (size >= 18.66 && weight >= 700)) ? 3.0 : 4.5;
           const rg = document.createRange(); rg.selectNodeContents(node);
-          let worst = Infinity;
+          let worst = Infinity, worstBg = null;
           for (const r of rg.getClientRects()) {
             if (r.width < 2 || r.height < 2) continue;
             const side = Math.max(4, r.height);
@@ -800,15 +800,39 @@ COMMON_AUTOFIT_JS = """
                 bg = bg.map((v, j) => b.a * b.rgb[j] + (1 - b.a) * v);
               }
               const lBg = tendooLum(bg);
-              worst = Math.min(worst, (Math.max(lText, lBg) + 0.05) / (Math.min(lText, lBg) + 0.05));
+              const ratio = (Math.max(lText, lBg) + 0.05) / (Math.min(lText, lBg) + 0.05);
+              if (ratio < worst) { worst = ratio; worstBg = lBg; }
             }
           }
           // Biên 15%: JS chỉ ước lượng nền (ảnh gốc + màu khối cha, bỏ qua gradient/backdrop-filter);
           // đo thật trên ảnh chụp lệch vài phần trăm -> case sát ngưỡng (4.1-4.48) trượt oan.
-          if (worst < need * 1.15) hosts.set(host, {worst, lText, need});
+          if (worst < need * 1.15) hosts.set(host, {worst, lText, need, worstBg, fill: fill.rgb});
         }
         hosts.forEach((v, host) => {
-          const c = v.lText > 0.4 ? '0,0,0' : '255,255,255';
+          // Màu nhấn (stat của hero_parts): quầng không cứu được ruột chữ to cùng tông nền (đo GĐ 5:
+          // "70%" hồng trên bokeh hồng 1.08:1) -> giữ SẮC, trộn dần về trắng hoặc đen (hướng nào tăng
+          // tương phản với nền xấu nhất) tới khi đạt ngưỡng; chỉ khi không đạt mới thêm quầng.
+          const accent = host.closest('.hero-seg--accent');  // chữ có thể nằm trong .stat-num/.stat-unit (GĐ 2)
+          if (accent && v.worstBg !== null) {
+            const target = v.need * 1.3;  // JS ước lượng nền lạc quan hơn ảnh chụp thật ~10-35% (đo GĐ 5)
+            const toward = v.worstBg < 0.18 ? [255, 255, 255] : [0, 0, 0];
+            for (let t = 0.1; t <= 1.0001; t += 0.1) {
+              const rgb = v.fill.map((x, j) => Math.round(x * (1 - t) + toward[j] * t));
+              const l = tendooLum(rgb);
+              if ((Math.max(l, v.worstBg) + 0.05) / (Math.min(l, v.worstBg) + 0.05) >= target) {
+                const col = `rgb(${rgb.join(',')})`;
+                for (const n of [accent, ...accent.querySelectorAll('*')]) {
+                  n.style.setProperty('color', col, 'important');
+                  n.style.setProperty('-webkit-text-fill-color', col, 'important');
+                }
+                report.push({cls: 'hero-seg--accent', worst: Math.round(v.worst * 100) / 100, recolor: col});
+                return;
+              }
+            }
+          }
+          // Quầng tương phản nhất với CHÍNH màu chữ (điểm giao WCAG ~0.18): chữ tầm trung (xanh dương,
+          // đỏ) cần quầng tối -- ngưỡng cũ 0.4 cho quầng trắng, vô dụng trên nền sáng (đo GĐ 5).
+          const c = v.lText > 0.18 ? '0,0,0' : '255,255,255';
           // Quầng đậm dần theo mức thiếu tương phản (worst/need): thiếu ít -> mảnh, thiếu nhiều -> dày.
           const k = Math.min(1, Math.max(0.35, 1 - v.worst / v.need + 0.35));
           const halo = `0 0 1px rgba(${c},1), 0 0 2px rgba(${c},${(0.8 + 0.2 * k).toFixed(2)}), 0 0 0.12em rgba(${c},${(0.6 + 0.35 * k).toFixed(2)}), 0 0 0.3em rgba(${c},${(0.45 + 0.4 * k).toFixed(2)}), 0 0 0.6em rgba(${c},${(0.3 + 0.35 * k).toFixed(2)})`;

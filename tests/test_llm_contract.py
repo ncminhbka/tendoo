@@ -28,7 +28,7 @@ def test_prompt_lists_every_closed_catalog():
     missing += [f for f in FONT_CATALOG if f"'{f}'" not in SYSTEM_PROMPT]
     missing += [f"{f}.{o}" for f, opts in COMPONENT_STYLES.items() for o in opts if f"'{o}'" not in SYSTEM_PROMPT]
     assert not missing, f"Prompt thiếu lựa chọn mà Cổng 2 chấp nhận: {missing}"
-    for key in ("hero_parts", "visual_intent", "badge_style", "stat_style", "decor"):
+    for key in ("hero_parts", "visual_intent", "badge_style", "stat_style", "decor", "maskless"):
         assert f"`{key}`" in SYSTEM_PROMPT
 
 
@@ -49,6 +49,11 @@ def test_prompt_example_passes_gates():
 
 # Phản hồi của "LLM lý tưởng": markup đúng nguyên văn, intent hợp template, linh kiện hợp intent.
 IDEAL_RESPONSES = [
+    {"template": "grand_opening_banner", "visual_intent": "festive_event", "maskless": True, "hero": "MỪNG KHAI TRƯƠNG GIẢM 30%",
+     "hero_parts": [{"t": "MỪNG KHAI TRƯƠNG GIẢM", "role": "prefix"}, {"t": "30%", "role": "stat", "emphasis": "accent"}],
+     "subhead": "Duy nhất 3 ngày đầu tiên", "cta": "GHÉ NGAY",
+     "scene_prompt": "Soft golden bokeh and fine glitter dust over a smooth deep red gradient, zero text",
+     "corridor_prompt": "", "style": {"font": "bevietnam", "theme_color": "#FACC15", "text_effect": "3d_gold", "background_tone": "cinema_red"}},
     {"template": "sandwich_top_heavy", "visual_intent": "big_number_deal", "hero": "SIÊU SALE 50%",
      "hero_parts": [{"t": "SIÊU SALE", "role": "prefix"}, {"t": "50%", "role": "stat", "emphasis": "accent"}],
      "subhead": "Áp dụng toàn hệ thống tới hết chủ nhật", "badge": "ƯU ĐÃI CÓ HẠN", "badge_style": "ribbon",
@@ -72,8 +77,8 @@ def test_ideal_llm_response_survives_pipeline(resp):
     raw = json.dumps(resp, ensure_ascii=False)
     plan = _finalize_plan_from_dict(extract_balanced_json(raw), {})
     assert plan.hero_parts == [dict(p, emphasis=p.get("emphasis")) for p in resp["hero_parts"]]
-    assert (plan.visual_intent, plan.badge_style, plan.stat_style, plan.decor) == (
-        resp["visual_intent"], resp.get("badge_style"), resp.get("stat_style"), resp.get("decor"))
+    assert (plan.visual_intent, plan.badge_style, plan.stat_style, plan.decor, plan.maskless) == (
+        resp["visual_intent"], resp.get("badge_style"), resp.get("stat_style"), resp.get("decor"), resp.get("maskless", False))
     assert check_plan(plan) == []
 
 

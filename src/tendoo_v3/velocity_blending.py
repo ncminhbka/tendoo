@@ -94,6 +94,44 @@ def denoise_regional_velocity_blended(
     return img_b[0:1, :L_canvas, :]
 
 
+
+def denoise_scene_only(
+    model: Any,
+    img: torch.Tensor,             # (1, L_total, C) nhiễu ban đầu + token ảnh tham chiếu (nếu có)
+    img_ids: torch.Tensor,
+    txt_scene: torch.Tensor,
+    txt_scene_ids: torch.Tensor,
+    timesteps: List[float],
+    guidance: float = 4.0,
+    num_canvas_tokens: Optional[int] = None,
+) -> torch.Tensor:
+    """MASKLESS MODE (ROADMAP §5.3, GĐ 5): Euler ODE chỉ luồng Scene, batch 1 -- không corridor.
+
+    Toán học trùng khớp `denoise_regional_velocity_blended` với mask ≡ 0 (test_maskless.py kiểm
+    bằng mô hình giả trên CPU), nhưng mỗi bước chỉ 1 forward thay vì batch 2. Chỉ dùng cho nền ÍT
+    CHI TIẾT: bỏ corridor là bỏ cơ chế DUY NHẤT tạo vùng tĩnh có bảo đảm dưới chữ -- phần còn lại
+    do quầng thích ứng (autofit Bước 5) gánh. Tốc độ thật PHẢI đo trên máy chủ
+    (scripts/bench_maskless.py), không suy từ FLOPs.
+    """
+    orig_dtype = img.dtype
+    device = img.device
+    L_canvas = num_canvas_tokens if num_canvas_tokens is not None else img.shape[1]
+    x = img
+    for step_idx in range(len(timesteps) - 1):
+        t_curr = timesteps[step_idx]
+        t_prev = timesteps[step_idx + 1]
+        pred = model(
+            x=x,
+            x_ids=img_ids,
+            timesteps=torch.full((1,), t_curr, dtype=orig_dtype, device=device),
+            ctx=txt_scene,
+            ctx_ids=txt_scene_ids,
+            guidance=torch.tensor([guidance], dtype=orig_dtype, device=device),
+        )
+        canvas = x[:, :L_canvas, :] + (t_prev - t_curr) * pred[:, :L_canvas, :]
+        x = (torch.cat([canvas, x[:, L_canvas:, :]], dim=1) if x.shape[1] > L_canvas else canvas).to(orig_dtype)
+    return x[:, :L_canvas, :]
+
 def load_and_encode_ref_image(
     ref_image_path: Path | str,
     ae: Any,
@@ -189,6 +227,7 @@ def generate_mock_backdrop(
 
 __all__ = [
     "denoise_regional_velocity_blended",
+    "denoise_scene_only",
     "generate_mock_backdrop",
     "load_and_encode_ref_image",
 ]

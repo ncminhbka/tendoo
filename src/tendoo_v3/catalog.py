@@ -354,6 +354,11 @@ INTENT_PROFILES: Dict[str, Dict[str, Any]] = {
 # âm thầm), Cổng 3 chỉ đếm phần hiển thị.
 LIST_LIMITS: Dict[str, int] = {"extra_texts": 6, "steps": 6}
 
+# Maskless Mode (GĐ 5, ROADMAP §5.3): poster LẤY CHỮ LÀM NHÂN VẬT CHÍNH. Không cho product_showcase
+# (sản phẩm cần vùng ảnh riêng, corridor mới giữ chữ khỏi đè sản phẩm), testimonial_trust và
+# matrix_board (khối chữ nhỏ dày đặc -- cần nền tĩnh có bảo đảm).
+MASKLESS_INTENTS: Tuple[str, ...] = ("big_number_deal", "hook_headline", "festive_event")
+
 # Linh kiện đồ hoạ GĐ 2 (ROADMAP §4.4) -- danh mục ĐÓNG, mỗi lựa chọn khai báo intent được dùng
 # (Luật 4: tránh "neon rơi vào thiệp mời VIP"). Lựa chọn đầu tiên của mỗi nhóm là mặc định và
 # giữ nguyên ảnh trước GĐ 2. Xử lý render: components.py.

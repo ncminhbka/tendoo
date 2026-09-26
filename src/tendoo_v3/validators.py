@@ -17,7 +17,7 @@ import logging
 from typing import List
 
 from tendoo_core.fonts import FONT_ALIASES, FONT_CATALOG
-from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, LIST_LIMITS, TEMPLATE_CATALOG, resolve_intent
+from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, LIST_LIMITS, MASKLESS_INTENTS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import STAMP_FONT_MIN, split_stat, stamp_ring
 from tendoo_v3.schema import TendooCreativePlan
 from tendoo_v3.styles import BACKGROUND_TONES, TEXT_EFFECT_ALIASES, TEXT_EFFECT_INTENTS, TEXT_EFFECTS
@@ -103,6 +103,8 @@ def _check_components(plan: TendooCreativePlan) -> List[str]:
             issues.append(f"{field} '{value}' không có trong danh mục {sorted(options)} -- dùng mặc định")
         elif intent not in options[value]:
             issues.append(f"{field} '{value}' không hợp intent '{intent}' (chỉ dùng cho {list(options[value])})")
+    if plan.maskless and intent not in MASKLESS_INTENTS:
+        issues.append(f"maskless chỉ dành cho poster lấy chữ làm chính (intent {list(MASKLESS_INTENTS)}), không hợp '{intent}' -- nền không có vùng tĩnh dưới chữ")
     if plan.badge_style not in (None, "pill") and not plan.badge:
         issues.append(f"badge_style '{plan.badge_style}' nhưng plan không có badge -- bỏ qua")
     if plan.badge_style == "capsule" and plan.badge and "|" not in plan.badge:

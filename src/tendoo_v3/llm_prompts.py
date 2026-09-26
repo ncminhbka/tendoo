@@ -15,6 +15,7 @@ from tendoo_v3.catalog import (
     build_llm_effect_prompt,
     build_llm_font_prompt,
     build_llm_intent_prompt,
+    MASKLESS_INTENTS,
 )
 from tendoo_v3.styles import BACKGROUND_TONES
 
@@ -174,6 +175,11 @@ DANH MỤC TÔNG NỀN (style.background_tone -- CHỈ chọn 1 trong các giá 
    - Đúng 1 stat, ngắn (1-3 từ). Nếu cả câu quan trọng ngang nhau (vd tên thương hiệu 2-3 từ) -> BỎ `hero_parts`, tiêu đề phẳng là đúng.
    - Ví dụ: hero "GIẢM TỚI 25% TOÀN BỘ MENU" -> [{{"t": "GIẢM TỚI", "role": "prefix"}}, {{"t": "25%", "role": "stat", "emphasis": "accent"}}, {{"t": "TOÀN BỘ MENU", "role": "suffix"}}]; hero "TƯNG BỪNG KHAI TRƯƠNG TENDOO COFFEE" -> prefix "TƯNG BỪNG", stat "KHAI TRƯƠNG", suffix "TENDOO COFFEE".
    - LUÔN điền `visual_intent` (1 giá trị trong danh mục dưới, phải nằm trong danh sách intent của template đã chọn).
+
+9. CHẾ ĐỘ KHÔNG MASK (`maskless`) -- CHỈ khi CHỮ LÀ NHÂN VẬT CHÍNH (sale thuần chữ, chúc mừng, thông báo lớn), KHÔNG có sản phẩm/chủ thể cần giữ:
+   - Đặt `"maskless": true`, `visual_intent` thuộc: {", ".join(repr(i) for i in MASKLESS_INTENTS)}.
+   - `scene_prompt` BẮT BUỘC là nền ÍT CHI TIẾT phủ cả khung: gradient mượt, bokeh mờ, bụi/hạt sáng li ti, khói mỏng, chất liệu phẳng (giấy, lụa, đá mài mịn). CẤM vật thể/sản phẩm/người, cấm hoạ tiết dày đặc -- nền rậm khiến chữ khó đọc hơn cả khi có mask.
+   - Có sản phẩm/chủ thể cần thể hiện -> KHÔNG dùng maskless (bỏ hẳn trường này).
 
 {build_llm_intent_prompt()}
 

@@ -25,7 +25,7 @@ import re
 import zlib
 from typing import Any, Dict, List, Optional, Tuple
 
-from tendoo_core.colors import get_contrasting_text_color
+from tendoo_core.colors import calculate_contrast_ratio, get_contrasting_text_color, parse_color_to_rgb, rgb_to_hex
 from tendoo_v3.styles import TIER1_CLASSES
 
 logger = logging.getLogger(__name__)
@@ -183,6 +183,26 @@ def stamp_svg(badge: str, box: Box, theme_color: str, text_color: str, uid: str 
 </svg>"""
 
 
+
+def accessible_fill(theme: str, min_ratio: float = 4.5) -> Tuple[str, str]:
+    """(màu nền khối, màu chữ) cho khối màu nhấn chứa CHỮ NHỎ (nửa viên nang, dải băng...). Giữ
+    sắc thương hiệu, chỉ trộn dần về đen (chữ trắng) hoặc trắng (chữ navy) tới khi đạt WCAG 4.5:1 --
+    lấy hướng thay đổi ÍT nhất. Đo GĐ 5: xanh #3B82F6 cả chữ trắng (3.68) lẫn navy (4.2) đều trượt."""
+    text = get_contrasting_text_color(theme)
+    if calculate_contrast_ratio(theme, text) >= min_ratio:
+        return theme, text
+    r, g, b = parse_color_to_rgb(theme)
+    best = None
+    for toward, txt in (((0, 0, 0), "#FFFFFF"), ((255, 255, 255), "#0F172A")):
+        for i in range(1, 11):
+            t = i / 10
+            cand = rgb_to_hex(r * (1 - t) + toward[0] * t, g * (1 - t) + toward[1] * t, b * (1 - t) + toward[2] * t)
+            if calculate_contrast_ratio(cand, txt) >= min_ratio:
+                if best is None or t < best[0]:
+                    best = (t, cand, txt)
+                break
+    return (best[1], best[2]) if best else (theme, text)
+
 def build_components(plan: Any, zones: Dict[str, Any], width: int, height: int) -> Optional[Dict[str, Any]]:
     """Dữ liệu render linh kiện cho template (biến Jinja `components`), hoặc None nếu plan không
     dùng linh kiện nào -> template giữ nguyên hành vi trước GĐ 2."""
@@ -194,8 +214,10 @@ def build_components(plan: Any, zones: Dict[str, Any], width: int, height: int) 
 
     theme = plan.style.theme_color
     on_theme = get_contrasting_text_color(theme)
+    # Khối màu nhấn chứa chữ nhỏ (nửa phải viên nang, dải băng): nền chỉnh sắc độ để đạt 4.5:1.
+    fill, on_fill = accessible_fill(theme)
     boxes = _zone_boxes(zones)
-    comp: Dict[str, Any] = {"on_theme": on_theme, "decor_html": ""}
+    comp: Dict[str, Any] = {"on_theme": on_theme, "fill": fill, "on_fill": on_fill, "decor_html": ""}
 
     if badge_style == "capsule":
         left, sep, right = plan.badge.partition("|")

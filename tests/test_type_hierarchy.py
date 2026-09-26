@@ -182,3 +182,29 @@ def test_adaptive_halo_only_where_needed(page):
         page.wait_for_function("window.__tendooAutofitDone === true", timeout=5000)
         halos.append(page.evaluate("window.__tendooHalo"))
     assert len(halos[1]) > len(halos[0]) and {"store-info-col"} <= {x["cls"] for x in halos[1]}
+
+
+
+# GĐ 5 -- BÁNH CÓC MASKLESS: case có intent cho phép maskless (catalog.MASKLESS_INTENTS), hero_parts
+# của LLM lý tưởng, trên nền ít chi tiết phủ CẢ khung (không vùng tĩnh dưới chữ), 1/2 số case.
+#   probe_type_hierarchy.py --bg --maskless --oracle --every 2 --write-baseline tests/squint_baseline_maskless.json
+BASELINE_MASKLESS = Path(__file__).resolve().parent / "squint_baseline_maskless.json"
+
+
+@pytest.fixture(scope="module")
+def measured_maskless(page):
+    from tendoo_v3.catalog import MASKLESS_INTENTS, resolve_intent
+
+    cases = [(s, t, c) for s, t, c in with_oracle_hero_parts(load_cases(None), only_changed=True)
+             if resolve_intent(t, c.get("plan", c).get("visual_intent")) in MASKLESS_INTENTS][::2]
+    return [{**measure_case(page, case, tpl, with_bg=True, maskless=True), "suite": suite} for suite, tpl, case in cases]
+
+
+def test_squint_maskless_does_not_regress(measured_maskless):
+    base = json.loads(BASELINE_MASKLESS.read_text(encoding="utf-8"))
+    now = squint_baseline(summarize(measured_maskless))
+    worse = [
+        f"{tpl}.{k}: {now[tpl][k]} < mốc {b[k]}"
+        for tpl, b in base.items() for k in SQUINT_KEYS if now.get(tpl, {}).get(k, 0) < b[k]
+    ]
+    assert not worse, "Squint (maskless) tệ đi so với mốc: " + "; ".join(worse)
