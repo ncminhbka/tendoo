@@ -35,6 +35,7 @@ from dotenv import load_dotenv
 from tendoo_v3.catalog import TEMPLATE_CATALOG
 from tendoo_v3.llm_prompts import MULTI_VARIANT_INSTRUCTION_TEMPLATE, SYSTEM_PROMPT
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
+from tendoo_v3.validators import log_plan_issues
 
 logger = logging.getLogger("TendooV3.LLMPlanner")
 
@@ -790,7 +791,7 @@ def fallback_heuristic_planner(
         corridor_prompt=clean_corridor,
         style=style,
     )
-    _log_template_field_mismatch(primary)
+    log_plan_issues(primary)
     num_variants = max(1, min(5, int(num_variants or 1)))
     if num_variants <= 1:
         return primary
@@ -824,34 +825,6 @@ def _save_debug_trace(debug_trace: Dict[str, Any], custom_path: Optional[Path | 
         logger.warning(f"[LLM Planner] Không thể ghi file debug LLM: {e}")
 
 
-# Field CHUYÊN BIỆT chỉ có ý nghĩa thật với đúng 1 template (khác với field chung như
-# hero/subhead/badge/extra_texts/cta/store_info/qr_code dùng ở mọi template). Nếu LLM
-# chọn 1 trong các template dưới đây mà bỏ trống field tương ứng, nội dung sinh ra sẽ
-# không đúng bản chất template đó (vd feedback card không có lời review thật). Tạm thời
-# CHỈ ghi log để quan sát tần suất thật -- KHÔNG auto-repair/validate phức tạp (xem thảo
-# luận: ưu tiên enrich hint trong catalog.py trước, chỉ nâng cấp lớp này nếu log cho thấy
-# tần suất lệch đủ cao để đáng làm).
-_TEMPLATE_EXPECTED_FIELDS: Dict[str, Tuple[str, ...]] = {
-    "customer_feedback_card": ("testimonial", "reviewer_name"),
-    "step_process_roadmap": ("steps",),
-    "before_after_split": ("tag_left", "tag_right"),
-    "menu_price_board": ("extra_texts",),
-}
-
-
-def _log_template_field_mismatch(plan: TendooCreativePlan) -> None:
-    """Ghi log cảnh báo (KHÔNG sửa plan) nếu template được chọn thiếu field chuyên biệt
-    đáng lẽ phải có theo đúng bản chất của nó."""
-    expected = _TEMPLATE_EXPECTED_FIELDS.get(plan.template)
-    if not expected:
-        return
-    missing = [f for f in expected if not getattr(plan, f, None)]
-    if missing:
-        logger.warning(
-            f"[LLM Planner] Template '{plan.template}' được chọn nhưng thiếu field chuyên biệt "
-            f"{missing} -- nội dung có thể không khớp đúng bản chất template này."
-        )
-
 
 def _finalize_plan_from_dict(extracted_dict: Dict[str, Any], form_data: Dict[str, Any]) -> TendooCreativePlan:
     """Chuẩn hóa template và làm sạch 100% Zero-Text Background cho DiT Base 4B."""
@@ -874,7 +847,7 @@ def _finalize_plan_from_dict(extracted_dict: Dict[str, Any], form_data: Dict[str
         scene_prompt=extracted_dict["scene_prompt"]
     )
     plan = TendooCreativePlan.from_dict(extracted_dict)
-    _log_template_field_mismatch(plan)
+    log_plan_issues(plan)
     return plan
 
 

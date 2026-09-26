@@ -17,7 +17,8 @@ from typing import Any, Dict, List, Optional
 # `drives_geometry`: field này hiện diện hay không thì geometry.py đổi kích thước zone qua
 # cờ tương ứng (has_qr/has_footer/has_message/has_freetext) -- thay cho 4 set hard-code cũ
 # trong geometry.py. Cờ = True nếu BẤT KỲ slot nào khai báo cờ đó có nội dung.
-# Các thuộc tính slot khác trong ví dụ §6.2 (required, supports_markup, max_items) CHƯA khai
+# `required`: template được chọn mà thiếu field này thì poster lệch bản chất (Cổng 2 cảnh báo).
+# Các thuộc tính slot khác trong ví dụ §6.2 (supports_markup, max_items) CHƯA khai
 # báo: chưa có code nào đọc chúng, và chưa có số đo cho max_items.
 TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
     "split_left": {
@@ -97,8 +98,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
             "store_info": {"drives_geometry": ('has_footer',)},
             "qr_code": {"drives_geometry": ('has_footer',)},
             "rating": {},
-            "tag_left": {},
-            "tag_right": {},
+            "tag_left": {"required": True},
+            "tag_right": {"required": True},
         },
         "aspect_ratios": ["1:1", "4:5", "16:9", "9:16"],
     },
@@ -180,8 +181,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
             "cta": {"drives_geometry": ('has_footer',)},
             "store_info": {"drives_geometry": ('has_footer',)},
             "qr_code": {"drives_geometry": ('has_footer',)},
-            "testimonial": {},
-            "reviewer_name": {},
+            "testimonial": {"required": True},
+            "reviewer_name": {"required": True},
             "rating": {},
         },
         "aspect_ratios": ["1:1", "4:5", "16:9", "9:16"],
@@ -199,7 +200,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
             "cta": {},
             "store_info": {},
             "qr_code": {"drives_geometry": ('has_qr',)},
-            "steps": {},
+            "steps": {"required": True},
         },
         "aspect_ratios": ["1:1", "4:5", "16:9", "9:16"],
     },
@@ -228,7 +229,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
             "hero": {},
             "subhead": {},
             "badge": {},
-            "extra_texts": {},
+            "extra_texts": {"required": True},
             "cta": {},
             "store_info": {},
             "qr_code": {},

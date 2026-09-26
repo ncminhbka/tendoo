@@ -14,6 +14,25 @@ from typing import Any, Dict, Optional
 from tendoo_core.colors import ensure_contrast, get_contrasting_text_color
 from tendoo_core.fonts import resolve_font
 
+# Danh mục đóng hiệu ứng chữ -- đúng các nhánh get_effect_css() bên dưới xử lý. Tên lạ rơi
+# về "plain_elegant" (nhánh else). Dùng chung với validators.py (Cổng 2).
+TEXT_EFFECTS = (
+    "3d_gold", "neon", "neon_bloom", "chrome", "fire", "shadow",
+    "embossed", "chromatic", "hologram", "plain_elegant",
+)
+# Alias thường dùng từ prompt/LLM.
+TEXT_EFFECT_ALIASES = {
+    "gold_metallic": "3d_gold",
+    "gold": "3d_gold",
+    "neon_glow": "neon_bloom",
+    "glow": "neon_bloom",
+    "bold_clean": "plain_elegant",
+    "clean": "plain_elegant",
+}
+# Tông nền có xử lý riêng ở get_adaptive_palette() / velocity_blending.py / comment của nó.
+# Tên lạ: palette coi là nền tối, mock backdrop dùng màu dark_luxury.
+BACKGROUND_TONES = ("dark_luxury", "light_clean", "warm_rustic", "pastel", "vibrant", "cyber_neon", "cinema_red")
+
 
 def get_effect_css(
     effect_name: str,
@@ -33,16 +52,7 @@ def get_effect_css(
     NGUYÊN hành vi cũ (trắng/navy thuần) khi không truyền vào."""
     eff = (effect_name or "plain_elegant").lower().strip()
 
-    # Ánh xạ các alias thường dùng từ prompt/LLM
-    alias_map = {
-        "gold_metallic": "3d_gold",
-        "gold": "3d_gold",
-        "neon_glow": "neon_bloom",
-        "glow": "neon_bloom",
-        "bold_clean": "plain_elegant",
-        "clean": "plain_elegant",
-    }
-    eff = alias_map.get(eff, eff)
+    eff = TEXT_EFFECT_ALIASES.get(eff, eff)
 
     if is_dark:
         # ==========================================
