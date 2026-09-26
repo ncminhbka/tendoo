@@ -25,11 +25,11 @@
  },
  "grand_opening_banner": {
   "n": 18,
-  "c1": 9,
-  "c2": 16,
+  "c1": 13,
+  "c2": 18,
   "c3": 17,
   "c4": 18,
-  "squint": 9
+  "squint": 13
  },
  "l_frame_showcase": {
   "n": 4,

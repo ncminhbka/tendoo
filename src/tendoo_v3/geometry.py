@@ -676,18 +676,21 @@ def _grand_opening_banner(
     # CHỈ co nhánh False -- nhánh True (has_freetext=True/has_qr=True) giữ NGUYÊN y hệt
     # gốc, không đo lại (đo thử cho thấy 16:9's bottom có thể đã khá sát mép ngay cả ở
     # nhánh gốc -- ngoài phạm vi sửa lần này, không tự ý đổi).
+    # GĐ 6A (26/09): nhánh has_freetext=False nới 0.18/0.225/0.28 -> 0.24/0.26/0.34 (1:1/4:5/16:9) --
+    # lần co trước chỉ kiểm "vừa khung"; có badge (dự trữ 52px) thì hero hụt chiều cao 67.5 -> 51.5px,
+    # sức chứa thẩm mỹ gãy ở 64 ký tự (calibrate_capacity --oracle). 9:16 không đổi (đã đạt).
     if w / h < 0.7:  # 9:16 Narrow Portrait
         head_h = 0.30 if has_freetext else 0.22
         bot_h = 0.17 if has_qr else 0.11
     elif w / h >= 1.5:  # 16:9 Wide Landscape
-        head_h = 0.34 if has_freetext else 0.28
+        head_h = 0.34  # 16:9: không co (0.32 vẫn thiếu: hero 64 < 67.5px, C1 3.37 < 3.5)
         bot_h = 0.16 if has_qr else 0.115
     else:  # 1:1, 4:5
         aspect = w / h
         if aspect >= 0.95:  # 1:1
-            head_h = 0.30 if has_freetext else 0.18
+            head_h = 0.30 if has_freetext else 0.24
         else:  # 4:5 (cột hẹp hơn -> badge/hero/subhead wrap nhiều hơn, cần margin lớn hơn 1:1)
-            head_h = 0.30 if has_freetext else 0.225
+            head_h = 0.30 if has_freetext else 0.26
         bot_h = 0.14 if has_qr else 0.075
 
     return {

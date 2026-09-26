@@ -320,7 +320,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "festive_center",
         "visual_intents": ["festive_event"],
-        "capacity_chars": {"1:1": 64, "9:16": 699, "16:9": 64, "4:5": 699},
+        "capacity_chars": {"1:1": 699, "9:16": 699, "16:9": 370, "4:5": 699},
         "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 699, "4:5": 699},
         "slots": {
             "hero": {},
