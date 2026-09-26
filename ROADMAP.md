@@ -780,9 +780,13 @@ doanh nghiệp thực sự dùng được.
 
 - ✅ **19/19 font có đủ ký tự dấu tiếng Việt** (kiểm bằng fontTools: Đ, Ệ, Ợ, Ữ, Ặ, Ổ, Ỹ, Ư, Ơ…).
 - ❌ **16/19 font chỉ có 1 độ đậm**; chỉ Dancing Script, Oswald, Playfair là variable font.
-- ❌ **Font UI "Be Vietnam Pro" chỉ nhúng bản Black (900)** trong khi CSS yêu cầu 600/800 cho
-  subhead, pill, store → trình duyệt dùng Black cho tất cả → chữ phụ đặc, nặng. Typography tinh
-  tế cần tối thiểu Regular/Medium/SemiBold/Bold (Be Vietnam Pro là OFL, miễn phí).
+- ✅ **ĐÃ SỬA 26/09 — Font UI "Be Vietnam Pro" trước chỉ nhúng bản Black (900)**, lại khai báo
+  `font-weight: normal` → CSS xin 600/800 thì Chromium lấy Black rồi **tô đậm giả thêm** → chữ
+  phụ dính nét. Nay nhúng đủ 400–900 (Google Fonts, OFL, bản Black trùng từng byte file cũ) dạng
+  WOFF2 (nhỏ ~3.5× TTF, ảnh giống hệt TTF trên 379 case). 356/379 ảnh đổi (chữ phụ + hero thoáng
+  hơn); squint không điều kiện nào giảm (C2 +1); thời gian render 379 case 3m06 → ~3m38.
+  Test `test_ui_font_embeds_every_weight_the_css_asks_for` giữ đủ bộ độ đậm. **Các font headline
+  1 độ đậm vẫn bị tô đậm giả khi CSS xin 900** — việc của GĐ 7.
 - ❌ Chỉ khoảng 4 font viết tay/thư pháp; bộ tham chiếu cần nhiều phong cách hơn (thư pháp mềm,
   cọ khô, viết tay thanh mảnh).
 - Cần: probe **va chạm dấu** (dấu chồng tầng của Ệ/Ợ đụng nét dòng trên ở font thư pháp — đo hộp
@@ -847,8 +851,7 @@ hiện tại **chứa được** nội dung S nhưng không **được thiết k
 
 ### 10.13. Việc rẻ bây giờ, đắt nếu để sau (làm xen trong GĐ 1–6)
 
-1. **Bổ sung Be Vietnam Pro Regular/Medium/SemiBold/Bold** — sửa độ "nặng" của mọi chữ phụ trên
-   14 template; miễn phí (OFL). Phải so ảnh trước/sau vì đổi toàn bộ chữ phụ.
+1. ✅ **XONG 26/09** — ~~Bổ sung Be Vietnam Pro Regular/Medium/SemiBold/Bold~~ (xem §10.7).
 2. **Chừa lớp decor** (`decor-layer` giữa nền và chữ) trong template — để GĐ 8 không phải sửa lại
    14 template.
 3. **Thu thập bộ tham chiếu** 20–30 poster theo dịp/ngành — cần cho mọi đánh giá GĐ 7–10.

@@ -83,7 +83,8 @@ def test_resolve_font_generates_valid_font_face_css(font_key):
     assert resolved_key == font_key
     assert "@font-face" in font_face_css
     assert f"font-family: '{meta['css_family']}'" in font_face_css
-    assert f"format('{meta['format']}')" in font_face_css
+    fmt = "woff2" if meta.get("weights") else meta["format"]
+    assert f"format('{fmt}')" in font_face_css
     assert "data:font/" in font_face_css and ";base64," in font_face_css, (
         "@font-face must embed a Base64 Data URI (zero-network offline rendering requirement)"
     )
@@ -92,6 +93,19 @@ def test_resolve_font_generates_valid_font_face_css(font_key):
     )
     assert meta["css_family"] in headline_font_css
     assert meta["fallback"] in headline_font_css
+
+
+def test_ui_font_embeds_every_weight_the_css_asks_for():
+    """ROADMAP §10.7: CSS template xin Be Vietnam Pro 500-900. Thiếu độ đậm nào thì Chromium
+    tô đậm GIẢ từ file gần nhất (trước 26/09: chỉ có Black -> mọi chữ phụ đặc, nặng)."""
+    weights = FONT_CATALOG["bevietnam"]["weights"]
+    assert set(weights) >= {400, 500, 600, 700, 800, 900}
+    for fname in weights.values():
+        assert (FONTS_DIR / fname).read_bytes()[:4] == b"wOF2", fname
+    for key in ("bevietnam", "anton"):  # tự làm headline, và nhúng kèm làm font UI
+        _, css, _ = resolve_font(font_key=key)
+        bv = [f for f in css.split("@font-face") if "font-family: 'Be Vietnam Pro'" in f]
+        assert {f.split("font-weight: ")[1].split(";")[0] for f in bv} == {str(w) for w in weights}, key
 
 
 def test_resolve_font_missing_file_falls_back_gracefully(tmp_path, monkeypatch):

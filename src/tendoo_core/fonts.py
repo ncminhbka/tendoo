@@ -58,6 +58,17 @@ FONT_CATALOG: Dict[str, Dict[str, Any]] = {
     # Nhóm 1: Hiện đại & Chuẩn mực (Modern Clean)
     "bevietnam": {
         "file": "BeVietnamPro-Black.ttf",
+        # Họ font nhiều độ đậm (ROADMAP §10.7): trước 26/09 chỉ nhúng Black nhưng khai báo
+        # `font-weight: normal` -> CSS xin 600/800 thì Chromium lấy Black rồi TÔ ĐẬM GIẢ thêm.
+        # WOFF2 (nén không mất dữ liệu, nhỏ ~3.5x so với TTF) để 6 độ đậm không làm chậm render.
+        "weights": {
+            400: "BeVietnamPro-Regular.woff2",
+            500: "BeVietnamPro-Medium.woff2",
+            600: "BeVietnamPro-SemiBold.woff2",
+            700: "BeVietnamPro-Bold.woff2",
+            800: "BeVietnamPro-ExtraBold.woff2",
+            900: "BeVietnamPro-Black.woff2",
+        },
         "css_family": "Be Vietnam Pro",
         "display_name": "Be Vietnam Pro (Hiện đại / Siêu nét)",
         "archetype": "Hiện đại & Chuẩn mực",
@@ -281,6 +292,25 @@ def _read_and_encode_font(file_path_str: str) -> str:
     return base64.b64encode(data).decode("ascii")
 
 
+def _font_faces(meta: Dict[str, Any]) -> List[str]:
+    """Các khối @font-face (Base64) của 1 họ font. Họ có "weights" -> 1 khối/độ đậm THẬT để
+    Chromium chọn đúng file thay vì tô đậm giả; họ 1 file -> 1 khối `font-weight: normal`."""
+    files = meta.get("weights") or {"normal": meta["file"]}
+    family, faces = meta["css_family"], []
+    for weight, fname in files.items():
+        fmt = "woff2" if fname.endswith(".woff2") else meta["format"]
+        b64 = _read_and_encode_font(str(FONTS_DIR / fname))
+        if b64:
+            faces.append(f"""@font-face {{
+      font-family: '{family}';
+      src: url('data:font/{fmt};charset=utf-8;base64,{b64}') format('{fmt}');
+      font-weight: {weight};
+      font-style: normal;
+      font-display: swap;
+    }}""")
+    return faces
+
+
 def recommend_font(category: str, style_hint: str = "", text_content: str = "") -> str:
     """
     Intelligently recommends the best typography font key based on:
@@ -354,51 +384,21 @@ def resolve_font(
         k = recommend_font(category=category, style_hint=style_hint, text_content=text_content)
 
     meta = FONT_CATALOG.get(k, FONT_CATALOG["bevietnam"])
-    file_path = FONTS_DIR / meta["file"]
 
-    font_b64 = _read_and_encode_font(str(file_path))
-    fmt = meta["format"]
     css_family = meta["css_family"]
     fallback = meta["fallback"]
+    # headline_font_css vẫn nêu font mong muốn + chuỗi dự phòng kể cả khi file thiếu
+    # (`_read_and_encode_font` đã log cảnh báo) -- khi đó Chromium dùng font hệ thống.
+    headline_font_css = f"'{css_family}', {fallback}"
 
-    faces = []
-    if font_b64:
-        faces.append(f"""
-    @font-face {{
-      font-family: '{css_family}';
-      src: url('data:font/{fmt};charset=utf-8;base64,{font_b64}') format('{fmt}');
-      font-weight: normal;
-      font-style: normal;
-      font-display: swap;
-    }}
-        """.strip())
-        headline_font_css = f"'{css_family}', {fallback}"
-    else:
-        # Graceful fallback if file is missing (`_read_and_encode_font` already logged a
-        # warning above) -- headline_font_css still names the intended font + its CSS
-        # fallback stack, but neither is actually embedded, so Chromium will render with
-        # whatever system font it can find instead.
-        headline_font_css = f"'{css_family}', {fallback}"
-
+    faces = _font_faces(meta)
     # Luôn nhúng kèm Be Vietnam Pro Base64 để phục vụ các thành phần UI
     # (badge, body, store info, step list) mà không cần internet/Google Fonts.
     if k != "bevietnam":
-        bv_meta = FONT_CATALOG.get("bevietnam", {})
-        if bv_meta:
-            bv_file = FONTS_DIR / bv_meta["file"]
-            bv_b64 = _read_and_encode_font(str(bv_file))
-            if not bv_b64:
-                logger.warning("[fonts] Mandatory Be Vietnam Pro embed unavailable -- badges/store-info/step-list text will fall back to whatever system font Chromium finds, which may not render Vietnamese diacritics correctly.")
-            if bv_b64:
-                faces.append(f"""
-    @font-face {{
-      font-family: 'Be Vietnam Pro';
-      src: url('data:font/truetype;charset=utf-8;base64,{bv_b64}') format('truetype');
-      font-weight: normal;
-      font-style: normal;
-      font-display: swap;
-    }}
-                """.strip())
+        bv_faces = _font_faces(FONT_CATALOG["bevietnam"])
+        if not bv_faces:
+            logger.warning("[fonts] Mandatory Be Vietnam Pro embed unavailable -- badges/store-info/step-list text will fall back to whatever system font Chromium finds, which may not render Vietnamese diacritics correctly.")
+        faces += bv_faces
 
     font_face_css = "\n\n".join(faces)
     return k, font_face_css, headline_font_css
