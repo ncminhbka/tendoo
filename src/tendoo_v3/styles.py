@@ -12,8 +12,8 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, Optional
 
-from tendoo_core.colors import ensure_contrast, get_contrasting_text_color
-from tendoo_core.fonts import resolve_font
+from tendoo_v3.colors import ensure_contrast, get_contrasting_text_color
+from tendoo_v3.fonts import resolve_font
 
 # Danh mục đóng hiệu ứng chữ -- đúng các nhánh get_effect_css() bên dưới xử lý. Tên lạ rơi
 # về "plain_elegant" (nhánh else). Dùng chung với validators.py (Cổng 2).

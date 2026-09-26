@@ -1,4 +1,4 @@
-"""tendoo_core.palette -- bộ token màu tự động đạt chuẩn WCAG AA.
+"""tendoo_v3.palette -- bộ token màu tự động đạt chuẩn WCAG AA.
 
 Trích nguyên văn `ColorPalette` từ `src/tendoo/core/base.py` của repo cũ. Phần còn
 lại của base.py (`PosterContent`, `BaseLayout`) thuộc kiến trúc v1 và KHÔNG được

@@ -30,7 +30,7 @@ if hasattr(sys.stderr, "reconfigure"):
 
 import numpy as np
 
-from tendoo_core.colors import analyze_color_harmony
+from tendoo_v3.colors import analyze_color_harmony
 from tendoo_v3.catalog import TEMPLATE_CATALOG
 from tendoo_v3.demo_server import _extract_primary_crop_zone
 from tendoo_v3.mask_engine import generate_template_mask, save_mask_preview

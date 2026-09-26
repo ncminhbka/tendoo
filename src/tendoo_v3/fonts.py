@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 # Xác định đường dẫn thư mục fonts một cách an toàn và linh hoạt
 # (không đổi độ sâu thư mục khi gộp từ layouts/ -- core/ nằm cùng cấp `src/tendoo/<pkg>/`)
 _CURRENT_DIR = Path(__file__).resolve().parent
-# (2026-09-25) Sâu 2 cấp trong repo mới (src/tendoo_core/) thay vì 3 cấp như repo
+# (2026-09-25) Sâu 2 cấp trong repo mới (src/tendoo_v3/, gộp từ tendoo_core 27/09) thay vì 3 cấp như repo
 # cũ (src/tendoo/core/) -- sửa để FONTS_DIR vẫn trỏ đúng <repo>/fonts.
 _PROJECT_ROOT = _CURRENT_DIR.parent.parent
 FONTS_DIR = _PROJECT_ROOT / "fonts"

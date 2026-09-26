@@ -481,7 +481,7 @@ def build_llm_component_prompt() -> str:
 def build_llm_font_prompt() -> str:
     """Tạo danh sách gợi ý 19 font tiếng Việt chuẩn gom nhóm theo Archetype cho LLM."""
     try:
-        from tendoo_core.fonts import FONT_CATALOG
+        from tendoo_v3.fonts import FONT_CATALOG
         grouped: Dict[str, List[str]] = {}
         for key, meta in FONT_CATALOG.items():
             archetype = meta.get("archetype", "Khác")

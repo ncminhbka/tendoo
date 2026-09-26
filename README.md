@@ -45,19 +45,17 @@ Brief người dùng
 ```
 src/
 ├── flux2/          Mã gốc Black Forest Labs (FLUX.2) — ĐÓNG BĂNG, không sửa
-├── tendoo_core/    Hạ tầng dùng chung: màu/WCAG, font, engine Chromium
-└── tendoo_v3/      Sản phẩm: catalog, geometry, mask, renderer, 14 template
+└── tendoo_v3/      Toàn bộ sản phẩm: catalog, geometry, mask, renderer, 16 template + hạ tầng màu/font/Chromium
 fonts/              19 font tiếng Việt có dấu đầy đủ
 tests/              Bộ test + 36 suite JSON dữ liệu nghiệm thu template
-scripts/            Script render & nghiệm thu 14 template
+scripts/            Script render & nghiệm thu (run_template_test, probe_type_hierarchy, run_real_llm, build_acceptance_report)
 docs/               Nguyên lý thiết kế & kiến trúc
 ROADMAP.md          ★ Định hướng kiến trúc và thi công — ĐỌC TRƯỚC KHI SỬA CODE
 ```
 
-### `tendoo_core` là gì
+### Hạ tầng dùng chung (trong `tendoo_v3`)
 
-Phần hạ tầng mà mọi lần render đều dùng, tách ra thành package riêng để `tendoo_v3` không
-phụ thuộc vào bất kỳ thế hệ code cũ nào:
+Trước 27/09 nằm ở package riêng `tendoo_core`; nay gộp vào `tendoo_v3` (một package duy nhất):
 
 | Module | Vai trò |
 | :--- | :--- |

@@ -121,3 +121,11 @@ mang sang đây là các script render/nghiệm thu template, nay **được git
    ngay trên → `ColorPalette() takes no arguments`. Dùng `node.decorator_list` chứ đừng dùng
    `node.lineno`.
 2. Cắt hàm bằng regex làm hỏng cú pháp file → phải làm lại bằng AST.
+
+---
+
+## Cập nhật 27/09/2026 — gộp `tendoo_core` vào `tendoo_v3`
+
+`src/tendoo_core/{colors,fonts,palette,poster_renderer}.py` → `src/tendoo_v3/` (cùng tên file, cùng độ sâu thư
+mục nên `FONTS_DIR` không đổi). Mọi `from tendoo_core.X import ...` → `from tendoo_v3.X import ...`. Package
+`tendoo_core` đã xoá. Bảng ánh xạ ở trên giữ để tra lịch sử.

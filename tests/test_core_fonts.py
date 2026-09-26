@@ -18,8 +18,8 @@ import numpy as np
 import pytest
 from PIL import Image, ImageDraw
 
-from tendoo_core.colors import analyze_color_harmony
-from tendoo_core.fonts import (
+from tendoo_v3.colors import analyze_color_harmony
+from tendoo_v3.fonts import (
     FONT_ALIASES,
     FONT_CATALOG,
     FONTS_DIR,
@@ -27,7 +27,7 @@ from tendoo_core.fonts import (
     recommend_font,
     resolve_font,
 )
-from tendoo_core.poster_renderer import PosterRenderer
+from tendoo_v3.poster_renderer import PosterRenderer
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +111,7 @@ def test_ui_font_embeds_every_weight_the_css_asks_for():
 def test_resolve_font_missing_file_falls_back_gracefully(tmp_path, monkeypatch):
     """If a catalog entry's font file is missing on disk, resolve_font must degrade to an
     empty @font-face block (letting the CSS fallback stack render) instead of raising."""
-    import tendoo_core.fonts as font_engine_mod
+    import tendoo_v3.fonts as font_engine_mod
 
     bogus_catalog = dict(FONT_CATALOG)
     bogus_catalog["__missing_test_font__"] = {

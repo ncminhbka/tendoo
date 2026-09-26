@@ -23,7 +23,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 import numpy as np
 from PIL import Image
 
-from tendoo_core.colors import analyze_color_harmony
+from tendoo_v3.colors import analyze_color_harmony
 from tendoo_v3.catalog import TEMPLATE_CATALOG, build_llm_font_prompt, build_llm_effect_prompt
 from tendoo_v3.geometry import get_zones
 from tendoo_v3.llm_planner import fallback_heuristic_planner

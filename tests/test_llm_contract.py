@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from tendoo_core.fonts import FONT_CATALOG
+from tendoo_v3.fonts import FONT_CATALOG
 from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, TEMPLATE_CATALOG, build_llm_catalog_prompt
 from tendoo_v3.llm_planner import _finalize_plan_from_dict, extract_balanced_json
 from tendoo_v3.llm_prompts import SYSTEM_PROMPT

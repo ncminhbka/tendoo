@@ -38,7 +38,7 @@ def mock_slow_playwright_render(request, monkeypatch):
         return out_path
 
     try:
-        from tendoo_core.poster_renderer import PosterRenderer
+        from tendoo_v3.poster_renderer import PosterRenderer
         monkeypatch.setattr(PosterRenderer, 'render', classmethod(fake_render))
     except Exception:
         pass
@@ -68,7 +68,7 @@ def mock_slow_zone_measurement(request, monkeypatch):
         return {}
 
     try:
-        from tendoo_core.poster_renderer import PosterRenderer
+        from tendoo_v3.poster_renderer import PosterRenderer
         monkeypatch.setattr(PosterRenderer, 'measure_zone_rects', classmethod(fake_measure))
     except Exception:
         pass

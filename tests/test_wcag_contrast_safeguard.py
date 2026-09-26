@@ -26,8 +26,8 @@ if hasattr(sys.stdout, "reconfigure"):
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from tendoo_core.palette import ColorPalette
-from tendoo_core.colors import (
+from tendoo_v3.palette import ColorPalette
+from tendoo_v3.colors import (
     analyze_color_harmony,
     calculate_contrast_ratio,
     calculate_wcag_luminance,

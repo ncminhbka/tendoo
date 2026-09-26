@@ -25,7 +25,7 @@ import re
 import zlib
 from typing import Any, Dict, List, Optional, Tuple
 
-from tendoo_core.colors import calculate_contrast_ratio, get_contrasting_text_color, parse_color_to_rgb, rgb_to_hex
+from tendoo_v3.colors import calculate_contrast_ratio, get_contrasting_text_color, parse_color_to_rgb, rgb_to_hex
 from tendoo_v3.styles import TIER1_CLASSES
 
 logger = logging.getLogger(__name__)

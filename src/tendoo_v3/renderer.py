@@ -20,9 +20,9 @@ import jinja2
 import numpy as np
 from PIL import Image
 
-from tendoo_core.colors import ensure_contrast
-from tendoo_core.fonts import BODY_SAFE_FONTS, resolve_font
-from tendoo_core.poster_renderer import PosterRenderer
+from tendoo_v3.colors import ensure_contrast
+from tendoo_v3.fonts import BODY_SAFE_FONTS, resolve_font
+from tendoo_v3.poster_renderer import PosterRenderer
 from tendoo_v3.catalog import INTENT_PROFILES, LIST_LIMITS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import accessible_fill, build_components, enrich_hero_parts
 from tendoo_v3.hero_markup import bind_nonbreaking

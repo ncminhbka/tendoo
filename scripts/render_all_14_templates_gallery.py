@@ -35,7 +35,7 @@ import numpy as np
 from playwright.sync_api import sync_playwright
 
 import test_master_templates as mt  # tái dùng measure_text_elements_in_page/build_gallery_html
-from tendoo_core.colors import analyze_color_harmony
+from tendoo_v3.colors import analyze_color_harmony
 from tendoo_v3.demo_server import _extract_primary_crop_zone
 from tendoo_v3.mask_engine import generate_template_mask, save_mask_preview
 from tendoo_v3.mock_backgrounds import create_gradient_backdrop

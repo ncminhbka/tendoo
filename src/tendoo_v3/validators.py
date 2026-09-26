@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 from typing import List
 
-from tendoo_core.fonts import FONT_ALIASES, FONT_CATALOG
+from tendoo_v3.fonts import FONT_ALIASES, FONT_CATALOG
 from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, LIST_LIMITS, MASKLESS_INTENTS, TEXT_WORD_LIMITS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import STAMP_FONT_MIN, split_stat, stamp_ring
 from tendoo_v3.schema import TendooCreativePlan

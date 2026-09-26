@@ -13,7 +13,7 @@ import re
 
 import numpy as np
 
-from tendoo_core.colors import analyze_color_harmony, hex_to_hue
+from tendoo_v3.colors import analyze_color_harmony, hex_to_hue
 
 FULL_ZONE = (0.0, 0.0, 1.0, 1.0)
 

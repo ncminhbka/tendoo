@@ -45,7 +45,7 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from tendoo_core.palette import ColorPalette
+from tendoo_v3.palette import ColorPalette
 
 
 def parse_color_to_rgb(color_str: str) -> Tuple[float, float, float]:

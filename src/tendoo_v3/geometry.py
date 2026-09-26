@@ -293,6 +293,12 @@ def _luxury_centered_card(
         else:
             cx = (1.0 - cw) / 2.0
 
+    if not has_content:
+        # Chỉ badge/sao/hero/subhead (thiệp mời, lời chúc): thẻ co cũ giữ NGUYÊN đỉnh (cy) -> cụm chữ dạt lên 1/3
+        # trên, nửa dưới trống, và hộp thấp khoá cỡ hero (27/09 thiệp VIP GPT thật: tp 1.83 < 2.8). Thiệp mời chuẩn:
+        # cụm chữ Ở TÂM khung. Cao thêm 40% cho hero; mask vẫn <= 50% (<= 0.64 x 0.46 ở 1:1).
+        ch = min(ch * 1.4, 0.74)
+        cy = (1.0 - ch) / 2.0
     ch_scaled = ch * density
     cy_scaled = cy + (ch - ch_scaled) / 2.0
     return {"card": _frac(cx, cy_scaled, cx + cw, cy_scaled + ch_scaled, w, h)}

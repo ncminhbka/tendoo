@@ -46,7 +46,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from tendoo_core.colors import analyze_color_harmony
+from tendoo_v3.colors import analyze_color_harmony
 from tendoo_v3.catalog import TEMPLATE_CATALOG
 from tendoo_v3.geometry import get_zones
 from tendoo_v3.mask_engine import generate_template_mask
@@ -518,7 +518,7 @@ async def get_required_fields():
 @app.get("/api/fonts")
 async def get_fonts():
     """Trả về danh sách 19 phông chữ tiếng Việt chuẩn hóa."""
-    from tendoo_core.fonts import list_font_options
+    from tendoo_v3.fonts import list_font_options
     return {
         "status": "success",
         "groups": list_font_options(),
