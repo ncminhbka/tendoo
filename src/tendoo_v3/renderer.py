@@ -70,6 +70,37 @@ def _derive_subhead_max_font(hero_max_f: float, ratio: float, ceiling: float) ->
     return round(min(hero_max_f / ratio, ceiling), 1)
 
 
+# THỨ BẬC CẤP 2 > CẤP 3 (GĐ 0A+, ROADMAP §4.1). Đo baseline 379 case
+# (scripts/probe_type_hierarchy.py, 26/09): 53 case có phần tử Cấp 3 to hơn subhead, vì
+# cta/badge/store/extra giữ trần hằng số 17-22px cao hơn trần subhead.
+# KHÔNG dùng công thức chia theo trần hero của §4.1 (hero/4.5, hero/5, hero/5.5): đã đo --
+# đưa 575/993 phần tử Cấp 3 xuống dưới 13px (trung vị 16.5 -> 12px) ở cả poster ÍT chữ,
+# vì 9/14 template có trần hero chỉ 52-68px. Thay bằng ràng buộc tương đối: Cấp 3 không
+# vượt Cấp 2 -- ở đây chặn tầng trần, còn COMMON_AUTOFIT_JS chặn tiếp theo cỡ ĐO THẬT.
+_TIER3_BUDGET_KEYS = ("cta", "extra", "freetext_block", "freetext_pills", "message", "badge", "reviewer", "store")
+
+
+def _apply_tier_caps(
+    budget: Dict[str, Any], plan: TendooCreativePlan, subhead_max_f: Optional[float] = None
+) -> Dict[str, Any]:
+    """Chặn `max_font` của mọi phần tử Cấp 3 không vượt trần subhead -- CHỈ hạ, không bao
+    giờ nâng. Không có subhead thì không có Cấp 2 để giữ thứ bậc -> giữ nguyên.
+    Không đụng `menu_list`/`steps`/`testimonial`: nội dung chính của template dạng bảng,
+    không phải chi tiết Cấp 3 (ROADMAP §8, rủi ro áp nhầm ngưỡng).
+    Kẹp `min_font <= max_font` vì autofit JS gặp max < min sẽ tự đặt max = min + 10,
+    tức PHÌNH chữ lên thay vì co lại."""
+    if not plan.subhead:
+        return budget
+    cap = subhead_max_f if subhead_max_f is not None else budget["subhead"]["max_font"]
+    for key in _TIER3_BUDGET_KEYS:
+        entry = budget.get(key)
+        if not isinstance(entry, dict) or "max_font" not in entry:
+            continue
+        entry["max_font"] = min(entry["max_font"], cap)
+        entry["min_font"] = min(entry["min_font"], entry["max_font"])
+    return budget
+
+
 def compute_sandwich_top_budget(
     plan: TendooCreativePlan,
     top_height: float,
@@ -155,12 +186,12 @@ def compute_sandwich_top_budget(
     subhead_ceiling = max(13.0, min(24.0, hero_max_f / 4.0))
     subhead_max_f = _derive_subhead_max_font(hero_max_f, ratio, ceiling=subhead_ceiling)
 
-    return {
+    return _apply_tier_caps({
         "badge": {"max_h": round(badge_h, 1), "min_font": 12.0, "max_font": 20.0 if not is_wide else 17.0},
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
         "subhead": {"max_h": round(subhead_h, 1), "min_font": 13.0, "max_font": subhead_max_f},
         "extra": {"max_h": round(extra_h, 1), "min_font": 11.0, "max_font": 22.0 if not is_wide else 18.0},
-    }
+    }, plan)
 
 
 def compute_sandwich_top_heavy_bottom_budget(
@@ -168,8 +199,11 @@ def compute_sandwich_top_heavy_bottom_budget(
     bottom_height: float,
     width: int,
     height: int,
+    subhead_max_f: float,
 ) -> Dict[str, Dict[str, float]]:
     """Tính toán ngân sách cho cụm đáy của sandwich_top_heavy (Store Info + CTA + QR).
+    `subhead_max_f` là trần subhead của dải đỉnh cùng poster -- cta/store ở đáy vẫn không
+    được vượt nó (thứ bậc Cấp 2 > Cấp 3 tính trên cả poster, không theo từng dải).
     Khác với sandwich_bottom_heavy (nơi store nằm ở Top Bar mỏng ~90-128px),
     sandwich_top_heavy có Bottom Band rộng rãi (chiều cao 16% canvas ~163.8px ở 1:1/4:5).
     Vì vậy, thông tin cửa hàng có không gian thoải mái để hiển thị nổi bật, dễ đọc."""
@@ -237,10 +271,10 @@ def compute_sandwich_top_heavy_bottom_budget(
     cta_min_f = 13.0
     cta_max_h = 48.0 if not is_wide else 38.0
 
-    return {
+    return _apply_tier_caps({
         "cta": {"max_h": round(cta_max_h, 1), "min_font": cta_min_f, "max_font": cta_max_f},
         "store": {"max_h": round(store_max_h, 1), "min_font": store_min_f, "max_font": store_max_f},
-    }
+    }, plan, subhead_max_f=subhead_max_f)
 
 
 def compute_sandwich_bottom_budget(
@@ -378,13 +412,13 @@ def compute_sandwich_bottom_budget(
             store_min_f = 11.5
             store_max_h = 75.0
 
-    return {
+    return _apply_tier_caps({
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
         "subhead": {"max_h": round(subhead_h, 1), "min_font": 13.0, "max_font": subhead_max_f},
         "extra": {"max_h": round(extra_h, 1), "min_font": extra_min_f, "max_font": extra_max_f},
         "cta": {"max_h": round(cta_h, 1), "min_font": cta_min_f, "max_font": cta_max_f},
         "store": {"max_h": round(store_max_h, 1), "min_font": store_min_f, "max_font": store_max_f},
-    }
+    }, plan)
 
 
 def compute_split_budget(
@@ -509,13 +543,17 @@ def compute_split_budget(
             store_min_f = 11.5
             store_h = 105.0
 
-    return {
+    return _apply_tier_caps({
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
         "subhead": {"max_h": round(subhead_h, 1), "min_font": 12.0, "max_font": subhead_max_f},
         "extra": {"max_h": round(extra_h, 1), "min_font": extra_min_f, "max_font": extra_max_f},
         "bottom": {"max_h": round(bottom_h, 1), "min_font": 13.0, "max_font": 20.0},
+        # Trước đây hard-code thẳng trong split_left/split_right template.html (13/20/46 ở
+        # 16:9, 13/22/50 còn lại) nên đứng ngoài mọi chính sách ngân sách -- cta là phần tử
+        # phụ to nhất ở 23/37 case split trong baseline, to hơn cả subhead ở 7 case.
+        "cta": {"max_h": 46.0 if is_wide else 50.0, "min_font": 13.0, "max_font": 20.0 if is_wide else 22.0},
         "store": {"max_h": round(store_h, 1), "min_font": store_min_f, "max_font": store_max_f},
-    }
+    }, plan)
 
 
 def compute_step_process_roadmap_budget(
@@ -582,14 +620,14 @@ def compute_step_process_roadmap_budget(
         cta_h, cta_min_f, cta_max_f = 38.0, 13.0, 17.0
         store_h, store_min_f, store_max_f = 38.0, 14.0, 18.0
 
-    return {
+    return _apply_tier_caps({
         "badge": {"max_h": round(badge_h, 1), "min_font": 11.5, "max_font": 16.0},
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
         "subhead": {"max_h": round(subhead_h, 1), "min_font": 13.0, "max_font": subhead_max_f},
         "steps": {"max_h": round(steps_h, 1), "min_font": steps_min_f, "max_font": steps_max_f},
         "cta": {"max_h": cta_h, "min_font": cta_min_f, "max_font": cta_max_f},
         "store": {"max_h": store_h, "min_font": store_min_f, "max_font": store_max_f},
-    }
+    }, plan)
 
 
 def compute_grand_opening_banner_budget(
@@ -623,6 +661,7 @@ def compute_grand_opening_banner_budget(
 
     header_badge_reserve = (36.0 if is_wide else 52.0) if has_badge else 0.0
     header_avail_h = max(80.0, header_height - header_badge_reserve)
+    hero_max_f = 68.0
 
     # Trần nâng thêm 1 vòng nữa (user yêu cầu trực tiếp "tăng toàn bộ cỡ chữ" sau khi
     # đã nâng 1 lần trong cùng phiên) -- hero giữ nguyên 68 (đã ở mức trần cao nhất
@@ -634,15 +673,15 @@ def compute_grand_opening_banner_budget(
         cta_h, cta_min_f, cta_max_f = 46.0, 13.0, 18.0
         store_h, store_min_f, store_max_f = 44.0, 14.0, 19.0
 
-    return {
+    return _apply_tier_caps({
         "badge": {"max_h": min(36.0 if is_wide else 40.0, header_badge_reserve) if has_badge else 0.0, "min_font": 12.0, "max_font": 17.0},
-        "hero": {"max_h": round(header_avail_h * (0.50 if is_wide else 0.46), 1), "min_font": 22.0, "max_font": 68.0},
+        "hero": {"max_h": round(header_avail_h * (0.50 if is_wide else 0.46), 1), "min_font": 22.0, "max_font": hero_max_f},
         "subhead": {"max_h": max(26.0, round(header_avail_h * (0.24 if is_wide else 0.185), 1)), "min_font": 13.0, "max_font": 22.0},
         "freetext_block": {"max_h": round(header_avail_h * 0.60, 1), "min_font": 14.0, "max_font": 20.0},
         "freetext_pills": {"max_h": round(header_avail_h * 0.60, 1), "min_font": 13.0, "max_font": 18.0},
         "cta": {"max_h": cta_h, "min_font": cta_min_f, "max_font": cta_max_f},
         "store": {"max_h": store_h, "min_font": store_min_f, "max_font": store_max_f},
-    }
+    }, plan)
 
 
 def compute_recruitment_board_budget(
@@ -717,14 +756,14 @@ def compute_recruitment_board_budget(
         cta_h, cta_min_f, cta_max_f = 38.0, 13.0, 17.0
         store_h, store_min_f, store_max_f = 54.0, 14.0, 18.0
 
-    return {
+    return _apply_tier_caps({
         "badge": {"max_h": round(badge_h, 1), "min_font": 11.5, "max_font": 16.0},
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
         "subhead": {"max_h": round(subhead_h, 1), "min_font": 13.0, "max_font": subhead_max_f},
         "extra": {"max_h": round(extra_h, 1), "min_font": extra_min_f, "max_font": extra_max_f},
         "cta": {"max_h": cta_h, "min_font": cta_min_f, "max_font": cta_max_f},
         "store": {"max_h": store_h, "min_font": store_min_f, "max_font": store_max_f},
-    }
+    }, plan)
 
 
 def compute_menu_price_board_budget(
@@ -766,14 +805,14 @@ def compute_menu_price_board_budget(
         cta_h, cta_min_f, cta_max_f = 46.0, 13.0, 17.0
         store_h, store_min_f, store_max_f = 90.0, 14.0, 18.0
 
-    return {
+    return _apply_tier_caps({
         "badge": {"max_h": 40.0 if has_badge else 0.0, "min_font": 11.5, "max_font": 16.0},
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
         "subhead": {"max_h": round(subhead_h, 1), "min_font": 13.0, "max_font": subhead_max_f},
         "menu_list": {"max_h": round(menu_h, 1), "min_font": 14.0, "max_font": 19.0},
         "cta": {"max_h": cta_h, "min_font": cta_min_f, "max_font": cta_max_f},
         "store": {"max_h": store_h, "min_font": store_min_f, "max_font": store_max_f},
-    }
+    }, plan)
 
 
 def compute_diagonal_slash_budget(
@@ -810,7 +849,7 @@ def compute_diagonal_slash_budget(
         cta_h, cta_min_f, cta_max_f = 46.0, 13.0, 17.0
         store_h, store_min_f, store_max_f = 90.0, 14.0, 18.0
 
-    return {
+    return _apply_tier_caps({
         "badge": {"max_h": 40.0 if has_badge else 0.0, "min_font": 11.5, "max_font": 16.0},
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
         "subhead": {"max_h": round(subhead_h, 1), "min_font": 13.0, "max_font": subhead_max_f},
@@ -818,7 +857,7 @@ def compute_diagonal_slash_budget(
         "freetext_pills": {"max_h": round(freetext_h, 1), "min_font": 13.0, "max_font": 17.0},
         "cta": {"max_h": cta_h, "min_font": cta_min_f, "max_font": cta_max_f},
         "store": {"max_h": store_h, "min_font": store_min_f, "max_font": store_max_f},
-    }
+    }, plan)
 
 
 def compute_before_after_budget(
@@ -857,14 +896,14 @@ def compute_before_after_budget(
         # (chữ ở đây từng nhỏ hơn hẳn cần thiết so với hero, user báo cáo trực tiếp).
         hero_max_f, hero_min_f = 46.0, 18.0
         subhead_max_f = _derive_subhead_max_font(hero_max_f, ratio, ceiling=18.0)
-        return {
+        return _apply_tier_caps({
             "hero": {"max_h": round(bottom_height * 0.55, 1), "min_font": hero_min_f, "max_font": hero_max_f},
             "subhead": {"max_h": round(bottom_height * 0.30, 1) if has_subhead else 0.0, "min_font": 13.0, "max_font": subhead_max_f},
             "freetext_block": {"max_h": 0.0, "min_font": 14.0, "max_font": 19.0},
             "freetext_pills": {"max_h": 0.0, "min_font": 13.0, "max_font": 17.0},
             "cta": {"max_h": round(bottom_height * 0.32, 1), "min_font": 13.0, "max_font": 17.0},
             "store": {"max_h": round(bottom_height * 0.55, 1), "min_font": 14.0, "max_font": 18.0},
-        }
+        }, plan)
 
     # 1:1/9:16/4:5: XẾP CHỒNG 1 cột trong `.bottom-info-pod` (card cố định, KHÔNG có
     # `overflow:hidden` riêng) -- (rating-stars nếu có) + hero + subhead + freetext +
@@ -913,14 +952,14 @@ def compute_before_after_budget(
     subhead_max_f = _derive_subhead_max_font(hero_max_f, ratio, ceiling=20.0)
     cta_h = 36.0 if is_narrow else 42.0
     store_h = 70.0 if is_narrow else 90.0
-    return {
+    return _apply_tier_caps({
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
         "subhead": {"max_h": round(subhead_h, 1), "min_font": 13.0, "max_font": subhead_max_f},
         "freetext_block": {"max_h": round(freetext_h, 1), "min_font": 14.0, "max_font": 19.0},
         "freetext_pills": {"max_h": round(freetext_h, 1), "min_font": 13.0, "max_font": 17.0},
         "cta": {"max_h": cta_h, "min_font": 13.0, "max_font": 17.0},
         "store": {"max_h": store_h, "min_font": 14.0, "max_font": 18.0},
-    }
+    }, plan)
 
 
 def compute_l_frame_showcase_budget(
@@ -994,7 +1033,7 @@ def compute_l_frame_showcase_budget(
     ratio = compute_type_scale_ratio(plan.style)
     subhead_max_f = _derive_subhead_max_font(hero_max_f, ratio, ceiling=22.0)
 
-    return {
+    return _apply_tier_caps({
         "container_max_h": round(container_max_h, 1),
         "badge": {"max_h": 34.0 if has_badge else 0.0, "min_font": 12.0, "max_font": 17.0},
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
@@ -1002,7 +1041,7 @@ def compute_l_frame_showcase_budget(
         "freetext_block": {"max_h": round(freetext_h, 1), "min_font": 14.0, "max_font": 20.0},
         "freetext_pills": {"max_h": round(freetext_h, 1), "min_font": 13.0, "max_font": 18.0},
         "store": {"max_h": 34.0, "min_font": 14.0, "max_font": 19.0},
-    }
+    }, plan)
 
 
 def compute_lifestyle_corner_pod_budget(
@@ -1076,7 +1115,7 @@ def compute_lifestyle_corner_pod_budget(
     # nhỏ hơn hẳn cần thiết so với hero).
     subhead_max_f = _derive_subhead_max_font(hero_max_f, ratio, ceiling=20.0)
 
-    return {
+    return _apply_tier_caps({
         "badge": {"max_h": 34.0 if has_badge else 0.0, "min_font": 11.5, "max_font": 16.0},
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
         "subhead": {"max_h": round(subhead_h, 1), "min_font": 13.0, "max_font": subhead_max_f},
@@ -1084,7 +1123,7 @@ def compute_lifestyle_corner_pod_budget(
         "freetext_pills": {"max_h": round(freetext_h, 1), "min_font": 13.0, "max_font": 17.0},
         "cta": {"max_h": 42.0, "min_font": 13.0, "max_font": 17.0},
         "store": {"max_h": store_ceiling, "min_font": 14.0, "max_font": 18.0},
-    }
+    }, plan)
 
 
 def compute_customer_feedback_budget(
@@ -1186,7 +1225,7 @@ def compute_customer_feedback_budget(
     # ngay bằng suite thay vì nâng mạnh như các template có margin rộng hơn.
     testimonial_max_f = 28.0 if has_freetext else 36.0
 
-    return {
+    return _apply_tier_caps({
         "hero": {"max_h": round(hero_h, 1), "min_font": hero_min_f, "max_font": hero_max_f},
         "subhead": {"max_h": round(subhead_h, 1), "min_font": 13.0, "max_font": subhead_max_f},
         "testimonial": {"max_h": round(testimonial_h, 1), "min_font": 14.0, "max_font": testimonial_max_f},
@@ -1195,7 +1234,7 @@ def compute_customer_feedback_budget(
         "freetext_pills": {"max_h": round(freetext_h, 1), "min_font": 13.0, "max_font": 18.0},
         "cta": {"max_h": 42.0, "min_font": 13.0, "max_font": 18.0},
         "store": {"max_h": 55.0, "min_font": 14.0, "max_font": 19.0},
-    }
+    }, plan)
 
 
 def compute_luxury_centered_card_budget(
@@ -1267,7 +1306,7 @@ def compute_luxury_centered_card_budget(
     ratio = compute_type_scale_ratio(plan.style)
     subhead_max_f = _derive_subhead_max_font(hero_max_f, ratio, ceiling=18.0)
 
-    return {
+    return _apply_tier_caps({
         # `.header-cluster` không có CSS height/max-height cố định (tự phình theo
         # nội dung) -- so sánh scrollHeight với chính clientHeight của nó (như test
         # script vẫn làm cho phần tử không có `data-max-height`) rất DỄ VỠ: đo thật
@@ -1288,7 +1327,7 @@ def compute_luxury_centered_card_budget(
         # card quá nhỏ". Thêm entry ngân sách này để template gắn `data-autofit` giống
         # hệt cơ chế đã dùng cho hero/subhead/message/cta.
         "store": {"max_h": 60.0, "min_font": 14.0, "max_font": 18.0},
-    }
+    }, plan)
 
 
 def compute_plan_content_density(plan: TendooCreativePlan, store_items: Optional[list] = None) -> float:
@@ -1911,7 +1950,9 @@ def build_template_html(
     top_budget = compute_sandwich_top_budget(plan, top_height, width, height)
     bottom_height = zones.get("bottom", {}).get("height", 286.0)
     if tpl_name == "sandwich_top_heavy":
-        bottom_budget = compute_sandwich_top_heavy_bottom_budget(plan, bottom_height, width, height)
+        bottom_budget = compute_sandwich_top_heavy_bottom_budget(
+            plan, bottom_height, width, height, subhead_max_f=top_budget["subhead"]["max_font"]
+        )
     else:
         bottom_budget = compute_sandwich_bottom_budget(plan, bottom_height, width, height)
 

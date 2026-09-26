@@ -329,6 +329,34 @@ ngay.
 (tức `hero_max < 52`), nghĩa là nội dung đã quá dày cho template này ⇒ kích hoạt Cổng 3,
 **reroute**, chứ không phải ép nhỏ tiếp.
 
+> **KẾT QUẢ ĐO GĐ 0A+ (26/09) — công thức `cta/extra/badge/store` ở trên ĐÃ BỊ BÁC, không áp.**
+> Đo bằng `scripts/probe_type_hierarchy.py` trên 379 case (toàn bộ suite JSON):
+>
+> | | Baseline | Công thức §4.1 nguyên văn | **Đã áp: Cấp 3 ≤ Cấp 2** |
+> | :--- | ---: | ---: | ---: |
+> | Case có Cấp 3 to hơn subhead | 53 | 0 | **0** |
+> | Trung vị cỡ Cấp 3 | 16.5px | **12px** | 16.5px |
+> | Phần tử Cấp 3 < 13px | 17/993 | **575/993** | 17/993 |
+> | Subhead < 14px | 0/290 | 93/290 | 0/290 |
+> | Case đạt ≥4x | 23 | 78 | 24 |
+> | Hero đổi cỡ | — | 0 case | 0 case |
+>
+> Vì sao bác: công thức chia theo **trần** hero, mà 9/14 template có trần hero chỉ 52–68px ⇒
+> chữ phụ rơi xuống 11–13px **kể cả ở poster ÍT chữ** — Cổng 3 (reroute) không cứu được vì
+> poster ít chữ không có lý do để reroute. Toàn bộ mức tăng 23→78 case ≥4x đến từ **thu nhỏ
+> chữ phụ**, hero không to thêm pixel nào.
+>
+> Đã áp thay thế (2 lớp, chỉ co — không bao giờ phóng, nên không sinh tràn mới):
+> 1. `renderer.py::_apply_tier_caps` — trần mọi phần tử Cấp 3 ≤ trần subhead (khi có subhead).
+>    Riêng lớp này còn 22 case đảo bậc: subhead hay bị **chiều cao** khoá dưới trần của nó.
+> 2. Bước 3 trong `styles.py::COMMON_AUTOFIT_JS` — sau autofit, phần tử Cấp 3 nào to hơn
+>    subhead **đo thật** thì co về bằng nó. Danh sách class theo cấp: `styles.py::TIER*_CLASSES`.
+>
+> Chỉ đúng 53 case từng đảo bậc bị co chữ phụ (tối đa 6px). **Bài học rút ra cho các GĐ sau:**
+> tương phản thấp ở 9 template **không phải do chữ phụ to — mà do hero nhỏ** (bị chiều cao
+> khoá). Đòn bẩy thật là làm hero TO lên (Luật 2 `hero_parts`, phân bổ chiều cao), không phải
+> ép chữ phụ nhỏ xuống.
+
 ### 4.2. LUẬT 2 — Tương phản trong dòng (nguồn tương phản thứ hai, miễn phí chiều cao)
 
 Luật 1 có trần vật lý: trong một dải đỉnh cao 280px, hero không thể to mãi. Nguồn tương phản
@@ -530,7 +558,7 @@ thuật toán** — chúng khác nhau ở các hằng số tỉ lệ chiều cao
    chạm trần.
 3. **Test phải kiểm THẨM MỸ, không chỉ kiểm không-crash.** 323/323 xanh trong khi 6 case tràn
    thật là bằng chứng bộ test hiện tại chưa đủ.
-4. **Không đóng băng `src/flux2/`.** Mọi mở rộng nằm ở tầng ngoài (quy tắc cũ, vẫn áp dụng).
+4. **Đóng băng `src/flux2/` — không sửa mã gốc BFL.** Mọi mở rộng nằm ở tầng ngoài (quy tắc cũ, vẫn áp dụng).
 
 ---
 
@@ -542,7 +570,7 @@ Không có deadline cứng. Xếp theo **thứ tự phụ thuộc**, mỗi giai 
 | GĐ | Nội dung | Nghiệm thu (Definition of Done) | Trạng thái |
 | :-- | :--- | :--- | :--- |
 | **0A** | Tầng markup ngữ nghĩa (`hero_parts` + `.hero-phrase` + macro) và thang cỡ chữ poster cho `sandwich_top_heavy` | Tương phản 1.62x → 4.10x, 0 tràn, test xanh | ✅ **XONG 25/09** |
-| **0A+** | Lan Luật 1 ra 13 hàm budget còn lại; vá đảo ngược thứ bậc Cấp 2 vs Cấp 3 (extra/cta/badge) | Không còn phần tử Cấp 3 nào to hơn Cấp 2 trên cả 212 case | 🔜 **làm ngay** |
+| **0A+** | Lan Luật 1 ra 13 hàm budget còn lại; vá đảo ngược thứ bậc Cấp 2 vs Cấp 3 (extra/cta/badge) | Không còn phần tử Cấp 3 nào to hơn Cấp 2 trên cả 212 case | ✅ **XONG 26/09** — 0/379 case đảo bậc (từ 53), cỡ chữ phụ giữ nguyên ngoài 53 case đó; **không** dùng công thức chia theo hero (xem kết quả đo cuối §4.1) |
 | **0B** | `catalog.py` declarative (§6.2); migrate 13 template sang component layer; Cổng 2+3 | Thêm template mới chỉ chạm **2 file**; 4 set cờ hard-code bị xoá | |
 | **0C** | Cổng 4 — phát hiện tràn lúc chạy (`window.__tendoo_overflow` + `page.evaluate`) | 6 case tràn hiện tại bị bắt và phân loại đúng (thật / báo động giả) | |
 | **1** | Squint test tự động hoá (§4.5) vào CI; đo lại bản đồ phủ sóng **lần 2** theo đúng profile intent | Có bảng sức chứa thật ⇒ điền `capacity_chars` vào catalog | |
@@ -564,6 +592,9 @@ Không có deadline cứng. Xếp theo **thứ tự phụ thuộc**, mỗi giai 
 | LLM cắt `hero_parts` sai chỗ (gán `stat` cho cụm không phải cái móc) | Trung bình | Không làm sai chữ (Cổng 1 bảo đảm); chỉ giảm thẩm mỹ. Đo qua §4.5 điều kiện 1 |
 | Markup làm hero chiếm nhiều dòng hơn khi wrap | Thấp | Đã quan sát ngược lại (hero base tăng 43→61.5px); vẫn phải theo dõi ở 9:16 |
 | `from_dict()` nhận `style` là object thì âm thầm rơi về mặc định | Thấp | Lỗi sai-thầm-lặng, đã ghi nhận, vá ở 0B |
+| §4.5 điều kiện 2 ("≥3 phần tử trong ±20%") mâu thuẫn với chính thứ bậc 3 tầng: poster có ≥3 chi tiết Cấp 3 (hotline + địa chỉ + CTA…) gần như luôn vi phạm. Đo 26/09: **195/379** case vi phạm ở baseline, **205/379** sau 0A+ (chữ phụ bị co về cùng cỡ subhead) | **Cao** | Định nghĩa lại trước GĐ 1 (vd chỉ xét giữa các CẤP khác nhau, không xét trong cùng Cấp 3) — nếu đưa nguyên văn vào CI sẽ chặn hơn nửa số poster |
+| Khi subhead bị chiều cao khoá nhỏ, 0A+ kéo cả hotline/CTA xuống theo (vd `sth_03_1x1_medium`: subhead 15px ⇒ store/cta 18–19.5 → 15px) | Trung bình | Chưa sửa. Đòn bẩy đúng là cấp thêm chiều cao cho subhead/hero, không phải nới Cấp 3 |
+| 15 case tràn thật mà `run_template_test.py` báo PASS (store-info kẹt sàn 14px, `sbh_11_16x9_heavy`, `lframe_*_9x16`…) — có từ trước 0A+, 0A+ không đổi | Trung bình | Liệt kê được bằng `probe_type_hierarchy.py --show overflows`; vá ở GĐ 0C |
 
 ---
 

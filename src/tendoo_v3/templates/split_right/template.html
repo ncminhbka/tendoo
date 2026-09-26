@@ -365,7 +365,7 @@
         {% if is_landscape_wide %}
           <div class="bottom-col-actions">
             {% if cta %}
-            <div class="cta-btn" data-autofit data-min-font="13" data-max-font="20" data-max-height="46">
+            <div class="cta-btn" data-autofit data-min-font="{{ split_budget.cta.min_font if split_budget else 13 }}" data-max-font="{{ split_budget.cta.max_font if split_budget else 20 }}" data-max-height="{{ split_budget.cta.max_h if split_budget else 46 }}">
               <span>{{ cta }}</span>
               <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </div>
@@ -393,7 +393,7 @@
           <div style="align-self:flex-end; margin-bottom:2px;">{{ qr_svg }}</div>
           {% endif %}
           {% if cta %}
-          <div class="cta-btn" data-autofit data-min-font="13" data-max-font="22" data-max-height="50">
+          <div class="cta-btn" data-autofit data-min-font="{{ split_budget.cta.min_font if split_budget else 13 }}" data-max-font="{{ split_budget.cta.max_font if split_budget else 22 }}" data-max-height="{{ split_budget.cta.max_h if split_budget else 50 }}">
             <span>{{ cta }}</span>
             <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </div>

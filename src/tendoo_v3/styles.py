@@ -364,6 +364,19 @@ def palette_from_color_harmony(cp: Any, theme_color: Optional[str] = None) -> Di
 from tendoo_v3.icons import render_qr_code_svg, render_star_rating_svg
 
 
+# Class autofit theo cấp thị giác (DESIGN_PRINCIPLES §1.1) -- nguồn DUY NHẤT, dùng cho
+# bước giữ thứ bậc trong COMMON_AUTOFIT_JS và cho scripts/probe_type_hierarchy.py.
+# Không có menu-list/steps-grid/testimonial-quote: nội dung chính của template dạng bảng.
+TIER1_CLASSES = ("hero-title", "hero-top-title")
+TIER2_CLASSES = ("subhead-title", "subhead-date", "subhead-benefit")
+TIER3_CLASSES = (
+    "badge-pill", "badge-capsule", "kicker-tag", "kicker-capsule", "cta-btn",
+    "store-info-row", "store-info-col", "store-details-row", "store-text", "store-item",
+    "extra-tag-row", "freetext-block", "flexible-stack", "extra-pills-wrap",
+    "message-container", "reviewer-info",
+)
+CONTENT_CLASSES = ("menu-list", "steps-grid", "testimonial-quote")
+
 COMMON_AUTOFIT_JS = """
 <script>
 (function() {
@@ -517,6 +530,46 @@ COMMON_AUTOFIT_JS = """
       }
     });
 
+    // 3. THỨ BẬC CẤP 2 > CẤP 3 THEO CỠ ĐO THẬT (GĐ 0A+, ROADMAP §4.1). Chặn trần ở
+    // renderer.py::_apply_tier_caps chưa đủ: subhead hay bị CHIỀU CAO khoá dưới trần
+    // của nó, trong khi cta/store vẫn đạt trần -- đo thật còn 22/379 case đảo bậc chỉ
+    // với chặn trần. Ở đây phần tử Cấp 3 nào to hơn subhead THỰC TẾ thì co về đúng
+    // bằng nó. Chỉ co, không bao giờ phóng -> không thể sinh tràn mới.
+    function tendooEffFont(el) {
+      let eff = 0;
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (!node.textContent.trim()) continue;
+        const host = node.parentElement;
+        if (host.closest('svg') || host.classList.contains('deco-bullet') || host.classList.contains('freetext-bullet')) continue;
+        const r = host.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) continue;
+        eff = Math.max(eff, parseFloat(getComputedStyle(host).fontSize) || 0);
+      }
+      return eff;
+    }
+    let tier2Font = 0;
+    document.querySelectorAll('__TENDOO_TIER2_SELECTOR__').forEach(el => {
+      tier2Font = Math.max(tier2Font, tendooEffFont(el));
+    });
+    if (tier2Font > 0) {
+      document.querySelectorAll('__TENDOO_TIER3_SELECTOR__').forEach(el => {
+        const eff = tendooEffFont(el);
+        if (eff <= tier2Font) return;
+        const k = tier2Font / eff;
+        const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
+        el.style.fontSize = (Math.floor(cur * k * 2) / 2) + 'px';
+        // Con đã bị ghi cỡ px inline (anti-clip ở Bước 2, hoặc autofit lồng) không còn
+        // kế thừa cha -> phải co cùng tỉ lệ, nếu không vẫn to hơn subhead.
+        el.querySelectorAll('*').forEach(ch => {
+          if (ch.style.fontSize && ch.style.fontSize.endsWith('px')) {
+            ch.style.fontSize = (Math.floor(parseFloat(ch.style.fontSize) * k * 2) / 2) + 'px';
+          }
+        });
+      });
+    }
+
     window.__tendooAutofitDone = true;
   }
 
@@ -529,4 +582,6 @@ COMMON_AUTOFIT_JS = """
   setTimeout(fitElements, 150);
 })();
 </script>
-"""
+""".replace("__TENDOO_TIER2_SELECTOR__", ", ".join("." + c for c in TIER2_CLASSES)).replace(
+    "__TENDOO_TIER3_SELECTOR__", ", ".join("." + c for c in TIER3_CLASSES)
+)
