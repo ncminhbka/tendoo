@@ -27,7 +27,7 @@ def measured():
         browser = p.chromium.launch(headless=True)
         try:
             page = browser.new_page()
-            yield [measure_case(page, case, tpl) for _, tpl, case in load_cases(None)]
+            yield [{**measure_case(page, case, tpl), "suite": suite} for suite, tpl, case in load_cases(None)]
         finally:
             browser.close()
 
@@ -44,6 +44,45 @@ def test_no_tier3_larger_than_subhead(measured):
 def test_every_autofit_class_has_a_tier(measured):
     unknown = sorted({c for r in measured for c in r["unknown"]})
     assert not unknown, f"Class autofit chưa phân cấp trong styles.py::TIER*_CLASSES: {unknown}"
+
+
+def _by_id(measured, case_id, suite):
+    return next(r for r in measured if r["id"] == case_id and r["suite"] == suite)
+
+
+# Cổng 4 (GĐ 0C). Phân loại dưới đây đã đối chiếu bằng MẮT trên ảnh render ngày 26/09:
+# sbh_11 cắt mất nửa dòng email ở dải đỉnh; lframe_06 và ba_02 vượt ngân sách nhưng hiển thị đủ.
+def test_gate4_classifies_verified_cases(measured):
+    sbh = _by_id(measured, "sbh_11_16x9_heavy", "test_sandwich_bottom_heavy_suite.json")
+    assert "store-info-row:clipped" in sbh["overflow"]
+    assert "freetext-block:spill" in sbh["overflow"]
+    assert _by_id(measured, "lframe_06_9x16_light_left", "test_l_frame_showcase_suite.json")["overflow"] == ["store-details-row:spill"]
+    assert _by_id(measured, "ba_02_9x16_left_dental", "test_before_after_split_suite.json")["overflow"] == ["store-info-row:spill"]
+
+
+# Mất chữ ĐÃ BIẾT, chưa sửa (ROADMAP §8). Case mới xuất hiện -> hồi quy thật. Case biến mất
+# khỏi đây -> đã sửa được, cập nhật danh sách.
+KNOWN_TEXT_LOSS = {"sbh_11_16x9_heavy", "sbh_noqr_11_16x9_heavy"}
+
+
+def test_no_new_text_loss(measured):
+    lost = {r["id"] for r in measured if r["text_lost"]}
+    assert lost == KNOWN_TEXT_LOSS, f"mới mất chữ: {sorted(lost - KNOWN_TEXT_LOSS)}; đã hết: {sorted(KNOWN_TEXT_LOSS - lost)}"
+
+
+def test_render_plan_to_poster_returns_gate4_report(tmp_path):
+    """Đường render THẬT (demo_server dùng) phải mang báo cáo Cổng 4 ra ngoài."""
+    import json
+
+    from run_template_test import generate_mock_backdrop_data_uri, parse_case_to_plan
+    from tendoo_v3.renderer import render_plan_to_poster
+
+    suite = Path(__file__).resolve().parent / "test_sandwich_bottom_heavy_suite.json"
+    case = next(c for c in json.loads(suite.read_text(encoding="utf-8")) if c["id"] == "sbh_11_16x9_heavy")
+    plan, w, h = parse_case_to_plan(case, "sandwich_bottom_heavy")
+    report: list = []
+    render_plan_to_poster(plan, generate_mock_backdrop_data_uri(w, h, plan.style.theme_color), tmp_path / "p.png", w, h, overflow_report=report)
+    assert {(o["cls"], o["verdict"]) for o in report} == {("store-info-row", "clipped"), ("freetext-block", "spill")}
 
 
 def test_hero_is_largest_text(measured):

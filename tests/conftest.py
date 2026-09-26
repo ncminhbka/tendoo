@@ -26,7 +26,7 @@ def mock_slow_playwright_render(request, monkeypatch):
     if 'e2e' in request.keywords or os.environ.get('TENDOO_REAL_PLAYWRIGHT') == '1':
         return
 
-    def fake_render(cls, html_content, output_image_path, width, height, device_scale_factor=1):
+    def fake_render(cls, html_content, output_image_path, width, height, device_scale_factor=1, overflow_report=None):
         out_path = Path(output_image_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         # Create non-trivial image so PNG size > 30000 bytes

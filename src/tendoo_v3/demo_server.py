@@ -793,6 +793,7 @@ async def _run_variant_pipeline(
 
     # Biên Dịch & Chụp Ảnh Render (Playwright Chromium)
     bg_uri = pil_to_base64_data_uri(bg_img)
+    overflow_report: List[Dict[str, Any]] = []
     rendered_path, html_content = render_plan_to_poster(
         plan=plan,
         bg_data_uri=bg_uri,
@@ -800,6 +801,7 @@ async def _run_variant_pipeline(
         width=width,
         height=height,
         palette_override=palette_override,
+        overflow_report=overflow_report,
     )
     html_path.write_text(html_content, encoding="utf-8")
 
@@ -823,6 +825,10 @@ async def _run_variant_pipeline(
         "orientation": plan.orientation,
         "plan": plan.to_dict(),
         "palette": palette_override,
+        # Cổng 4 (GĐ 0C): phần tử kẹt sàn mà vẫn vượt ngân sách; verdict "clipped"/"overlap"
+        # = mất chữ thật trên poster này, "spill" = tràn vào chỗ trống (không mất gì).
+        "overflow": overflow_report,
+        "text_lost": any(o.get("verdict") in ("clipped", "overlap") for o in overflow_report),
         "poster_uri": poster_uri,
         "bg_uri": bg_uri,
         "mask_uri": mask_uri,

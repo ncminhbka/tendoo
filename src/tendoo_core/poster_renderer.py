@@ -157,9 +157,14 @@ class PosterRenderer:
         width: int,
         height: int,
         device_scale_factor: int = 1,
+        overflow_report: List[Dict[str, Any]] | None = None,
     ) -> Path:
         """
         Renders HTML content into a lossless PNG image using Playwright Chromium.
+
+        `overflow_report` (tuỳ chọn): list được điền thêm nội dung `window.__tendooOverflow`
+        mà script autofit của trang đặt ra (Cổng 4 -- phát hiện tràn), đọc từ ĐÚNG trang
+        vừa chụp. Trang không đặt biến này thì list giữ nguyên.
         """
         from playwright.async_api import async_playwright
 
@@ -183,6 +188,11 @@ class PosterRenderer:
                     full_page=True,
                     type="png",
                 )
+                if overflow_report is not None:
+                    try:
+                        overflow_report.extend(await page.evaluate("window.__tendooOverflow || []"))
+                    except Exception as e:
+                        logger.warning(f"[PosterRenderer] Không đọc được báo cáo tràn: {e}")
             finally:
                 # 2026-09-12 fix: trước đây `browser.close()` chỉ được gọi ở cuối luồng
                 # thành công -- nếu bất kỳ bước nào ở trên raise, browser không bao giờ
@@ -202,6 +212,7 @@ class PosterRenderer:
         width: int,
         height: int,
         device_scale_factor: int = 1,
+        overflow_report: List[Dict[str, Any]] | None = None,
     ) -> Path:
         """
         Bọc đồng bộ an toàn cho render_html_async (chạy được cả trong Event Loop JupyterLab).
@@ -213,6 +224,7 @@ class PosterRenderer:
                 width=width,
                 height=height,
                 device_scale_factor=device_scale_factor,
+                overflow_report=overflow_report,
             )
         )
 

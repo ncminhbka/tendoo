@@ -580,6 +580,69 @@ COMMON_AUTOFIT_JS = """
       });
     }
 
+    // 4. CỔNG 4 -- PHÁT HIỆN TRÀN (GĐ 0C, ROADMAP §2.5). Binary search ở Bước 1 đã biết
+    // phần tử nào kẹt ở sàn min_font mà vẫn không vừa max_height, nhưng trước đây vứt
+    // kết quả đi. "Vượt ngân sách" chưa chắc mất chữ -- đo tay 26/09: phần lớn chỉ tràn
+    // vào chỗ trống. Nên phân loại theo cái NGƯỜI XEM thấy:
+    //   clipped = có chữ nằm ngoài vùng hiển thị của khung overflow!=visible bao nó (MẤT CHỮ)
+    //   overlap = chữ đè lên chữ của phần tử autofit khác
+    //   spill   = vượt ngân sách nhưng tràn vào chỗ trống, không mất gì (báo động giả)
+    function tendooTextRects(el) {
+      const rects = [];
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (!node.textContent.trim() || node.parentElement.closest('svg')) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        for (const r of range.getClientRects()) {
+          if (r.width > 0 && r.height > 0) rects.push(r);
+        }
+      }
+      return rects;
+    }
+    function tendooClipBox(el) {
+      let box = null;
+      for (let a = el; a && a !== document.documentElement; a = a.parentElement) {
+        const cs = getComputedStyle(a);
+        if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
+        const r = a.getBoundingClientRect();
+        box = box
+          ? {left: Math.max(box.left, r.left), top: Math.max(box.top, r.top), right: Math.min(box.right, r.right), bottom: Math.min(box.bottom, r.bottom)}
+          : {left: r.left, top: r.top, right: r.right, bottom: r.bottom};
+      }
+      return box;
+    }
+    const outerFit = Array.from(document.querySelectorAll('[data-autofit]')).filter(el => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && !(el.parentElement && el.parentElement.closest('[data-autofit]'));
+    });
+    const overflowReport = [];
+    outerFit.forEach(el => {
+      const maxH = parseFloat(el.dataset.maxHeight);
+      const minF = parseFloat(el.dataset.minFont);
+      const font = parseFloat(getComputedStyle(el).fontSize) || 0;
+      if (!(maxH > 0) || !(font <= minF + 0.25) || !(el.scrollHeight > maxH + 1.5)) return;
+      const rects = tendooTextRects(el);
+      const clip = tendooClipBox(el);
+      let verdict = 'spill';
+      if (clip && rects.some(r => r.bottom > clip.bottom + 1 || r.top < clip.top - 1 || r.right > clip.right + 1 || r.left < clip.left - 1)) {
+        verdict = 'clipped';
+      } else {
+        const hit = outerFit.some(other => other !== el && !other.contains(el) && !el.contains(other) &&
+          tendooTextRects(other).some(o => rects.some(r =>
+            Math.min(r.right, o.right) - Math.max(r.left, o.left) > 1 && Math.min(r.bottom, o.bottom) - Math.max(r.top, o.top) > 1)));
+        if (hit) verdict = 'overlap';
+      }
+      overflowReport.push({
+        cls: (el.className || '').toString().trim().split(/\\s+/)[0],
+        verdict: verdict,
+        font: font, minFont: minF, maxH: maxH, scrollH: el.scrollHeight,
+        text: (el.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 60),
+      });
+    });
+    window.__tendooOverflow = overflowReport;
+
     window.__tendooAutofitDone = true;
   }
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import base64
 import colorsys
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -38,6 +39,8 @@ from tendoo_v3.styles import (
     get_adaptive_palette,
     get_effect_css,
 )
+
+logger = logging.getLogger(__name__)
 
 # Chặn nội dung dạng list phình vô hạn TRƯỚC khi tới template -- mask/CSS của mỗi
 # zone là 1 khối kích thước cố định (xem geometry.py), autofit chỉ CO CHỮ chứ không
@@ -2193,9 +2196,15 @@ def render_plan_to_poster(
     width: int,
     height: int,
     palette_override: Optional[Dict[str, str]] = None,
+    overflow_report: Optional[list] = None,
 ) -> Tuple[Path, str]:
     """Render plan thành ảnh poster PNG qua Playwright Chromium.
     Trả về (output_path, html_content).
+
+    `overflow_report` (tuỳ chọn): list được điền kết quả Cổng 4 (styles.py, Bước 4 của
+    autofit) đo trên đúng trang vừa chụp -- mỗi phần tử kẹt sàn mà vẫn vượt ngân sách kèm
+    `verdict` clipped/overlap/spill. Case clipped/overlap (mất chữ thật) được log WARNING.
+    Chưa reroute: cần capacity đo ở GĐ 1.
     """
     html_content = build_template_html(
         plan=plan,
@@ -2208,11 +2217,19 @@ def render_plan_to_poster(
     out_file = Path(output_image_path)
     out_file.parent.mkdir(parents=True, exist_ok=True)
     
+    report: list = [] if overflow_report is None else overflow_report
     PosterRenderer.render(
         html_content=html_content,
         output_image_path=out_file,
         width=width,
         height=height,
+        overflow_report=report,
     )
-    
+    for item in report:
+        if item.get("verdict") in ("clipped", "overlap"):
+            logger.warning(
+                f"[Cổng 4] {plan.template} {width}x{height}: '{item.get('cls')}' {item.get('verdict')} "
+                f"(scrollH {item.get('scrollH')} > {item.get('maxH')} ở sàn {item.get('minFont')}px) -- \"{item.get('text')}\""
+            )
+
     return out_file, html_content

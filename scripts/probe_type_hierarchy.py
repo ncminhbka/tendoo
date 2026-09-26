@@ -16,7 +16,8 @@ Chỉ số mỗi case:
   contrast   = cỡ hero / cỡ phần tử phụ to nhất (Cấp 2 ∪ Cấp 3)       -- §4.5 điều kiện 1
   inversion  = có phần tử Cấp 3 to hơn subhead (chỉ tính khi có subhead) -- DoD 0A+
   wall       = có >=3 phần tử (mọi cấp) nằm trong dải ±20% của nhau     -- §4.5 điều kiện 2
-  overflow   = phần tử kẹt ở sàn min_font mà scrollHeight > max_height   -- §4.5 điều kiện 4
+  overflow   = Cổng 4 (window.__tendooOverflow, styles.py Bước 4)        -- §4.5 điều kiện 4
+               text_lost = verdict clipped/overlap (mất chữ thật); spill = báo động giả
   pinned     = phần tử chạm trần max_font (cho biết ràng buộc nào thắng)
 
 Chạy:
@@ -124,17 +125,18 @@ def measure_case(page, case: Dict[str, Any], template: str) -> Dict[str, Any]:
     except Exception:
         pass
     raw = page.evaluate(MEASURE_JS)
+    gate4 = page.evaluate("window.__tendooOverflow || []")
+    gate4_cls = {o["cls"] for o in gate4}
 
     elements = []
     for e in raw:
         name, tier = classify(e["cls"])
         size = e["eff"] or e["font"]
-        at_floor = e["font"] <= e["minFont"] + 0.25 if e["minFont"] == e["minFont"] else False
         elements.append({
             "cls": name, "tier": tier, "size": size, "font": e["font"],
             "min_font": e["minFont"], "max_font": e["maxFont"], "max_h": e["maxH"], "scroll_h": e["scrollH"],
             "pinned": e["font"] >= e["maxFont"] - 0.5 if e["maxFont"] == e["maxFont"] else False,
-            "overflow": bool(at_floor and e["maxH"] == e["maxH"] and e["scrollH"] > e["maxH"] + 1.5),
+            "overflow": name in gate4_cls,
             "text": e["text"],
         })
 
@@ -153,7 +155,8 @@ def measure_case(page, case: Dict[str, Any], template: str) -> Dict[str, Any]:
         "top_secondary": sec_top["cls"] if sec_top else "",
         "inversion": bool(sub and t3_top and t3_top["size"] > sub),
         "wall": has_wall([e["size"] for e in elements if e["tier"] in (1, 2, 3)]),
-        "overflow": [e["cls"] for e in elements if e["overflow"]],
+        "overflow": [f"{o['cls']}:{o['verdict']}" for o in gate4],
+        "text_lost": [o["cls"] for o in gate4 if o["verdict"] in ("clipped", "overlap")],
         "unknown": [e["cls"] for e in elements if e["tier"] == "?"],
         "elements": elements,
     }
@@ -191,6 +194,7 @@ def summarize(results: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
             "inversions": sum(r["inversion"] for r in rs),
             "walls": sum(r["wall"] for r in rs),
             "overflows": sum(bool(r["overflow"]) for r in rs),
+            "text_lost": sum(bool(r["text_lost"]) for r in rs),
             "top_secondary": ", ".join(f"{k}:{v}" for k, v in sorted(tops.items(), key=lambda kv: -kv[1])[:2]),
         }
     return summ
@@ -203,20 +207,23 @@ def print_table(summ, base=None):
         delta = summ[tpl][key] - base[tpl][key]
         return f" ({fmt.format(round(delta, 2))})" if delta else ""
 
-    hdr = f"{'template':<24}{'n':>4} {'contrast TB':>16} {'max':>6} {'>=4x':>9} {'đảo bậc':>12} {'tường':>10} {'tràn':>9}  phụ to nhất"
+    hdr = (f"{'template':<24}{'n':>4} {'contrast TB':>16} {'max':>6} {'>=4x':>9} {'đảo bậc':>12} {'tường':>10}"
+           f" {'vượt NS':>9} {'mất chữ':>9}  phụ to nhất")
     print(hdr)
     print("-" * len(hdr))
     tot = defaultdict(int)
     for tpl, s in summ.items():
-        for k in ("n", "ge4x", "inversions", "walls", "overflows"):
-            tot[k] += s[k]
+        for k in ("n", "ge4x", "inversions", "walls", "overflows", "text_lost"):
+            tot[k] += s.get(k, 0)
         print(
             f"{tpl:<24}{s['n']:>4} {str(s['contrast_mean']) + d('contrast_mean', tpl):>16} {str(s['contrast_max']):>6}"
             f" {str(s['ge4x']) + d('ge4x', tpl):>9} {str(s['inversions']) + d('inversions', tpl):>12}"
-            f" {str(s['walls']) + d('walls', tpl):>10} {str(s['overflows']) + d('overflows', tpl):>9}  {s['top_secondary']}"
+            f" {str(s['walls']) + d('walls', tpl):>10} {str(s['overflows']) + d('overflows', tpl):>9}"
+            f" {str(s.get('text_lost', 0)) + d('text_lost', tpl):>9}  {s['top_secondary']}"
         )
     print("-" * len(hdr))
-    print(f"{'TỔNG':<24}{tot['n']:>4} {'':>16} {'':>6} {tot['ge4x']:>9} {tot['inversions']:>12} {tot['walls']:>10} {tot['overflows']:>9}")
+    print(f"{'TỔNG':<24}{tot['n']:>4} {'':>16} {'':>6} {tot['ge4x']:>9} {tot['inversions']:>12} {tot['walls']:>10}"
+          f" {tot['overflows']:>9} {tot['text_lost']:>9}")
 
 
 def main():
