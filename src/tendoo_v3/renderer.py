@@ -24,7 +24,7 @@ from tendoo_core.colors import ensure_contrast
 from tendoo_core.fonts import BODY_SAFE_FONTS, resolve_font
 from tendoo_core.poster_renderer import PosterRenderer
 from tendoo_v3.catalog import INTENT_PROFILES, LIST_LIMITS, TEMPLATE_CATALOG, resolve_intent
-from tendoo_v3.components import build_components, enrich_hero_parts
+from tendoo_v3.components import accessible_fill, build_components, enrich_hero_parts
 from tendoo_v3.hero_markup import bind_nonbreaking
 from tendoo_v3.geometry import compute_density_score, geometry_drivers, get_zones
 from tendoo_v3.icons import (
@@ -2183,6 +2183,8 @@ def build_template_html(
         # Độ tối vùng THẺ (luxury/lifestyle...) -- template chọn bóng chữ theo nó (GĐ 4).
         "card_is_dark": card_zone_colors.get("is_dark", True),
         "palette": palette,
+        # Đĩa số thứ tự (step-num): chữ nhỏ trên nền màu nhấn -> WCAG 4.5 (GĐ 3R: chữ navy trên tím 2.5:1).
+        "num_disc": dict(zip(("bg", "text"), accessible_fill(palette.get("on_card_accent", plan.style.theme_color)))),
         "header_text_primary": header_colors["text_primary"],
         "header_text_secondary": header_colors["text_secondary"],
         "card_text_primary": card_colors["text_primary"],

@@ -984,60 +984,90 @@ COMMON_AUTOFIT_JS = """
           }
           // Biên 15%: JS chỉ ước lượng nền (ảnh gốc + màu khối cha, bỏ qua gradient/backdrop-filter);
           // đo thật trên ảnh chụp lệch vài phần trăm -> case sát ngưỡng (4.1-4.48) trượt oan.
-          if (worst < need * 1.15) hosts.set(host, {worst, lText, need, worstBg, lMin, lMax, fill: fill.rgb});
+          // Đo MỌI nút chữ (cả nút đang đạt): quyết màu theo nhóm phải biết cả phần dòng đang ổn.
+          if (isFinite(worst)) hosts.set(host, {worst, lText, need, worstBg, lMin, lMax, fill: fill.rgb, fails: worst < need * 1.15,
+            accent: host.closest('.hero-seg--accent'), backsKey: JSON.stringify(backs.map(x => [x.rgb, x.a]))});
         }
+        // QUYẾT MÀU THEO NHÓM, không theo từng nút chữ (27/09, poster cà phê): "30" và "%" là 2 nút trong CÙNG màu
+        // nhấn -> nút sau (ô nền khác) ghi đè màu nút trước, con số chìm hẳn; "GIẢM" đảo navy còn "TOÀN BỘ MENU"
+        // giữ trắng -> một dòng tiêu đề hai màu. Designer: một dòng chữ một màu, một màu nhấn một màu. Nhóm =
+        // cùng màu nhấn, hoặc cùng phần tử + cùng chồng nền khối cha; minimax trên ô tối nhất / sáng nhất của CẢ nhóm.
+        const lumRatio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+        const groups = new Map();
         hosts.forEach((v, host) => {
+          const key = v.accent || v.backsKey;
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push([host, v]);
+        });
+        const haloHosts = new Map();  // host -> v (sau khi đã quyết màu nhóm)
+        groups.forEach(members => {
+          if (!members.some(m => m[1].fails)) return;  // cả nhóm đạt -> không đụng
+          const vs = members.map(m => m[1]);
+          const g = {lMin: Math.min(...vs.map(v => v.lMin)), lMax: Math.max(...vs.map(v => v.lMax)),
+                     worst: Math.min(...vs.map(v => v.worst)), need: Math.max(...vs.map(v => v.need)), fill: vs[0].fill};
+          const accent = vs[0].accent;
           // Màu nhấn (stat của hero_parts): quầng không cứu được ruột chữ to cùng tông nền (đo GĐ 5:
           // "70%" hồng trên bokeh hồng 1.08:1) -> giữ SẮC, trộn dần về trắng hoặc đen (hướng nào tăng
           // tương phản với nền xấu nhất) tới khi đạt ngưỡng; chỉ khi không đạt mới thêm quầng.
-          const accent = host.closest('.hero-seg--accent');  // chữ có thể nằm trong .stat-num/.stat-unit (GĐ 2)
-          if (accent && isFinite(v.lMin)) {
+          if (accent && isFinite(g.lMin)) {
             // MINIMAX trên CẢ ô tối nhất lẫn ô sáng nhất dưới dòng (26/09: "KHÁCH HÀNG VIP" vắt qua nền tối +
             // kính sáng -> bản cũ chỉ nhìn ô xấu nhất (kính sáng), trộn vàng về đen -> chìm hẳn trên phần tối).
-            const target = v.need * 1.3;
-            const score = rgb => { const l = tendooLum(rgb);
-              return Math.min((Math.max(l, v.lMin) + 0.05) / (Math.min(l, v.lMin) + 0.05), (Math.max(l, v.lMax) + 0.05) / (Math.min(l, v.lMax) + 0.05)); };
-            let best = {rgb: v.fill, s: score(v.fill), t: 0};
+            const target = g.need * 1.3;
+            const score = rgb => { const l = tendooLum(rgb); return Math.min(lumRatio(l, g.lMin), lumRatio(l, g.lMax)); };
+            let best = {rgb: g.fill, s: score(g.fill), t: 0};
             for (const toward of [[255, 255, 255], [0, 0, 0]]) {
               for (let t = 0.1; t <= 1.0001; t += 0.1) {
-                const rgb = v.fill.map((x, j) => Math.round(x * (1 - t) + toward[j] * t));
+                const rgb = g.fill.map((x, j) => Math.round(x * (1 - t) + toward[j] * t));
                 const sc = score(rgb);
                 if (sc >= target && (best.s < target || t < best.t)) { best = {rgb, s: sc, t}; break; }
                 if (best.s < target && sc > best.s * 1.05) best = {rgb, s: sc, t};
               }
             }
+            // Nền LẪN sáng-tối (không màu nào đạt): giữ màu nhấn gốc của thương hiệu, để lớp mờ gánh (đổi sang
+            // đen/trắng vẫn trượt mà mất luôn màu nhấn -- 27/09 "30%" thành đen trên tường nâu).
+            if (best.s < g.need * 0.85) best = {rgb: g.fill, s: score(g.fill), t: 0};
             if (best.t > 0) {
               const col = `rgb(${best.rgb.join(',')})`;
               for (const n of [accent, ...accent.querySelectorAll('*')]) {
                 n.style.setProperty('color', col, 'important');
                 n.style.setProperty('-webkit-text-fill-color', col, 'important');
               }
-              report.push({cls: 'hero-seg--accent', worst: Math.round(v.worst * 100) / 100, recolor: col});
+              report.push({cls: 'hero-seg--accent', worst: Math.round(g.worst * 100) / 100, recolor: col});
             }
-            if (best.s >= v.need) return;
-            v.lText = tendooLum(best.rgb);
-            v.worst = best.s;
-            host = accent;
+            if (best.s >= g.need) return;
+            // Quầng/lớp mờ áp MỘT lần lên cả khối màu nhấn.
+            haloHosts.set(accent, {...g, lText: tendooLum(best.rgb), worst: best.s});
+            return;
           }
-          // Quầng tương phản nhất với CHÍNH màu chữ (điểm giao WCAG ~0.18): chữ tầm trung (xanh dương,
-          // đỏ) cần quầng tối -- ngưỡng cũ 0.4 cho quầng trắng, vô dụng trên nền sáng (đo GĐ 5).
           // Chữ thường chọn SAI cực (Python lấy mẫu 1 dải cố định; dòng thật có thể nằm thấp hơn -- GĐ 3R:
           // subhead trắng trên trần nhà màu be): đảo trắng <-> navy nếu cực kia đạt ngưỡng ở ô XẤU NHẤT
-          // của CHÍNH nó (trắng xấu nhất ở ô sáng nhất, navy ở ô tối nhất) và tốt hơn rõ (>= 1.2x).
-          if (!accent && isFinite(v.lMin)) {
+          // của CHÍNH nhóm (trắng xấu nhất ở ô sáng nhất, navy ở ô tối nhất) và tốt hơn rõ (>= 1.2x).
+          let lNew = null;
+          if (isFinite(g.lMin)) {
             const lNavy = tendooLum([15, 23, 42]);
-            const rWhite = 1.05 / (v.lMax + 0.05), rNavy = (v.lMin + 0.05) / (lNavy + 0.05);
+            const rWhite = 1.05 / (g.lMax + 0.05), rNavy = (g.lMin + 0.05) / (lNavy + 0.05);
             const [col, r] = rWhite >= rNavy ? ['#FFFFFF', rWhite] : ['#0F172A', rNavy];
-            if (r >= v.worst * 1.2) {
-              host.style.setProperty('color', col, 'important');
-              host.style.setProperty('-webkit-text-fill-color', col, 'important');
-              if (col === '#0F172A') host.style.setProperty('text-shadow', 'none', 'important');  // bóng đen quanh chữ tối = nhoè
-              report.push({cls: (el.className || '').toString().trim().split(' ')[0], worst: Math.round(v.worst * 100) / 100, flip: col});
-              if (r >= v.need) return;
-              v.lText = tendooLum(col === '#FFFFFF' ? [255, 255, 255] : [15, 23, 42]);  // chưa đủ -> quầng theo cực MỚI
-              v.worst = r;
+            // Dòng NHIỀU đoạn: chỉ đảo khi cực kia thoát được vùng cần lớp mờ (không cực nào đạt -> giữ màu thiết
+            // kế + lớp mờ, khỏi kéo đoạn đang ổn sang cực trượt). Một nút: đảo khi tốt hơn rõ như trước (harsh -1 C3).
+            if (r >= g.worst * 1.2 && (members.length === 1 || r >= g.need * 0.85)) {
+              members.forEach(([n]) => {
+                n.style.setProperty('color', col, 'important');
+                n.style.setProperty('-webkit-text-fill-color', col, 'important');
+                if (col === '#0F172A') n.style.setProperty('text-shadow', 'none', 'important');  // bóng đen quanh chữ tối = nhoè
+              });
+              report.push({cls: (el.className || '').toString().trim().split(' ')[0], worst: Math.round(g.worst * 100) / 100, flip: col});
+              lNew = tendooLum(col === '#FFFFFF' ? [255, 255, 255] : [15, 23, 42]);
             }
           }
+          members.forEach(([host, v]) => {
+            if (lNew === null) { if (v.fails) haloHosts.set(host, v); return; }
+            const w = Math.min(lumRatio(lNew, v.lMin), lumRatio(lNew, v.lMax));
+            if (w < v.need) haloHosts.set(host, {...v, lText: lNew, worst: w});  // chưa đủ -> quầng theo cực MỚI
+          });
+        });
+        haloHosts.forEach((v, host) => {
+          // Quầng tương phản nhất với CHÍNH màu chữ (điểm giao WCAG ~0.18): chữ tầm trung (xanh dương,
+          // đỏ) cần quầng tối -- ngưỡng cũ 0.4 cho quầng trắng, vô dụng trên nền sáng (đo GĐ 5).
           const c = v.lText > 0.18 ? '0,0,0' : '255,255,255';
           // LỚP MỜ NHẸ (người duyệt đồng ý 26/09): nền tông TRUNG BÌNH / lẫn sáng-tối -> không màu chữ nào đạt
           // ngưỡng, quầng không đủ. Scrim cục bộ đúng sau dòng chữ (thực hành chuẩn: lớp tối 40-60% chỉ ở phần
