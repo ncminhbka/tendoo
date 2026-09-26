@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <style>
     {{ font_face_css }}
+    {% include "components/hero_phrase.css" %}
     :root {
       /* Font UI phụ (badge/cta/store/message list) tách khỏi font nghệ thuật
          headline -- xem giải thích đầy đủ ở sandwich_top_heavy/template.html. */
@@ -348,6 +349,7 @@
     {% endif %}
   </style>
 </head>
+{% from "components/ui_macros.html" import render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
@@ -362,11 +364,9 @@
         <div class="rating-stars">{{ stars_svg | safe }}</div>
         {% endif %}
 
-        <div class="hero-title" data-autofit data-min-font="{{ luxury_budget.hero.min_font }}" data-max-font="{{ luxury_budget.hero.max_font }}" data-max-height="{{ luxury_budget.hero.max_h }}">{{ hero }}</div>
+        {{ render_hero_phrase(hero, hero_parts, budget=luxury_budget.hero) }}
 
-        {% if subhead %}
-        <div class="subhead-title" data-autofit data-min-font="{{ luxury_budget.subhead.min_font }}" data-max-font="{{ luxury_budget.subhead.max_font }}" data-max-height="{{ luxury_budget.subhead.max_h }}">{{ subhead }}</div>
-        {% endif %}
+        {{ render_subhead(subhead, budget=luxury_budget.subhead) }}
       </div>
 
       {% if extra_texts %}
