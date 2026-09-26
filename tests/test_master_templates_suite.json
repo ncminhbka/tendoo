@@ -92,8 +92,8 @@
       "style": {
         "font": "montserrat",
         "theme_color": "#06B6D4",
-        "text_effect": "clean_gradient",
-        "background_tone": "cool_tech"
+        "text_effect": "plain_elegant",
+        "background_tone": "cyber_neon"
       },
       "badge": "SỰ LỰA CHỌN CỦA NHÀ LÃNH ĐẠO",
       "hero": "NÂNG TẦM THÀNH CÔNG VỚI TITAN WATCH 2026",
@@ -122,7 +122,7 @@
         "font": "playfair",
         "theme_color": "#F43F5E",
         "text_effect": "3d_gold",
-        "background_tone": "pastel_soft"
+        "background_tone": "pastel"
       },
       "badge": "ĐỘT PHÁ LÀN DA",
       "hero": "SERUM NANO COLLAGEN TƯƠI",
@@ -151,7 +151,7 @@
         "font": "bevietnam",
         "theme_color": "#EF4444",
         "text_effect": "neon",
-        "background_tone": "vibrant_sale"
+        "background_tone": "vibrant"
       },
       "badge": "GYM & FITNESS PREMIUM",
       "hero": "CHINH PHỤC VÓC DÁNG ĐỈNH CAO",
@@ -206,10 +206,10 @@
     "plan": {
       "template": "customer_feedback_card",
       "style": {
-        "font": "comfortaa",
+        "font": "harabaras",
         "theme_color": "#10B981",
-        "text_effect": "clean_gradient",
-        "background_tone": "fresh_organic"
+        "text_effect": "plain_elegant",
+        "background_tone": "light_clean"
       },
       "badge": "ĐÁNH GIÁ 5 SAO",
       "hero": "SPA THÚ CƯNG 7 BƯỚC CHUẨN HÀN",
@@ -241,8 +241,8 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#38BDF8",
-        "text_effect": "clean_gradient",
-        "background_tone": "cool_tech"
+        "text_effect": "plain_elegant",
+        "background_tone": "cyber_neon"
       },
       "hero": "TRẢ LẠI KHÔNG GIAN SỐNG SẠCH BONG",
       "subhead": "Dịch vụ vệ sinh công nghiệp chuyên sâu diệt khuẩn 99.9% bằng công nghệ sinh học",
@@ -270,7 +270,7 @@
         "font": "bevietnam",
         "theme_color": "#A855F7",
         "text_effect": "neon",
-        "background_tone": "cool_tech"
+        "background_tone": "cyber_neon"
       },
       "badge": "WE ARE HIRING 2026",
       "hero": "CHIÊU MỘ SENIOR AI RESEARCH ENGINEER",
@@ -299,7 +299,7 @@
         "font": "playfair",
         "theme_color": "#EC4899",
         "text_effect": "3d_gold",
-        "background_tone": "pastel_soft"
+        "background_tone": "pastel"
       },
       "badge": "LIỆU TRÌNH ĐỘC QUYỀN",
       "hero": "QUY TRÌNH TÁI SINH LÀN DA 3 BƯỚC",

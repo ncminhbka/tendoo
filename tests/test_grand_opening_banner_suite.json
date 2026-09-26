@@ -56,7 +56,7 @@
     "store_info": "Tầng 1 TTTM Vincom Megamall, TP. Thủ Đức",
     "qr_code": "https://tendoo.ai/tech-opening",
     "qr_label": "QUÉT DEAL",
-    "style": { "theme_color": "#00E5FF", "text_effect": "cyber_glow", "background_tone": "cyber_neon" }
+    "style": { "theme_color": "#00E5FF", "text_effect": "neon_bloom", "background_tone": "cyber_neon" }
   },
   {
     "id": "open_04_4x5_restaurant",
@@ -76,7 +76,7 @@
     "store_info": "Hotline đặt bàn: 0909 123 456 • 42 Nguyễn Thị Minh Khai, Q.3",
     "qr_code": "https://tendoo.ai/sashimi",
     "qr_label": "ĐẶT CHỖ",
-    "style": { "theme_color": "#FB923C", "text_effect": "warm_glow", "background_tone": "warm_rustic" }
+    "style": { "theme_color": "#FB923C", "text_effect": "neon_bloom", "background_tone": "warm_rustic" }
   },
   {
     "id": "open_05_1x1_minimal",
@@ -127,7 +127,7 @@
     "store_info": "Hotline tư vấn: 1900 1234",
     "qr_code": "https://tendoo.ai/welcome",
     "qr_label": "XEM NGAY",
-    "style": { "theme_color": "#EF4444", "text_effect": "cinema_red", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#EF4444", "text_effect": "shadow", "background_tone": "dark_luxury" }
   },
   {
     "id": "open_08_4x5_bullet_block",
@@ -257,7 +257,7 @@
     "store_info": "Hotline: 0912 345 678 • 256 Hoàng Văn Thụ, Tân Bình",
     "qr_code": "https://tendoo.ai/fitness-open",
     "qr_label": "NHẬN DEAL",
-    "style": { "theme_color": "#06B6D4", "text_effect": "cyber_glow", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#06B6D4", "text_effect": "neon_bloom", "background_tone": "dark_luxury" }
   },
   {
     "id": "open_15_16x9_jewelry",

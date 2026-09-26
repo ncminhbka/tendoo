@@ -159,7 +159,7 @@
       "style": {
         "font": "montserrat",
         "theme_color": "#38BDF8",
-        "text_effect": "subtle_depth",
+        "text_effect": "shadow",
         "background_tone": "dark_luxury"
       },
       "hero": "LAPTOP SIÊU MỎNG",
@@ -181,7 +181,7 @@
       "style": {
         "font": "montserrat",
         "theme_color": "#38BDF8",
-        "text_effect": "subtle_depth",
+        "text_effect": "shadow",
         "background_tone": "dark_luxury"
       },
       "hero": "LAPTOP SIÊU MỎNG",
@@ -206,7 +206,7 @@
       "style": {
         "font": "montserrat",
         "theme_color": "#38BDF8",
-        "text_effect": "subtle_depth",
+        "text_effect": "shadow",
         "background_tone": "dark_luxury"
       },
       "hero": "LAPTOP SIÊU MỎNG",

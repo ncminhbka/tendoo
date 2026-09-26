@@ -126,7 +126,7 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#EF4444",
-        "text_effect": "glow_edge",
+        "text_effect": "neon_bloom",
         "background_tone": "dark_luxury"
       },
       "hero": "BỨT PHÁ TỐC ĐỘ VỚI GT SPORT",
@@ -178,7 +178,7 @@
       "style": {
         "font": "playfair",
         "theme_color": "#EC4899",
-        "text_effect": "embossed_shadow",
+        "text_effect": "embossed",
         "background_tone": "dark_luxury"
       },
       "hero": "HƯƠNG THƠM HOÀNG GIA QUÝ PHÁI",
@@ -207,7 +207,7 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#10B981",
-        "text_effect": "subtle_depth",
+        "text_effect": "shadow",
         "background_tone": "dark_luxury"
       },
       "hero": "KHÓA HỌC LÃNH ĐẠO CẤP CAO 2026",
@@ -262,7 +262,7 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#F59E0B",
-        "text_effect": "glow_edge",
+        "text_effect": "neon_bloom",
         "background_tone": "dark_luxury"
       },
       "hero": "PENTHOUSE THE RIVER THỦ THIÊM",
@@ -319,7 +319,7 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#06B6D4",
-        "text_effect": "subtle_depth",
+        "text_effect": "shadow",
         "background_tone": "dark_luxury"
       },
       "hero": "HỘI NGHỊ TRÍ TUỆ NHÂN TẠO GLOBAL AI 2026",

@@ -44,7 +44,7 @@
     "qr_code": "https://tendoo.ai/watch-expo",
     "qr_label": "VÉ MỜI VIP",
     "style": {
-      "font": "cormorant",
+      "font": "playfair",
       "theme_color": "#E2B874",
       "text_effect": "plain_elegant",
       "background_tone": "dark_luxury"
@@ -69,7 +69,7 @@
     "qr_code": "https://tendoo.ai/amanoi-booking",
     "qr_label": "VOUCHER VIP",
     "style": {
-      "font": "cinzel",
+      "font": "playfair",
       "theme_color": "#38BDF8",
       "text_effect": "neon_bloom",
       "background_tone": "dark_luxury"
@@ -121,7 +121,7 @@
     "qr_code": "https://tendoo.ai/supercar-drive",
     "qr_label": "ĐẶT LỊCH",
     "style": {
-      "font": "outfit",
+      "font": "bevietnam",
       "theme_color": "#EF4444",
       "text_effect": "neon",
       "background_tone": "dark_luxury"
@@ -171,7 +171,7 @@
     "qr_code": "https://tendoo.ai/yacht-charter",
     "qr_label": "HẢI TRÌNH",
     "style": {
-      "font": "cormorant",
+      "font": "playfair",
       "theme_color": "#06B6D4",
       "text_effect": "plain_elegant",
       "background_tone": "dark_luxury"
@@ -197,7 +197,7 @@
     "qr_code": "https://tendoo.ai/sky-villa",
     "qr_label": "SƠ ĐỒ CĂN HỘ",
     "style": {
-      "font": "cinzel",
+      "font": "playfair",
       "theme_color": "#F59E0B",
       "text_effect": "3d_gold",
       "background_tone": "dark_luxury"
@@ -223,7 +223,7 @@
     "qr_code": "https://tendoo.ai/supercar-drive",
     "qr_label": "ĐẶT LỊCH",
     "style": {
-      "font": "outfit",
+      "font": "bevietnam",
       "theme_color": "#EF4444",
       "text_effect": "neon",
       "background_tone": "dark_luxury"
@@ -273,7 +273,7 @@
     "qr_code": "https://tendoo.ai/yacht-charter",
     "qr_label": "HẢI TRÌNH",
     "style": {
-      "font": "cormorant",
+      "font": "playfair",
       "theme_color": "#06B6D4",
       "text_effect": "plain_elegant",
       "background_tone": "dark_luxury"
@@ -299,7 +299,7 @@
     "qr_code": "https://tendoo.ai/sky-villa",
     "qr_label": "SƠ ĐỒ CĂN HỘ",
     "style": {
-      "font": "cinzel",
+      "font": "playfair",
       "theme_color": "#F59E0B",
       "text_effect": "3d_gold",
       "background_tone": "dark_luxury"
@@ -365,7 +365,7 @@
     "qr_code": "https://tendoo.ai/michelin-menu",
     "qr_label": "MENU VIP",
     "style": {
-      "font": "cormorant",
+      "font": "playfair",
       "theme_color": "#FBBF24",
       "text_effect": "plain_elegant",
       "background_tone": "dark_luxury"

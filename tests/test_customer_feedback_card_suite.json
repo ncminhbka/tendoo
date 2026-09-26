@@ -35,7 +35,7 @@
     "store_info": "120 Trần Duy Hưng, Cầu Giấy, HN",
     "qr_code": "https://tendoo.ai/dental-review",
     "qr_label": "NHẬN ƯU ĐÃI",
-    "style": { "theme_color": "#00E5FF", "text_effect": "cyber_glow", "background_tone": "cyber_neon" }
+    "style": { "theme_color": "#00E5FF", "text_effect": "neon_bloom", "background_tone": "cyber_neon" }
   },
   {
     "id": "fb_03_16x9_left_car",
@@ -73,7 +73,7 @@
     "store_info": "Hotline: 1900 8989 • 12 chi nhánh toàn quốc",
     "qr_code": "https://tendoo.ai/gym-review",
     "qr_label": "TẬP THỬ",
-    "style": { "theme_color": "#F59E0B", "text_effect": "warm_glow", "background_tone": "warm_rustic" }
+    "style": { "theme_color": "#F59E0B", "text_effect": "neon_bloom", "background_tone": "warm_rustic" }
   },
   {
     "id": "fb_05_1x1_right_resort",
@@ -167,7 +167,7 @@
     "store_info": "Hệ thống 50 showroom toàn quốc",
     "qr_code": "https://tendoo.ai/review",
     "qr_label": "XEM REVIEW",
-    "style": { "theme_color": "#FF5722", "text_effect": "cinema_red", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#FF5722", "text_effect": "shadow", "background_tone": "dark_luxury" }
   },
   {
     "id": "fb_10_9x16_left_bullet_block",
@@ -186,7 +186,7 @@
     "store_info": "Hotline chuyển nhà: 1900 6666",
     "qr_code": "https://tendoo.ai/moving",
     "qr_label": "BÁO GIÁ",
-    "style": { "theme_color": "#3B82F6", "text_effect": "chrome_silver", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#3B82F6", "text_effect": "chrome", "background_tone": "dark_luxury" }
   },
   {
     "id": "fb_11_16x9_left_minimal",
@@ -241,7 +241,7 @@
     "store_info": "Hotline: 1900 3344",
     "qr_code": "https://tendoo.ai/experience",
     "qr_label": "SỞ HỮU",
-    "style": { "theme_color": "#F59E0B", "text_effect": "warm_glow", "background_tone": "warm_rustic" }
+    "style": { "theme_color": "#F59E0B", "text_effect": "neon_bloom", "background_tone": "warm_rustic" }
   },
   {
     "id": "fb_14_9x16_right_bullet",
@@ -278,7 +278,7 @@
     "store_info": "SmartHome Lab: Tầng 4, Vincom Center, Q.1",
     "qr_code": "https://tendoo.ai/smarthome",
     "qr_label": "GIẢI PHÁP",
-    "style": { "theme_color": "#06B6D4", "text_effect": "cyber_glow", "background_tone": "cyber_neon" }
+    "style": { "theme_color": "#06B6D4", "text_effect": "neon_bloom", "background_tone": "cyber_neon" }
   },
   {
     "id": "fb_16_4x5_right_rich",

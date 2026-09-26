@@ -41,7 +41,7 @@
     "store_info": "Auto Care Hub • Hotline: 0909 6688",
     "qr_code": "https://tendoo.ai/ceramic-process",
     "qr_label": "BÁO GIÁ",
-    "style": { "theme_color": "#F59E0B", "text_effect": "warm_glow", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#F59E0B", "text_effect": "neon_bloom", "background_tone": "dark_luxury" }
   },
   {
     "id": "step_03_16x9_left_skin",
@@ -279,7 +279,7 @@
     "store_info": "Craft Beer Taproom • 19 Pasteur, Q.1",
     "qr_code": "https://tendoo.ai/craft-beer",
     "qr_label": "ĐẶT BÀN",
-    "style": { "theme_color": "#F59E0B", "text_effect": "warm_glow", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#F59E0B", "text_effect": "neon_bloom", "background_tone": "dark_luxury" }
   },
   {
     "id": "step_14_9x16_right_bullet",

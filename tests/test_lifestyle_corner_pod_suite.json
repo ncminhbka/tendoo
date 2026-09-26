@@ -17,7 +17,7 @@
     "store_info": "12 Đặng Thai Mai, Tây Hồ, Hà Nội",
     "qr_code": "https://tendoo.ai/coffee-pod",
     "qr_label": "MENU NGÀY",
-    "style": { "theme_color": "#D4AF37", "text_effect": "warm_glow", "background_tone": "warm_rustic" }
+    "style": { "theme_color": "#D4AF37", "text_effect": "neon_bloom", "background_tone": "warm_rustic" }
   },
   {
     "id": "pod_02_9x16_bottom_left_skincare",
@@ -57,7 +57,7 @@
     "store_info": "Đường Hoa Hồng, Hồ Tuyền Lâm, Đà Lạt",
     "qr_code": "https://tendoo.ai/homestay",
     "qr_label": "XEM PHÒNG",
-    "style": { "theme_color": "#F59E0B", "text_effect": "gold_3d", "background_tone": "warm_rustic" }
+    "style": { "theme_color": "#F59E0B", "text_effect": "3d_gold", "background_tone": "warm_rustic" }
   },
   {
     "id": "pod_04_4x5_bottom_left_book",
@@ -217,7 +217,7 @@
     "store_info": "Xưởng Gốm: Làng gốm Bát Tràng, Gia Lâm, Hà Nội",
     "qr_code": "https://tendoo.ai/ceramics",
     "qr_label": "XEM GỐM",
-    "style": { "theme_color": "#FB923C", "text_effect": "warm_glow", "background_tone": "warm_rustic" }
+    "style": { "theme_color": "#FB923C", "text_effect": "neon_bloom", "background_tone": "warm_rustic" }
   },
   {
     "id": "pod_12_4x5_top_left_candle",
@@ -277,7 +277,7 @@
     "store_info": "Atelier: 55 Nam Kỳ Khởi Nghĩa, Quận 1",
     "qr_code": "https://tendoo.ai/leather",
     "qr_label": "MẪU DA",
-    "style": { "theme_color": "#F59E0B", "text_effect": "gold_3d", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#F59E0B", "text_effect": "3d_gold", "background_tone": "dark_luxury" }
   },
   {
     "id": "pod_15_16x9_top_right_minimal",

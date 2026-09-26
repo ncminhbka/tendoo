@@ -21,7 +21,7 @@
     "qr_label": "BÁO GIÁ",
     "style": {
       "theme_color": "#F59E0B",
-      "text_effect": "warm_glow",
+      "text_effect": "neon_bloom",
       "background_tone": "dark_luxury"
     }
   },

@@ -84,8 +84,8 @@
       "style": {
         "font": "montserrat",
         "theme_color": "#FF3366",
-        "text_effect": "clean_gradient",
-        "background_tone": "vibrant_sale"
+        "text_effect": "plain_elegant",
+        "background_tone": "vibrant"
       },
       "badge": "LỄ HỘI MUA SẮM LỚN NHẤT NĂM 2026",
       "hero": "BÙNG NỔ ƯU ĐÃI BLACK FRIDAY TỚI 70%",
@@ -132,10 +132,10 @@
     "plan": {
       "template": "sandwich_bottom_heavy",
       "style": {
-        "font": "comfortaa",
+        "font": "harabaras",
         "theme_color": "#10B981",
-        "text_effect": "clean_gradient",
-        "background_tone": "fresh_organic"
+        "text_effect": "plain_elegant",
+        "background_tone": "light_clean"
       },
       "badge": "MÓN MỚI RA MẮT",
       "hero": "TRÀ SỮA OOLONG NƯỚNG",
@@ -159,7 +159,7 @@
         "font": "playfair",
         "theme_color": "#EC4899",
         "text_effect": "3d_gold",
-        "background_tone": "pastel_soft"
+        "background_tone": "pastel"
       },
       "badge": "LIỆU TRÌNH CHUYÊN SÂU",
       "hero": "TRẺ HÓA DA NANO GOLD",
@@ -216,8 +216,8 @@
       "style": {
         "font": "montserrat",
         "theme_color": "#3B82F6",
-        "text_effect": "clean_gradient",
-        "background_tone": "cool_tech"
+        "text_effect": "plain_elegant",
+        "background_tone": "cyber_neon"
       },
       "hero": "CLOUD AI PLATFORM 2026",
       "store_info": "Hotline: 1900 1234",
@@ -262,7 +262,7 @@
         "font": "montserrat",
         "theme_color": "#06B6D4",
         "text_effect": "neon",
-        "background_tone": "cool_tech"
+        "background_tone": "cyber_neon"
       },
       "badge": "XE ĐIỆN THẾ HỆ MỚI",
       "hero": "KHÁM PHÁ TENDOO EV SEDAN ULTRA",
@@ -290,8 +290,8 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#8B5CF6",
-        "text_effect": "clean_gradient",
-        "background_tone": "cool_tech"
+        "text_effect": "plain_elegant",
+        "background_tone": "cyber_neon"
       },
       "badge": "CHƯƠNG TRÌNH ĐÀO TẠO GIÁM ĐỐC ĐIỀU HÀNH 2026",
       "hero": "LÀM CHỦ CÔNG NGHỆ AI & TỰ ĐỘNG HÓA DOANH NGHIỆP",
@@ -340,7 +340,7 @@
       "style": {
         "font": "montserrat",
         "theme_color": "#F59E0B",
-        "text_effect": "clean_gradient",
+        "text_effect": "plain_elegant",
         "background_tone": "warm_rustic"
       },
       "badge": "SPECIALTY COFFEE",
@@ -365,7 +365,7 @@
         "font": "bevietnam",
         "theme_color": "#EF4444",
         "text_effect": "neon",
-        "background_tone": "vibrant_sale"
+        "background_tone": "vibrant"
       },
       "badge": "GÓI TẬP PREMIUM TOÀN DIỆN",
       "hero": "BỨT PHÁ GIỚI HẠN THỂ HÌNH",
@@ -394,7 +394,7 @@
         "font": "playfair",
         "theme_color": "#EC4899",
         "text_effect": "3d_gold",
-        "background_tone": "pastel_soft"
+        "background_tone": "pastel"
       },
       "badge": "TOUR CAO CẤP MÙA HOA ANH ĐÀO 2026",
       "hero": "HÀNH TRÌNH KHÁM PHÁ XỨ SỞ PHÙ TANG 6N5Đ",

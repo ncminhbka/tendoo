@@ -30,8 +30,8 @@
       "style": {
         "font": "montserrat",
         "theme_color": "#FF3366",
-        "text_effect": "clean_gradient",
-        "background_tone": "vibrant_sale"
+        "text_effect": "plain_elegant",
+        "background_tone": "vibrant"
       },
       "badge": "LỄ HỘI MUA SẮM LỚN NHẤT NĂM 2026",
       "hero": "BÙNG NỔ ƯU ĐÃI BLACK FRIDAY TỚI 70%",
@@ -109,8 +109,8 @@
       "style": {
         "font": "montserrat",
         "theme_color": "#3B82F6",
-        "text_effect": "clean_gradient",
-        "background_tone": "cool_tech"
+        "text_effect": "plain_elegant",
+        "background_tone": "cyber_neon"
       },
       "hero": "CLOUD AI PLATFORM 2026",
       "store_info": "Hotline: 1900 1234",
@@ -130,8 +130,8 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#8B5CF6",
-        "text_effect": "clean_gradient",
-        "background_tone": "cool_tech"
+        "text_effect": "plain_elegant",
+        "background_tone": "cyber_neon"
       },
       "badge": "CHƯƠNG TRÌNH ĐÀO TẠO GIÁM ĐỐC ĐIỀU HÀNH 2026",
       "hero": "LÀM CHỦ CÔNG NGHỆ AI & TỰ ĐỘNG HÓA DOANH NGHIỆP",
@@ -181,7 +181,7 @@
         "font": "playfair",
         "theme_color": "#EC4899",
         "text_effect": "3d_gold",
-        "background_tone": "pastel_soft"
+        "background_tone": "pastel"
       },
       "badge": "TOUR CAO CẤP MÙA HOA ANH ĐÀO 2026",
       "hero": "HÀNH TRÌNH KHÁM PHÁ XỨ SỞ PHÙ TANG 6N5Đ",

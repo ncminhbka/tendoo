@@ -16,7 +16,7 @@
     "qr_label": "MENU NGÀY",
     "style": {
       "theme_color": "#D4AF37",
-      "text_effect": "warm_glow",
+      "text_effect": "neon_bloom",
       "background_tone": "warm_rustic"
     }
   },
@@ -58,7 +58,7 @@
     "qr_label": "XEM PHÒNG",
     "style": {
       "theme_color": "#F59E0B",
-      "text_effect": "gold_3d",
+      "text_effect": "3d_gold",
       "background_tone": "warm_rustic"
     }
   },

@@ -37,7 +37,7 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#8B5CF6",
-        "text_effect": "glow_edge",
+        "text_effect": "neon_bloom",
         "background_tone": "dark_luxury"
       },
       "badge": "ĐỘT PHÁ AI",
@@ -65,7 +65,7 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#38BDF8",
-        "text_effect": "subtle_depth",
+        "text_effect": "shadow",
         "background_tone": "dark_luxury"
       },
       "badge": "MỎNG NHẸ 1KG",
@@ -178,7 +178,7 @@
       "style": {
         "font": "playfair",
         "theme_color": "#10B981",
-        "text_effect": "subtle_depth",
+        "text_effect": "shadow",
         "background_tone": "dark_luxury"
       },
       "badge": "ƯU ĐÃI THÁNG 9",

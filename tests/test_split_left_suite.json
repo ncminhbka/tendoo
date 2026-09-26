@@ -53,7 +53,7 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#8B5CF6",
-        "text_effect": "glow_edge",
+        "text_effect": "neon_bloom",
         "background_tone": "dark_luxury"
       },
       "badge": "FLAGSHIP AI 2026",
@@ -154,7 +154,7 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#8B5CF6",
-        "text_effect": "glow_edge",
+        "text_effect": "neon_bloom",
         "background_tone": "dark_luxury"
       },
       "badge": "ĐỘT PHÁ AI",
@@ -182,7 +182,7 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#10B981",
-        "text_effect": "subtle_depth",
+        "text_effect": "shadow",
         "background_tone": "dark_luxury"
       },
       "badge": "TUẦN LỄ VÀNG",
@@ -211,7 +211,7 @@
       "style": {
         "font": "montserrat",
         "theme_color": "#38BDF8",
-        "text_effect": "subtle_depth",
+        "text_effect": "shadow",
         "background_tone": "dark_luxury"
       },
       "hero": "LAPTOP SIÊU MỎNG",
@@ -231,7 +231,7 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#38BDF8",
-        "text_effect": "subtle_depth",
+        "text_effect": "shadow",
         "background_tone": "dark_luxury"
       },
       "badge": "MỎNG NHẸ 1KG",
@@ -384,7 +384,7 @@
       "style": {
         "font": "bevietnam",
         "theme_color": "#EC4899",
-        "text_effect": "subtle_depth",
+        "text_effect": "shadow",
         "background_tone": "dark_luxury"
       },
       "badge": "CÔNG NGHỆ SINH HỌC",

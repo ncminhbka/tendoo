@@ -38,7 +38,7 @@
     "store_info": "Có mặt tại mọi hệ thống siêu thị",
     "qr_code": "https://tendoo.ai/boost",
     "qr_label": "SĂN VOUCHER",
-    "style": { "theme_color": "#00E5FF", "text_effect": "cyber_glow", "background_tone": "cyber_neon" }
+    "style": { "theme_color": "#00E5FF", "text_effect": "neon_bloom", "background_tone": "cyber_neon" }
   },
   {
     "id": "diag_03_16x9_left_gaming",
@@ -80,7 +80,7 @@
     "store_info": "Hotline: 028 3822 9999 • Hệ thống 12 chi nhánh",
     "qr_code": "https://tendoo.ai/gym-vip",
     "qr_label": "NHẬN ƯU ĐÃI",
-    "style": { "theme_color": "#F59E0B", "text_effect": "gold_3d", "background_tone": "warm_rustic" }
+    "style": { "theme_color": "#F59E0B", "text_effect": "3d_gold", "background_tone": "warm_rustic" }
   },
   {
     "id": "diag_05_1x1_right_supercar",
@@ -101,7 +101,7 @@
     "store_info": "Hotline: 1800 8888 • Showroom Tân Cảng, TP.HCM",
     "qr_code": "https://tendoo.ai/supercar",
     "qr_label": "VIP ACCESS",
-    "style": { "theme_color": "#EF4444", "text_effect": "cinema_red", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#EF4444", "text_effect": "shadow", "background_tone": "dark_luxury" }
   },
   {
     "id": "diag_06_9x16_right_drone",
@@ -142,7 +142,7 @@
     "store_info": "Tendoo VR Lab: Tầng 3, Landmark 81, TP.HCM",
     "qr_code": "https://tendoo.ai/vr-headset",
     "qr_label": "BOOK NOW",
-    "style": { "theme_color": "#3B82F6", "text_effect": "chrome_silver", "background_tone": "cyber_neon" }
+    "style": { "theme_color": "#3B82F6", "text_effect": "chrome", "background_tone": "cyber_neon" }
   },
   {
     "id": "diag_08_4x5_right_chrono",
@@ -163,7 +163,7 @@
     "store_info": "Boutique: 18 Tràng Tiền, Hoàn Kiếm, Hà Nội",
     "qr_code": "https://tendoo.ai/chrono",
     "qr_label": "XEM CHI TIẾT",
-    "style": { "theme_color": "#EAB308", "text_effect": "gold_3d", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#EAB308", "text_effect": "3d_gold", "background_tone": "dark_luxury" }
   },
   {
     "id": "diag_09_1x1_left_minimal",
@@ -175,7 +175,7 @@
     "hero": "CHINH PHỤC ĐỈNH CAO",
     "badge": "CHAMPION",
     "cta": "KHÁM PHÁ",
-    "style": { "theme_color": "#FF5722", "text_effect": "plain_bold", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#FF5722", "text_effect": "plain_elegant", "background_tone": "dark_luxury" }
   },
   {
     "id": "diag_10_9x16_left_rich_features",
@@ -210,7 +210,7 @@
     "subhead": "Công nghệ đua xe thể thao F1 ứng dụng cho đường phố",
     "badge": "RACING DNA",
     "cta": "TÌM HIỂU THÊM",
-    "style": { "theme_color": "#F43F5E", "text_effect": "cinema_red", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#F43F5E", "text_effect": "shadow", "background_tone": "dark_luxury" }
   },
   {
     "id": "diag_12_4x5_left_bullet_block",
@@ -243,7 +243,7 @@
     "hero": "ĐẲNG CẤP VƯỢT THỜI GIAN",
     "badge": "PREMIUM",
     "cta": "XEM NGAY",
-    "style": { "theme_color": "#EAB308", "text_effect": "gold_3d", "background_tone": "dark_luxury" }
+    "style": { "theme_color": "#EAB308", "text_effect": "3d_gold", "background_tone": "dark_luxury" }
   },
   {
     "id": "diag_14_9x16_right_rich_features",
@@ -278,7 +278,7 @@
     "subhead": "Dòng lốp thể thao hiệu suất cao bám đường ướt vượt trội",
     "badge": "PERFORMANCE",
     "cta": "MUA NGAY",
-    "style": { "theme_color": "#06B6D4", "text_effect": "cyber_glow", "background_tone": "cyber_neon" }
+    "style": { "theme_color": "#06B6D4", "text_effect": "neon_bloom", "background_tone": "cyber_neon" }
   },
   {
     "id": "diag_16_4x5_right_bullet_block",

@@ -33,7 +33,7 @@
     "qr_label": "XEM NGAY",
     "style": {
       "theme_color": "#EF4444",
-      "text_effect": "cinema_red",
+      "text_effect": "shadow",
       "background_tone": "dark_luxury"
     }
   },

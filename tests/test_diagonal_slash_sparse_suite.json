@@ -96,7 +96,7 @@
     "qr_label": null,
     "style": {
       "theme_color": "#00E5FF",
-      "text_effect": "cyber_glow",
+      "text_effect": "neon_bloom",
       "background_tone": "cyber_neon"
     }
   },
@@ -120,7 +120,7 @@
     "qr_label": "SĂN VOUCHER",
     "style": {
       "theme_color": "#00E5FF",
-      "text_effect": "cyber_glow",
+      "text_effect": "neon_bloom",
       "background_tone": "cyber_neon"
     },
     "store_items": null,
@@ -144,7 +144,7 @@
     "qr_label": null,
     "style": {
       "theme_color": "#00E5FF",
-      "text_effect": "cyber_glow",
+      "text_effect": "neon_bloom",
       "background_tone": "cyber_neon"
     },
     "tag_left": null,
@@ -249,7 +249,7 @@
     "qr_label": null,
     "style": {
       "theme_color": "#F59E0B",
-      "text_effect": "gold_3d",
+      "text_effect": "3d_gold",
       "background_tone": "warm_rustic"
     }
   },
@@ -274,7 +274,7 @@
     "qr_label": "NHẬN ƯU ĐÃI",
     "style": {
       "theme_color": "#F59E0B",
-      "text_effect": "gold_3d",
+      "text_effect": "3d_gold",
       "background_tone": "warm_rustic"
     },
     "store_items": null,
@@ -298,7 +298,7 @@
     "qr_label": null,
     "style": {
       "theme_color": "#F59E0B",
-      "text_effect": "gold_3d",
+      "text_effect": "3d_gold",
       "background_tone": "warm_rustic"
     },
     "tag_left": null,
