@@ -32,6 +32,17 @@ TEXT_EFFECT_ALIASES = {
 # Tông nền có xử lý riêng ở get_adaptive_palette() / velocity_blending.py / comment của nó.
 # Tên lạ: palette coi là nền tối, mock backdrop dùng màu dark_luxury.
 BACKGROUND_TONES = ("dark_luxury", "light_clean", "warm_rustic", "pastel", "vibrant", "cyber_neon", "cinema_red")
+# Tông nền SÁNG -- palette chọn chữ đậm, mock backdrop nền sáng. Nguồn duy nhất cho get_adaptive_palette,
+# velocity_blending (mock nền server) và nền giả của bộ test.
+LIGHT_BACKGROUND_TONES = ("pastel", "light_clean")
+# Màu gradient (trên, dưới) của nền giả theo tông; tông không có trong bảng dùng dark_luxury.
+TONE_BACKDROP_COLORS = {
+    "dark_luxury": ((14, 18, 28), (28, 38, 56)),
+    "light_clean": ((245, 247, 250), (220, 228, 238)),
+    "warm_rustic": ((42, 28, 20), (74, 52, 38)),
+    "pastel": ((240, 244, 248), (255, 235, 238)),
+    "vibrant": ((20, 24, 45), (45, 25, 65)),
+}
 
 
 def get_effect_css(
@@ -219,7 +230,7 @@ def get_adaptive_palette(background_tone: str, theme_color: str = "#FFB300") -> 
     """Tính toán bảng màu thích ứng cho Transparent Glass Overlay, loại bỏ hoàn toàn các vệt đen."""
     tone = (background_tone or "dark_luxury").lower().strip()
     tc = theme_color if theme_color else "#FFB300"
-    is_dark = tone not in ("pastel", "light_clean")
+    is_dark = tone not in LIGHT_BACKGROUND_TONES
 
     if not is_dark:
         card_bg_solid = "#FFFFFF"

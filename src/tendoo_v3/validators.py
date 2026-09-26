@@ -17,7 +17,7 @@ import logging
 from typing import List
 
 from tendoo_core.fonts import FONT_ALIASES, FONT_CATALOG
-from tendoo_v3.catalog import TEMPLATE_CATALOG
+from tendoo_v3.catalog import INTENT_PROFILES, TEMPLATE_CATALOG
 from tendoo_v3.schema import TendooCreativePlan
 from tendoo_v3.styles import BACKGROUND_TONES, TEXT_EFFECT_ALIASES, TEXT_EFFECTS
 
@@ -44,6 +44,12 @@ def check_plan(plan: TendooCreativePlan) -> List[str]:
         missing = [f for f, spec in slots.items() if spec.get("required") and not getattr(plan, f, None)]
         if missing:
             issues.append(f"template '{plan.template}' thiếu field chuyên biệt {missing} -- poster có thể lệch bản chất template")
+
+    if plan.visual_intent is not None:
+        if plan.visual_intent not in INTENT_PROFILES:
+            issues.append(f"visual_intent '{plan.visual_intent}' không có trong danh mục -- dùng intent mặc định của template")
+        elif info is not None and plan.visual_intent not in info.get("visual_intents", []):
+            issues.append(f"visual_intent '{plan.visual_intent}' không hợp template '{plan.template}' -- dùng intent mặc định")
 
     font = (plan.style.font or "auto").lower().strip()
     if font != "auto" and font not in FONT_CATALOG and font not in FONT_ALIASES:

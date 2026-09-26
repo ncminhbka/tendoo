@@ -58,6 +58,9 @@ class TendooCreativePlan:
     # "bottom_right" | "top_left" | "top_right" -- vị trí đặt capsule góc;
     # Hoặc "diagonal_slash": "left" (mặc định) | "right" (bản gương).
     orientation: Optional[str] = None
+    # Ý đồ thị giác (ROADMAP §3.3) -- quyết định ngưỡng tương phản squint test. None = intent mặc
+    # định của template (catalog `visual_intents[0]`). LLM điền ở GĐ 3.
+    visual_intent: Optional[str] = None
 
     style: StyleConfig = field(default_factory=StyleConfig)
 
@@ -179,6 +182,7 @@ class TendooCreativePlan:
             reviewer_name=data.get("reviewer_name"),
             steps=steps,
             orientation=data.get("orientation"),
+            visual_intent=data.get("visual_intent"),
             style=style,
             # "background_prompt" chấp nhận thêm làm alias: hệ thống prompt LLM từng
             # dùng tên này trước khi thống nhất về "scene_prompt" (2026-09-15) -- giữ

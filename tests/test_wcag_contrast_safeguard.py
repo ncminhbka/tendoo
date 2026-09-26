@@ -88,6 +88,13 @@ def test_get_contrasting_text_color():
     cr_amber = calculate_contrast_ratio("#F59E0B", text_on_amber)
     assert cr_amber >= 4.5, f"Contrast on amber {cr_amber} must be >= 4.5:1"
 
+    # Màu độ sáng trung bình (luminance 0.18-0.40): ngưỡng cứng cũ trả chữ trắng -- sai.
+    # Hồng #F472B6 (CTA thật trong suite): trắng 2.65:1, chữ đậm ~7:1.
+    for mid in ("#F472B6", "#38BDF8", "#FB923C", "#D4AF37"):
+        chosen = get_contrasting_text_color(mid)
+        other = "#FFFFFF" if chosen == "#0F172A" else "#0F172A"
+        assert calculate_contrast_ratio(mid, chosen) >= calculate_contrast_ratio(mid, other), mid
+
 
 def test_ensure_contrast_dark_surface():
     """

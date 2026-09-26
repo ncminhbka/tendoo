@@ -49,3 +49,9 @@ def test_check_does_not_mutate_plan():
     before = replace(p)
     check_plan(p)
     assert p == before
+
+
+def test_intent_membership():
+    assert check_plan(_plan(visual_intent="big_number_deal")) == []
+    assert any("không có trong danh mục" in i for i in check_plan(_plan(visual_intent="xyz")))
+    assert any("không hợp template" in i for i in check_plan(_plan(visual_intent="matrix_board")))

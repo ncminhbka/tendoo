@@ -31,6 +31,7 @@ import argparse
 import csv
 import glob
 import json
+import re
 import sys
 import time
 from collections import defaultdict
@@ -48,6 +49,7 @@ if hasattr(sys.stdout, "reconfigure"):
 from playwright.sync_api import sync_playwright
 
 from run_template_test import generate_mock_backdrop_data_uri, parse_case_to_plan
+from tendoo_v3.catalog import INTENT_PROFILES, resolve_intent
 from tendoo_v3.renderer import build_template_html
 from tendoo_v3.styles import CONTENT_CLASSES, TIER1_CLASSES, TIER2_CLASSES, TIER3_CLASSES
 
@@ -106,17 +108,91 @@ def classify(classes: List[str]) -> tuple:
     return (classes[0] if classes else "?"), "?"
 
 
-def has_wall(sizes: List[float]) -> bool:
-    s = sorted(x for x in sizes if x > 0)
-    for i in range(len(s) - 2):
-        if s[i + 2] <= s[i] * 1.2:
+def has_cross_tier_wall(elements: List[Dict[str, Any]]) -> bool:
+    """§4.5 điều kiện 2, ĐỊNH NGHĨA LẠI (GĐ 1, theo §8): >= 3 phần tử nằm trong dải ±20% cỡ của
+    nhau VÀ thuộc >= 2 cấp khác nhau. Nhiều phần tử CÙNG Cấp 3 (hotline + địa chỉ + CTA) cùng cỡ
+    là một nhóm hợp lệ, không phải "chữ nhòe ngang nhau" (DESIGN_PRINCIPLES §1.2)."""
+    items = sorted((e["size"], e["tier"]) for e in elements if e["tier"] in (1, 2, 3) and e["size"] > 0)
+    for i in range(len(items)):
+        window = [t for sz, t in items[i:] if sz <= items[i][0] * 1.2]
+        if len(window) >= 3 and len(set(window)) >= 2:
             return True
     return False
 
 
-def measure_case(page, case: Dict[str, Any], template: str) -> Dict[str, Any]:
-    plan, w, h = parse_case_to_plan(case, default_template=template)
-    html = build_template_html(plan=plan, bg_data_uri=generate_mock_backdrop_data_uri(w, h, plan.style.theme_color), width=w, height=h)
+TEXT_BOXES_JS = r"""
+() => {
+  const out = [];
+  for (const el of document.querySelectorAll('[data-autofit]')) {
+    if (el.parentElement && el.parentElement.closest('[data-autofit]')) continue;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode, host = node.parentElement;
+      if (!node.textContent.trim() || host.closest('svg')) continue;
+      const cs = getComputedStyle(host);
+      const range = document.createRange(); range.selectNodeContents(node);
+      for (const r of range.getClientRects()) {
+        if (r.width < 2 || r.height < 2) continue;
+        out.push({cls: (el.className || '').toString().trim().split(/\s+/)[0], x: r.left, y: r.top, w: r.width, h: r.height,
+                  color: cs.webkitTextFillColor || cs.color, size: parseFloat(cs.fontSize) || 0, weight: parseInt(cs.fontWeight) || 400});
+      }
+    }
+  }
+  return out;
+}
+"""
+HIDE_TEXT_CSS = "* { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; }"
+
+
+def _parse_rgba(css):
+    m = re.match(r"rgba?\(([^)]+)\)", css or "")
+    if not m:
+        return None
+    parts = [float(x) for x in m.group(1).replace("/", ",").split(",") if x.strip()]
+    return parts[:3], (parts[3] if len(parts) > 3 else 1.0)
+
+
+def _luminance(rgb) -> float:
+    def ch(c):
+        c = c / 255.0
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b = (ch(x) for x in rgb)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def measure_bg_contrast(page) -> List[Dict[str, Any]]:
+    """§4.5 điều kiện 3: WCAG màu chữ vs màu nền ĐO THẬT ngay dưới từng dòng chữ. Chụp lại trang
+    với chữ ẩn rồi lấy màu trung bình vùng dưới chữ. Giới hạn: bỏ qua text-shadow/glow (WCAG không
+    tính); chữ tô gradient (fill trong suốt, vd 3d_gold) đánh dấu `gradient`, không chấm."""
+    import io
+
+    import numpy as np
+    from PIL import Image
+
+    boxes = page.evaluate(TEXT_BOXES_JS)
+    page.add_style_tag(content=HIDE_TEXT_CSS)
+    img = np.asarray(Image.open(io.BytesIO(page.screenshot())).convert("RGB")).astype(float)
+    out = []
+    for b in boxes:
+        parsed = _parse_rgba(b["color"])
+        x0, y0 = max(0, int(b["x"])), max(0, int(b["y"]))
+        x1, y1 = min(img.shape[1], int(b["x"] + b["w"])), min(img.shape[0], int(b["y"] + b["h"]))
+        if parsed is None or x1 <= x0 or y1 <= y0:
+            continue
+        rgb, alpha = parsed
+        if alpha < 0.5:
+            out.append({"cls": b["cls"], "ratio": None, "gradient": True})
+            continue
+        bg = img[y0:y1, x0:x1].reshape(-1, 3).mean(axis=0)
+        l1, l2 = _luminance(rgb), _luminance(bg)
+        ratio = (max(l1, l2) + 0.05) / (min(l1, l2) + 0.05)
+        large = b["size"] >= 24 or (b["size"] >= 18.66 and b["weight"] >= 700)
+        out.append({"cls": b["cls"], "ratio": round(ratio, 2), "need": 3.0 if large else 4.5, "gradient": False})
+    return out
+
+
+def measure_plan(page, plan, w: int, h: int, with_bg: bool = False) -> Dict[str, Any]:
+    html = build_template_html(plan=plan, bg_data_uri=generate_mock_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone), width=w, height=h)
     page.set_viewport_size({"width": w, "height": h})
     page.set_content(html, wait_until="load")
     page.evaluate("document.fonts.ready")
@@ -145,21 +221,45 @@ def measure_case(page, case: Dict[str, Any], template: str) -> Dict[str, Any]:
     t3 = [e for e in elements if e["tier"] == 3]
     sub = max((e["size"] for e in t2), default=0.0)
     t3_top = max(t3, key=lambda e: e["size"], default=None)
-    secondary = [e for e in t2 + t3]
-    sec_top = max(secondary, key=lambda e: e["size"], default=None)
-    return {
-        "id": case["id"], "template": plan.template, "w": w, "h": h,
+    intent = resolve_intent(plan.template, getattr(plan, "visual_intent", None))
+    target = INTENT_PROFILES[intent]["contrast_target"]
+    # matrix_board: điểm neo so với cả khối nội dung chính (menu/steps), không chỉ Cấp 2/3.
+    pool = t2 + t3 + ([e for e in elements if e["tier"] == "content"] if intent == "matrix_board" else [])
+    sec_top = max(pool, key=lambda e: e["size"], default=None)
+    contrast = round(hero / sec_top["size"], 2) if (sec_top and hero) else None
+    text_lost = [o["cls"] for o in gate4 if o["verdict"] in ("clipped", "overlap")]
+    wall = has_cross_tier_wall(elements)
+    result = {
+        "template": plan.template, "w": w, "h": h, "intent": intent, "contrast_target": target,
         "hero": hero, "subhead": sub,
         "t3_max": t3_top["size"] if t3_top else 0.0, "t3_max_cls": t3_top["cls"] if t3_top else "",
-        "contrast": round(hero / sec_top["size"], 2) if (sec_top and hero) else None,
+        "contrast": contrast,
         "top_secondary": sec_top["cls"] if sec_top else "",
         "inversion": bool(sub and t3_top and t3_top["size"] > sub),
-        "wall": has_wall([e["size"] for e in elements if e["tier"] in (1, 2, 3)]),
+        "wall": wall,
         "overflow": [f"{o['cls']}:{o['verdict']}" for o in gate4],
-        "text_lost": [o["cls"] for o in gate4 if o["verdict"] in ("clipped", "overlap")],
+        "text_lost": text_lost,
         "unknown": [e["cls"] for e in elements if e["tier"] == "?"],
         "elements": elements,
+        # 4 điều kiện squint test §4.5 (điều kiện 3 chỉ khi with_bg)
+        "c1_anchor": contrast is None or contrast >= target,
+        "c2_no_wall": not wall,
+        "c4_no_loss": not text_lost,
     }
+    if with_bg:
+        bgc = measure_bg_contrast(page)
+        fails = [b for b in bgc if b.get("ratio") is not None and b["ratio"] < b["need"]]
+        result.update({
+            "bg_contrast": bgc, "c3_bg": not fails, "bg_fail": sorted({b["cls"] for b in fails}),
+            "bg_min": min((b["ratio"] for b in bgc if b.get("ratio")), default=None),
+        })
+    result["squint_pass"] = result["c1_anchor"] and result["c2_no_wall"] and result["c4_no_loss"] and result.get("c3_bg", True)
+    return result
+
+
+def measure_case(page, case: Dict[str, Any], template: str, with_bg: bool = False) -> Dict[str, Any]:
+    plan, w, h = parse_case_to_plan(case, default_template=template)
+    return {"id": case["id"], **measure_plan(page, plan, w, h, with_bg=with_bg)}
 
 
 def load_cases(template: Optional[str]) -> List[tuple]:
@@ -195,9 +295,21 @@ def summarize(results: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
             "walls": sum(r["wall"] for r in rs),
             "overflows": sum(bool(r["overflow"]) for r in rs),
             "text_lost": sum(bool(r["text_lost"]) for r in rs),
+            "intent": rs[0]["intent"], "target": rs[0]["contrast_target"],
+            "c1": sum(r["c1_anchor"] for r in rs), "c2": sum(r["c2_no_wall"] for r in rs),
+            "c3": sum(r["c3_bg"] for r in rs) if "c3_bg" in rs[0] else None, "c4": sum(r["c4_no_loss"] for r in rs),
+            "squint": sum(r["squint_pass"] for r in rs),
             "top_secondary": ", ".join(f"{k}:{v}" for k, v in sorted(tops.items(), key=lambda kv: -kv[1])[:2]),
         }
     return summ
+
+
+SQUINT_KEYS = ("c1", "c2", "c3", "c4", "squint")
+
+
+def squint_baseline(summ: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
+    """Mốc bánh cóc cho CI: số case ĐẠT từng điều kiện squint, theo template."""
+    return {tpl: {"n": s["n"], **{k: s[k] for k in SQUINT_KEYS}} for tpl, s in summ.items()}
 
 
 def print_table(summ, base=None):
@@ -207,23 +319,23 @@ def print_table(summ, base=None):
         delta = summ[tpl][key] - base[tpl][key]
         return f" ({fmt.format(round(delta, 2))})" if delta else ""
 
-    hdr = (f"{'template':<24}{'n':>4} {'contrast TB':>16} {'max':>6} {'>=4x':>9} {'đảo bậc':>12} {'tường':>10}"
-           f" {'vượt NS':>9} {'mất chữ':>9}  phụ to nhất")
+    hdr = (f"{'template':<24}{'n':>4} {'intent':<18}{'ngưỡng':>6} {'contrast TB':>13} {'đảo':>5}"
+           f" {'C1 neo':>9} {'C2 tường':>9} {'C3 nền':>8} {'C4 chữ':>8} {'ĐẠT CẢ 4':>12}")
     print(hdr)
     print("-" * len(hdr))
     tot = defaultdict(int)
     for tpl, s in summ.items():
-        for k in ("n", "ge4x", "inversions", "walls", "overflows", "text_lost"):
-            tot[k] += s.get(k, 0)
+        for k in ("n", "inversions", "c1", "c2", "c3", "c4", "squint"):
+            tot[k] += s.get(k) or 0
+        c3 = "-" if s.get("c3") is None else str(s["c3"])
         print(
-            f"{tpl:<24}{s['n']:>4} {str(s['contrast_mean']) + d('contrast_mean', tpl):>16} {str(s['contrast_max']):>6}"
-            f" {str(s['ge4x']) + d('ge4x', tpl):>9} {str(s['inversions']) + d('inversions', tpl):>12}"
-            f" {str(s['walls']) + d('walls', tpl):>10} {str(s['overflows']) + d('overflows', tpl):>9}"
-            f" {str(s.get('text_lost', 0)) + d('text_lost', tpl):>9}  {s['top_secondary']}"
+            f"{tpl:<24}{s['n']:>4} {s.get('intent', ''):<18}{s.get('target', ''):>6} {str(s['contrast_mean']) + d('contrast_mean', tpl):>13}"
+            f" {s['inversions']:>5} {str(s.get('c1')) + d('c1', tpl):>9} {str(s.get('c2')) + d('c2', tpl):>9} {c3:>8}"
+            f" {str(s.get('c4')) + d('c4', tpl):>8} {str(s.get('squint')) + d('squint', tpl):>12}"
         )
     print("-" * len(hdr))
-    print(f"{'TỔNG':<24}{tot['n']:>4} {'':>16} {'':>6} {tot['ge4x']:>9} {tot['inversions']:>12} {tot['walls']:>10}"
-          f" {tot['overflows']:>9} {tot['text_lost']:>9}")
+    print(f"{'TỔNG':<24}{tot['n']:>4} {'':<18}{'':>6} {'':>13} {tot['inversions']:>5} {tot['c1']:>9} {tot['c2']:>9}"
+          f" {tot['c3']:>8} {tot['c4']:>8} {tot['squint']:>12}")
 
 
 def main():
@@ -231,7 +343,9 @@ def main():
     ap.add_argument("--template", default=None)
     ap.add_argument("--out", default=str(PROJECT_ROOT / "output_probe" / "latest"))
     ap.add_argument("--compare", default=None, help="Thư mục kết quả cũ để so sánh (chứa summary.json)")
-    ap.add_argument("--show", choices=["inversions", "overflows", "unknown"], default=None, help="In chi tiết case vi phạm")
+    ap.add_argument("--show", choices=["inversions", "overflows", "unknown", "squint"], default=None, help="In chi tiết case vi phạm")
+    ap.add_argument("--bg", action="store_true", help="Đo thêm §4.5 điều kiện 3 (tương phản nền thật, chậm ~2x)")
+    ap.add_argument("--write-baseline", default=None, help="Ghi mốc squint (bánh cóc CI), vd tests/squint_baseline.json -- cần --bg")
     args = ap.parse_args()
 
     cases = load_cases(args.template)
@@ -244,7 +358,7 @@ def main():
         page = browser.new_page()
         for i, (suite, tpl, case) in enumerate(cases, 1):
             try:
-                r = measure_case(page, case, tpl)
+                r = measure_case(page, case, tpl, with_bg=args.bg)
                 r["suite"] = suite
                 results.append(r)
             except Exception as ex:
@@ -268,9 +382,17 @@ def main():
                 print(f"  {r['id']:<34} subhead {r['subhead']:>5} < {r['t3_max_cls']} {r['t3_max']}")
             elif args.show == "overflows" and r["overflow"]:
                 print(f"  {r['id']:<34} tràn: {r['overflow']}")
+            elif args.show == "squint" and not r["squint_pass"]:
+                why = [k for k in ("c1_anchor", "c2_no_wall", "c3_bg", "c4_no_loss") if r.get(k) is False]
+                print(f"  {r['id']:<34} trượt {why}  contrast {r['contrast']} / {r['contrast_target']}  nền yếu {r.get('bg_fail', [])}")
             elif args.show == "unknown" and r["unknown"]:
                 print(f"  {r['id']:<34} class chưa phân cấp: {r['unknown']}")
 
+    if args.write_baseline:
+        if not args.bg or args.template:
+            raise SystemExit("--write-baseline cần --bg và toàn bộ template (không dùng --template)")
+        Path(args.write_baseline).write_text(json.dumps(squint_baseline(summ), ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"Đã ghi mốc squint: {args.write_baseline}")
     (out_dir / "summary.json").write_text(json.dumps(summ, ensure_ascii=False, indent=2), encoding="utf-8")
     (out_dir / "cases.json").write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
     with open(out_dir / "elements.csv", "w", newline="", encoding="utf-8-sig") as f:

@@ -159,14 +159,8 @@ def generate_mock_backdrop(
 ) -> Image.Image:
     """Tạo ảnh nền giả lập (Aesthetic Mock Backdrop) mượt mà khi chạy trên môi trường CPU/Local."""
     # Phân tích tone màu nền
-    tone_palettes = {
-        "dark_luxury": ((14, 18, 28), (28, 38, 56)),
-        "light_clean": ((245, 247, 250), (220, 228, 238)),
-        "warm_rustic": ((42, 28, 20), (74, 52, 38)),
-        "pastel": ((240, 244, 248), (255, 235, 238)),
-        "vibrant": ((20, 24, 45), (45, 25, 65)),
-    }
-    top_color, bottom_color = tone_palettes.get(background_tone, ((14, 18, 28), (28, 38, 56)))
+    from tendoo_v3.styles import TONE_BACKDROP_COLORS
+    top_color, bottom_color = TONE_BACKDROP_COLORS.get(background_tone, TONE_BACKDROP_COLORS["dark_luxury"])
 
     # Tạo gradient dọc
     base = Image.new("RGB", (width, height), top_color)

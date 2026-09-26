@@ -47,7 +47,7 @@ def snap(out: Path, template: str | None) -> None:
         page = browser.new_page()
         for suite, tpl, case in cases:
             plan, w, h = parse_case_to_plan(case, tpl)
-            html = build_template_html(plan, generate_mock_backdrop_data_uri(w, h, plan.style.theme_color), w, h)
+            html = build_template_html(plan, generate_mock_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone), w, h)
             page.set_viewport_size({"width": w, "height": h})
             page.set_content(html, wait_until="load")
             page.evaluate("document.fonts.ready")

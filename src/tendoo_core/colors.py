@@ -132,9 +132,14 @@ def rgb_to_hex(r: float, g: float, b: float) -> str:
 
 
 def get_contrasting_text_color(bg_color: str) -> str:
-    """Trả về '#0F172A' (chữ đậm) hoặc '#FFFFFF' (chữ trắng) để tương phản cao nhất với bg_color."""
-    lum = calculate_wcag_luminance(bg_color)
-    return "#0F172A" if lum > 0.40 else "#FFFFFF"
+    """Trả về '#0F172A' (chữ đậm) hoặc '#FFFFFF' (chữ trắng) -- màu nào có tỉ số WCAG cao hơn.
+
+    Trước đây dùng ngưỡng cứng luminance > 0.40, trong khi điểm hoà thật giữa 2 lựa chọn ở
+    khoảng 0.18 -> mọi màu độ sáng trung bình (hồng, cam, cyan, vàng đồng: 0.18-0.40) nhận chữ
+    trắng dù chữ đậm tương phản gấp 2-3 lần. Đo 26/09 (squint §4.5 điều kiện 3): CTA chữ trắng
+    trên hồng #F472B6 chỉ 2.65:1 (< cả ngưỡng 3.0 chữ lớn); chữ đậm đạt ~7:1."""
+    dark, light = "#0F172A", "#FFFFFF"
+    return dark if calculate_contrast_ratio(dark, bg_color) >= calculate_contrast_ratio(light, bg_color) else light
 
 
 def ensure_contrast(

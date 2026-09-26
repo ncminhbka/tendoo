@@ -42,6 +42,7 @@ from tendoo_v3.mask_engine import generate_template_mask, save_mask_preview
 from tendoo_v3.mock_backgrounds import create_gradient_backdrop
 from tendoo_v3.renderer import pil_to_base64_data_uri, render_plan_to_poster
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
+from tendoo_v3.styles import LIGHT_BACKGROUND_TONES, TONE_BACKDROP_COLORS
 
 TESTS_DIR = PROJECT_ROOT / "tests"
 OUTPUT_BASE_DIR = PROJECT_ROOT / "output_tendoo_v3"
@@ -64,11 +65,14 @@ ALL_TEMPLATES = [
 ]
 
 
-def generate_mock_backdrop_data_uri(width: int, height: int, theme_hex: str = "#FF3366") -> str:
-    """Tạo gradient backdrop chuyên nghiệp cho poster."""
-    img = Image.new("RGB", (width, height), color=(10, 15, 26))
-    draw = ImageDraw.Draw(img)
+def generate_mock_backdrop_data_uri(
+    width: int, height: int, theme_hex: str = "#FF3366", background_tone: str = "dark_luxury"
+) -> str:
+    """Tạo gradient backdrop cho poster, THEO TÔNG NỀN của plan.
 
+    Trước đây luôn nền tối -> poster tông sáng (pastel/light_clean) chưa từng được test trên nền
+    sáng: palette chọn chữ đậm cho nền sáng rồi đặt lên nền tối (đo 26/09: giá menu đỏ đậm trên
+    nền gần đen, WCAG 1.78:1). Tông tối giữ NGUYÊN thuật toán cũ (ảnh không đổi)."""
     r = int(theme_hex[1:3], 16) if len(theme_hex) >= 7 else 255
     g = int(theme_hex[3:5], 16) if len(theme_hex) >= 7 else 51
     b = int(theme_hex[5:7], 16) if len(theme_hex) >= 7 else 102
@@ -77,14 +81,28 @@ def generate_mock_backdrop_data_uri(width: int, height: int, theme_hex: str = "#
     cy = int(height * 0.45)
     radius = int(min(width, height) * 0.55)
 
-    for i in range(radius, 0, -20):
-        alpha = int(50 * (1.0 - i / radius))
-        col = (
-            min(255, 10 + int(r * alpha / 255)),
-            min(255, 15 + int(g * alpha / 255)),
-            min(255, 26 + int(b * alpha / 255)),
-        )
-        draw.ellipse([cx - i, cy - i, cx + i, cy + i], fill=col)
+    if background_tone in LIGHT_BACKGROUND_TONES:
+        top, bottom = TONE_BACKDROP_COLORS[background_tone]
+        img = Image.new("RGB", (width, height), color=top)
+        draw = ImageDraw.Draw(img)
+        for y in range(0, height, 8):
+            t = y / max(1, height - 1)
+            draw.rectangle([0, y, width, y + 8], fill=tuple(int(top[k] * (1 - t) + bottom[k] * t) for k in range(3)))
+        for i in range(radius, 0, -20):
+            a = 0.25 * (1.0 - i / radius)  # quầng màu theme nhạt dần, trộn tuyến tính trên nền sáng
+            col = tuple(int(bottom[k] * (1 - a) + (r, g, b)[k] * a) for k in range(3))
+            draw.ellipse([cx - i, cy - i, cx + i, cy + i], fill=col)
+    else:
+        img = Image.new("RGB", (width, height), color=(10, 15, 26))
+        draw = ImageDraw.Draw(img)
+        for i in range(radius, 0, -20):
+            alpha = int(50 * (1.0 - i / radius))
+            col = (
+                min(255, 10 + int(r * alpha / 255)),
+                min(255, 15 + int(g * alpha / 255)),
+                min(255, 26 + int(b * alpha / 255)),
+            )
+            draw.ellipse([cx - i, cy - i, cx + i, cy + i], fill=col)
 
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=85)
@@ -496,7 +514,7 @@ def run_test_suite_for_template(
         t0 = time.perf_counter()
 
         # 1. Background mock
-        bg_data_uri = generate_mock_backdrop_data_uri(w, h, theme_hex=plan.style.theme_color)
+        bg_data_uri = generate_mock_backdrop_data_uri(w, h, theme_hex=plan.style.theme_color, background_tone=plan.style.background_tone)
 
         # 2. Render HTML & PNG
         _, html_content = render_plan_to_poster(

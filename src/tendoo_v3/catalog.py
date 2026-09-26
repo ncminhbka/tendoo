@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional
 # trong geometry.py. Cờ = True nếu BẤT KỲ slot nào khai báo cờ đó có nội dung.
 # `default_orientation`: template có biến thể hướng (trái/phải/góc) -- hàm zone nhận `orientation`,
 # mặc định giá trị này khi plan không chỉ định. Không khai báo = template không có hướng.
+# `visual_intents`: intent template phục vụ (phần tử đầu = mặc định), xem INTENT_PROFILES.
 # `required`: template được chọn mà thiếu field này thì poster lệch bản chất (Cổng 2 cảnh báo).
 # Các thuộc tính slot khác trong ví dụ §6.2 (supports_markup, max_items) CHƯA khai
 # báo: chưa có code nào đọc chúng, và chưa có số đo cho max_items.
@@ -28,6 +29,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "hint": "Hero và toàn bộ thông tin dạt sang cột bên trái (100% full chiều cao), sản phẩm ở bên phải. Cực kỳ phù hợp cho đồng hồ, sofa, nước hoa, công nghệ, hoặc khi prompt yêu cầu 'ở góc trên trái', 'ở giữa trái', 'chữ bên trái', 'cột trái', 'chia đôi trái'. Là lựa chọn AN TOÀN, ĐA DỤNG cho hầu hết brief KHÔNG nêu rõ vị trí (chứa được nhiều nội dung hơn corner_pod/l_frame_showcase vì chiếm full chiều cao, không chỉ 1 góc). Khác `diagonal_slash`: cột thẳng đứng gọn gàng, phong cách trang trọng/đa ngành, không phải cắt chéo góc cạnh năng động.",
         "has_mask": True,
         "mask_preset": "split_left_full",
+        "visual_intents": ["product_showcase", "big_number_deal"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -44,6 +46,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "hint": "Sản phẩm ở bên trái, toàn bộ chữ dạt sang cột bên phải (100% full chiều cao). Dùng khi prompt muốn 'chữ bên phải', 'cột phải', 'chia đôi phải', 'sản phẩm bên trái' hoặc chủ thể nghiêng về bên trái khung hình. Bản gương 100% của `split_left` -- cùng mức độ đa dụng, chọn khi vị trí mong muốn ngược lại.",
         "has_mask": True,
         "mask_preset": "split_right_full",
+        "visual_intents": ["product_showcase", "big_number_deal"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -60,6 +63,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "hint": "Tiêu đề lớn trên đỉnh, nút CTA & hotline ở đáy, sản phẩm nằm trọn ở giữa. Rất hợp cho Khuyến mại, Giảm giá thông thường, giới thiệu sản phẩm, hoặc khi prompt yêu cầu 'ở giữa', 'chính giữa', 'ở trên... ở dưới...'. Là lựa chọn MẶC ĐỊNH AN TOÀN cho brief KHÔNG nêu rõ vị trí VÀ không thuộc loại nội dung đặc thù nào khác (menu, feedback, tuyển dụng...) -- phong cách trang trọng/tiết chế. Khác `grand_opening_banner`: cái này KHÔNG rực rỡ lễ hội, không hỗ trợ nhiều dòng CTA cùng lúc -- chỉ dùng grand_opening_banner khi prompt thực sự cần nhiều CTA/không khí sôi động.",
         "has_mask": True,
         "mask_preset": "sandwich_standard",
+        "visual_intents": ["big_number_deal", "hook_headline", "product_showcase"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -76,6 +80,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "hint": "Thông tin cửa hàng/brand ở trên đỉnh, toàn bộ cụm Tiêu đề & ưu đãi dạt xuống bệ đỡ đáy. Dùng khi prompt yêu cầu 'thông tin cửa hàng lên trên', 'chữ xuống dưới', 'tiêu đề ở dưới', hoặc bố cục nhấn mạnh chân trang ở giữa. Bản gương của `sandwich_top_heavy` -- cùng mức độ trang trọng/đa dụng, chỉ đảo vị trí 2 khối.",
         "has_mask": True,
         "mask_preset": "sandwich_standard",
+        "visual_intents": ["big_number_deal", "hook_headline", "product_showcase"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -93,6 +98,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "bottom_band",
         "default_orientation": "left",
+        "visual_intents": ["testimonial_trust"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -112,6 +118,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "luxury_card",
         "default_orientation": "center",
+        "visual_intents": ["hook_headline"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -130,6 +137,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "corner_bl",
         "default_orientation": "bottom_left",
+        "visual_intents": ["product_showcase", "hook_headline"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -147,6 +155,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "top_band",
         "default_orientation": "left",
+        "visual_intents": ["matrix_board"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -164,6 +173,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "diagonal_slash",
         "default_orientation": "left",
+        "visual_intents": ["big_number_deal", "product_showcase"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -181,6 +191,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "feedback_card",
         "default_orientation": "left",
+        "visual_intents": ["testimonial_trust"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -201,6 +212,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "bottom_band",
         "default_orientation": "left",
+        "visual_intents": ["matrix_board"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -219,6 +231,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "l_frame",
         "default_orientation": "left",
+        "visual_intents": ["product_showcase"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -236,6 +249,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "menu_price_board",
         "default_orientation": "left",
+        "visual_intents": ["matrix_board"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -252,6 +266,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "hint": "Tiêu đề lớn rực rỡ và thời hạn ưu đãi căn giữa ở đỉnh, bệ đỡ nút CTA chính và địa chỉ cửa hàng + QR ở đáy, trung tâm poster mở cho ly cafe bốc khói, món ăn hấp dẫn hoặc sản phẩm khai trương. Nếu có nhiều dòng ưu đãi/kêu gọi hành động phụ (vd 'Deal sốc', 'Ghé ngay hôm nay!'), đưa dòng MẠNH NHẤT vào `cta`, các dòng còn lại vào `extra_texts` (hiển thị dạng pill/bullet ngay dưới tiêu đề). Không chỉ dành riêng cho khai trương -- đây là lựa chọn TỔNG QUÁT tốt nhất cho MỌI banner ưu đãi/flash sale rộn ràng có nhiều dòng CTA/kêu gọi hành động cùng lúc (vd 'Mua 1 tặng 1', 'Deal sốc', nhiều nút CTA rải rác), không nhất thiết phải là sự kiện khai trương cửa hàng. Nếu prompt chỉ có 1 CTA duy nhất và không khí bình thường (không rực rỡ/lễ hội), dùng `sandwich_top_heavy` thay vào đó -- template đó tiết chế/trang trọng hơn.",
         "has_mask": True,
         "mask_preset": "festive_center",
+        "visual_intents": ["festive_event"],
         "slots": {
             "hero": {},
             "subhead": {},
@@ -264,6 +279,25 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "aspect_ratios": ["1:1", "16:9", "9:16", "4:5"],
     },
 }
+
+
+# HỒ SƠ INTENT (ROADMAP §3.3): intent quyết định NGƯỠNG tương phản điểm neo (squint test §4.5
+# điều kiện 1). `visual_intents` của mỗi template: phần tử đầu = intent mặc định khi plan không
+# chỉ định. matrix_board: các khối chữ cỡ tương đương, KHÔNG có hero áp đảo -> ngưỡng thấp.
+INTENT_PROFILES: Dict[str, Dict[str, Any]] = {
+    "big_number_deal": {"contrast_target": 4.0, "desc": "Con số/phần trăm áp đảo"},
+    "hook_headline": {"contrast_target": 4.0, "desc": "Cụm từ khoá lớn, không có số"},
+    "product_showcase": {"contrast_target": 4.0, "desc": "Sản phẩm là chính, chữ nép"},
+    "testimonial_trust": {"contrast_target": 3.0, "desc": "Sao + trích dẫn + tên người"},
+    "festive_event": {"contrast_target": 3.5, "desc": "Khai trương, lễ hội, minigame"},
+    "matrix_board": {"contrast_target": 2.5, "desc": "Bảng/lưới/quy trình, các khối cỡ tương đương"},
+}
+
+
+def resolve_intent(template: str, requested: Optional[str] = None) -> str:
+    """Intent hiệu lực: intent plan yêu cầu nếu template chấp nhận, nếu không -> mặc định template."""
+    allowed = TEMPLATE_CATALOG.get(template, {}).get("visual_intents") or ["hook_headline"]
+    return requested if requested in allowed else allowed[0]
 
 
 def build_llm_catalog_prompt() -> str:

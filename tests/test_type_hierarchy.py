@@ -14,7 +14,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
-from probe_type_hierarchy import load_cases, measure_case  # noqa: E402
+from probe_type_hierarchy import SQUINT_KEYS, load_cases, measure_case, squint_baseline, summarize  # noqa: E402
 
 pytestmark = pytest.mark.e2e
 
@@ -27,7 +27,7 @@ def measured():
         browser = p.chromium.launch(headless=True)
         try:
             page = browser.new_page()
-            yield [{**measure_case(page, case, tpl), "suite": suite} for suite, tpl, case in load_cases(None)]
+            yield [{**measure_case(page, case, tpl, with_bg=True), "suite": suite} for suite, tpl, case in load_cases(None)]
         finally:
             browser.close()
 
@@ -81,10 +81,28 @@ def test_render_plan_to_poster_returns_gate4_report(tmp_path):
     case = next(c for c in json.loads(suite.read_text(encoding="utf-8")) if c["id"] == "sbh_11_16x9_heavy")
     plan, w, h = parse_case_to_plan(case, "sandwich_bottom_heavy")
     report: list = []
-    render_plan_to_poster(plan, generate_mock_backdrop_data_uri(w, h, plan.style.theme_color), tmp_path / "p.png", w, h, overflow_report=report)
+    render_plan_to_poster(plan, generate_mock_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone), tmp_path / "p.png", w, h, overflow_report=report)
     assert {(o["cls"], o["verdict"]) for o in report} == {("store-info-row", "clipped"), ("freetext-block", "spill")}
 
 
 def test_hero_is_largest_text(measured):
     bad = [r["id"] for r in measured if r["hero"] and any(e["tier"] in (2, 3) and e["size"] > r["hero"] for e in r["elements"])]
     assert not bad, f"Có chữ phụ to hơn hero: {bad}"
+
+
+# SQUINT TEST §4.5 -- BÁNH CÓC (GĐ 1). Chưa thể đòi mọi poster đạt 4 điều kiện (mốc 26/09: 51/379),
+# nên CI chặn mọi thay đổi làm GIẢM số case đạt bất kỳ điều kiện nào ở bất kỳ template nào.
+# Cải thiện được thì chạy lại: probe_type_hierarchy.py --bg --write-baseline tests/squint_baseline.json
+BASELINE = Path(__file__).resolve().parent / "squint_baseline.json"
+
+
+def test_squint_does_not_regress(measured):
+    import json
+
+    base = json.loads(BASELINE.read_text(encoding="utf-8"))
+    now = squint_baseline(summarize(measured))
+    worse = [
+        f"{tpl}.{k}: {now[tpl][k]} < mốc {b[k]}"
+        for tpl, b in base.items() for k in SQUINT_KEYS if now.get(tpl, {}).get(k, 0) < b[k]
+    ]
+    assert not worse, "Squint test tệ đi so với mốc: " + "; ".join(worse)
