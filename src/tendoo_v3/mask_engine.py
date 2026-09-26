@@ -84,6 +84,7 @@ def generate_template_mask(
     has_footer: Optional[bool] = None,
     has_message: Optional[bool] = None,
     has_freetext: Optional[bool] = None,
+    has_subhead: Optional[bool] = None,
 ) -> np.ndarray:
     """Sinh ma trận float32 [H, W] trong khoảng [0.0, 1.0]:
     - 0.0: Vùng Scene (sản phẩm, mẫu ảnh, bối cảnh)
@@ -121,6 +122,7 @@ def generate_template_mask(
             has_footer=has_footer,
             has_message=has_message,
             has_freetext=has_freetext,
+            has_subhead=has_subhead,
         )
         if not zones:
             return np.zeros((height, width), dtype=np.float32)

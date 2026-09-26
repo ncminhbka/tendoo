@@ -556,7 +556,8 @@ def _recruitment_board(
     return {"header": header, "board": board}
 
 
-def _step_process_roadmap(w: float, h: float, orientation: str = "left", has_qr: bool = True) -> Dict[str, Rect]:
+def _step_process_roadmap(w: float, h: float, orientation: str = "left", has_qr: bool = True,
+                          has_subhead: bool = True) -> Dict[str, Rect]:
     # .top-header ở đỉnh: cao 20% (22% ở 16:9) -- GĐ 4 (26/09) nâng từ 15%/18%: hero tiêu đề dài
     # bị chiều cao khoá ở 36-41px < 2.5x subhead 19.5px -> C1 0/21; nay hero ~49.5px, C1 11/21,
     # đạt đủ 4 điều kiện 0 -> 9/21, không mất chữ (probe_type_hierarchy --template step_process_roadmap).
@@ -589,8 +590,14 @@ def _step_process_roadmap(w: float, h: float, orientation: str = "left", has_qr:
         plat_h = 0.22
     else:  # 1:1, 4:5
         head_h = 0.20
-        plat_h = 0.165
+        # 0.165 -> 0.20 (27/09): các bước là NỘI DUNG CHÍNH của template; 4 bước + CTA + cửa hàng trong 169px
+        # khoá chữ bước ở 17-20px (6-7px trên màn). Mask vẫn <= 50% (27%·0.92 + 20%).
+        plat_h = 0.20
 
+    # Header CÓ subhead: badge + tiêu đề dài + subhead không vừa 20% -> Bước 3d co mọi chữ dưới sàn (27/09: 10/21
+    # case, tiêu đề 27-34px ở khung 1024). +7% chiều cao; mask vẫn <= 50% (27% + 16.5-25%).
+    if has_subhead:
+        head_h += 0.07
     header = _frac(0.04, 0.0, 0.96, head_h, w, h)
     platform = _frac(0.0, 1.0 - plat_h, 1.0, 1.0, w, h)
     return {"header": header, "platform": platform}
@@ -812,6 +819,7 @@ def get_zones(
     has_footer: Optional[bool] = None,
     has_message: Optional[bool] = None,
     has_freetext: Optional[bool] = None,
+    has_subhead: Optional[bool] = None,
 ) -> Dict[str, Rect]:
     """Trả về {tên_vùng: (x1,y1,x2,y2) px} cho template này ở đúng width/height.
     Dict rỗng nghĩa là zero-mask (vd luxury_centered_card) hoặc template lạ.
@@ -829,7 +837,8 @@ def get_zones(
     if fn is None:
         return {}
     density_kwarg = {"density": density} if template in _DENSITY_AWARE_TEMPLATES else {}
-    given = {"has_qr": has_qr, "has_footer": has_footer, "has_message": has_message, "has_freetext": has_freetext}
+    given = {"has_qr": has_qr, "has_footer": has_footer, "has_message": has_message, "has_freetext": has_freetext,
+             "has_subhead": has_subhead}
     presence_kwarg: Dict[str, bool] = {
         flag: True if given[flag] is None else given[flag] for flag in geometry_drivers(template)
     }

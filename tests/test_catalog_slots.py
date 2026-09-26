@@ -22,7 +22,7 @@ VAR_TO_FIELD = {
     "testimonial": "testimonial", "reviewer_name": "reviewer_name", "steps": "steps",
     "tag_left": "tag_left", "tag_right": "tag_right",
 }
-KNOWN_FLAGS = {"has_qr", "has_footer", "has_message", "has_freetext"}
+KNOWN_FLAGS = {"has_qr", "has_footer", "has_message", "has_freetext", "has_subhead"}
 
 
 def fields_rendered_by(template: str) -> set:

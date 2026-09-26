@@ -160,27 +160,43 @@
       width: 100%;
       justify-content: space-between;
     }
+    {% set n_steps = (steps or extra_texts or []) | length %}
+    {% if n_steps >= 4 and not is_landscape_wide and not is_portrait_narrow %}
+    /* >= 4 bước ở 1:1/4:5: lưới 2x2 thay vì 4 cột -- cột ~200px bắt mỗi bước xuống 3-4 dòng, chữ bước khoá
+       ở 17-21px (đo 27/09, step_05/12/16). 2 cột: mỗi bước 1-2 dòng, chữ to hơn trong cùng chiều cao bệ. */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.3em 1em;
+    }
+    {% endif %}
 
+    /* Số tròn ĐỨNG CẠNH chữ bước (không chồng lên trên): tiết kiệm trọn 1 dòng chiều cao bệ -> chữ bước to hơn
+       (đo GĐ 3R skincare 1:1: xếp chồng khoá chữ bước ở sàn 27.5px). */
     .step-card {
       flex: 1;
       display: flex;
-      flex-direction: column;
-      gap: 5px;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 0.4em;
       padding: 8px 12px;
       background: transparent;
       min-width: 0;
     }
 
+    /* Số thứ tự: cỡ theo em của chữ bước (trước cố định 26px/13px -> khung 1024 chữ bước 36px mà số chỉ là
+       chấm tròn 13px, gần như không đọc được, GĐ 3R skincare). Số là điểm neo thứ cấp của từng bước. */
     .step-num {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 26px;
-      height: 26px;
+      width: 1.6em;
+      height: 1.6em;
       border-radius: 50%;
       background: {{ palette.on_card_accent }};
       color: {{ palette.badge_text }};
-      font-size: 13px;
+      font-family: var(--ui-font);
+      font-size: 0.85em;
       font-weight: 900;
       box-shadow: 0 2px 8px {{ theme_color }}88;
       flex-shrink: 0;
@@ -191,7 +207,7 @@
       font-weight: 700;
       line-height: 1.32;
       color: {{ card_text_primary }};
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+      text-shadow: {{ '0 1px 4px rgba(0, 0, 0, 0.6)' if card_is_dark else 'none' }};
       word-break: break-word;
     }
 
@@ -337,9 +353,9 @@
       padding: 5px 8px !important;
     }
     .step-num {
-      width: 20px !important;
-      height: 20px !important;
-      font-size: 10.5px !important;
+      width: 1.5em !important;
+      height: 1.5em !important;
+      font-size: 0.8em !important;
     }
     .step-text {
       line-height: 1.25 !important;
@@ -401,9 +417,9 @@
       gap: 3px;
     }
     .step-num {
-      width: 18px;
-      height: 18px;
-      font-size: 10px;
+      width: 1.5em;
+      height: 1.5em;
+      font-size: 0.8em;
     }
     .step-text {
       line-height: 1.2;

@@ -42,8 +42,8 @@ def test_all_suite_cases_measured(measured):
     assert len(measured) >= 379
 
 
-# Luật 6: 3 case suite dày nhất ở 16:9 -- mọi chữ bị co đều để không tràn khung, subhead về sàn cứu 12px (§8).
-KNOWN_INVERSION = {"sbh_11_16x9_heavy", "sbh_noqr_11_16x9_heavy", "sth_noqr_12_16x9_heavy"}
+# 27/09: hết đảo thứ bậc (3d co theo vùng + chặn Cấp 3 <= Cấp 2 sau 3d). Trước đó 3 case 16:9 dày nhất (§8).
+KNOWN_INVERSION: set = set()
 
 
 def test_no_tier3_larger_than_subhead(measured):

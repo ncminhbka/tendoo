@@ -449,6 +449,9 @@ PHONE_TIER2_PX = 12.5
 PHONE_HERO_PX = 20.0          # MỤC TIÊU hero (squint C5): 28 quá gắt -- poster nha khoa người duyệt khen có câu trích dẫn ~21px trên màn
 RESCUE_MIN_PX = 12          # cứu chữ: cỡ nhỏ nhất khi nội dung quá dày cho sàn Luật 6 (không mất chữ > đọc được)
 HIERARCHY_MIN_RATIO = 1.6     # hero >= 1.6x subhead dù phải hạ subhead dưới sàn mềm 12.5px (không dưới sàn cứng 10px)
+# Trần NỘI DUNG CHÍNH dạng danh sách (bảng giá, các bước): đọc thoải mái trên điện thoại. Đo GĐ 3R: trần cố
+# định 18-19px = 12px trên màn (menu trà sữa, 3 bước chăm sóc da -- user: "chữ quá nhỏ").
+PHONE_LIST_PX = 15.0
 PHONE_HERO_MAX_PX = 40.0      # trần hero (~109px ở khung 1024 -- social 1080: tiêu đề 48-96px, poster lớn hơn)
 HERO_HEIGHT_BOOST = 1.6       # nới chiều cao ngân sách hero (tiêu đề trước) -- đo trên suite + 16 poster LLM thật
 PHONE_HERO_FLOOR_PX = 16.0    # sàn CỨNG hero trong ngân sách: tiêu đề dài co xuống được, không bị cắt
@@ -801,13 +804,24 @@ COMMON_AUTOFIT_JS = """
         (clip && (r.bottom > clip.bottom + 1 || r.top < clip.top - 1 || r.right > clip.right + 1 || r.left < clip.left - 1)));
     };
     const offCanvas = () => outerFit.some(tendooCut);
+    // Chỉ co chữ CÙNG VÙNG với chữ bị cắt (vùng = tổ tiên position:absolute gần nhất -- mỗi zone của template).
+    // 27/09: bệ các bước (đáy) tràn -> vòng co cũ co cả hero ở header (vùng khác, không liên quan) 80 -> 34px.
+    const zoneOf = el => {
+      for (let a = el.parentElement; a && a !== canvasEl; a = a.parentElement) {
+        const pos = getComputedStyle(a).position;
+        if (pos === 'absolute' || pos === 'fixed') return a;
+      }
+      return canvasEl;
+    };
+    const cutZones = () => new Set(outerFit.filter(tendooCut).map(zoneOf));
     const heroEls = Array.from(document.querySelectorAll('__TENDOO_TIER1_SELECTOR__'));
     // (i) Chữ PHỤ co trước, chỉ tới sàn ngân sách của chính nó (đã gồm sàn Luật 6) -> giữ tầng bậc: hero vẫn
     // là điểm neo (27/09: co hero trước làm poster nước hoa hero ~ badge, tp 1.2).
     const shrinkOthers = floorOf => {
       let shrunk = false;
+      const zones = cutZones();
       outerFit.forEach(el => {
-        if (heroEls.includes(el)) return;
+        if (heroEls.includes(el) || !zones.has(zoneOf(el))) return;
         const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
         if (cur * 0.94 >= floorOf(el)) {
           tendooApplyTypo(el, Math.floor(cur * 0.94 * 2) / 2);
@@ -825,7 +839,9 @@ COMMON_AUTOFIT_JS = """
     // (ii) Rồi mới tới hero.
     for (let step = 0; step < 14 && heroEls.length && offCanvas(); step++) {
       let shrunk = false;
+      const zones = cutZones();
       heroEls.forEach(h => {
+        if (!zones.has(zoneOf(h))) return;
         const cur = parseFloat(getComputedStyle(h).fontSize) || 0;
         const floor = Math.max(__RESCUE_MIN__, (parseFloat(h.dataset.minFont) || 0) * 0.75);
         if (cur * 0.94 >= floor) { tendooApplyTypo(h, Math.floor(cur * 0.94 * 2) / 2); h.dataset.tendooRescued = '1'; shrunk = true; }
@@ -836,6 +852,18 @@ COMMON_AUTOFIT_JS = """
     // __RESCUE_MIN__. Không mất chữ đứng trên đọc-tốt (C5 sẽ báo).
     for (let step = 0; step < 16 && offCanvas(); step++) {
       if (!shrinkOthers(() => __RESCUE_MIN__)) break;
+    }
+    // 3d co theo VÙNG -> subhead ở vùng bị cắt có thể nhỏ hơn CTA/badge ở vùng khác: Cấp 3 không được to hơn
+    // Cấp 2 (27/09: sth_11 subhead 17.5 < CTA 20.5).
+    const t2Now = Array.from(document.querySelectorAll('__TENDOO_TIER2_SELECTOR__')).filter(e => e.getBoundingClientRect().width > 0);
+    if (t2Now.length) {
+      const t2f = Math.max(...t2Now.map(tendooEffFont));
+      document.querySelectorAll('__TENDOO_TIER3_SELECTOR__').forEach(el => {
+        const eff = tendooEffFont(el);
+        if (!(eff > t2f)) return;
+        const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
+        el.style.fontSize = Math.max(__RESCUE_MIN__, Math.floor(cur * t2f / eff * 2) / 2) + 'px';
+      });
     }
     // Hero bị cứu (co nhỏ) -> chữ phụ không được to hơn nó: hạ Cấp 2/3 về hero / 1.2, không dưới __RESCUE_MIN__.
     const rescuedHero = Array.from(document.querySelectorAll('__TENDOO_TIER1_SELECTOR__')).filter(e => e.dataset.tendooRescued);

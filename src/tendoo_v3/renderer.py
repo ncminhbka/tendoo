@@ -21,7 +21,7 @@ import numpy as np
 from PIL import Image
 
 from tendoo_core.colors import ensure_contrast
-from tendoo_core.fonts import resolve_font
+from tendoo_core.fonts import BODY_SAFE_FONTS, resolve_font
 from tendoo_core.poster_renderer import PosterRenderer
 from tendoo_v3.catalog import INTENT_PROFILES, LIST_LIMITS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import build_components, enrich_hero_parts
@@ -42,6 +42,7 @@ from tendoo_v3.styles import (
     PHONE_HERO_FLOOR_PX,
     PHONE_HERO_MAX_PX,
     PHONE_HERO_PX,
+    PHONE_LIST_PX,
     PHONE_MIN_PX,
     PHONE_TIER2_PX,
     TIER3_BELOW_SUBHEAD,
@@ -625,14 +626,16 @@ def compute_step_process_roadmap_budget(
 
     # Trần đã nâng theo đúng tiền lệ các template khác (user báo cáo trực tiếp:
     # "thông tin thêm"/"thông tin cửa hàng" nhìn nhỏ so với hero).
+    # Các bước = NỘI DUNG CHÍNH của poster hướng dẫn -> trần theo PHONE_LIST_PX (styles), autofit co theo hộp.
+    list_max = phone_floor(PHONE_LIST_PX, width)
     if is_narrow:
         steps_h = platform_height * 0.52
-        steps_min_f, steps_max_f = 14.0, 18.0
+        steps_min_f, steps_max_f = 14.0, max(18.0, list_max)
         cta_h, cta_min_f, cta_max_f = 34.0, 13.0, 17.0
         store_h, store_min_f, store_max_f = 30.0, 14.0, 18.0
     else:
         steps_h = platform_height * 0.68
-        steps_min_f, steps_max_f = 14.0, 19.0
+        steps_min_f, steps_max_f = 14.0, max(19.0, list_max)
         cta_h, cta_min_f, cta_max_f = 38.0, 13.0, 17.0
         store_h, store_min_f, store_max_f = 38.0, 14.0, 18.0
 
@@ -828,7 +831,7 @@ def compute_menu_price_board_budget(
         # Trần theo px-trên-điện-thoại (Luật 6): 19px cố định = 12px trên màn khi khung 9:16 rộng 576 -- bảng giá
         # 4 món lọt thỏm, nửa cột trống (GĐ 3R v5, menu trà sữa). 15px-trên-màn: danh sách đọc thoải mái, vẫn
         # nhỏ hơn hẳn tiêu đề; autofit co theo chiều cao khi nhiều món.
-        "menu_list": {"max_h": round(menu_h, 1), "min_font": 14.0, "max_font": max(19.0, phone_floor(15.0, width))},
+        "menu_list": {"max_h": round(menu_h, 1), "min_font": 14.0, "max_font": max(19.0, phone_floor(PHONE_LIST_PX, width))},
         "cta": {"max_h": cta_h, "min_font": cta_min_f, "max_font": cta_max_f},
         "store": {"max_h": store_h, "min_font": store_min_f, "max_font": store_max_f},
     }, plan)
@@ -2166,6 +2169,9 @@ def build_template_html(
         "bg_data_uri": bg_data_uri,
         "font_face_css": font_face_css,
         "headline_font_css": headline_font_css,
+        # Thân chữ (các bước, danh sách, chip): theo font tiêu đề nếu đó là font văn bản, còn font trưng bày
+        # (script/cọ/ultra) thì về font UI.
+        "body_font_css": headline_font_css if canonical_font in BODY_SAFE_FONTS else "'Be Vietnam Pro', 'Montserrat', sans-serif",
         "theme_color": plan.style.theme_color,
         "glow_color": glow_color,
         "effect_css": effect_css,

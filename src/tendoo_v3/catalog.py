@@ -301,7 +301,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "capacity_chars_safe": {"1:1": 784, "9:16": 784, "16:9": 784, "4:5": 784},
         "slots": {
             "hero": {},
-            "subhead": {},
+            "subhead": {"drives_geometry": ('has_subhead',)},
             "badge": {},
             "extra_texts": {},
             "cta": {},

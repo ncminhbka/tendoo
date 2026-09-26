@@ -251,6 +251,11 @@ FONT_CATALOG: Dict[str, Dict[str, Any]] = {
 }
 
 # Alias dictionary for convenience
+# Font ĐỌC ĐƯỢC ở cỡ nhỏ, dòng dài (sans/serif văn bản). Còn lại là font TRƯNG BÀY (script, cọ, graffiti,
+# condensed/ultra-black): chỉ cho tiêu đề -- quy tắc ghép font của designer "display cho headline, sans cho
+# thân chữ". Đo thật GĐ 3R: Pacifico cho bảng giá / các bước chăm sóc da -> danh sách khó đọc.
+BODY_SAFE_FONTS = frozenset({"bevietnam", "harabaras", "playfair", "oswald"})
+
 FONT_ALIASES: Dict[str, str] = {
     "montserrat": "bevietnam",
     "be_vietnam_pro": "bevietnam",
@@ -431,6 +436,7 @@ def list_font_options() -> List[Dict[str, Any]]:
 
 
 __all__ = [
+    "BODY_SAFE_FONTS",
     "FONT_ALIASES",
     "FONT_CATALOG",
     "FONTS_DIR",

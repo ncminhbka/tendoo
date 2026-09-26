@@ -77,3 +77,11 @@
   font-weight: 800 !important;
   letter-spacing: 0.06em;
 }
+
+/* THÂN CHỮ (file này được MỌI template nạp): chữ ĐỌC -- các bước, dòng liệt kê -- không bao giờ mang font trưng
+   bày (script/cọ/ultra). Chúng thừa kế font body = font tiêu đề, nên đặt tường minh: font tiêu đề nếu là font
+   văn bản, font UI nếu không (renderer.body_font_css, fonts.BODY_SAFE_FONTS). */
+:root { --body-font: {{ body_font_css | default("'Be Vietnam Pro', sans-serif") }}; }
+.step-text, .freetext-line, .freetext-block {
+  font-family: var(--body-font);
+}
