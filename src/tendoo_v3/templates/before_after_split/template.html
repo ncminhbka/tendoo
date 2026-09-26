@@ -5,6 +5,7 @@
   <title>{{ hero }}</title>
   <style>
     {{ font_face_css }}
+    {% include "components/hero_phrase.css" %}
 
     :root {
       --headline-font: {{ headline_font_css }};
@@ -314,6 +315,7 @@
     {% endif %}
   </style>
 </head>
+{% from "components/ui_macros.html" import render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
@@ -334,36 +336,16 @@
         {% if stars_svg %}
         <div class="rating-stars">{{ stars_svg }}</div>
         {% endif %}
-        <div class="hero-title" data-autofit data-min-font="{{ before_after_budget.hero.min_font }}" data-max-font="{{ before_after_budget.hero.max_font }}" data-max-height="{{ before_after_budget.hero.max_h }}">{{ hero }}</div>
-        {% if subhead %}
-        <div class="subhead-title" data-autofit data-min-font="{{ before_after_budget.subhead.min_font }}" data-max-font="{{ before_after_budget.subhead.max_font }}" data-max-height="{{ before_after_budget.subhead.max_h }}">{{ subhead }}</div>
-        {% endif %}
+        {{ render_hero_phrase(hero, hero_parts, budget=before_after_budget.hero) }}
+        {{ render_subhead(subhead, budget=before_after_budget.subhead) }}
       </div>
       <div class="land-right-col">
         {% if qr_svg %}
         <div class="qr-col">{{ qr_svg }}</div>
         {% endif %}
         <div class="action-stack">
-          {% if cta %}
-          <div class="cta-btn" data-autofit data-min-font="{{ before_after_budget.cta.min_font }}" data-max-font="{{ before_after_budget.cta.max_font }}" data-max-height="{{ before_after_budget.cta.max_h }}">
-            <span>{{ cta }}</span>
-            <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </div>
-          {% endif %}
-          {% if store_items %}
-          <div class="store-info-row" data-autofit data-min-font="{{ before_after_budget.store.min_font }}" data-max-font="{{ before_after_budget.store.max_font }}" data-max-height="{{ before_after_budget.store.max_h }}">
-            {% for item in store_items %}
-            <div class="store-item">
-              {{ item.icon_svg }}
-              <span>{{ item.text }}</span>
-            </div>
-            {% endfor %}
-          </div>
-          {% elif store_info %}
-          <div class="store-item">
-            <span>{{ store_info }}</span>
-          </div>
-          {% endif %}
+          {{ render_cta(cta, budget=before_after_budget.cta, arrow='right') }}
+          {{ render_store(store_items, store_info, budget=before_after_budget.store, is_col=false, bare_single=true) }}
         </div>
       </div>
     </div>
@@ -376,34 +358,12 @@
       <div class="rating-stars">{{ stars_svg }}</div>
       {% endif %}
 
-      <div class="hero-title" data-autofit data-min-font="{{ before_after_budget.hero.min_font }}" data-max-font="{{ before_after_budget.hero.max_font }}" data-max-height="{{ before_after_budget.hero.max_h }}">{{ hero }}</div>
+      {{ render_hero_phrase(hero, hero_parts, budget=before_after_budget.hero) }}
 
-      {% if subhead %}
-      <div class="subhead-title" data-autofit data-min-font="{{ before_after_budget.subhead.min_font }}" data-max-font="{{ before_after_budget.subhead.max_font }}" data-max-height="{{ before_after_budget.subhead.max_h }}">{{ subhead }}</div>
-      {% endif %}
+      {{ render_subhead(subhead, budget=before_after_budget.subhead) }}
 
       <!-- FreeText Dual-Mode -->
-      {% if extra_texts %}
-        {% if is_freetext_block %}
-        <div class="freetext-block" data-autofit data-min-font="{{ before_after_budget.freetext_block.min_font }}" data-max-font="{{ before_after_budget.freetext_block.max_font }}" data-max-height="{{ before_after_budget.freetext_block.max_h }}">
-          {% for line in extra_texts %}
-          <div class="freetext-line">
-            <span class="freetext-bullet">{{ bullet_svg }}</span>
-            <span>{{ line }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="extra-tag-row" data-autofit data-min-font="{{ before_after_budget.freetext_pills.min_font }}" data-max-font="{{ before_after_budget.freetext_pills.max_font }}" data-max-height="{{ before_after_budget.freetext_pills.max_h }}">
-          {% for pill in extra_pills %}
-          <div class="extra-pill">
-            {{ pill.icon_svg }}
-            <span>{{ pill.text }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-      {% endif %}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(before_after_budget.freetext_block if is_freetext_block else before_after_budget.freetext_pills), bullet_svg=bullet_svg) }}
 
       {% if qr_svg or cta or store_items or store_info %}
       <div class="footer-row">
@@ -411,27 +371,9 @@
         <div class="qr-col">{{ qr_svg }}</div>
         {% endif %}
 
-        {% if cta %}
-        <div class="cta-btn" data-autofit data-min-font="{{ before_after_budget.cta.min_font }}" data-max-font="{{ before_after_budget.cta.max_font }}" data-max-height="{{ before_after_budget.cta.max_h }}">
-          <span>{{ cta }}</span>
-          <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-        {% endif %}
+        {{ render_cta(cta, budget=before_after_budget.cta, arrow='right') }}
 
-        {% if store_items %}
-        <div class="store-info-row" data-autofit data-min-font="{{ before_after_budget.store.min_font }}" data-max-font="{{ before_after_budget.store.max_font }}" data-max-height="{{ before_after_budget.store.max_h }}">
-          {% for item in store_items %}
-          <div class="store-item">
-            {{ item.icon_svg }}
-            <span>{{ item.text }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% elif store_info %}
-        <div class="store-item">
-          <span>{{ store_info }}</span>
-        </div>
-        {% endif %}
+        {{ render_store(store_items, store_info, budget=before_after_budget.store, is_col=false, bare_single=true) }}
       </div>
       {% endif %}
     </div>
