@@ -129,7 +129,7 @@
       word-break: keep-all;
       width: 100%;
       color: {{ header_text_primary }};
-      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.92), 0 0 4px rgba(0, 0, 0, 0.95);
+      text-shadow: {{ '0 2px 14px rgba(0, 0, 0, 0.92), 0 0 4px rgba(0, 0, 0, 0.95)' if header_is_dark else 'none' }};
       padding: 2px 0;
       {{ header_effect_css }}
     }
@@ -145,7 +145,7 @@
          Giam blur chinh xuong 2px, giu 1 lop glow phu nhe (6px/0.55). Bo han
          `-webkit-text-stroke` ban trong suot -- gay vien mau (chromatic fringing)
          o co chu nho khi chong lop voi text-shadow. */
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.55);
+      text-shadow: {{ '0 1px 2px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.55)' if subhead_is_dark else 'none' }};
       width: 100%;
     }
 
@@ -171,8 +171,10 @@
     .menu-item-name {
       font-family: var(--headline-font);
       font-weight: 700;
-      color: #fff;
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+      /* GĐ 4: trước gán cứng #fff + bóng đen -> chữ trắng trên nền pastel (đo GĐ 1). Nay theo màu
+         chữ thích ứng của vùng nội dung, bóng chỉ khi nền tối; vệt sáng cục bộ do Bước 5 autofit lo. */
+      color: {{ header_text_primary }};
+      text-shadow: {{ '0 1px 6px rgba(0, 0, 0, 0.85)' if header_is_dark else 'none' }};
       /* KHÔNG dùng text-overflow:ellipsis -- yeu_cau_templates.txt:9 cấm mất/cắt nội
          dung; tên món dài xuống dòng thay vì bị cắt (đo thấy thật: ellipsis khiến
          Playwright DOM-measurement coi là tràn, và về bản chất vẫn là mất chữ). */
@@ -187,7 +189,7 @@
       min-width: 10px;
       height: 0.55em;
       align-self: flex-end;
-      border-bottom: 2px dotted rgba(255, 255, 255, 0.38);
+      border-bottom: 2px dotted {{ 'rgba(255, 255, 255, 0.38)' if header_is_dark else 'rgba(15, 23, 42, 0.32)' }};
     }
 
     .menu-item-price {
@@ -195,7 +197,7 @@
       font-weight: 700;
       font-style: italic;
       color: {{ palette.on_card_accent }};
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+      text-shadow: {{ '0 1px 6px rgba(0, 0, 0, 0.85)' if header_is_dark else 'none' }};
       white-space: nowrap;
       flex-shrink: 0;
     }

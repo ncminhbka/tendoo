@@ -7,6 +7,7 @@ suite JSON chỉ được script trong scripts/ đọc). Baseline 26/09: 53/379 
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -138,3 +139,46 @@ def test_squint_with_hero_parts_does_not_regress(measured_oracle):
     ]
     assert not worse, "Squint (hero_parts) tệ đi so với mốc: " + "; ".join(worse)
     assert not [r["id"] for r in measured_oracle if r["text_lost"]], "hero_parts gây mất chữ"
+
+
+
+# GĐ 4 -- BÁNH CÓC NỀN KHẮC NGHIỆT: nền giả có vệt sáng / mảng tối cục bộ (run_template_test.
+# generate_harsh_backdrop_data_uri), đo 1/4 suite (lấy đều). Mốc 26/09: C3 trước quầng thích ứng
+# 159/379 toàn suite -> 317/379. Cập nhật:
+#   probe_type_hierarchy.py --bg --harsh --every 4 --write-baseline tests/squint_baseline_harsh.json
+BASELINE_HARSH = Path(__file__).resolve().parent / "squint_baseline_harsh.json"
+
+
+@pytest.fixture(scope="module")
+def measured_harsh(page):
+    return [{**measure_case(page, case, tpl, with_bg=True, harsh=True), "suite": suite}
+            for suite, tpl, case in load_cases(None)[::4]]
+
+
+def test_squint_on_harsh_background_does_not_regress(measured_harsh):
+    import json
+
+    base = json.loads(BASELINE_HARSH.read_text(encoding="utf-8"))
+    now = squint_baseline(summarize(measured_harsh))
+    worse = [
+        f"{tpl}.{k}: {now[tpl][k]} < mốc {b[k]}"
+        for tpl, b in base.items() for k in SQUINT_KEYS if now.get(tpl, {}).get(k, 0) < b[k]
+    ]
+    assert not worse, "Squint (nền khắc nghiệt) tệ đi so với mốc: " + "; ".join(worse)
+
+
+def test_adaptive_halo_only_where_needed(page):
+    """Quầng chỉ bật ở dòng thiếu tương phản: nền giả thường -> hầu như không; nền khắc nghiệt -> có."""
+    from run_template_test import generate_harsh_backdrop_data_uri, generate_mock_backdrop_data_uri, parse_case_to_plan
+    from tendoo_v3.renderer import build_template_html
+
+    case = json.loads((Path(__file__).resolve().parent / "test_lifestyle_corner_pod_suite.json").read_text(encoding="utf-8"))[0]
+    plan, w, h = parse_case_to_plan(case, "lifestyle_corner_pod")
+    halos = []
+    for bg in (generate_mock_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone),
+               generate_harsh_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone, seed=case["id"])):
+        page.set_viewport_size({"width": w, "height": h})
+        page.set_content(build_template_html(plan, bg, w, h), wait_until="load")
+        page.wait_for_function("window.__tendooAutofitDone === true", timeout=5000)
+        halos.append(page.evaluate("window.__tendooHalo"))
+    assert len(halos[1]) > len(halos[0]) and {"store-info-col"} <= {x["cls"] for x in halos[1]}

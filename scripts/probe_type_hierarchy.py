@@ -48,7 +48,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from playwright.sync_api import sync_playwright
 
-from run_template_test import generate_mock_backdrop_data_uri, parse_case_to_plan
+from run_template_test import generate_harsh_backdrop_data_uri, generate_mock_backdrop_data_uri, parse_case_to_plan
 from tendoo_v3.catalog import INTENT_PROFILES, resolve_intent
 from tendoo_v3.renderer import build_template_html
 from tendoo_v3.styles import CONTENT_CLASSES, TIER1_CLASSES, TIER2_CLASSES, TIER3_CLASSES
@@ -141,7 +141,10 @@ TEXT_BOXES_JS = r"""
   return out;
 }
 """
-HIDE_TEXT_CSS = "* { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; }"
+# Ẩn RUỘT chữ nhưng GIỮ text-shadow (GĐ 4): quầng/bóng quanh nét là một phần nền cục bộ thật mà
+# mắt thấy sau chữ -- trước đây bỏ cả shadow nên quầng thích ứng không được tính.
+HIDE_TEXT_CSS = "* { color: transparent !important; -webkit-text-fill-color: transparent !important; }"
+HIDE_SHADOW_CSS = "* { text-shadow: none !important; }"
 
 
 def _parse_rgba(css):
@@ -171,28 +174,57 @@ def measure_bg_contrast(page) -> List[Dict[str, Any]]:
 
     boxes = page.evaluate(TEXT_BOXES_JS)
     page.add_style_tag(content=HIDE_TEXT_CSS)
-    img = np.asarray(Image.open(io.BytesIO(page.screenshot())).convert("RGB")).astype(float)
+    img_sh = np.asarray(Image.open(io.BytesIO(page.screenshot())).convert("RGB")).astype(float)
+    page.add_style_tag(content=HIDE_SHADOW_CSS)
+    img_plain = np.asarray(Image.open(io.BytesIO(page.screenshot())).convert("RGB")).astype(float)
+    a = _box_ratios(boxes, img_sh)
+    b = _box_ratios(boxes, img_plain)
+    # Lấy lần đo TỐT HƠN cho từng dòng: quầng tối (GĐ 4) chỉ hiện ở lần giữ shadow; quầng phát
+    # sáng CÙNG màu chữ (neon) làm lần đó tụt oan nhưng lần bỏ shadow vẫn đúng như trước GĐ 4.
+    return [x if (x.get("ratio") or 0) >= (y.get("ratio") or 0) else y for x, y in zip(a, b)]
+
+
+def _box_ratios(boxes, img) -> List[Dict[str, Any]]:
     out = []
     for b in boxes:
         parsed = _parse_rgba(b["color"])
         x0, y0 = max(0, int(b["x"])), max(0, int(b["y"]))
         x1, y1 = min(img.shape[1], int(b["x"] + b["w"])), min(img.shape[0], int(b["y"] + b["h"]))
         if parsed is None or x1 <= x0 or y1 <= y0:
+            out.append({"cls": b["cls"], "ratio": None, "gradient": False, "skip": True})
             continue
         rgb, alpha = parsed
         if alpha < 0.5:
             out.append({"cls": b["cls"], "ratio": None, "gradient": True})
             continue
-        bg = img[y0:y1, x0:x1].reshape(-1, 3).mean(axis=0)
-        l1, l2 = _luminance(rgb), _luminance(bg)
-        ratio = (max(l1, l2) + 0.05) / (min(l1, l2) + 0.05)
+        # GĐ 4: chấm theo MẢNG XẤU NHẤT, không theo trung bình cả dòng -- nền trung bình "tối"
+        # nhưng có vệt chói ngay dưới vài chữ vẫn làm chìm đúng những chữ đó (§4.3). Cắt dòng
+        # thành các ô vuông cạnh = chiều cao dòng, lấy tỉ lệ WCAG thấp nhất.
+        l1 = _luminance(rgb)
+        side = max(4, y1 - y0)
+        ratios = []
+        for xs in range(x0, x1, side):
+            patch = img[y0:y1, xs:min(x1, xs + side)].reshape(-1, 3)
+            if len(patch) < side:  # mẩu cuối quá hẹp
+                continue
+            l2 = _luminance(patch.mean(axis=0))
+            ratios.append((max(l1, l2) + 0.05) / (min(l1, l2) + 0.05))
+        if not ratios:
+            out.append({"cls": b["cls"], "ratio": None, "gradient": False, "skip": True})
+            continue
+        l2 = _luminance(img[y0:y1, x0:x1].reshape(-1, 3).mean(axis=0))
         large = b["size"] >= 24 or (b["size"] >= 18.66 and b["weight"] >= 700)
-        out.append({"cls": b["cls"], "ratio": round(ratio, 2), "need": 3.0 if large else 4.5, "gradient": False})
+        out.append({"cls": b["cls"], "ratio": round(min(ratios), 2), "ratio_mean": round((max(l1, l2) + 0.05) / (min(l1, l2) + 0.05), 2),
+                    "need": 3.0 if large else 4.5, "gradient": False})
     return out
 
 
-def measure_plan(page, plan, w: int, h: int, with_bg: bool = False) -> Dict[str, Any]:
-    html = build_template_html(plan=plan, bg_data_uri=generate_mock_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone), width=w, height=h)
+def measure_plan(page, plan, w: int, h: int, with_bg: bool = False, harsh_seed: Optional[str] = None) -> Dict[str, Any]:
+    if harsh_seed is not None:  # GĐ 4: nền có vệt sáng / mảng tối cục bộ
+        bg = generate_harsh_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone, seed=harsh_seed)
+    else:
+        bg = generate_mock_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone)
+    html = build_template_html(plan=plan, bg_data_uri=bg, width=w, height=h)
     page.set_viewport_size({"width": w, "height": h})
     page.set_content(html, wait_until="load")
     page.evaluate("document.fonts.ready")
@@ -257,9 +289,9 @@ def measure_plan(page, plan, w: int, h: int, with_bg: bool = False) -> Dict[str,
     return result
 
 
-def measure_case(page, case: Dict[str, Any], template: str, with_bg: bool = False) -> Dict[str, Any]:
+def measure_case(page, case: Dict[str, Any], template: str, with_bg: bool = False, harsh: bool = False) -> Dict[str, Any]:
     plan, w, h = parse_case_to_plan(case, default_template=template)
-    return {"id": case["id"], **measure_plan(page, plan, w, h, with_bg=with_bg)}
+    return {"id": case["id"], **measure_plan(page, plan, w, h, with_bg=with_bg, harsh_seed=case["id"] if harsh else None)}
 
 
 def load_cases(template: Optional[str]) -> List[tuple]:
@@ -364,6 +396,8 @@ def main():
     ap.add_argument("--compare", default=None, help="Thư mục kết quả cũ để so sánh (chứa summary.json)")
     ap.add_argument("--show", choices=["inversions", "overflows", "unknown", "squint"], default=None, help="In chi tiết case vi phạm")
     ap.add_argument("--bg", action="store_true", help="Đo thêm §4.5 điều kiện 3 (tương phản nền thật, chậm ~2x)")
+    ap.add_argument("--harsh", action="store_true", help="GĐ 4: nền giả có vệt sáng / mảng tối cục bộ (cần --bg)")
+    ap.add_argument("--every", type=int, default=1, help="Chỉ đo 1/N case (lấy đều, tất định) -- mốc nền khắc nghiệt dùng 4")
     ap.add_argument("--oracle", action="store_true", help="GĐ 3: chỉ đo các case mà 'LLM lý tưởng' (hero_markup.suggest_hero_parts) tách được hero_parts")
     ap.add_argument("--write-baseline", default=None, help="Ghi mốc squint (bánh cóc CI), vd tests/squint_baseline.json -- cần --bg")
     args = ap.parse_args()
@@ -371,6 +405,7 @@ def main():
     cases = load_cases(args.template)
     if args.oracle:
         cases = with_oracle_hero_parts(cases, only_changed=True)
+    cases = cases[:: max(1, args.every)]
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.perf_counter()
@@ -380,7 +415,7 @@ def main():
         page = browser.new_page()
         for i, (suite, tpl, case) in enumerate(cases, 1):
             try:
-                r = measure_case(page, case, tpl, with_bg=args.bg)
+                r = measure_case(page, case, tpl, with_bg=args.bg, harsh=args.harsh)
                 r["suite"] = suite
                 results.append(r)
             except Exception as ex:

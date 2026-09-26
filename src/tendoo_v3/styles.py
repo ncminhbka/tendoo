@@ -458,6 +458,7 @@ COMMON_AUTOFIT_JS = """
   // hạt lấp lánh GĐ 2 -- vẽ ở lượt cuối -- không bao giờ lên ảnh).
   window.__tendooAutofitDone = false;
   window.__tendooOverflow = [];
+  window.__tendooHalo = [];
   // Cỡ chữ + line-height + letter-spacing gán CÙNG MỘT CHỖ, dùng cho cả lúc dò (binary
   // search) lẫn lúc gán kết quả -- trước đây letter-spacing -0.5px chỉ gán SAU khi dò xong,
   // nên chữ lúc đo rộng hơn chữ lúc hiển thị và autofit chọn cỡ nhỏ hơn cần thiết (lỗi này
@@ -731,6 +732,95 @@ COMMON_AUTOFIT_JS = """
     window.__tendooOverflow = overflowReport;
   }
 
+  // 5. QUẦNG THÍCH ỨNG (GĐ 4, ROADMAP §4.3): chữ đặt thẳng lên ảnh chọn màu theo 1 dải ảnh
+  // lấy mẫu ở Python -- vệt sáng cục bộ ngay dưới vài chữ vẫn làm chìm đúng những chữ đó (đo
+  // 26/09 trên nền giả khắc nghiệt: C3 chỉ 159/379). Ở đây đọc ĐIỂM ẢNH THẬT của ảnh nền dưới
+  // từng dòng chữ ĐÃ CHỐT vị trí, trộn thêm nền bán trong suốt của các khối cha (pill, panel),
+  // chấm WCAG theo ô vuông XẤU NHẤT; dòng nào dưới ngưỡng (3.0 chữ lớn / 4.5 chữ nhỏ) được thêm
+  // quầng mềm ngược màu quanh nét -- không thêm hộp nền (chữ vẫn đè thẳng lên ảnh).
+  function tendooLum(c) {
+    const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+  }
+  function tendooRgba(str) {
+    const m = /rgba?\(([^)]+)\)/.exec(str || '');
+    if (!m) return null;
+    const p = m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat);
+    return {rgb: [p[0], p[1], p[2]], a: p.length > 3 ? p[3] : 1};
+  }
+  function tendooHalo() {
+    const layer = document.querySelector('.bg-layer');
+    const m = layer && /url\(["']?(.*?)["']?\)\s*$/.exec(getComputedStyle(layer).backgroundImage);
+    if (!m) return Promise.resolve();
+    return new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = m[1]; }).then(im => {
+      if (!im) return;
+      const lr = layer.getBoundingClientRect();
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(lr.width)); cv.height = Math.max(1, Math.round(lr.height));
+      const ctx = cv.getContext('2d');
+      const sc = Math.max(cv.width / im.width, cv.height / im.height);  // background-size: cover, center
+      ctx.drawImage(im, (cv.width - im.width * sc) / 2, (cv.height - im.height * sc) / 2, im.width * sc, im.height * sc);
+      const px = ctx.getImageData(0, 0, cv.width, cv.height).data;
+      const mean = (x0, y0, x1, y1) => {
+        x0 = Math.max(0, Math.floor(x0 - lr.left)); y0 = Math.max(0, Math.floor(y0 - lr.top));
+        x1 = Math.min(cv.width, Math.ceil(x1 - lr.left)); y1 = Math.min(cv.height, Math.ceil(y1 - lr.top));
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let y = y0; y < y1; y += 2) for (let x = x0; x < x1; x += 2) { const i = (y * cv.width + x) * 4; r += px[i]; g += px[i + 1]; b += px[i + 2]; n++; }
+        return n ? [r / n, g / n, b / n] : null;
+      };
+      const report = [];
+      document.querySelectorAll('[data-autofit]').forEach(el => {
+        if (el.parentElement && el.parentElement.closest('[data-autofit]')) return;
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        const hosts = new Map();
+        while (walker.nextNode()) {
+          const node = walker.currentNode, host = node.parentElement;
+          if (!node.textContent.trim() || host.closest('svg')) continue;
+          const cs = getComputedStyle(host);
+          const fill = tendooRgba(cs.webkitTextFillColor || cs.color);
+          if (!fill || fill.a < 0.5) continue;  // chữ tô gradient (3d_gold, chrome...) đã có drop-shadow riêng
+          const backs = [];
+          for (let n = host; n && !n.classList.contains('poster-canvas') && n !== document.body; n = n.parentElement) {
+            const bc = tendooRgba(getComputedStyle(n).backgroundColor);
+            if (bc && bc.a > 0.02) backs.push(bc);
+          }
+          const lText = tendooLum(fill.rgb);
+          const size = parseFloat(cs.fontSize) || 0, weight = parseInt(cs.fontWeight) || 400;
+          const need = (size >= 24 || (size >= 18.66 && weight >= 700)) ? 3.0 : 4.5;
+          const rg = document.createRange(); rg.selectNodeContents(node);
+          let worst = Infinity;
+          for (const r of rg.getClientRects()) {
+            if (r.width < 2 || r.height < 2) continue;
+            const side = Math.max(4, r.height);
+            for (let xs = r.left; xs < r.right - side * 0.5; xs += side) {
+              let bg = mean(xs, r.top, Math.min(r.right, xs + side), r.bottom);
+              if (!bg) continue;
+              for (let k = backs.length - 1; k >= 0; k--) {  // khối ngoài cùng trước, trong cùng sau
+                const b = backs[k];
+                bg = bg.map((v, j) => b.a * b.rgb[j] + (1 - b.a) * v);
+              }
+              const lBg = tendooLum(bg);
+              worst = Math.min(worst, (Math.max(lText, lBg) + 0.05) / (Math.min(lText, lBg) + 0.05));
+            }
+          }
+          // Biên 15%: JS chỉ ước lượng nền (ảnh gốc + màu khối cha, bỏ qua gradient/backdrop-filter);
+          // đo thật trên ảnh chụp lệch vài phần trăm -> case sát ngưỡng (4.1-4.48) trượt oan.
+          if (worst < need * 1.15) hosts.set(host, {worst, lText, need});
+        }
+        hosts.forEach((v, host) => {
+          const c = v.lText > 0.4 ? '0,0,0' : '255,255,255';
+          // Quầng đậm dần theo mức thiếu tương phản (worst/need): thiếu ít -> mảnh, thiếu nhiều -> dày.
+          const k = Math.min(1, Math.max(0.35, 1 - v.worst / v.need + 0.35));
+          const halo = `0 0 1px rgba(${c},1), 0 0 2px rgba(${c},${(0.8 + 0.2 * k).toFixed(2)}), 0 0 0.12em rgba(${c},${(0.6 + 0.35 * k).toFixed(2)}), 0 0 0.3em rgba(${c},${(0.45 + 0.4 * k).toFixed(2)}), 0 0 0.6em rgba(${c},${(0.3 + 0.35 * k).toFixed(2)})`;
+          const cur = getComputedStyle(host).textShadow;
+          host.style.setProperty('text-shadow', halo + (cur && cur !== 'none' ? ', ' + cur : ''), 'important');
+          report.push({cls: (el.className || '').toString().trim().split(/\s+/)[0], worst: Math.round(v.worst * 100) / 100});
+        });
+      });
+      window.__tendooHalo = report;
+    });
+  }
+
   if (document.readyState === 'complete') {
     fitElements();
   } else {
@@ -748,6 +838,8 @@ COMMON_AUTOFIT_JS = """
       // "xong" nên ảnh chụp luôn có nó; linh kiện không đổi kích thước chữ -> không cần fit lại.
       if (typeof window.__tendooAfterFit === 'function') window.__tendooAfterFit();
       window.__tendooAfterFit = undefined;  // không để poster sau (cùng window) chạy nhầm móc cũ
+      return tendooHalo();
+    }).then(function() {
       window.__tendooAutofitDone = true;
     });
   }, 150);

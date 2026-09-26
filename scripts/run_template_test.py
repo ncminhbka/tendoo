@@ -110,6 +110,43 @@ def generate_mock_backdrop_data_uri(
     return f"data:image/jpeg;base64,{base64.b64encode(raw).decode('ascii')}"
 
 
+
+def generate_harsh_backdrop_data_uri(
+    width: int, height: int, theme_hex: str = "#FF3366", background_tone: str = "dark_luxury", seed: str = ""
+) -> str:
+    """Nền giả KHẮC NGHIỆT cho GĐ 4 (ROADMAP §4.3): nền theo tông như trên + các vệt sáng cục bộ
+    (nền tối) hoặc mảng tối cục bộ (nền sáng) -- vừa mờ mềm (đèn, nắng) vừa cạnh sắc (ô cửa sổ,
+    khung). Mô phỏng ảnh FLUX thật: trung bình vùng "tối" nhưng có vệt chói ngay dưới nét chữ.
+    Tất định theo `seed` (mã case)."""
+    import random
+    import zlib
+
+    from PIL import ImageFilter
+
+    base = Image.open(io.BytesIO(base64.b64decode(generate_mock_backdrop_data_uri(width, height, theme_hex, background_tone).split(",", 1)[1]))).convert("RGB")
+    rng = random.Random(zlib.crc32(f"{seed}|{width}x{height}".encode("utf-8")))
+    light_tone = background_tone in LIGHT_BACKGROUND_TONES
+    short = min(width, height)
+    soft = Image.new("L", (width, height), 0)
+    d = ImageDraw.Draw(soft)
+    for _ in range(rng.randint(4, 7)):  # đốm mềm
+        rx, ry = short * rng.uniform(0.06, 0.2), short * rng.uniform(0.04, 0.14)
+        x, y = rng.uniform(0, width), rng.uniform(0, height)
+        d.ellipse([x - rx, y - ry, x + rx, y + ry], fill=rng.randint(150, 255))
+    soft = soft.filter(ImageFilter.GaussianBlur(short * 0.03))
+    hard = Image.new("L", (width, height), 0)
+    d = ImageDraw.Draw(hard)
+    for _ in range(rng.randint(2, 4)):  # khối cạnh sắc
+        w_, h_ = short * rng.uniform(0.08, 0.25), short * rng.uniform(0.03, 0.12)
+        x, y = rng.uniform(0, width - w_), rng.uniform(0, height - h_)
+        d.rectangle([x, y, x + w_, y + h_], fill=rng.randint(170, 240))
+    mask = Image.fromarray(np.maximum(np.asarray(soft), np.asarray(hard)))
+    spot = (22, 24, 32) if light_tone else (255, 244, 220)  # mảng tối trên nền sáng / vệt đèn ấm trên nền tối
+    img = Image.composite(Image.new("RGB", (width, height), spot), base, mask)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=85)
+    return f"data:image/jpeg;base64,{base64.b64encode(buf.getvalue()).decode('ascii')}"
+
 def parse_case_to_plan(case: Dict[str, Any], default_template: str) -> Tuple[TendooCreativePlan, int, int]:
     """Phân tích case thành TendooCreativePlan bất kể schema nested hay flat."""
     width = case.get("width", 1024)

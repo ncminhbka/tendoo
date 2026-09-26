@@ -1,0 +1,114 @@
+{
+ "before_after_split": {
+  "n": 8,
+  "c1": 1,
+  "c2": 8,
+  "c3": 6,
+  "c4": 8,
+  "squint": 1
+ },
+ "customer_feedback_card": {
+  "n": 9,
+  "c1": 0,
+  "c2": 9,
+  "c3": 4,
+  "c4": 9,
+  "squint": 0
+ },
+ "diagonal_slash": {
+  "n": 7,
+  "c1": 3,
+  "c2": 7,
+  "c3": 7,
+  "c4": 7,
+  "squint": 3
+ },
+ "grand_opening_banner": {
+  "n": 5,
+  "c1": 0,
+  "c2": 3,
+  "c3": 5,
+  "c4": 5,
+  "squint": 0
+ },
+ "l_frame_showcase": {
+  "n": 8,
+  "c1": 1,
+  "c2": 8,
+  "c3": 8,
+  "c4": 8,
+  "squint": 1
+ },
+ "lifestyle_corner_pod": {
+  "n": 5,
+  "c1": 0,
+  "c2": 5,
+  "c3": 2,
+  "c4": 5,
+  "squint": 0
+ },
+ "luxury_centered_card": {
+  "n": 6,
+  "c1": 0,
+  "c2": 6,
+  "c3": 6,
+  "c4": 6,
+  "squint": 0
+ },
+ "menu_price_board": {
+  "n": 6,
+  "c1": 1,
+  "c2": 6,
+  "c3": 5,
+  "c4": 6,
+  "squint": 1
+ },
+ "recruitment_board": {
+  "n": 5,
+  "c1": 1,
+  "c2": 5,
+  "c3": 3,
+  "c4": 5,
+  "squint": 1
+ },
+ "sandwich_bottom_heavy": {
+  "n": 6,
+  "c1": 0,
+  "c2": 6,
+  "c3": 6,
+  "c4": 5,
+  "squint": 0
+ },
+ "sandwich_top_heavy": {
+  "n": 6,
+  "c1": 0,
+  "c2": 4,
+  "c3": 5,
+  "c4": 6,
+  "squint": 0
+ },
+ "split_left": {
+  "n": 10,
+  "c1": 3,
+  "c2": 10,
+  "c3": 9,
+  "c4": 10,
+  "squint": 3
+ },
+ "split_right": {
+  "n": 9,
+  "c1": 2,
+  "c2": 9,
+  "c3": 9,
+  "c4": 9,
+  "squint": 2
+ },
+ "step_process_roadmap": {
+  "n": 5,
+  "c1": 0,
+  "c2": 5,
+  "c3": 2,
+  "c4": 5,
+  "squint": 0
+ }
+}

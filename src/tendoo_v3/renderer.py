@@ -2090,6 +2090,8 @@ def build_template_html(
         "subhead_effect_css": subhead_effect_css,
         "header_is_dark": hero_zone_colors.get("is_dark", is_dark),
         "subhead_is_dark": subhead_is_dark,
+        # Độ tối vùng THẺ (luxury/lifestyle...) -- template chọn bóng chữ theo nó (GĐ 4).
+        "card_is_dark": card_zone_colors.get("is_dark", True),
         "palette": palette,
         "header_text_primary": header_colors["text_primary"],
         "header_text_secondary": header_colors["text_secondary"],
