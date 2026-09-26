@@ -54,3 +54,10 @@
   background: none;
   text-shadow: 0 2px 14px {{ theme_color }}80, 0 2px 6px rgba(0, 0, 0, 0.85);
 }
+
+/* GĐ 7a (R2) -- NGẮT DÒNG CÂN BẰNG: chia dòng tiêu đề/subhead/câu trích dẫn đều nhau thay vì dồn
+   đầy dòng trên rồi để 1 âm tiết mồ côi ở dòng cuối. Không đổi số dòng -> không đổi chiều cao
+   autofit đo. Đo bằng scripts/probe_line_breaks.py. */
+.hero-title, .hero-top-title, .quote-hero, .subhead-title {
+  text-wrap: balance;
+}

@@ -82,4 +82,27 @@ def suggest_hero_parts(hero: str) -> List[Dict[str, Any]]:
     return parts
 
 
-__all__ = ["COMPOUNDS", "HOOK_PHRASES", "UNIT_WORDS", "suggest_hero_parts"]
+
+NBSP = " "
+_PUNCT = ",.:;!?()\"'“”"
+
+
+def bind_nonbreaking(text: str, compounds: bool = True) -> str:
+    """Nối bằng khoảng trắng KHÔNG NGẮT các cặp không được tách qua 2 dòng (GĐ 7a): âm tiết của
+    từ ghép thông dụng ("CÀ PHÊ") và số + đơn vị ("12 TRIỆU", "3 BƯỚC"). Chỉ đổi loại khoảng
+    trắng -- chữ hiển thị và phép đối chiếu nguyên văn (bỏ mọi khoảng trắng) không đổi.
+
+    `compounds=False` cho HERO: cột hẹp (split ~450px) + chữ 70px thì 1 cụm từ ghép nối cứng đã
+    rộng hơn cột -> autofit phải thu nhỏ cả hero (đo R2: tương phản split_left 3.42 -> 2.93).
+    Hero chỉ giữ số + đơn vị; từ ghép để `text-wrap: balance` lo."""
+    if not text or " " not in text:
+        return text
+    words = text.split(" ")
+    out = [words[0]]
+    for prev, cur in zip(words, words[1:]):
+        a, b = prev.upper().strip(_PUNCT), cur.upper().strip(_PUNCT)
+        join = (compounds and f"{a} {b}" in COMPOUNDS and not prev.endswith(tuple(_PUNCT))) or (a[:1].isdigit() and b in UNIT_WORDS)
+        out.append((NBSP if join else " ") + cur)
+    return "".join(out)
+
+__all__ = ["COMPOUNDS", "HOOK_PHRASES", "NBSP", "UNIT_WORDS", "bind_nonbreaking", "suggest_hero_parts"]

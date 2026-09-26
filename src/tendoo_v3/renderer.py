@@ -25,6 +25,7 @@ from tendoo_core.fonts import resolve_font
 from tendoo_core.poster_renderer import PosterRenderer
 from tendoo_v3.catalog import INTENT_PROFILES, LIST_LIMITS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import build_components, enrich_hero_parts
+from tendoo_v3.hero_markup import bind_nonbreaking
 from tendoo_v3.geometry import compute_density_score, geometry_drivers, get_zones
 from tendoo_v3.icons import (
     BULLET_SPARKLE_SVG,
@@ -2122,9 +2123,11 @@ def build_template_html(
         "card_footer_accent": card_footer_colors["accent"],
         "card_chrome_text": card_chrome_text,
         "card_chrome_accent": card_chrome_accent,
-        "hero": plan.hero,
-        "hero_parts": enrich_hero_parts(plan.hero_parts, components["stat_style"]) if components else plan.hero_parts,
-        "subhead": plan.subhead,
+        # GĐ 7a: khoảng trắng không ngắt giữa âm tiết từ ghép / số + đơn vị (chỉ chữ hiển thị).
+        "hero": bind_nonbreaking(plan.hero, compounds=False),
+        "hero_parts": [dict(p, t=bind_nonbreaking(p.get("t", ""), compounds=False)) for p in
+                       (enrich_hero_parts(plan.hero_parts, components["stat_style"]) if components else plan.hero_parts)],
+        "subhead": bind_nonbreaking(plan.subhead),
         "badge": plan.badge,
         "tag_left": plan.tag_left,
         "tag_left_icon": tag_left_icon,
@@ -2145,7 +2148,7 @@ def build_template_html(
         "qr_code": plan.qr_code,
         "qr_label": plan.qr_label,
         "qr_svg": qr_svg,
-        "testimonial": plan.testimonial,
+        "testimonial": bind_nonbreaking(plan.testimonial),
         "reviewer_name": plan.reviewer_name,
         "steps": steps,
         "orientation": plan.orientation or "bottom_left",
