@@ -34,6 +34,7 @@ from dotenv import load_dotenv
 
 from tendoo_v3.catalog import TEMPLATE_CATALOG
 from tendoo_v3.hero_markup import suggest_hero_parts
+from tendoo_v3.routing import route_template
 from tendoo_v3.llm_prompts import MULTI_VARIANT_INSTRUCTION_TEMPLATE, SYSTEM_PROMPT
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
 from tendoo_v3.validators import log_plan_issues
@@ -1030,6 +1031,10 @@ def generate_creative_plan(
     def _pack(plans: list):
         """Ghi debug_trace + trả kết quả -- gói lại pattern lặp 7 lần trong hàm này
         thành 1 chỗ duy nhất, giảm rủi ro quên cập nhật 1 nhánh khi sửa sau này."""
+        # Cổng 3 (GĐ 3): mọi nhánh (API/local/dự phòng) đều qua phủ quyết dung lượng ở đây.
+        routed = [route_template(p, aspect_ratio) for p in plans]
+        plans = [p for p, _ in routed]
+        debug_trace["gate3"] = [why for _, why in routed if why]
         debug_trace["output"]["final_plan"] = plans[0].to_dict()
         debug_trace["output"]["final_plans"] = [p.to_dict() for p in plans]
         debug_trace["latency_seconds"] = round(time.time() - t_start, 4)

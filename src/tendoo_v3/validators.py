@@ -31,6 +31,18 @@ CONTENT_FIELDS = (
 )
 
 
+def content_chars(plan: TendooCreativePlan) -> int:
+    """Số ký tự nội dung hiển thị -- đơn vị của sức chứa (`catalog.capacity_chars*`, Cổng 3).
+    Không tính qr_code (ảnh) và rating (sao)."""
+    n = 0
+    for f in CONTENT_FIELDS:
+        v = getattr(plan, f, None)
+        if f in ("qr_code", "rating") or not v:
+            continue
+        n += sum(len(x) for x in v) if isinstance(v, list) else len(str(v))
+    return n
+
+
 def check_plan(plan: TendooCreativePlan) -> List[str]:
     """Danh sách vấn đề (rỗng = qua cổng). Không raise, không sửa plan."""
     issues: List[str] = []
@@ -106,4 +118,4 @@ def log_plan_issues(plan: TendooCreativePlan) -> List[str]:
     return issues
 
 
-__all__ = ["CONTENT_FIELDS", "check_plan", "log_plan_issues"]
+__all__ = ["CONTENT_FIELDS", "check_plan", "content_chars", "log_plan_issues"]

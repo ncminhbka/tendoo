@@ -14,7 +14,7 @@ chữ theo một "thang nội dung" tất định, render qua Chromium ở mỗi
 bậc 1 (chỉ có tiêu đề ngắn) -> template không đạt profile intent ở bất kỳ lượng chữ nào.
 
 Giới hạn đã biết (ghi vào kết quả): đo với 1 style cố định (Be Vietnam Pro, plain_elegant,
-dark_luxury) và hero PHẲNG (không hero_parts) -- font hẹp/rộng và markup Luật 2 đổi sức chứa.
+dark_luxury); hero PHẲNG, hoặc `--oracle` = hero_parts (Luật 2) như LLM lý tưởng trả (GĐ 3).
 
   PYTHONPATH=src python scripts/calibrate_capacity.py --out output_probe/capacity
 """
@@ -39,8 +39,9 @@ from playwright.sync_api import sync_playwright
 
 from probe_type_hierarchy import measure_plan
 from tendoo_v3.catalog import TEMPLATE_CATALOG
+from tendoo_v3.hero_markup import suggest_hero_parts
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
-from tendoo_v3.validators import CONTENT_FIELDS
+from tendoo_v3.validators import content_chars
 
 ASPECTS = {"1:1": (1024, 1024), "9:16": (576, 1024), "16:9": (1024, 576), "4:5": (816, 1024)}
 STYLE = StyleConfig(font="bevietnam", theme_color="#F59E0B", text_effect="plain_elegant", background_tone="dark_luxury")
@@ -54,6 +55,9 @@ MENU = ["Cà phê sữa đá - 29.000đ", "Bạc xỉu - 32.000đ", "Trà đào 
         "Trà vải hoa hồng - 42.000đ", "Cold brew nguyên chất - 45.000đ", "Bánh sừng bò bơ - 35.000đ"]
 STEPS = ["Tư vấn 1:1 miễn phí", "Lên phác đồ riêng", "Thực hiện liệu trình", "Theo dõi và bảo hành 12 tháng"]
 STORE = ["Hotline: 1900 8888", "123 Nguyễn Huệ, Quận 1, TP.HCM", "Mở cửa: 8:00 - 22:00"]
+
+# GĐ 3: đo với hero_parts của "LLM lý tưởng" (mọi hero của thang đều có con số -> đều tách được).
+ORACLE = False
 
 # Thang nội dung: mỗi bậc là tập field -> giá trị; chỉ áp field template THỰC SỰ hiển thị (slots).
 LADDER = [
@@ -92,17 +96,10 @@ def plan_at(template: str, level: int) -> TendooCreativePlan:
         fields.update({k: v for k, v in step.items() if k in slots or k == "qr_code" and "qr_code" in slots})
     if template in SPECIAL:
         fields.update({k: v for k, v in SPECIAL[template](level).items() if k in slots})
-    return replace(TendooCreativePlan(template=template, hero=fields.pop("hero"), style=STYLE), **fields)
-
-
-def content_chars(plan: TendooCreativePlan) -> int:
-    n = 0
-    for f in CONTENT_FIELDS:
-        v = getattr(plan, f, None)
-        if f in ("qr_code", "rating") or not v:
-            continue
-        n += sum(len(x) for x in v) if isinstance(v, list) else len(str(v))
-    return n
+    plan = replace(TendooCreativePlan(template=template, hero=fields.pop("hero"), style=STYLE), **fields)
+    if ORACLE:
+        plan = replace(plan, hero_parts=suggest_hero_parts(plan.hero))
+    return plan
 
 
 def calibrate(page, template: str, w: int, h: int) -> dict:
@@ -131,7 +128,10 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(PROJECT_ROOT / "output_probe" / "capacity"))
     ap.add_argument("--template", default=None)
+    ap.add_argument("--oracle", action="store_true", help="hero_parts của hero_markup.suggest_hero_parts (GĐ 3)")
     args = ap.parse_args()
+    global ORACLE
+    ORACLE = args.oracle
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     templates = [args.template] if args.template else sorted(TEMPLATE_CATALOG)

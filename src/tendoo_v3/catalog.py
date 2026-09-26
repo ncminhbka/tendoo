@@ -20,11 +20,14 @@ from typing import Any, Dict, List, Optional, Tuple
 # `default_orientation`: template có biến thể hướng (trái/phải/góc) -- hàm zone nhận `orientation`,
 # mặc định giá trị này khi plan không chỉ định. Không khai báo = template không có hướng.
 # `visual_intents`: intent template phục vụ (phần tử đầu = mặc định), xem INTENT_PROFILES.
-# `capacity_chars` / `capacity_chars_safe` (GĐ 1, ĐO bằng scripts/calibrate_capacity.py 26/09 -- không tuyên bố):
+# `capacity_chars` / `capacity_chars_safe` (ĐO bằng scripts/calibrate_capacity.py -- không tuyên bố):
 #   số ký tự nội dung tối đa theo tỉ lệ khung hình mà poster còn (a) giữ tương phản điểm neo >= ngưỡng intent
-#   VÀ không mất chữ / (b) chỉ không mất chữ. Đo với hero PHẲNG + chính sách cỡ chữ hiện tại: (a) phần lớn chỉ
-#   13 ký tự (= chỉ có hero) vì tỉ lệ trần hero/trần subhead < ngưỡng -- ĐO CHÍNH SÁCH, chưa đo hình học
-#   (ROADMAP §3.4 bản đo lần 2). Cổng 3 hiện chỉ nên dùng (b) làm giới hạn cứng.
+#   VÀ không mất chữ / (b) chỉ không mất chữ. Bản đo lần 3 (GĐ 3, 26/09): (a) đo với hero_parts như LLM lý
+#   tưởng trả (`--oracle`) + trần subhead theo intent + Cấp 3 <= 0.8 subhead -- hero PHẲNG thì (a) vẫn ~13 ký
+#   tự ở đa số template; (b) = min(phẳng, hero_parts). 699/784 = không gãy tới bậc cuối của thang đo.
+#   Cổng 3 (routing.py) dùng (b) làm giới hạn cứng, (a) để ưu tiên khi chọn template thay thế.
+# `specialized`: template gắn với LOẠI NỘI DUNG (menu, tuyển dụng, quy trình, đánh giá, trước/sau) -- Cổng 3 không
+#   đổi plan ra khỏi nó, cũng không đổi plan thường vào nó (cùng intent matrix_board không có nghĩa tuyển dụng -> menu).
 # `required`: template được chọn mà thiếu field này thì poster lệch bản chất (Cổng 2 cảnh báo).
 # Các thuộc tính slot khác trong ví dụ §6.2 (supports_markup, max_items) CHƯA khai
 # báo: chưa có code nào đọc chúng, và chưa có số đo cho max_items.
@@ -36,7 +39,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "split_left_full",
         "visual_intents": ["product_showcase", "big_number_deal"],
-        "capacity_chars": {"1:1": 13, "9:16": 95, "16:9": 13, "4:5": 13},
+        "capacity_chars": {"1:1": 699, "9:16": 699, "16:9": 611, "4:5": 699},
         "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 611, "4:5": 699},
         "slots": {
             "hero": {},
@@ -56,7 +59,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "split_right_full",
         "visual_intents": ["product_showcase", "big_number_deal"],
-        "capacity_chars": {"1:1": 13, "9:16": 95, "16:9": 13, "4:5": 13},
+        "capacity_chars": {"1:1": 699, "9:16": 699, "16:9": 611, "4:5": 699},
         "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 611, "4:5": 699},
         "slots": {
             "hero": {},
@@ -76,8 +79,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "sandwich_standard",
         "visual_intents": ["big_number_deal", "hook_headline", "product_showcase"],
-        "capacity_chars": {"1:1": 154, "9:16": 13, "16:9": 64, "4:5": 154},
-        "capacity_chars_safe": {"1:1": 699, "9:16": 681, "16:9": 611, "4:5": 699},
+        "capacity_chars": {"1:1": 699, "9:16": 681, "16:9": 64, "4:5": 699},
+        "capacity_chars_safe": {"1:1": 699, "9:16": 681, "16:9": 396, "4:5": 699},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -96,7 +99,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "sandwich_standard",
         "visual_intents": ["big_number_deal", "hook_headline", "product_showcase"],
-        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars": {"1:1": 699, "9:16": 699, "16:9": 95, "4:5": 699},
         "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 699, "4:5": 699},
         "slots": {
             "hero": {},
@@ -111,13 +114,14 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
     },
     "before_after_split": {
         "name": "So Sánh Trước & Sau (Before / After)",
+        "specialized": True,
         "llm_hint": "So sánh trước/sau hai nửa ảnh (cần tag_left + tag_right), dải chữ ở đáy.",
         "hint": "Chia đôi màn hình Before (trái/trên) & After (phải/dưới), khung thông tin ở đáy hoặc tâm. Dành riêng cho Fitness Gym, Spa thú cưng Poodle, Giảm cân Kombucha, Dịch vụ dọn nhà sạch bóng -- bất kỳ prompt nào có ý 'trước và sau', 'before after', 'so sánh', 'cải thiện rõ rệt', 'lột xác'. BẮT BUỘC điền `tag_left` (nhãn khối Before, mặc định 'BEFORE' nếu bỏ trống) và `tag_right` (nhãn khối After, mặc định 'AFTER') -- đây là 2 field ĐỊNH DANH riêng của template này, không dùng ở template khác. Có thể điền thêm `rating` nếu prompt có số sao đánh giá thật đi kèm kết quả (tuỳ chọn, không bắt buộc).",
         "has_mask": True,
         "mask_preset": "bottom_band",
         "default_orientation": "left",
         "visual_intents": ["testimonial_trust"],
-        "capacity_chars": {"1:1": 21, "9:16": 21, "16:9": 21, "4:5": 21},
+        "capacity_chars": {"1:1": 694, "9:16": 565, "16:9": 694, "4:5": 365},
         "capacity_chars_safe": {"1:1": 694, "9:16": 565, "16:9": 694, "4:5": 694},
         "slots": {
             "hero": {},
@@ -140,7 +144,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "luxury_card",
         "default_orientation": "center",
         "visual_intents": ["hook_headline"],
-        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars": {"1:1": 699, "9:16": 681, "16:9": 699, "4:5": 699},
         "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 699, "4:5": 699},
         "slots": {
             "hero": {},
@@ -162,7 +166,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "corner_bl",
         "default_orientation": "bottom_left",
         "visual_intents": ["product_showcase", "hook_headline"],
-        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars": {"1:1": 570, "9:16": 570, "16:9": 570, "4:5": 570},
         "capacity_chars_safe": {"1:1": 570, "9:16": 570, "16:9": 570, "4:5": 570},
         "slots": {
             "hero": {},
@@ -177,13 +181,14 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
     },
     "recruitment_board": {
         "name": "Bảng Tin Tuyển Dụng & Báo Chí 2 Cột",
+        "specialized": True,
         "llm_hint": "Tuyển dụng: tiêu đề trên đỉnh, bảng 2 cột (quyền lợi / cách ứng tuyển) ở đáy.",
         "hint": "Bảng thông tin phong cách báo chí, tiêu đề dập nổi ở trên, thân bài chia 2 cột quyền lợi & yêu cầu. Dành cho Tuyển dụng, Khóa học ngoại ngữ, Bảng tin nội bộ -- bất kỳ prompt nào có ý 'tuyển dụng', 'cần tuyển', 'tìm đồng đội', 'gia nhập đội ngũ'.",
         "has_mask": True,
         "mask_preset": "top_band",
         "default_orientation": "left",
         "visual_intents": ["matrix_board"],
-        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars": {"1:1": 154, "9:16": 154, "16:9": 154, "4:5": 154},
         "capacity_chars_safe": {"1:1": 322, "9:16": 224, "16:9": 322, "4:5": 322},
         "slots": {
             "hero": {},
@@ -204,8 +209,8 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "diagonal_slash",
         "default_orientation": "left",
         "visual_intents": ["big_number_deal", "product_showcase"],
-        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
-        "capacity_chars_safe": {"1:1": 570, "9:16": 570, "16:9": 224, "4:5": 570},
+        "capacity_chars": {"1:1": 570, "9:16": 570, "16:9": 570, "4:5": 570},
+        "capacity_chars_safe": {"1:1": 570, "9:16": 570, "16:9": 570, "4:5": 570},
         "slots": {
             "hero": {},
             "subhead": {},
@@ -219,13 +224,14 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
     },
     "customer_feedback_card": {
         "name": "Thẻ Đánh Giá & Review Khách Hàng (Testimonial Card)",
+        "specialized": True,
         "llm_hint": "Thẻ đánh giá khách hàng: sao + trích dẫn (cần testimonial + reviewer_name, rating).",
         "hint": "Thẻ kính mờ hiển thị 5 sao đánh giá uy tín, icon trích dẫn (quote), lời nhận xét chân thực của khách hàng (testimonial), tên/chức danh người review, huy hiệu cam kết và nút đặt lịch. Dành riêng cho: Feedback khách hàng sau 90 ngày (Gym), Spa thú cưng, Review Glamping nghỉ dưỡng, Khách hàng khen Sofa Zen, Nệm ngủ ngon, Nồi chiên không dầu -- BẮT BUỘC prompt có nội dung đánh giá/lời khen/sao thật (điền vào `testimonial`/`rating`/`reviewer_name`). Nếu chỉ là lời tri ân/voucher chung chung KHÔNG có review thật, dùng `luxury_centered_card` thay vào đó.",
         "has_mask": True,
         "mask_preset": "feedback_card",
         "default_orientation": "left",
         "visual_intents": ["testimonial_trust"],
-        "capacity_chars": {"1:1": 99, "9:16": 99, "16:9": 0, "4:5": 99},
+        "capacity_chars": {"1:1": 656, "9:16": 240, "16:9": 0, "4:5": 656},
         "capacity_chars_safe": {"1:1": 656, "9:16": 482, "16:9": 656, "4:5": 656},
         "slots": {
             "hero": {},
@@ -243,6 +249,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
     },
     "step_process_roadmap": {
         "name": "Quy Trình & Lộ Trình Hướng Dẫn Các Bước (Steps Roadmap)",
+        "specialized": True,
         "llm_hint": "Quy trình/lộ trình 2-4 bước (cần steps) trên bệ ngang ở đáy.",
         "hint": "Trình bày chuỗi quy trình rõ ràng từng bước (Step 01 -> Step 02 -> Step 03) với các icon vector, tiêu đề nổi bật và nhãn ưu đãi / bảo hành. Dành cho: Combo Spa 7 bước, Lộ trình 3 tháng tiếng Anh, 3 bước đặt lịch dọn nhà sạch bóng, quy trình chăm sóc xe -- bất kỳ prompt nào có ý 'các bước', 'quy trình', 'hướng dẫn', 'lộ trình'. Điền `steps` (mảng chuỗi theo đúng thứ tự), KHÔNG dùng `extra_texts` cho nội dung này.",
         "has_mask": True,
@@ -271,7 +278,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "mask_preset": "l_frame",
         "default_orientation": "left",
         "visual_intents": ["product_showcase"],
-        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars": {"1:1": 357, "9:16": 211, "16:9": 211, "4:5": 211},
         "capacity_chars_safe": {"1:1": 686, "9:16": 686, "16:9": 686, "4:5": 686},
         "slots": {
             "hero": {},
@@ -286,13 +293,14 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
     },
     "menu_price_board": {
         "name": "Bảng Giá & Thực Đơn Nhiều Dòng (Menu Price Board)",
+        "specialized": True,
         "llm_hint": "Menu/bảng giá nhiều dòng 'Tên - Giá' trong extra_texts, cột chữ trái/phải.",
         "hint": "Cột dọc liệt kê nhiều dòng tên món/dịch vụ kèm giá (dùng `extra_texts`, mỗi dòng 1 món dạng 'Tên món - Giá'), thông tin cửa hàng + QR ở đáy cột. Dành riêng cho: Menu quán ăn/cafe, bảng giá dịch vụ Spa/Salon theo gói, combo nhiều lựa chọn -- bất kỳ prompt nào có ý 'menu', 'thực đơn', 'bảng giá', 'giá dịch vụ', liệt kê từ 2 món/gói trở lên kèm giá cụ thể. Hỗ trợ orientation: 'left' (mặc định, cột chữ bên trái, ảnh bên phải) hoặc 'right' (bản gương).",
         "has_mask": True,
         "mask_preset": "menu_price_board",
         "default_orientation": "left",
         "visual_intents": ["matrix_board"],
-        "capacity_chars": {"1:1": 356, "9:16": 185, "16:9": 53, "4:5": 185},
+        "capacity_chars": {"1:1": 511, "9:16": 511, "16:9": 511, "4:5": 511},
         "capacity_chars_safe": {"1:1": 511, "9:16": 511, "16:9": 511, "4:5": 511},
         "slots": {
             "hero": {},
@@ -312,7 +320,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "has_mask": True,
         "mask_preset": "festive_center",
         "visual_intents": ["festive_event"],
-        "capacity_chars": {"1:1": 13, "9:16": 13, "16:9": 13, "4:5": 13},
+        "capacity_chars": {"1:1": 64, "9:16": 699, "16:9": 64, "4:5": 699},
         "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 699, "4:5": 699},
         "slots": {
             "hero": {},
