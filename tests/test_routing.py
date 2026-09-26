@@ -69,3 +69,11 @@ def test_gate3_runs_on_every_planner_branch():
     form = {"title": "Siêu sale 50%", "highlights": "\n".join(LONG * 2), "product_desc": LONG[0]}
     _, trace = generate_creative_plan(form, prompt="chữ gom ở góc trên trái", aspect_ratio="1:1", return_debug=True)
     assert "gate3" in trace
+
+
+def test_template_that_drops_a_field_is_vetoed():
+    """GĐ 3R: LLM thật đặt cta vào l_frame_showcase (không có chỗ cho cta) -> đổi template cùng intent."""
+    plan = _plan("l_frame_showcase", n_extra=1, cta="ĐẶT LỊCH NGAY", visual_intent="product_showcase")
+    routed, why = route_template(plan, "4:5")
+    assert routed.template != "l_frame_showcase" and "cta" in TEMPLATE_CATALOG[routed.template]["slots"]
+    assert "không hiển thị hết" in why

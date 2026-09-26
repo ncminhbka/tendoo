@@ -994,6 +994,15 @@ def generate_creative_plan(
     # Qwen3 -- các model khác (vd Gemma, Llama) không có khái niệm này, và tùy độ nghiêm
     # ngặt của server vLLM/OpenAI-compatible đích, field lạ có thể bị từ chối (400) thay
     # vì được âm thầm bỏ qua. Chỉ gửi khi model_name thực sự thuộc họ Qwen.
+    # OpenAI họ suy luận (gpt-5*, o1/o3/o4): KHÔNG nhận `max_tokens` + temperature khác mặc định --
+    # dùng `max_completion_tokens` (gồm cả token suy luận nên cấp rộng hơn) và reasoning thấp
+    # (lập plan là việc ngữ nghĩa ngắn; GĐ 3R thử bằng OpenAI API).
+    m_low = model_name.lower()
+    if m_low.startswith(("gpt-5", "o1", "o3", "o4")):
+        request_body.pop("temperature", None)
+        request_body.pop("max_tokens", None)
+        request_body["max_completion_tokens"] = max_tokens * 4
+        request_body["reasoning_effort"] = os.environ.get("TENDOO_V3_LLM_REASONING_EFFORT", "low")
     if "qwen" in model_name.lower():
         request_body["chat_template_kwargs"] = {"enable_thinking": False}
         request_body["extra_body"] = {"chat_template_kwargs": {"enable_thinking": False}}
@@ -1088,12 +1097,25 @@ def generate_creative_plan(
 
     try:
         logger.info(f"[LLM Planner] Gọi {model_name} tại {url}...")
-        resp = requests.post(
-            url,
-            json=request_body,
-            headers=headers,
-            timeout=(LLM_CONNECT_TIMEOUT_S, LLM_TIMEOUT_S),
-        )
+        # Thử lại 1 lần với lỗi TẠM THỜI (timeout, mất kết nối, 429/5xx) -- GĐ 3R: 2/16 brief rơi về
+        # dự phòng vì lỗi thoáng qua, gọi lại ngay thì thành công.
+        for attempt in range(2):
+            try:
+                resp = requests.post(
+                    url,
+                    json=request_body,
+                    headers=headers,
+                    timeout=(LLM_CONNECT_TIMEOUT_S, LLM_TIMEOUT_S),
+                )
+                if resp.status_code in (429, 500, 502, 503, 504) and attempt == 0:
+                    logger.warning(f"[LLM Planner] HTTP {resp.status_code} -> thử lại 1 lần")
+                    time.sleep(2)
+                    continue
+                break
+            except (requests.Timeout, requests.ConnectionError) as net_err:
+                if attempt == 1:
+                    raise
+                logger.warning(f"[LLM Planner] Lỗi mạng tạm thời ({net_err}) -> thử lại 1 lần")
         debug_trace["output"]["http_status_code"] = resp.status_code
         resp.raise_for_status()
         resp_data = resp.json()

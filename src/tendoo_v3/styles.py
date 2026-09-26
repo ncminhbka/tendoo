@@ -788,7 +788,7 @@ COMMON_AUTOFIT_JS = """
           const size = parseFloat(cs.fontSize) || 0, weight = parseInt(cs.fontWeight) || 400;
           const need = (size >= 24 || (size >= 18.66 && weight >= 700)) ? 3.0 : 4.5;
           const rg = document.createRange(); rg.selectNodeContents(node);
-          let worst = Infinity, worstBg = null;
+          let worst = Infinity, worstBg = null, lMin = Infinity, lMax = -Infinity;
           for (const r of rg.getClientRects()) {
             if (r.width < 2 || r.height < 2) continue;
             const side = Math.max(4, r.height);
@@ -802,11 +802,12 @@ COMMON_AUTOFIT_JS = """
               const lBg = tendooLum(bg);
               const ratio = (Math.max(lText, lBg) + 0.05) / (Math.min(lText, lBg) + 0.05);
               if (ratio < worst) { worst = ratio; worstBg = lBg; }
+              lMin = Math.min(lMin, lBg); lMax = Math.max(lMax, lBg);
             }
           }
           // Biên 15%: JS chỉ ước lượng nền (ảnh gốc + màu khối cha, bỏ qua gradient/backdrop-filter);
           // đo thật trên ảnh chụp lệch vài phần trăm -> case sát ngưỡng (4.1-4.48) trượt oan.
-          if (worst < need * 1.15) hosts.set(host, {worst, lText, need, worstBg, fill: fill.rgb});
+          if (worst < need * 1.15) hosts.set(host, {worst, lText, need, worstBg, lMin, lMax, fill: fill.rgb});
         }
         hosts.forEach((v, host) => {
           // Màu nhấn (stat của hero_parts): quầng không cứu được ruột chữ to cùng tông nền (đo GĐ 5:
@@ -832,13 +833,31 @@ COMMON_AUTOFIT_JS = """
           }
           // Quầng tương phản nhất với CHÍNH màu chữ (điểm giao WCAG ~0.18): chữ tầm trung (xanh dương,
           // đỏ) cần quầng tối -- ngưỡng cũ 0.4 cho quầng trắng, vô dụng trên nền sáng (đo GĐ 5).
+          // Chữ thường chọn SAI cực (Python lấy mẫu 1 dải cố định; dòng thật có thể nằm thấp hơn -- GĐ 3R:
+          // subhead trắng trên trần nhà màu be): đảo trắng <-> navy nếu cực kia đạt ngưỡng ở ô XẤU NHẤT
+          // của CHÍNH nó (trắng xấu nhất ở ô sáng nhất, navy ở ô tối nhất) và tốt hơn rõ (>= 1.2x).
+          if (!accent && isFinite(v.lMin)) {
+            const lNavy = tendooLum([15, 23, 42]);
+            const rWhite = 1.05 / (v.lMax + 0.05), rNavy = (v.lMin + 0.05) / (lNavy + 0.05);
+            const [col, r] = rWhite >= rNavy ? ['#FFFFFF', rWhite] : ['#0F172A', rNavy];
+            if (r >= v.worst * 1.2) {
+              host.style.setProperty('color', col, 'important');
+              host.style.setProperty('-webkit-text-fill-color', col, 'important');
+              if (col === '#0F172A') host.style.setProperty('text-shadow', 'none', 'important');  // bóng đen quanh chữ tối = nhoè
+              report.push({cls: (el.className || '').toString().trim().split(' ')[0], worst: Math.round(v.worst * 100) / 100, flip: col});
+              if (r >= v.need) return;
+              v.lText = tendooLum(col === '#FFFFFF' ? [255, 255, 255] : [15, 23, 42]);  // chưa đủ -> quầng theo cực MỚI
+              v.worst = r;
+            }
+          }
           const c = v.lText > 0.18 ? '0,0,0' : '255,255,255';
           // Quầng đậm dần theo mức thiếu tương phản (worst/need): thiếu ít -> mảnh, thiếu nhiều -> dày.
           const k = Math.min(1, Math.max(0.35, 1 - v.worst / v.need + 0.35));
           const halo = `0 0 1px rgba(${c},1), 0 0 2px rgba(${c},${(0.8 + 0.2 * k).toFixed(2)}), 0 0 0.12em rgba(${c},${(0.6 + 0.35 * k).toFixed(2)}), 0 0 0.3em rgba(${c},${(0.45 + 0.4 * k).toFixed(2)}), 0 0 0.6em rgba(${c},${(0.3 + 0.35 * k).toFixed(2)})`;
-          const cur = getComputedStyle(host).textShadow;
+          const cur = host.style.getPropertyValue('text-shadow') === 'none' ? 'none' : getComputedStyle(host).textShadow;
           host.style.setProperty('text-shadow', halo + (cur && cur !== 'none' ? ', ' + cur : ''), 'important');
-          report.push({cls: (el.className || '').toString().trim().split(/\\s+/)[0], worst: Math.round(v.worst * 100) / 100});
+          report.push({cls: (el.className || '').toString().trim().split(/\\s+/)[0], worst: Math.round(v.worst * 100) / 100,
+                       bg: [Math.round(v.lMin * 1000) / 1000, Math.round(v.lMax * 1000) / 1000]});
         });
       });
       window.__tendooHalo = report;

@@ -100,7 +100,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "hint": "Tiêu đề lớn trên đỉnh, nút CTA & hotline ở đáy, sản phẩm nằm trọn ở giữa. Rất hợp cho Khuyến mại, Giảm giá thông thường, giới thiệu sản phẩm, hoặc khi prompt yêu cầu 'ở giữa', 'chính giữa', 'ở trên... ở dưới...'. Là lựa chọn MẶC ĐỊNH AN TOÀN cho brief KHÔNG nêu rõ vị trí VÀ không thuộc loại nội dung đặc thù nào khác (menu, feedback, tuyển dụng...) -- phong cách trang trọng/tiết chế. Khác `grand_opening_banner`: cái này KHÔNG rực rỡ lễ hội, không hỗ trợ nhiều dòng CTA cùng lúc -- chỉ dùng grand_opening_banner khi prompt thực sự cần nhiều CTA/không khí sôi động.",
         "has_mask": True,
         "mask_preset": "sandwich_standard",
-        "visual_intents": ["big_number_deal", "hook_headline", "product_showcase"],
+        "visual_intents": ["big_number_deal", "hook_headline", "product_showcase", "festive_event"],
         "capacity_chars": {"1:1": 699, "9:16": 681, "16:9": 95, "4:5": 699},
         "capacity_chars_safe": {"1:1": 699, "9:16": 681, "16:9": 611, "4:5": 699},
         "slots": {
@@ -120,7 +120,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "hint": "Thông tin cửa hàng/brand ở trên đỉnh, toàn bộ cụm Tiêu đề & ưu đãi dạt xuống bệ đỡ đáy. Dùng khi prompt yêu cầu 'thông tin cửa hàng lên trên', 'chữ xuống dưới', 'tiêu đề ở dưới', hoặc bố cục nhấn mạnh chân trang ở giữa. Bản gương của `sandwich_top_heavy` -- cùng mức độ trang trọng/đa dụng, chỉ đảo vị trí 2 khối.",
         "has_mask": True,
         "mask_preset": "sandwich_standard",
-        "visual_intents": ["big_number_deal", "hook_headline", "product_showcase"],
+        "visual_intents": ["big_number_deal", "hook_headline", "product_showcase", "festive_event"],
         "capacity_chars": {"1:1": 699, "9:16": 699, "16:9": 95, "4:5": 699},
         "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 699, "4:5": 699},
         "slots": {
@@ -341,7 +341,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "hint": "Tiêu đề lớn rực rỡ và thời hạn ưu đãi căn giữa ở đỉnh, bệ đỡ nút CTA chính và địa chỉ cửa hàng + QR ở đáy, trung tâm poster mở cho ly cafe bốc khói, món ăn hấp dẫn hoặc sản phẩm khai trương. Nếu có nhiều dòng ưu đãi/kêu gọi hành động phụ (vd 'Deal sốc', 'Ghé ngay hôm nay!'), đưa dòng MẠNH NHẤT vào `cta`, các dòng còn lại vào `extra_texts` (hiển thị dạng pill/bullet ngay dưới tiêu đề). Không chỉ dành riêng cho khai trương -- đây là lựa chọn TỔNG QUÁT tốt nhất cho MỌI banner ưu đãi/flash sale rộn ràng có nhiều dòng CTA/kêu gọi hành động cùng lúc (vd 'Mua 1 tặng 1', 'Deal sốc', nhiều nút CTA rải rác), không nhất thiết phải là sự kiện khai trương cửa hàng. Nếu prompt chỉ có 1 CTA duy nhất và không khí bình thường (không rực rỡ/lễ hội), dùng `sandwich_top_heavy` thay vào đó -- template đó tiết chế/trang trọng hơn.",
         "has_mask": True,
         "mask_preset": "festive_center",
-        "visual_intents": ["festive_event"],
+        "visual_intents": ["festive_event", "big_number_deal", "hook_headline"],
         "capacity_chars": {"1:1": 699, "9:16": 699, "16:9": 370, "4:5": 699},
         "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 699, "4:5": 699},
         "slots": {

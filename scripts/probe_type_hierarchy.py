@@ -226,8 +226,10 @@ def _box_ratios(boxes, img) -> List[Dict[str, Any]]:
 
 
 def measure_plan(page, plan, w: int, h: int, with_bg: bool = False, harsh_seed: Optional[str] = None,
-                 lowdetail_seed: Optional[str] = None) -> Dict[str, Any]:
-    if lowdetail_seed is not None:  # GĐ 5: nền maskless ít chi tiết phủ cả khung
+                 lowdetail_seed: Optional[str] = None, bg_override: Optional[str] = None) -> Dict[str, Any]:
+    if bg_override is not None:  # GĐ 3R: ảnh nền THẬT (sinh bằng mô hình ảnh) thay nền giả
+        bg = bg_override
+    elif lowdetail_seed is not None:  # GĐ 5: nền maskless ít chi tiết phủ cả khung
         bg = generate_lowdetail_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone, seed=lowdetail_seed)
     elif harsh_seed is not None:  # GĐ 4: nền có vệt sáng / mảng tối cục bộ
         bg = generate_harsh_backdrop_data_uri(w, h, plan.style.theme_color, plan.style.background_tone, seed=harsh_seed)

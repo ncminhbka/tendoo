@@ -56,9 +56,20 @@ def route_template(plan: TendooCreativePlan, aspect: str, key: Optional[str] = N
     if plan.template not in TEMPLATE_CATALOG:
         return plan, None
     chars = content_chars(plan)
+    intent = resolve_intent(plan.template, plan.visual_intent)
+    # Phủ quyết MẤT CHỮ (GĐ 3R: LLM thật đặt `cta` vào l_frame_showcase vốn không có chỗ cho cta):
+    # đổi sang template cùng intent hiển thị đủ mọi field, còn chứa nổi. Không có -> giữ, Cổng 2 báo.
+    if not TEMPLATE_CATALOG[plan.template].get("specialized") and not _fits_all_fields(plan, plan.template):
+        full = [t for t, info in TEMPLATE_CATALOG.items()
+                if t != plan.template and not info.get("specialized") and intent in info.get("visual_intents", [])
+                and _fits_all_fields(plan, t) and capacity(t, aspect, key) >= chars]
+        if full:
+            best = max(full, key=lambda t: (capacity(t, aspect, "capacity_chars") >= chars, capacity(t, aspect, key)))
+            why = f"[Cổng 3] '{plan.template}' không hiển thị hết field của plan -> đổi sang '{best}' (cùng intent '{intent}', đủ chỗ)"
+            logger.info(why)
+            return replace(plan, template=best, orientation=None), why
     if chars <= capacity(plan.template, aspect, key):
         return plan, None
-    intent = resolve_intent(plan.template, plan.visual_intent)
     if TEMPLATE_CATALOG[plan.template].get("specialized"):
         why = f"[Cổng 3] {chars} ký tự vượt sức chứa '{plan.template}' ({capacity(plan.template, aspect, key)}, {aspect}) -- template chuyên biệt, không đổi; LỖ HỔNG phủ sóng"
         logger.warning(why)

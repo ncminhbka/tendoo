@@ -172,9 +172,9 @@ DANH MỤC TÔNG NỀN (style.background_tone -- CHỈ chọn 1 trong các giá 
 8. TẦNG MARKUP TIÊU ĐỀ (`hero_parts`) -- ĐÓNG GÓP THẨM MỸ LỚN NHẤT, ĐIỀN MỖI KHI TIÊU ĐỀ CÓ ĐIỂM NEO:
    - Cắt `hero` thành các đoạn LIỀN NHAU. Nối các đoạn lại PHẢI ĐÚNG NGUYÊN VĂN `hero` (không thêm/bớt/sửa 1 ký tự nào -- sai là hệ thống vứt toàn bộ markup, tiêu đề về phẳng).
    - `role`: "stat" = ĐIỂM NEO DUY NHẤT, hiển thị TO NHẤT (con số "50%", "99K", "3N2Đ", "SỐ 1"; hoặc cụm móc "KHAI TRƯƠNG", "TUYỂN DỤNG", "MIỄN PHÍ", "FLASH SALE"; hoặc từ khoá chính của tên sản phẩm). "prefix"/"suffix" = chữ dẫn/đuôi, hiển thị nhỏ (~0.4 cỡ stat). Đoạn stat thêm `"emphasis": "accent"` để tô màu nhấn.
-   - Đúng 1 stat, ngắn (1-3 từ). Nếu cả câu quan trọng ngang nhau (vd tên thương hiệu 2-3 từ) -> BỎ `hero_parts`, tiêu đề phẳng là đúng.
+   - Đúng 1 stat, ngắn (1-3 từ). Tên sản phẩm/dịch vụ dài (>= 4 từ) CŨNG NÊN tách: phần định danh chính là stat, phần mô tả là prefix/suffix (vd "ĐỒNG HỒ TITAN S7" -> prefix "ĐỒNG HỒ", stat "TITAN S7"; "TUYỂN DỤNG KỸ SƯ AI CAO CẤP" -> stat "TUYỂN DỤNG", suffix "KỸ SƯ AI CAO CẤP"). Chỉ bỏ `hero_parts` khi tiêu đề ngắn 2-3 từ mà mọi từ quan trọng ngang nhau.
    - Ví dụ: hero "GIẢM TỚI 25% TOÀN BỘ MENU" -> [{{"t": "GIẢM TỚI", "role": "prefix"}}, {{"t": "25%", "role": "stat", "emphasis": "accent"}}, {{"t": "TOÀN BỘ MENU", "role": "suffix"}}]; hero "TƯNG BỪNG KHAI TRƯƠNG TENDOO COFFEE" -> prefix "TƯNG BỪNG", stat "KHAI TRƯƠNG", suffix "TENDOO COFFEE".
-   - LUÔN điền `visual_intent` (1 giá trị trong danh mục dưới, phải nằm trong danh sách intent của template đã chọn).
+   - LUÔN điền `visual_intent`: BẮT BUỘC là 1 trong các intent ghi ở cuối dòng của CHÍNH template đã chọn (danh mục template phía trên, sau chữ "intent:") -- intent ngoài danh sách đó sẽ bị hệ thống bỏ. Nếu intent mong muốn không có trong template, hãy đổi template.
 
 9. CHẾ ĐỘ KHÔNG MASK (`maskless`) -- CHỈ khi CHỮ LÀ NHÂN VẬT CHÍNH (sale thuần chữ, chúc mừng, thông báo lớn), KHÔNG có sản phẩm/chủ thể cần giữ:
    - Đặt `"maskless": true`, `visual_intent` thuộc: {", ".join(repr(i) for i in MASKLESS_INTENTS)}.
@@ -190,7 +190,7 @@ QUY TẮC BẮT BUỘC VỀ ĐẦU RA:
 - CHỈ điền field THẬT SỰ ÁP DỤNG cho `template` bạn vừa chọn (xem đúng field-spec trong hint catalog phía trên):
   + LUÔN LUÔN bắt buộc có mặt: `template`, `hero`, `visual_intent`, `scene_prompt`, `corridor_prompt`, `style`.
   + Field chung nên điền nếu có nội dung tương ứng: `hero_parts` (mục 8), `subhead`, `badge`, `extra_texts`, `cta`, `store_info`, `qr_code`, `qr_label`.
-  + Linh kiện `badge_style`, `stat_style`, `decor`: chỉ điền khi thực sự nâng thẩm mỹ và hợp intent -- bỏ hẳn nếu không dùng.
+  + Linh kiện `badge_style`, `stat_style`, `decor` (danh mục LINH KIỆN phía trên): NÊN dùng khi hợp intent -- stat là số+đơn vị ("50%", "99K", "12 TRIỆU") -> `stat_style: "unit"` (hoặc "burst" nếu stat <= 5 ký tự và cần rực rỡ); khuyến mãi/lễ hội có badge -> `badge_style: "ribbon"`; badge dạng nhãn + giá trị -> viết badge "NHÃN | GIÁ TRỊ" + `"capsule"`; lễ hội/khai trương -> cân nhắc `decor: "sparkles"`. Bỏ hẳn khi không hợp.
   + Field CHUYÊN BIỆT (`tag_left`, `tag_right`, `testimonial`, `reviewer_name`, `rating`, `steps`, `orientation`) CHỈ điền khi template đã chọn thực sự dùng đến nó -- ĐƯỢC PHÉP BỎ HẲN KHỎI JSON (không cần ghi `null`) nếu template không dùng, hệ thống tự mặc định an toàn. NGƯỢC LẠI, nếu template có dùng (vd `customer_feedback_card` cần `testimonial`+`reviewer_name`, `step_process_roadmap` cần `steps`, `before_after_split` cần `tag_left`+`tag_right`), BẮT BUỘC điền đúng field đó, không được bỏ trống.
 - Ví dụ mẫu dưới đây là 1 output THẬT cho `template: "split_right"` -- 1 template KHÔNG dùng field chuyên biệt nào, nên ví dụ này CỐ TÌNH KHÔNG CÓ các key `tag_left`/`tag_right`/`rating`/`testimonial`/`reviewer_name`/`steps`/`orientation` (bỏ hẳn, không phải để null) -- hãy bắt chước ĐÚNG kiểu tối giản này, chỉ thêm lại các key đó khi template bạn chọn thực sự cần:
 {{
