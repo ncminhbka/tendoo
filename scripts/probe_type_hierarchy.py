@@ -338,6 +338,25 @@ def print_table(summ, base=None):
           f" {tot['c3']:>8} {tot['c4']:>8} {tot['squint']:>12}")
 
 
+def with_oracle_hero_parts(cases: List[tuple], only_changed: bool = False) -> List[tuple]:
+    """Cô lập LLM khỏi phép đo (GĐ 3): gắn hero_parts mà một LLM giỏi sẽ trả -- bộ tách tất định
+    `hero_markup.suggest_hero_parts` (chỉ tách khi có con số/cụm từ móc; còn lại giữ phẳng)."""
+    import copy
+
+    from tendoo_v3.hero_markup import suggest_hero_parts
+
+    out = []
+    for suite, tpl, c in cases:
+        src = c.get("plan", c)
+        parts = [] if src.get("hero_parts") else suggest_hero_parts(src.get("hero", ""))
+        if parts:
+            c = copy.deepcopy(c)
+            (c["plan"] if "plan" in c else c)["hero_parts"] = parts
+        if parts or not only_changed:
+            out.append((suite, tpl, c))
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description="Đo thứ bậc cỡ chữ thật (ROADMAP §4.1/§4.5)")
     ap.add_argument("--template", default=None)
@@ -345,10 +364,13 @@ def main():
     ap.add_argument("--compare", default=None, help="Thư mục kết quả cũ để so sánh (chứa summary.json)")
     ap.add_argument("--show", choices=["inversions", "overflows", "unknown", "squint"], default=None, help="In chi tiết case vi phạm")
     ap.add_argument("--bg", action="store_true", help="Đo thêm §4.5 điều kiện 3 (tương phản nền thật, chậm ~2x)")
+    ap.add_argument("--oracle", action="store_true", help="GĐ 3: chỉ đo các case mà 'LLM lý tưởng' (hero_markup.suggest_hero_parts) tách được hero_parts")
     ap.add_argument("--write-baseline", default=None, help="Ghi mốc squint (bánh cóc CI), vd tests/squint_baseline.json -- cần --bg")
     args = ap.parse_args()
 
     cases = load_cases(args.template)
+    if args.oracle:
+        cases = with_oracle_hero_parts(cases, only_changed=True)
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.perf_counter()
@@ -391,6 +413,7 @@ def main():
     if args.write_baseline:
         if not args.bg or args.template:
             raise SystemExit("--write-baseline cần --bg và toàn bộ template (không dùng --template)")
+        # --oracle: mốc riêng tests/squint_baseline_oracle.json cho các case có hero_parts
         Path(args.write_baseline).write_text(json.dumps(squint_baseline(summ), ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"Đã ghi mốc squint: {args.write_baseline}")
     (out_dir / "summary.json").write_text(json.dumps(summ, ensure_ascii=False, indent=2), encoding="utf-8")

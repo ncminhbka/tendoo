@@ -434,6 +434,11 @@ from tendoo_v3.icons import render_qr_code_svg, render_star_rating_svg
 # Class autofit theo cấp thị giác (DESIGN_PRINCIPLES §1.1) -- nguồn DUY NHẤT, dùng cho
 # bước giữ thứ bậc trong COMMON_AUTOFIT_JS và cho scripts/probe_type_hierarchy.py.
 # Không có menu-list/steps-grid/testimonial-quote: nội dung chính của template dạng bảng.
+# Khoảng cách Cấp 3 dưới Cấp 2 (GĐ 3, ROADMAP §4.1): Cấp 3 <= 0.8 x subhead để khác cấp rõ
+# (±20% là ngưỡng "tường chữ" C2 §4.5), nhưng không bao giờ ép dưới 13px (bài học 0A+: công
+# thức chia theo hero đẩy 575/993 chữ Cấp 3 xuống < 13px). Muốn chữ chi tiết to hơn: tăng 0.8.
+TIER3_BELOW_SUBHEAD = 0.8
+TIER3_FLOOR_PX = 13
 TIER1_CLASSES = ("hero-title", "hero-top-title")
 TIER2_CLASSES = ("subhead-title", "subhead-date", "subhead-benefit")
 TIER3_CLASSES = (
@@ -616,6 +621,8 @@ COMMON_AUTOFIT_JS = """
     // của nó, trong khi cta/store vẫn đạt trần -- đo thật còn 22/379 case đảo bậc chỉ
     // với chặn trần. Ở đây phần tử Cấp 3 nào to hơn subhead THỰC TẾ thì co về đúng
     // bằng nó. Chỉ co, không bao giờ phóng -> không thể sinh tràn mới.
+    // GĐ 3 (26/09): co về TIER3_BELOW_SUBHEAD x subhead (sàn TIER3_FLOOR_PX), không chỉ "bằng" --
+    // Cấp 3 sát cỡ subhead tạo tường chữ C2; đo 379 case: C2 214 -> 365, số chữ < 13px không đổi.
     function tendooEffFont(el) {
       let eff = 0;
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -637,8 +644,9 @@ COMMON_AUTOFIT_JS = """
     if (tier2Font > 0) {
       document.querySelectorAll('__TENDOO_TIER3_SELECTOR__').forEach(el => {
         const eff = tendooEffFont(el);
-        if (eff <= tier2Font) return;
-        const k = tier2Font / eff;
+        const tgt = Math.max(__TIER3_FLOOR_PX__, tier2Font * __TIER3_BELOW_SUBHEAD__);
+        if (eff <= tgt) return;
+        const k = tgt / eff;
         const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
         el.style.fontSize = (Math.floor(cur * k * 2) / 2) + 'px';
         // Con đã bị ghi cỡ px inline (anti-clip ở Bước 2, hoặc autofit lồng) không còn
@@ -737,6 +745,6 @@ COMMON_AUTOFIT_JS = """
   }, 150);
 })();
 </script>
-""".replace("__TENDOO_TIER2_SELECTOR__", ", ".join("." + c for c in TIER2_CLASSES)).replace(
+""".replace("__TIER3_FLOOR_PX__", str(TIER3_FLOOR_PX)).replace("__TIER3_BELOW_SUBHEAD__", str(TIER3_BELOW_SUBHEAD)).replace("__TENDOO_TIER2_SELECTOR__", ", ".join("." + c for c in TIER2_CLASSES)).replace(
     "__TENDOO_TIER3_SELECTOR__", ", ".join("." + c for c in TIER3_CLASSES)
 )

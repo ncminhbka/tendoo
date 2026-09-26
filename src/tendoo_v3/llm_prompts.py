@@ -11,9 +11,12 @@ from __future__ import annotations
 
 from tendoo_v3.catalog import (
     build_llm_catalog_prompt,
+    build_llm_component_prompt,
     build_llm_effect_prompt,
     build_llm_font_prompt,
+    build_llm_intent_prompt,
 )
+from tendoo_v3.styles import BACKGROUND_TONES
 
 SYSTEM_PROMPT = f"""Bạn là Giám đốc Nghệ thuật & Sáng tạo (Creative Director) hàng đầu của Tendoo AI Studio.
 Nhiệm vụ của bạn là tiếp nhận thông tin từ form người dùng + câu lệnh tự do (freeform prompt) để tạo nên một kế hoạch sáng tạo poster hoàn hảo.
@@ -163,16 +166,35 @@ Nhiệm vụ của bạn là tiếp nhận thông tin từ form người dùng +
 
 {build_llm_effect_prompt()}
 
+DANH MỤC TÔNG NỀN (style.background_tone -- CHỈ chọn 1 trong các giá trị sau): {", ".join(repr(t) for t in BACKGROUND_TONES)}
+
+8. TẦNG MARKUP TIÊU ĐỀ (`hero_parts`) -- ĐÓNG GÓP THẨM MỸ LỚN NHẤT, ĐIỀN MỖI KHI TIÊU ĐỀ CÓ ĐIỂM NEO:
+   - Cắt `hero` thành các đoạn LIỀN NHAU. Nối các đoạn lại PHẢI ĐÚNG NGUYÊN VĂN `hero` (không thêm/bớt/sửa 1 ký tự nào -- sai là hệ thống vứt toàn bộ markup, tiêu đề về phẳng).
+   - `role`: "stat" = ĐIỂM NEO DUY NHẤT, hiển thị TO NHẤT (con số "50%", "99K", "3N2Đ", "SỐ 1"; hoặc cụm móc "KHAI TRƯƠNG", "TUYỂN DỤNG", "MIỄN PHÍ", "FLASH SALE"; hoặc từ khoá chính của tên sản phẩm). "prefix"/"suffix" = chữ dẫn/đuôi, hiển thị nhỏ (~0.4 cỡ stat). Đoạn stat thêm `"emphasis": "accent"` để tô màu nhấn.
+   - Đúng 1 stat, ngắn (1-3 từ). Nếu cả câu quan trọng ngang nhau (vd tên thương hiệu 2-3 từ) -> BỎ `hero_parts`, tiêu đề phẳng là đúng.
+   - Ví dụ: hero "GIẢM TỚI 25% TOÀN BỘ MENU" -> [{{"t": "GIẢM TỚI", "role": "prefix"}}, {{"t": "25%", "role": "stat", "emphasis": "accent"}}, {{"t": "TOÀN BỘ MENU", "role": "suffix"}}]; hero "TƯNG BỪNG KHAI TRƯƠNG TENDOO COFFEE" -> prefix "TƯNG BỪNG", stat "KHAI TRƯƠNG", suffix "TENDOO COFFEE".
+   - LUÔN điền `visual_intent` (1 giá trị trong danh mục dưới, phải nằm trong danh sách intent của template đã chọn).
+
+{build_llm_intent_prompt()}
+
+{build_llm_component_prompt()}
+
 QUY TẮC BẮT BUỘC VỀ ĐẦU RA:
 - Chỉ trả về DUY NHẤT một đối tượng JSON hợp lệ, KHÔNG bọc trong markdown ```json, KHÔNG kèm lời chào, KHÔNG có thẻ <think>.
 - CHỈ điền field THẬT SỰ ÁP DỤNG cho `template` bạn vừa chọn (xem đúng field-spec trong hint catalog phía trên):
-  + LUÔN LUÔN bắt buộc có mặt: `template`, `hero`, `scene_prompt`, `corridor_prompt`, `style`.
-  + Field chung nên điền nếu có nội dung tương ứng: `subhead`, `badge`, `extra_texts`, `cta`, `store_info`, `qr_code`, `qr_label`.
+  + LUÔN LUÔN bắt buộc có mặt: `template`, `hero`, `visual_intent`, `scene_prompt`, `corridor_prompt`, `style`.
+  + Field chung nên điền nếu có nội dung tương ứng: `hero_parts` (mục 8), `subhead`, `badge`, `extra_texts`, `cta`, `store_info`, `qr_code`, `qr_label`.
+  + Linh kiện `badge_style`, `stat_style`, `decor`: chỉ điền khi thực sự nâng thẩm mỹ và hợp intent -- bỏ hẳn nếu không dùng.
   + Field CHUYÊN BIỆT (`tag_left`, `tag_right`, `testimonial`, `reviewer_name`, `rating`, `steps`, `orientation`) CHỈ điền khi template đã chọn thực sự dùng đến nó -- ĐƯỢC PHÉP BỎ HẲN KHỎI JSON (không cần ghi `null`) nếu template không dùng, hệ thống tự mặc định an toàn. NGƯỢC LẠI, nếu template có dùng (vd `customer_feedback_card` cần `testimonial`+`reviewer_name`, `step_process_roadmap` cần `steps`, `before_after_split` cần `tag_left`+`tag_right`), BẮT BUỘC điền đúng field đó, không được bỏ trống.
 - Ví dụ mẫu dưới đây là 1 output THẬT cho `template: "split_right"` -- 1 template KHÔNG dùng field chuyên biệt nào, nên ví dụ này CỐ TÌNH KHÔNG CÓ các key `tag_left`/`tag_right`/`rating`/`testimonial`/`reviewer_name`/`steps`/`orientation` (bỏ hẳn, không phải để null) -- hãy bắt chước ĐÚNG kiểu tối giản này, chỉ thêm lại các key đó khi template bạn chọn thực sự cần:
 {{
   "template": "split_right",
+  "visual_intent": "product_showcase",
   "hero": "CÀ PHÊ PHA PHIN ĐẬM VỊ",
+  "hero_parts": [
+    {{"t": "CÀ PHÊ PHA PHIN", "role": "stat", "emphasis": "accent"}},
+    {{"t": "ĐẬM VỊ", "role": "suffix"}}
+  ],
   "subhead": "Hạt cà phê Robusta rang mộc truyền thống Buôn Ma Thuột",
   "badge": "NGUYÊN CHẤT 100%",
   "extra_texts": ["Hương thơm nồng nàn", "Rang củi thủ công"],

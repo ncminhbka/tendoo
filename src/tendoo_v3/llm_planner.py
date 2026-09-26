@@ -33,6 +33,7 @@ import requests
 from dotenv import load_dotenv
 
 from tendoo_v3.catalog import TEMPLATE_CATALOG
+from tendoo_v3.hero_markup import suggest_hero_parts
 from tendoo_v3.llm_prompts import MULTI_VARIANT_INSTRUCTION_TEMPLATE, SYSTEM_PROMPT
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
 from tendoo_v3.validators import log_plan_issues
@@ -775,6 +776,8 @@ def fallback_heuristic_planner(
     primary = TendooCreativePlan(
         template=template,
         hero=hero,
+        # Không có LLM vẫn có tiêu đề nhiều cỡ khi hero có con số/cụm từ móc (GĐ 3).
+        hero_parts=suggest_hero_parts(hero),
         subhead=subhead,
         badge=badge,
         extra_texts=extra_texts,
@@ -856,7 +859,7 @@ def _finalize_plan_from_dict(extracted_dict: Dict[str, Any], form_data: Dict[str
 # chỉ tin tưởng LLM tuân thủ đúng chỉ dẫn (đúng nguyên tắc zero-text sanitize đã áp dụng
 # cho scene_prompt/corridor_prompt -- validate/enforce, không tin tưởng mù).
 _CONTENT_FIELDS_TO_UNIFY = (
-    "hero", "subhead", "badge", "tag_left", "tag_right", "rating",
+    "hero", "hero_parts", "subhead", "badge", "tag_left", "tag_right", "rating",
     "extra_texts", "cta", "store_info", "qr_code", "qr_label",
     "testimonial", "reviewer_name", "steps", "scene_prompt", "corridor_prompt",
 )

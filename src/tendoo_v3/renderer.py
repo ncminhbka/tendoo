@@ -23,7 +23,7 @@ from PIL import Image
 from tendoo_core.colors import ensure_contrast
 from tendoo_core.fonts import resolve_font
 from tendoo_core.poster_renderer import PosterRenderer
-from tendoo_v3.catalog import TEMPLATE_CATALOG
+from tendoo_v3.catalog import INTENT_PROFILES, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import build_components, enrich_hero_parts
 from tendoo_v3.geometry import compute_density_score, geometry_drivers, get_zones
 from tendoo_v3.icons import (
@@ -37,6 +37,8 @@ from tendoo_v3.icons import (
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
 from tendoo_v3.styles import (
     COMMON_AUTOFIT_JS,
+    TIER3_BELOW_SUBHEAD,
+    TIER3_FLOOR_PX,
     get_adaptive_palette,
     get_effect_css,
     svg_filter_defs,
@@ -97,6 +99,7 @@ def _apply_tier_caps(
     if not plan.subhead:
         return budget
     cap = subhead_max_f if subhead_max_f is not None else budget["subhead"]["max_font"]
+    cap = max(TIER3_FLOOR_PX, cap * TIER3_BELOW_SUBHEAD)  # cùng quy tắc với Bước 3 autofit JS
     for key in _TIER3_BUDGET_KEYS:
         entry = budget.get(key)
         if not isinstance(entry, dict) or "max_font" not in entry:
@@ -1392,7 +1395,26 @@ _TEMPLATE_BUDGETS = {
 
 def compute_template_budget(template: str, plan: TendooCreativePlan, zones, width: int, height: int) -> Dict[str, Any]:
     """Ngân sách cỡ chữ cho ĐÚNG template đang render (trước đây tính cả 14 mỗi lần render)."""
-    return _TEMPLATE_BUDGETS[template](plan, zones, width, height)
+    budget = _TEMPLATE_BUDGETS[template](plan, zones, width, height)
+    return _apply_intent_subhead_cap(budget, template, plan)
+
+
+def _apply_intent_subhead_cap(budget: Dict[str, Any], template: str, plan: TendooCreativePlan) -> Dict[str, Any]:
+    """Trần subhead = trần hero ÷ ngưỡng tương phản của intent (ROADMAP §3.4 lần 2, GĐ 3) -- CHỈ
+    khi hero có điểm neo `stat` (Luật 2). Đo 80 case có hero_parts (oracle LLM, 26/09): đạt đủ 4
+    điều kiện squint 17 -> 41, subhead nhỏ nhất vẫn 15px. Hero PHẲNG thì không áp: đã đo ở GĐ 1,
+    hero không to lên nên chỉ làm subhead nhỏ đi (C2 tường chữ 213 -> 138)."""
+    hero_max = (budget.get("hero") or {}).get("max_font")
+    sub = budget.get("subhead")
+    if not hero_max or not isinstance(sub, dict) or not any(p.get("role") == "stat" for p in plan.hero_parts):
+        return budget
+    target = INTENT_PROFILES[resolve_intent(template, plan.visual_intent)]["contrast_target"]
+    # Đã thử sàn = 13/0.8 cho trần này: đạt-cả-4 80 -> 78 trên bộ oracle -> bỏ. Tường chữ còn lại
+    # của recruitment_board (C2 22 -> 10) KHÔNG do trần: hero_parts xuống dòng chiếm chiều cao,
+    # subhead co còn 15.5px vì hết chỗ (trần tính ra 20.8px chưa chạm) -- ROADMAP §8.
+    sub["max_font"] = min(sub["max_font"], round(hero_max / target, 1))
+    sub["min_font"] = min(sub["min_font"], sub["max_font"])
+    return _apply_tier_caps(budget, plan, subhead_max_f=sub["max_font"])
 
 
 def compute_plan_content_density(plan: TendooCreativePlan, store_items: Optional[list] = None) -> float:

@@ -14,22 +14,27 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
-from probe_type_hierarchy import SQUINT_KEYS, load_cases, measure_case, squint_baseline, summarize  # noqa: E402
+from probe_type_hierarchy import SQUINT_KEYS, load_cases, measure_case, squint_baseline, summarize, with_oracle_hero_parts  # noqa: E402
 
 pytestmark = pytest.mark.e2e
 
 
 @pytest.fixture(scope="module")
-def measured():
+def page():
+    """Một trình duyệt cho cả module (hai `sync_playwright()` lồng nhau thì Playwright báo lỗi)."""
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         try:
-            page = browser.new_page()
-            yield [{**measure_case(page, case, tpl, with_bg=True), "suite": suite} for suite, tpl, case in load_cases(None)]
+            yield browser.new_page()
         finally:
             browser.close()
+
+
+@pytest.fixture(scope="module")
+def measured(page):
+    return [{**measure_case(page, case, tpl, with_bg=True), "suite": suite} for suite, tpl, case in load_cases(None)]
 
 
 def test_all_suite_cases_measured(measured):
@@ -51,13 +56,14 @@ def _by_id(measured, case_id, suite):
 
 
 # Cổng 4 (GĐ 0C). Phân loại dưới đây đã đối chiếu bằng MẮT trên ảnh render ngày 26/09:
-# sbh_11 cắt mất nửa dòng email ở dải đỉnh; lframe_06 và ba_02 vượt ngân sách nhưng hiển thị đủ.
+# sbh_11 cắt mất nửa dòng email ở dải đỉnh; lframe_06 (và ba_02 trước GĐ 3) vượt ngân sách nhưng hiển thị đủ.
 def test_gate4_classifies_verified_cases(measured):
     sbh = _by_id(measured, "sbh_11_16x9_heavy", "test_sandwich_bottom_heavy_suite.json")
     assert "store-info-row:clipped" in sbh["overflow"]
     assert "freetext-block:spill" in sbh["overflow"]
     assert _by_id(measured, "lframe_06_9x16_light_left", "test_l_frame_showcase_suite.json")["overflow"] == ["store-details-row:spill"]
-    assert _by_id(measured, "ba_02_9x16_left_dental", "test_before_after_split_suite.json")["overflow"] == ["store-info-row:spill"]
+    # ba_02 hết vượt ngân sách từ GĐ 3 (Cấp 3 <= 0.8 x subhead làm hotline nhỏ lại, vừa khung).
+    assert _by_id(measured, "ba_02_9x16_left_dental", "test_before_after_split_suite.json")["overflow"] == []
 
 
 # Mất chữ ĐÃ BIẾT, chưa sửa (ROADMAP §8). Case mới xuất hiện -> hồi quy thật. Case biến mất
@@ -106,3 +112,29 @@ def test_squint_does_not_regress(measured):
         for tpl, b in base.items() for k in SQUINT_KEYS if now.get(tpl, {}).get(k, 0) < b[k]
     ]
     assert not worse, "Squint test tệ đi so với mốc: " + "; ".join(worse)
+
+
+# GĐ 3 -- BÁNH CÓC CHO TIÊU ĐỀ NHIỀU CỠ: các case mà "LLM lý tưởng" (hero_markup.suggest_hero_parts)
+# tách được hero_parts, đo với trần subhead theo intent. Mốc 26/09: 80 case, đạt cả 4 = 41
+# (tiêu đề phẳng cùng các case đó: 17). Cập nhật:
+#   probe_type_hierarchy.py --bg --oracle --write-baseline tests/squint_baseline_oracle.json
+BASELINE_ORACLE = Path(__file__).resolve().parent / "squint_baseline_oracle.json"
+
+
+@pytest.fixture(scope="module")
+def measured_oracle(page):
+    return [{**measure_case(page, case, tpl, with_bg=True), "suite": suite}
+            for suite, tpl, case in with_oracle_hero_parts(load_cases(None), only_changed=True)]
+
+
+def test_squint_with_hero_parts_does_not_regress(measured_oracle):
+    import json
+
+    base = json.loads(BASELINE_ORACLE.read_text(encoding="utf-8"))
+    now = squint_baseline(summarize(measured_oracle))
+    worse = [
+        f"{tpl}.{k}: {now[tpl][k]} < mốc {b[k]}"
+        for tpl, b in base.items() for k in SQUINT_KEYS if now.get(tpl, {}).get(k, 0) < b[k]
+    ]
+    assert not worse, "Squint (hero_parts) tệ đi so với mốc: " + "; ".join(worse)
+    assert not [r["id"] for r in measured_oracle if r["text_lost"]], "hero_parts gây mất chữ"
