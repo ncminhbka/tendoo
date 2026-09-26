@@ -9,11 +9,11 @@
  },
  "grand_opening_banner": {
   "n": 9,
-  "c1": 5,
-  "c2": 8,
+  "c1": 7,
+  "c2": 9,
   "c3": 9,
   "c4": 9,
-  "squint": 5
+  "squint": 7
  },
  "sandwich_bottom_heavy": {
   "n": 5,

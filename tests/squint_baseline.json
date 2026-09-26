@@ -63,6 +63,14 @@
   "c4": 25,
   "squint": 17
  },
+ "quote_spotlight": {
+  "n": 16,
+  "c1": 15,
+  "c2": 16,
+  "c3": 16,
+  "c4": 16,
+  "squint": 15
+ },
  "recruitment_board": {
   "n": 22,
   "c1": 13,

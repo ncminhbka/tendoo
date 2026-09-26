@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ hero }}</title>
+  <style>
+    {{ font_face_css }}
+    {% include "components/ui_components.css" %}
+
+    /* QUOTE SPOTLIGHT (GĐ 6B, ROADMAP §8): thẻ đánh giá theo thực hành thiết kế -- CÂU TRÍCH DẪN là
+       tâm điểm, chữ to nhất (Cấp 1: .quote-hero); sao + nhãn + tên người + CTA/cửa hàng nhỏ (Cấp 3).
+       Cố ý KHÔNG có subhead: ở customer_feedback_card subhead kẹt giữa câu trích dẫn và chữ nhỏ ->
+       hoặc tương phản điểm neo thấp (C1 1/33), hoặc thu nhỏ thì thành tường chữ với Cấp 3. */
+    :root {
+      --headline-font: {{ headline_font_css }};
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+      font-family: var(--headline-font, 'Inter', 'Be Vietnam Pro', sans-serif);
+      background: #0B0F19;
+      position: relative;
+    }
+
+    .poster-canvas {
+      position: relative;
+      width: {{ width }}px;
+      height: {{ height }}px;
+      overflow: hidden;
+    }
+
+    .bg-layer {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{ bg_data_uri }}');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    .quote-column {
+      position: absolute;
+      left: {{ zones.column.x1 }}px;
+      top: {{ zones.column.y1 }}px;
+      width: {{ zones.column.width }}px;
+      height: {{ zones.column.height }}px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 32px 28px;
+      background: transparent;
+    }
+
+    .quote-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .stars-wrap svg { height: 1.1em; width: auto; }
+    .stars-wrap { font-size: 18px; line-height: 0; }
+
+    .kicker-tag {
+      font-family: var(--ui-font);
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: {{ header_text_secondary }};
+      text-shadow: {{ '0 1px 3px rgba(0, 0, 0, 0.7)' if header_is_dark else 'none' }};
+      line-height: 1.2;
+    }
+
+    .quote-hero {
+      position: relative;
+      font-family: var(--headline-font);
+      font-weight: 700;
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+      width: 100%;
+      color: {{ header_text_primary }};
+      text-shadow: {{ '0 2px 14px rgba(0, 0, 0, 0.85)' if header_is_dark else 'none' }};
+      padding-top: 0.55em;  /* chỗ cho dấu ngoặc kép lớn */
+    }
+
+    /* Dấu ngoặc kép trang trí: pseudo-element (không phải text node -> không tính vào đo chữ),
+       màu nhấn 10% theo Luật 3, cỡ theo em để co giãn cùng autofit. */
+    .quote-hero::before {
+      content: "\201C";
+      position: absolute;
+      left: 0;
+      top: -0.12em;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 2.1em;
+      line-height: 1;
+      color: {{ theme_color }};
+      opacity: 0.9;
+      text-shadow: none;
+    }
+
+    .reviewer-info {
+      font-family: var(--ui-font);
+      font-weight: 700;
+      color: {{ header_text_secondary }};
+      text-shadow: {{ '0 1px 3px rgba(0, 0, 0, 0.7)' if header_is_dark else 'none' }};
+      line-height: 1.3;
+      width: 100%;
+    }
+
+    .bottom-stack {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-end;
+      gap: 12px;
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    .bottom-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cta-btn {
+      font-family: var(--ui-font);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+      padding: 0.5em 1.25em;
+      background: {{ palette.cta_bg }};
+      color: {{ palette.cta_text }};
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-radius: 9999px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      line-height: 1.2;
+      flex-shrink: 0;
+      white-space: normal;
+      text-shadow: none;
+    }
+    .cta-btn svg { width: 1.15em; height: 1.15em; }
+
+    .store-info-col {
+      font-family: var(--ui-font);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      width: 100%;
+      max-width: none;
+    }
+
+    .store-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.26em 0.8em;
+      background: rgba(10, 15, 28, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 9999px;
+      font-size: inherit;
+      font-weight: 600;
+      color: #E2E8F0;
+      max-width: 100%;
+      line-height: 1.2;
+    }
+    .store-item svg { width: 1.15em; height: 1.15em; color: {{ palette.on_card_accent }}; flex-shrink: 0; }
+
+    {% if orientation == 'right' and not is_portrait_narrow %}
+    .quote-column { align-items: flex-end; text-align: right; }
+    .quote-meta, .bottom-stack { justify-content: flex-end; }
+    .bottom-actions, .store-info-col { align-items: flex-end; }
+    .quote-hero::before { left: auto; right: 0; }  /* lệch âm ra mép phải làm autofit tưởng tràn (hero 57 -> 30px) */
+    {% endif %}
+
+    {% if is_portrait_narrow %}
+    .quote-column { padding: 24px 22px 28px; gap: 14px; }
+    {% endif %}
+
+    {% if is_landscape_wide %}
+    .quote-column { padding: 22px 26px; gap: 12px; }
+    {% endif %}
+  </style>
+</head>
+{% from "components/ui_macros.html" import render_decor_layer, render_store, render_cta with context %}
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    {{ render_decor_layer() }}
+    <div class="quote-column">
+      <div class="quote-meta">
+        {% if stars_svg %}<div class="stars-wrap">{{ stars_svg }}</div>{% endif %}
+        <div class="kicker-tag" data-autofit data-min-font="{{ budget.kicker.min_font }}" data-max-font="{{ budget.kicker.max_font }}" data-max-height="{{ budget.kicker.max_h }}">{{ hero }}</div>
+      </div>
+
+      <div class="quote-hero" data-autofit data-min-font="{{ budget.hero.min_font }}" data-max-font="{{ budget.hero.max_font }}" data-max-height="{{ budget.hero.max_h }}">{{ testimonial or hero }}</div>
+
+      {% if reviewer_name %}
+      <div class="reviewer-info" data-autofit data-min-font="{{ budget.reviewer.min_font }}" data-max-font="{{ budget.reviewer.max_font }}" data-max-height="{{ budget.reviewer.max_h }}">— {{ reviewer_name }}</div>
+      {% endif %}
+
+      {% if qr_svg or cta or store_items or store_info %}
+      <div class="bottom-stack">
+        {% if qr_svg and orientation != 'right' %}<div>{{ qr_svg }}</div>{% endif %}
+        <div class="bottom-actions">
+          {{ render_cta(cta, budget=budget.cta, arrow=('left' if orientation == 'right' else 'right')) }}
+          {{ render_store(store_items, store_info, budget=budget.store, is_col=true, bare_single=true) }}
+        </div>
+        {% if qr_svg and orientation == 'right' %}<div>{{ qr_svg }}</div>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {{ autofit_js }}
+</body>
+</html>

@@ -1,0 +1,362 @@
+[
+ {
+  "id": "quote_01_1x1_left_spa",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "left",
+   "hero": "ĐÁNH GIÁ KHÁCH HÀNG",
+   "testimonial": "Da tôi sáng mịn hẳn chỉ sau 3 buổi.",
+   "reviewer_name": "Ngọc Lan - Khách hàng thân thiết",
+   "rating": 5,
+   "style": {
+    "font": "playfair",
+    "theme_color": "#E11D48",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "cta": "ĐẶT LỊCH NGAY"
+  }
+ },
+ {
+  "id": "quote_02_9x16_right_spa",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "right",
+   "hero": "ĐÁNH GIÁ KHÁCH HÀNG",
+   "testimonial": "Da tôi sáng mịn hẳn chỉ sau 3 buổi.",
+   "reviewer_name": "Ngọc Lan - Khách hàng thân thiết",
+   "rating": 5,
+   "style": {
+    "font": "playfair",
+    "theme_color": "#E11D48",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh"
+  }
+ },
+ {
+  "id": "quote_03_16x9_left_spa",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "left",
+   "hero": "ĐÁNH GIÁ KHÁCH HÀNG",
+   "testimonial": "Da tôi sáng mịn hẳn chỉ sau 3 buổi.",
+   "reviewer_name": "Ngọc Lan - Khách hàng thân thiết",
+   "rating": 5,
+   "style": {
+    "font": "playfair",
+    "theme_color": "#E11D48",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "cta": "ĐẶT LỊCH NGAY",
+   "store_info": "Hotline: 1900 6868 | 12 Lý Thường Kiệt, Hà Nội"
+  }
+ },
+ {
+  "id": "quote_04_4x5_right_spa",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "right",
+   "hero": "ĐÁNH GIÁ KHÁCH HÀNG",
+   "testimonial": "Da tôi sáng mịn hẳn chỉ sau 3 buổi.",
+   "reviewer_name": "Ngọc Lan - Khách hàng thân thiết",
+   "rating": 5,
+   "style": {
+    "font": "playfair",
+    "theme_color": "#E11D48",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "store_info": "Hotline: 1900 6868 | 12 Lý Thường Kiệt, Hà Nội",
+   "qr_code": "https://tendoo.ai/review",
+   "qr_label": "XEM REVIEW"
+  }
+ },
+ {
+  "id": "quote_05_1x1_right_dental",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "right",
+   "hero": "KHÁCH HÀNG NÓI GÌ",
+   "testimonial": "Bác sĩ nhẹ tay, tư vấn kỹ, niềng răng xong tôi tự tin cười mỗi ngày.",
+   "reviewer_name": "Minh Anh - Nhân viên văn phòng",
+   "rating": 5,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#0EA5E9",
+    "text_effect": "shadow",
+    "background_tone": "dark_luxury"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "cta": "ĐẶT LỊCH NGAY"
+  }
+ },
+ {
+  "id": "quote_06_9x16_left_dental",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "left",
+   "hero": "KHÁCH HÀNG NÓI GÌ",
+   "testimonial": "Bác sĩ nhẹ tay, tư vấn kỹ, niềng răng xong tôi tự tin cười mỗi ngày.",
+   "reviewer_name": "Minh Anh - Nhân viên văn phòng",
+   "rating": 5,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#0EA5E9",
+    "text_effect": "shadow",
+    "background_tone": "dark_luxury"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh"
+  }
+ },
+ {
+  "id": "quote_07_16x9_right_dental",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "right",
+   "hero": "KHÁCH HÀNG NÓI GÌ",
+   "testimonial": "Bác sĩ nhẹ tay, tư vấn kỹ, niềng răng xong tôi tự tin cười mỗi ngày.",
+   "reviewer_name": "Minh Anh - Nhân viên văn phòng",
+   "rating": 5,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#0EA5E9",
+    "text_effect": "shadow",
+    "background_tone": "dark_luxury"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "cta": "ĐẶT LỊCH NGAY",
+   "store_info": "Hotline: 1900 6868 | 12 Lý Thường Kiệt, Hà Nội"
+  }
+ },
+ {
+  "id": "quote_08_4x5_left_dental",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "left",
+   "hero": "KHÁCH HÀNG NÓI GÌ",
+   "testimonial": "Bác sĩ nhẹ tay, tư vấn kỹ, niềng răng xong tôi tự tin cười mỗi ngày.",
+   "reviewer_name": "Minh Anh - Nhân viên văn phòng",
+   "rating": 5,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#0EA5E9",
+    "text_effect": "shadow",
+    "background_tone": "dark_luxury"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "store_info": "Hotline: 1900 6868 | 12 Lý Thường Kiệt, Hà Nội",
+   "qr_code": "https://tendoo.ai/review",
+   "qr_label": "XEM REVIEW"
+  }
+ },
+ {
+  "id": "quote_09_1x1_left_coffee",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "left",
+   "hero": "CẢM NHẬN CỦA KHÁCH",
+   "testimonial": "Không gian yên tĩnh, cà phê đậm vị Cầu Đất, nhân viên nhớ tên từng khách quen. Tôi làm việc ở đây mỗi sáng thứ bảy.",
+   "reviewer_name": "Hoàng Nam - Freelancer",
+   "rating": 5,
+   "style": {
+    "font": "montserrat",
+    "theme_color": "#D97706",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "cta": "ĐẶT LỊCH NGAY"
+  }
+ },
+ {
+  "id": "quote_10_9x16_right_coffee",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "right",
+   "hero": "CẢM NHẬN CỦA KHÁCH",
+   "testimonial": "Không gian yên tĩnh, cà phê đậm vị Cầu Đất, nhân viên nhớ tên từng khách quen. Tôi làm việc ở đây mỗi sáng thứ bảy.",
+   "reviewer_name": "Hoàng Nam - Freelancer",
+   "rating": 5,
+   "style": {
+    "font": "montserrat",
+    "theme_color": "#D97706",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh"
+  }
+ },
+ {
+  "id": "quote_11_16x9_left_coffee",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "left",
+   "hero": "CẢM NHẬN CỦA KHÁCH",
+   "testimonial": "Không gian yên tĩnh, cà phê đậm vị Cầu Đất, nhân viên nhớ tên từng khách quen. Tôi làm việc ở đây mỗi sáng thứ bảy.",
+   "reviewer_name": "Hoàng Nam - Freelancer",
+   "rating": 5,
+   "style": {
+    "font": "montserrat",
+    "theme_color": "#D97706",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "cta": "ĐẶT LỊCH NGAY",
+   "store_info": "Hotline: 1900 6868 | 12 Lý Thường Kiệt, Hà Nội"
+  }
+ },
+ {
+  "id": "quote_12_4x5_right_coffee",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "right",
+   "hero": "CẢM NHẬN CỦA KHÁCH",
+   "testimonial": "Không gian yên tĩnh, cà phê đậm vị Cầu Đất, nhân viên nhớ tên từng khách quen. Tôi làm việc ở đây mỗi sáng thứ bảy.",
+   "reviewer_name": "Hoàng Nam - Freelancer",
+   "rating": 5,
+   "style": {
+    "font": "montserrat",
+    "theme_color": "#D97706",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "store_info": "Hotline: 1900 6868 | 12 Lý Thường Kiệt, Hà Nội",
+   "qr_code": "https://tendoo.ai/review",
+   "qr_label": "XEM REVIEW"
+  }
+ },
+ {
+  "id": "quote_13_1x1_right_fitness",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "right",
+   "hero": "HỌC VIÊN CHIA SẺ",
+   "testimonial": "Giảm 8kg sau 12 tuần nhờ HLV kèm sát từng buổi.",
+   "reviewer_name": "Thu Trang - Học viên",
+   "rating": 5,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#22C55E",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "cta": "ĐẶT LỊCH NGAY"
+  }
+ },
+ {
+  "id": "quote_14_9x16_left_fitness",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "left",
+   "hero": "HỌC VIÊN CHIA SẺ",
+   "testimonial": "Giảm 8kg sau 12 tuần nhờ HLV kèm sát từng buổi.",
+   "reviewer_name": "Thu Trang - Học viên",
+   "rating": 5,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#22C55E",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh"
+  }
+ },
+ {
+  "id": "quote_15_16x9_right_fitness",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "right",
+   "hero": "HỌC VIÊN CHIA SẺ",
+   "testimonial": "Giảm 8kg sau 12 tuần nhờ HLV kèm sát từng buổi.",
+   "reviewer_name": "Thu Trang - Học viên",
+   "rating": 5,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#22C55E",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "cta": "ĐẶT LỊCH NGAY",
+   "store_info": "Hotline: 1900 6868 | 12 Lý Thường Kiệt, Hà Nội"
+  }
+ },
+ {
+  "id": "quote_16_4x5_left_fitness",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "quote_spotlight",
+   "orientation": "left",
+   "hero": "HỌC VIÊN CHIA SẺ",
+   "testimonial": "Giảm 8kg sau 12 tuần nhờ HLV kèm sát từng buổi.",
+   "reviewer_name": "Thu Trang - Học viên",
+   "rating": 5,
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#22C55E",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   },
+   "scene_prompt": "Portrait of a happy customer, soft studio light, zero text",
+   "corridor_prompt": "soft bokeh",
+   "store_info": "Hotline: 1900 6868 | 12 Lý Thường Kiệt, Hà Nội",
+   "qr_code": "https://tendoo.ai/review",
+   "qr_label": "XEM REVIEW"
+  }
+ }
+]

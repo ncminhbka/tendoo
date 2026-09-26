@@ -717,6 +717,20 @@ def _menu_price_board(w: float, h: float, orientation: str = "left") -> Dict[str
     return {"content": _frac(0.0, 0.0, frac_w, 1.0, w, h)}
 
 
+
+def _quote_spotlight(w: float, h: float, orientation: str = "left") -> Dict[str, Rect]:
+    # Quote Spotlight (GĐ 6B): 1 cột chữ quanh câu trích dẫn lớn, ảnh khách hàng/sản phẩm phía đối
+    # diện. 9:16 cột 52% bề ngang quá hẹp cho câu trích dẫn to -> dải dưới full ngang (60% dưới).
+    # Tỉ lệ khởi điểm theo split_left (cột 44%) nới rộng vì câu trích dẫn dài hơn hero; đo lại
+    # bằng calibrate_capacity + probe sau khi dựng.
+    aspect = w / h
+    if aspect < 0.7:  # 9:16
+        return {"column": _frac(0.0, 0.40, 1.0, 1.0, w, h)}
+    frac_w = 0.50 if aspect >= 1.5 else 0.54
+    if orientation == "right":
+        return {"column": _frac(1.0 - frac_w, 0.0, 1.0, 1.0, w, h)}
+    return {"column": _frac(0.0, 0.0, frac_w, 1.0, w, h)}
+
 _GEOMETRY_FUNCS: Dict[str, Callable[..., Dict[str, Rect]]] = {
     "split_left": _split_left,
     "split_right": _split_right,
@@ -732,6 +746,7 @@ _GEOMETRY_FUNCS: Dict[str, Callable[..., Dict[str, Rect]]] = {
     "l_frame_showcase": _l_frame_showcase,
     "grand_opening_banner": _grand_opening_banner,
     "menu_price_board": _menu_price_board,
+    "quote_spotlight": _quote_spotlight,
 }
 
 

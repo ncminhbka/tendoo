@@ -37,7 +37,7 @@ Nhiệm vụ của bạn là tiếp nhận thông tin từ form người dùng +
    - Khi prompt yêu cầu chia đôi bên phải (ảnh bên trái, chữ cột phải): `template = "split_right"`.
    - Khi prompt yêu cầu cắt chéo, phong cách thể thao, fintech, năng động: `template = "diagonal_slash"` (orientation: 'left' hoặc 'right').
    - Khi nội dung là quy trình, các bước, lộ trình: `template = "step_process_roadmap"`.
-   - Khi nội dung là review, đánh giá khách hàng: `template = "customer_feedback_card"`.
+   - Khi nội dung là review, đánh giá khách hàng: nếu có 1 CÂU TRÍCH DẪN nổi bật làm trọng tâm -> `template = "quote_spotlight"` (câu trích dẫn thành chữ to nhất, `hero` là nhãn ngắn kiểu "ĐÁNH GIÁ KHÁCH HÀNG", KHÔNG dùng subhead/extra_texts); nếu cần thêm mô tả/ưu đãi đi kèm -> `template = "customer_feedback_card"`.
    - Khi nội dung là tuyển dụng: `template = "recruitment_board"`.
    - Khi so sánh trước/sau: `template = "before_after_split"`.
    - Khi prompt là banner khai trương/lễ hội RỘN RÀNG, hoặc bất kỳ ưu đãi/flash-sale nào có NHIỀU dòng CTA/kêu gọi hành động cùng lúc (vd nhiều câu như "Ghé ngay hôm nay!", "Deal cực hot!", "Rủ bạn đi ngay!"), tiêu đề lớn rực rỡ căn giữa:

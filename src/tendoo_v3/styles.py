@@ -439,7 +439,7 @@ from tendoo_v3.icons import render_qr_code_svg, render_star_rating_svg
 # thức chia theo hero đẩy 575/993 chữ Cấp 3 xuống < 13px). Muốn chữ chi tiết to hơn: tăng 0.8.
 TIER3_BELOW_SUBHEAD = 0.8
 TIER3_FLOOR_PX = 13
-TIER1_CLASSES = ("hero-title", "hero-top-title")
+TIER1_CLASSES = ("hero-title", "hero-top-title", "quote-hero")
 TIER2_CLASSES = ("subhead-title", "subhead-date", "subhead-benefit")
 TIER3_CLASSES = (
     "badge-pill", "badge-capsule", "kicker-tag", "kicker-capsule", "cta-btn",
@@ -743,14 +743,14 @@ COMMON_AUTOFIT_JS = """
     return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
   }
   function tendooRgba(str) {
-    const m = /rgba?\(([^)]+)\)/.exec(str || '');
+    const m = /rgba?\\(([^)]+)\\)/.exec(str || '');
     if (!m) return null;
-    const p = m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat);
+    const p = m[1].split(/[\\s,\\/]+/).filter(Boolean).map(parseFloat);
     return {rgb: [p[0], p[1], p[2]], a: p.length > 3 ? p[3] : 1};
   }
   function tendooHalo() {
     const layer = document.querySelector('.bg-layer');
-    const m = layer && /url\(["']?(.*?)["']?\)\s*$/.exec(getComputedStyle(layer).backgroundImage);
+    const m = layer && /url\\(["']?(.*?)["']?\\)\\s*$/.exec(getComputedStyle(layer).backgroundImage);
     if (!m) return Promise.resolve();
     return new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = m[1]; }).then(im => {
       if (!im) return;
@@ -838,7 +838,7 @@ COMMON_AUTOFIT_JS = """
           const halo = `0 0 1px rgba(${c},1), 0 0 2px rgba(${c},${(0.8 + 0.2 * k).toFixed(2)}), 0 0 0.12em rgba(${c},${(0.6 + 0.35 * k).toFixed(2)}), 0 0 0.3em rgba(${c},${(0.45 + 0.4 * k).toFixed(2)}), 0 0 0.6em rgba(${c},${(0.3 + 0.35 * k).toFixed(2)})`;
           const cur = getComputedStyle(host).textShadow;
           host.style.setProperty('text-shadow', halo + (cur && cur !== 'none' ? ', ' + cur : ''), 'important');
-          report.push({cls: (el.className || '').toString().trim().split(/\s+/)[0], worst: Math.round(v.worst * 100) / 100});
+          report.push({cls: (el.className || '').toString().trim().split(/\\s+/)[0], worst: Math.round(v.worst * 100) / 100});
         });
       });
       window.__tendooHalo = report;

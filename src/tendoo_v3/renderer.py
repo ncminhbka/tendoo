@@ -1338,6 +1338,22 @@ def compute_luxury_centered_card_budget(
     }, plan)
 
 
+
+def compute_quote_spotlight_budget(plan: TendooCreativePlan, column_height: float, width: int, height: int) -> Dict[str, Dict[str, float]]:
+    """Ngân sách `quote_spotlight` (GĐ 6B): câu trích dẫn (`hero` slot của autofit = .quote-hero)
+    được phần chiều cao LỚN NHẤT; mọi phần phụ là Cấp 3 với trần 15px để tương phản điểm neo
+    >= 3.0 (testimonial_trust) ngay cả khi câu trích dẫn dài co xuống ~45px. Không subhead."""
+    is_narrow = (width / height) < 0.7
+    is_wide = (width / height) >= 1.5
+    quote_share = 0.50 if is_wide else (0.52 if is_narrow else 0.56)
+    return {
+        "hero": {"max_h": round(column_height * quote_share, 1), "min_font": 22.0, "max_font": 46.0 if is_narrow else 58.0},
+        "kicker": {"max_h": 24.0, "min_font": 12.0, "max_font": 14.0},
+        "reviewer": {"max_h": 26.0, "min_font": 13.0, "max_font": 15.0},
+        "cta": {"max_h": 40.0, "min_font": 13.0, "max_font": 15.0},
+        "store": {"max_h": 60.0, "min_font": 13.0, "max_font": 14.0},
+    }
+
 def _zone_h(zones: Dict[str, Dict[str, float]], name: str, default: float) -> float:
     return zones.get(name, {}).get("height", default)
 
@@ -1386,6 +1402,8 @@ _TEMPLATE_BUDGETS = {
         plan=plan, top_cluster_height=_zone_h(z, "top_cluster", h * 0.40), width=w, height=h),
     "lifestyle_corner_pod": lambda plan, z, w, h: compute_lifestyle_corner_pod_budget(
         plan=plan, pod_height=_zone_h(z, "pod", h * 0.48), width=w, height=h),
+    "quote_spotlight": lambda plan, z, w, h: compute_quote_spotlight_budget(
+        plan=plan, column_height=_zone_h(z, "column", h), width=w, height=h),
     "customer_feedback_card": lambda plan, z, w, h: compute_customer_feedback_budget(
         plan=plan, header_height=_zone_h(z, "header", h * 0.14), card_height=_zone_h(z, "card", h * 0.32), width=w, height=h),
     "luxury_centered_card": lambda plan, z, w, h: compute_luxury_centered_card_budget(
@@ -1768,6 +1786,7 @@ HEADER_ZONE_KEY_BY_TEMPLATE: Dict[str, str] = {
     "menu_price_board": "content",
     "diagonal_slash": "content",
     "l_frame_showcase": "top_cluster",
+    "quote_spotlight": "column",
 }
 
 # Zone dùng làm mốc đo độ chói nền THẬT cho TOÀN BỘ nội dung bên trong "card" của 5

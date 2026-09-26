@@ -85,6 +85,11 @@ SPECIAL = {
     "step_process_roadmap": lambda lvl: {"steps": STEPS[: min(4, 2 + lvl // 3)]},
     "customer_feedback_card": lambda lvl: {"testimonial": "Dịch vụ tuyệt vời, nhân viên tận tâm, tôi sẽ quay lại.",
                                            "reviewer_name": "Ngọc Lan - Khách hàng thân thiết", "rating": 5},
+    # Câu trích dẫn LÀ nội dung chính -> dài dần theo thang (field testimonial không có trong LADDER).
+    "quote_spotlight": lambda lvl: {"testimonial": ["Dịch vụ tuyệt vời, tôi sẽ quay lại.",
+                                                    "Dịch vụ tuyệt vời, nhân viên tận tâm và chu đáo, tôi chắc chắn sẽ quay lại cùng gia đình.",
+                                                    "Sau ba tháng dùng liệu trình, da tôi sáng và mịn hơn hẳn. Nhân viên tận tâm, tư vấn kỹ, không ép mua thêm. Tôi đã giới thiệu cho cả nhóm bạn thân."][min(2, lvl // 4)],
+                                    "reviewer_name": "Ngọc Lan - Khách hàng thân thiết", "rating": 5},
     "before_after_split": lambda lvl: {"tag_left": "TRƯỚC", "tag_right": "SAU", "rating": 5},
 }
 
