@@ -332,12 +332,12 @@
     <div class="split-column-left">
       <div class="top-stack">
         {{ render_badge(badge) }}
-        {{ render_hero_phrase(hero, hero_parts, budget=split_budget.hero) }}
-        {{ render_subhead(subhead, budget=split_budget.subhead) }}
+        {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
+        {{ render_subhead(subhead, budget=budget.subhead) }}
       </div>
 
       <!-- FreeText Dual-Mode -->
-      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=split_budget.extra, bullet_svg=bullet_svg, row_cls='flexible-stack', pill_cls='extra-item') }}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=budget.extra, bullet_svg=bullet_svg, row_cls='flexible-stack', pill_cls='extra-item') }}
 
       <div class="bottom-stack">
         {% if is_landscape_wide %}
@@ -345,15 +345,15 @@
           <div class="bottom-col-qr">{{ qr_svg }}</div>
           {% endif %}
           <div class="bottom-col-actions">
-            {{ render_cta(cta, budget=split_budget.cta, arrow='right') }}
-            {{ render_store(store_items, store_info, budget=split_budget.store, is_col=true, bare_single=true) }}
+            {{ render_cta(cta, budget=budget.cta, arrow='right') }}
+            {{ render_store(store_items, store_info, budget=budget.store, is_col=true, bare_single=true) }}
           </div>
         {% else %}
           {% if qr_svg %}
           <div style="align-self:flex-start; margin-bottom:2px;">{{ qr_svg }}</div>
           {% endif %}
-          {{ render_cta(cta, budget=split_budget.cta, arrow='right') }}
-          {{ render_store(store_items, store_info, budget=split_budget.store, is_col=true, bare_single=true) }}
+          {{ render_cta(cta, budget=budget.cta, arrow='right') }}
+          {{ render_store(store_items, store_info, budget=budget.store, is_col=true, bare_single=true) }}
         {% endif %}
       </div>
     </div>

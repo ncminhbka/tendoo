@@ -336,16 +336,16 @@
         {% if stars_svg %}
         <div class="rating-stars">{{ stars_svg }}</div>
         {% endif %}
-        {{ render_hero_phrase(hero, hero_parts, budget=before_after_budget.hero) }}
-        {{ render_subhead(subhead, budget=before_after_budget.subhead) }}
+        {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
+        {{ render_subhead(subhead, budget=budget.subhead) }}
       </div>
       <div class="land-right-col">
         {% if qr_svg %}
         <div class="qr-col">{{ qr_svg }}</div>
         {% endif %}
         <div class="action-stack">
-          {{ render_cta(cta, budget=before_after_budget.cta, arrow='right') }}
-          {{ render_store(store_items, store_info, budget=before_after_budget.store, is_col=false, bare_single=true) }}
+          {{ render_cta(cta, budget=budget.cta, arrow='right') }}
+          {{ render_store(store_items, store_info, budget=budget.store, is_col=false, bare_single=true) }}
         </div>
       </div>
     </div>
@@ -358,12 +358,12 @@
       <div class="rating-stars">{{ stars_svg }}</div>
       {% endif %}
 
-      {{ render_hero_phrase(hero, hero_parts, budget=before_after_budget.hero) }}
+      {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
 
-      {{ render_subhead(subhead, budget=before_after_budget.subhead) }}
+      {{ render_subhead(subhead, budget=budget.subhead) }}
 
       <!-- FreeText Dual-Mode -->
-      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(before_after_budget.freetext_block if is_freetext_block else before_after_budget.freetext_pills), bullet_svg=bullet_svg) }}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(budget.freetext_block if is_freetext_block else budget.freetext_pills), bullet_svg=bullet_svg) }}
 
       {% if qr_svg or cta or store_items or store_info %}
       <div class="footer-row">
@@ -371,9 +371,9 @@
         <div class="qr-col">{{ qr_svg }}</div>
         {% endif %}
 
-        {{ render_cta(cta, budget=before_after_budget.cta, arrow='right') }}
+        {{ render_cta(cta, budget=budget.cta, arrow='right') }}
 
-        {{ render_store(store_items, store_info, budget=before_after_budget.store, is_col=false, bare_single=true) }}
+        {{ render_store(store_items, store_info, budget=budget.store, is_col=false, bare_single=true) }}
       </div>
       {% endif %}
     </div>

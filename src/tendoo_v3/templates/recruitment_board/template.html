@@ -378,9 +378,9 @@
     <div class="bg-layer"></div>
 
     <div class="recruitment-header">
-      {{ render_badge(badge, budget=recruit_budget.badge, max_w=(zones.header.width * 0.85) if zones.header else width * 0.8, cls='badge-capsule', ui_font=false) }}
-      {{ render_hero_phrase(hero, hero_parts, budget=recruit_budget.hero) }}
-      {{ render_subhead(subhead, budget=recruit_budget.subhead) }}
+      {{ render_badge(badge, budget=budget.badge, max_w=(zones.header.width * 0.85) if zones.header else width * 0.8, cls='badge-capsule', ui_font=false) }}
+      {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
+      {{ render_subhead(subhead, budget=budget.subhead) }}
     </div>
 
     <div class="board-card">
@@ -388,15 +388,15 @@
         <div class="col-title">
           <span>QUYỀN LỢI & ĐIỀU KIỆN</span>
         </div>
-        {{ render_freetext(extra_texts, extra_pills, is_block=false, budget=recruit_budget.extra, pill_cls='extra-item') }}
+        {{ render_freetext(extra_texts, extra_pills, is_block=false, budget=budget.extra, pill_cls='extra-item') }}
       </div>
 
       {% if is_portrait_narrow %}
       <div class="board-bottom-split">
         <div class="board-col-mid">
-          {{ render_cta(cta, budget=recruit_budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right'), ui_font=false) }}
+          {{ render_cta(cta, budget=budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right'), ui_font=false) }}
 
-          {{ render_store(store_items, store_info, budget=recruit_budget.store, is_col=true, bare_single=true) }}
+          {{ render_store(store_items, store_info, budget=budget.store, is_col=true, bare_single=true) }}
         </div>
 
         {% if qr_svg %}
@@ -409,9 +409,9 @@
       </div>
       {% else %}
       <div class="board-col-mid">
-        {{ render_cta(cta, budget=recruit_budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right'), ui_font=false) }}
+        {{ render_cta(cta, budget=budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right'), ui_font=false) }}
 
-        {{ render_store(store_items, store_info, budget=recruit_budget.store, is_col=true, bare_single=true) }}
+        {{ render_store(store_items, store_info, budget=budget.store, is_col=true, bare_single=true) }}
       </div>
 
       {% if qr_svg %}

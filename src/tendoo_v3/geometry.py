@@ -794,15 +794,9 @@ def get_zones(
     presence_kwarg: Dict[str, bool] = {
         flag: True if given[flag] is None else given[flag] for flag in geometry_drivers(template)
     }
-    if template == "lifestyle_corner_pod":
-        return fn(
-            float(width), float(height), orientation=orientation or "bottom_left", **density_kwarg, **presence_kwarg
-        )
-    if template in ("diagonal_slash", "l_frame_showcase", "customer_feedback_card", "before_after_split", "recruitment_board", "step_process_roadmap", "menu_price_board"):
-        return fn(float(width), float(height), orientation=orientation or "left", **density_kwarg, **presence_kwarg)
-    if template == "luxury_centered_card":
-        return fn(float(width), float(height), orientation=orientation or "center", **density_kwarg, **presence_kwarg)
-    return fn(float(width), float(height), **presence_kwarg)
+    default_orientation = TEMPLATE_CATALOG.get(template, {}).get("default_orientation")
+    orientation_kwarg = {"orientation": orientation or default_orientation} if default_orientation else {}
+    return fn(float(width), float(height), **orientation_kwarg, **density_kwarg, **presence_kwarg)
 
 
 __all__ = ["Rect", "geometry_drivers", "get_zones"]

@@ -57,7 +57,7 @@
       padding: 2px 20px 8px 8px;
       {% endif %}
       width: {{ zones.top_cluster.width if zones.top_cluster else width * 0.56 }}px;
-      max-height: {{ lframe_budget.container_max_h }}px;
+      max-height: {{ budget.container_max_h }}px;
       box-sizing: border-box;
       overflow: visible;
       z-index: 10;
@@ -300,7 +300,7 @@
       left: 18px;
       {% endif %}
       width: {{ zones.top_cluster.width if zones.top_cluster else width * 0.88 }}px;
-      max-height: {{ lframe_budget.container_max_h }}px;
+      max-height: {{ budget.container_max_h }}px;
     }
     .hero-title {
       font-size: 34px;
@@ -331,7 +331,7 @@
       left: 24px;
       {% endif %}
       width: {{ zones.top_cluster.width if zones.top_cluster else width * 0.46 }}px;
-      max-height: {{ lframe_budget.container_max_h }}px;
+      max-height: {{ budget.container_max_h }}px;
       gap: 5px;
     }
     .hero-title {
@@ -365,14 +365,14 @@
          data-max-width để JS tự đo đúng (`styles.py`'s self-width-cap, đã verify hoạt
          động chính xác cho mọi dạng width:100% lẫn auto-width/inline-flex). -->
     <div class="lframe-top-cluster">
-      {{ render_hero_phrase(hero, hero_parts, budget=lframe_budget.hero, max_w=(zones.top_cluster.width if zones.top_cluster else width * 0.56) - 28) }}
+      {{ render_hero_phrase(hero, hero_parts, budget=budget.hero, max_w=(zones.top_cluster.width if zones.top_cluster else width * 0.56) - 28) }}
 
-      {{ render_badge(badge, budget=lframe_budget.badge, cls='badge-capsule', ui_font=false) }}
+      {{ render_badge(badge, budget=budget.badge, cls='badge-capsule', ui_font=false) }}
 
-      {{ render_subhead(subhead, budget=lframe_budget.subhead, cls='subhead-benefit') }}
+      {{ render_subhead(subhead, budget=budget.subhead, cls='subhead-benefit') }}
 
       <!-- FreeText Dual-Mode -->
-      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(lframe_budget.freetext_block if is_freetext_block else lframe_budget.freetext_pills), bullet_svg=bullet_svg) }}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(budget.freetext_block if is_freetext_block else budget.freetext_pills), bullet_svg=bullet_svg) }}
     </div>
 
     <!-- Dải Đáy Ngang: Store Info Card (Trái hoặc Phải) + QR Code (Phải hoặc Trái) -->
@@ -384,7 +384,7 @@
         <div class="brand-title">{{ tag_left }}</div>
         {% endif %}
         {% if store_items %}
-        <div class="store-details-row" data-autofit data-min-font="{{ lframe_budget.store.min_font }}" data-max-font="{{ lframe_budget.store.max_font }}" data-max-width="{{ width * 0.70 }}" data-max-height="{{ lframe_budget.store.max_h }}">
+        <div class="store-details-row" data-autofit data-min-font="{{ budget.store.min_font }}" data-max-font="{{ budget.store.max_font }}" data-max-width="{{ width * 0.70 }}" data-max-height="{{ budget.store.max_h }}">
           {% for item in store_items %}
           <div class="store-detail-item">
             {{ item.icon_svg }}
@@ -393,7 +393,7 @@
           {% endfor %}
         </div>
         {% elif store_info %}
-        <div class="store-details-row" data-autofit data-min-font="{{ lframe_budget.store.min_font }}" data-max-font="{{ lframe_budget.store.max_font }}" data-max-width="{{ width * 0.70 }}" data-max-height="{{ lframe_budget.store.max_h }}">
+        <div class="store-details-row" data-autofit data-min-font="{{ budget.store.min_font }}" data-max-font="{{ budget.store.max_font }}" data-max-width="{{ width * 0.70 }}" data-max-height="{{ budget.store.max_h }}">
           <span>{{ store_info }}</span>
         </div>
         {% endif %}

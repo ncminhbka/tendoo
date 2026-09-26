@@ -338,13 +338,13 @@
     <div class="bg-layer"></div>
     <div class="menu-column">
       <div class="top-stack">
-        {{ render_badge(badge, budget=menu_budget.badge, max_w=(zones.content.width * 0.9) if zones.content else width * 0.4) }}
-        {{ render_hero_phrase(hero, hero_parts, budget=menu_budget.hero) }}
-        {{ render_subhead(subhead, budget=menu_budget.subhead) }}
+        {{ render_badge(badge, budget=budget.badge, max_w=(zones.content.width * 0.9) if zones.content else width * 0.4) }}
+        {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
+        {{ render_subhead(subhead, budget=budget.subhead) }}
       </div>
 
       {% if extra_texts %}
-      <div class="menu-list" data-autofit data-min-font="{{ menu_budget.menu_list.min_font }}" data-max-font="{{ menu_budget.menu_list.max_font }}" data-max-height="{{ menu_budget.menu_list.max_h }}">
+      <div class="menu-list" data-autofit data-min-font="{{ budget.menu_list.min_font }}" data-max-font="{{ budget.menu_list.max_font }}" data-max-height="{{ budget.menu_list.max_h }}">
         {% for line in extra_texts %}
           {% set norm_line = line.replace('–', ' - ').replace('—', ' - ') %}
           {% set parts = norm_line.rsplit(' - ', 1) if ' - ' in norm_line else [norm_line] %}
@@ -365,15 +365,15 @@
           <div class="bottom-col-qr">{{ qr_svg }}</div>
           {% endif %}
           <div class="bottom-col-actions">
-            {{ render_cta(cta, budget=menu_budget.cta) }}
-            {{ render_store(store_items, store_info, budget=menu_budget.store, is_col=true, bare_single=true) }}
+            {{ render_cta(cta, budget=budget.cta) }}
+            {{ render_store(store_items, store_info, budget=budget.store, is_col=true, bare_single=true) }}
           </div>
         {% else %}
           {% if qr_svg %}
           <div style="margin-bottom:2px;">{{ qr_svg }}</div>
           {% endif %}
-          {{ render_cta(cta, budget=menu_budget.cta) }}
-          {{ render_store(store_items, store_info, budget=menu_budget.store, is_col=true, bare_single=true) }}
+          {{ render_cta(cta, budget=budget.cta) }}
+          {{ render_store(store_items, store_info, budget=budget.store, is_col=true, bare_single=true) }}
         {% endif %}
       </div>
     </div>

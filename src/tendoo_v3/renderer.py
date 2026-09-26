@@ -1333,6 +1333,66 @@ def compute_luxury_centered_card_budget(
     }, plan)
 
 
+def _zone_h(zones: Dict[str, Dict[str, float]], name: str, default: float) -> float:
+    return zones.get(name, {}).get("height", default)
+
+
+def _sandwich_top_budget(plan, zones, w, h):
+    top = compute_sandwich_top_budget(plan, _zone_h(zones, "top", 246.0), w, h)
+    bottom = compute_sandwich_top_heavy_bottom_budget(
+        plan, _zone_h(zones, "bottom", 286.0), w, h, subhead_max_f=top["subhead"]["max_font"]
+    )
+    return {**top, "cta": bottom.get("cta", {}), "store": bottom.get("store", {}), "top": top, "bottom": bottom}
+
+
+def _sandwich_bottom_budget(plan, zones, w, h):
+    top = compute_sandwich_top_budget(plan, _zone_h(zones, "top", 246.0), w, h)
+    bottom = compute_sandwich_bottom_budget(plan, _zone_h(zones, "bottom", 286.0), w, h)
+    return {**bottom, "badge": top.get("badge", {}), "top": top, "bottom": bottom}
+
+
+def _split_budget(plan, zones, w, h):
+    if "content" not in zones:
+        return {}
+    return compute_split_budget(plan=plan, col_height=zones["content"]["height"], col_width=zones["content"]["width"], width=w, height=h)
+
+
+# BẢNG ĐĂNG KÝ NGÂN SÁCH (GĐ 0B): template -> hàm (plan, zones, w, h) -> dict ngân sách mà
+# template.html đọc qua biến `budget`. Thêm template mới = viết hàm compute_*_budget + 1 dòng
+# ở đây (test_template_registry kiểm đủ). Chiều cao mặc định là giá trị cũ khi thiếu zone.
+_TEMPLATE_BUDGETS = {
+    "sandwich_top_heavy": _sandwich_top_budget,
+    "sandwich_bottom_heavy": _sandwich_bottom_budget,
+    "split_left": _split_budget,
+    "split_right": _split_budget,
+    "step_process_roadmap": lambda plan, z, w, h: compute_step_process_roadmap_budget(
+        plan=plan, header_height=_zone_h(z, "header", h * 0.15), platform_height=_zone_h(z, "platform", h * 0.18), width=w, height=h),
+    "grand_opening_banner": lambda plan, z, w, h: compute_grand_opening_banner_budget(
+        plan=plan, header_height=_zone_h(z, "header", h * 0.30), width=w, height=h),
+    "recruitment_board": lambda plan, z, w, h: compute_recruitment_board_budget(
+        plan=plan, header_height=_zone_h(z, "header", h * 0.15), board_height=_zone_h(z, "board", h * 0.20), width=w, height=h),
+    "menu_price_board": lambda plan, z, w, h: compute_menu_price_board_budget(
+        plan=plan, content_height=_zone_h(z, "content", h), width=w, height=h),
+    "diagonal_slash": lambda plan, z, w, h: compute_diagonal_slash_budget(
+        plan=plan, content_height=_zone_h(z, "content", h), width=w, height=h),
+    "before_after_split": lambda plan, z, w, h: compute_before_after_budget(
+        plan=plan, bottom_height=_zone_h(z, "bottom", h * 0.33), width=w, height=h),
+    "l_frame_showcase": lambda plan, z, w, h: compute_l_frame_showcase_budget(
+        plan=plan, top_cluster_height=_zone_h(z, "top_cluster", h * 0.40), width=w, height=h),
+    "lifestyle_corner_pod": lambda plan, z, w, h: compute_lifestyle_corner_pod_budget(
+        plan=plan, pod_height=_zone_h(z, "pod", h * 0.48), width=w, height=h),
+    "customer_feedback_card": lambda plan, z, w, h: compute_customer_feedback_budget(
+        plan=plan, header_height=_zone_h(z, "header", h * 0.14), card_height=_zone_h(z, "card", h * 0.32), width=w, height=h),
+    "luxury_centered_card": lambda plan, z, w, h: compute_luxury_centered_card_budget(
+        plan=plan, card_height=_zone_h(z, "card", h * 0.72), width=w, height=h),
+}
+
+
+def compute_template_budget(template: str, plan: TendooCreativePlan, zones, width: int, height: int) -> Dict[str, Any]:
+    """Ngân sách cỡ chữ cho ĐÚNG template đang render (trước đây tính cả 14 mỗi lần render)."""
+    return _TEMPLATE_BUDGETS[template](plan, zones, width, height)
+
+
 def compute_plan_content_density(plan: TendooCreativePlan, store_items: Optional[list] = None) -> float:
     """Bọc `geometry.py::compute_density_score()` để đọc field trực tiếp từ 1
     TendooCreativePlan -- dùng chung bởi `build_template_html()` (tính CSS) VÀ
@@ -1958,98 +2018,7 @@ def build_template_html(
     # Phân loại tỉ lệ và ngân sách dải đỉnh
     is_portrait_narrow = (width / height) < 0.7  # 9:16
     is_landscape_wide = (width / height) >= 1.5   # 16:9
-    top_height = zones.get("top", {}).get("height", 246.0)
-    top_budget = compute_sandwich_top_budget(plan, top_height, width, height)
-    bottom_height = zones.get("bottom", {}).get("height", 286.0)
-    if tpl_name == "sandwich_top_heavy":
-        bottom_budget = compute_sandwich_top_heavy_bottom_budget(
-            plan, bottom_height, width, height, subhead_max_f=top_budget["subhead"]["max_font"]
-        )
-    else:
-        bottom_budget = compute_sandwich_bottom_budget(plan, bottom_height, width, height)
-
-    split_budget = None
-    if tpl_name in ("split_left", "split_right") and "content" in zones:
-        split_budget = compute_split_budget(
-            plan=plan,
-            col_height=zones["content"]["height"],
-            col_width=zones["content"]["width"],
-            width=width,
-            height=height,
-        )
-
-    step_budget = compute_step_process_roadmap_budget(
-        plan=plan,
-        header_height=zones.get("header", {}).get("height", height * 0.15),
-        platform_height=zones.get("platform", {}).get("height", height * 0.18),
-        width=width,
-        height=height,
-    )
-
-    open_budget = compute_grand_opening_banner_budget(
-        plan=plan,
-        header_height=zones.get("header", {}).get("height", height * 0.30),
-        width=width,
-        height=height,
-    )
-
-    recruit_budget = compute_recruitment_board_budget(
-        plan=plan,
-        header_height=zones.get("header", {}).get("height", height * 0.15),
-        board_height=zones.get("board", {}).get("height", height * 0.20),
-        width=width,
-        height=height,
-    )
-
-    menu_budget = compute_menu_price_board_budget(
-        plan=plan,
-        content_height=zones.get("content", {}).get("height", height),
-        width=width,
-        height=height,
-    )
-
-    diagonal_budget = compute_diagonal_slash_budget(
-        plan=plan,
-        content_height=zones.get("content", {}).get("height", height),
-        width=width,
-        height=height,
-    )
-
-    before_after_budget = compute_before_after_budget(
-        plan=plan,
-        bottom_height=zones.get("bottom", {}).get("height", height * 0.33),
-        width=width,
-        height=height,
-    )
-
-    lframe_budget = compute_l_frame_showcase_budget(
-        plan=plan,
-        top_cluster_height=zones.get("top_cluster", {}).get("height", height * 0.40),
-        width=width,
-        height=height,
-    )
-
-    lifestyle_budget = compute_lifestyle_corner_pod_budget(
-        plan=plan,
-        pod_height=zones.get("pod", {}).get("height", height * 0.48),
-        width=width,
-        height=height,
-    )
-
-    feedback_budget = compute_customer_feedback_budget(
-        plan=plan,
-        header_height=zones.get("header", {}).get("height", height * 0.14),
-        card_height=zones.get("card", {}).get("height", height * 0.32),
-        width=width,
-        height=height,
-    )
-
-    luxury_budget = compute_luxury_centered_card_budget(
-        plan=plan,
-        card_height=zones.get("card", {}).get("height", height * 0.72),
-        width=width,
-        height=height,
-    )
+    budget = compute_template_budget(tpl_name, plan, zones, width, height)
 
     # Phân loại FreeText: dạng Bullet / Block văn bản vs Pills ngắn.
     # Trước đây dùng any() -- chỉ 1 dòng dài/nhiều từ trong cả mảng cũng ép TOÀN BỘ
@@ -2076,51 +2045,9 @@ def build_template_html(
         logger.error(f"[Renderer] Không nạp được template '{template_file}' ({e!r}) -> dùng sandwich_top_heavy thay thế")
         jinja_tpl = _JINJA_ENV.get_template("sandwich_top_heavy/template.html")
 
-    # Unified budget mapping for all templates
-    current_budget = {}
-    if tpl_name == "sandwich_top_heavy":
-        current_budget = {
-            **top_budget,
-            "cta": bottom_budget.get("cta", {}),
-            "store": bottom_budget.get("store", {}),
-            "top": top_budget,
-            "bottom": bottom_budget,
-        }
-    elif tpl_name == "sandwich_bottom_heavy":
-        current_budget = {
-            **bottom_budget,
-            "badge": top_budget.get("badge", {}),
-            "top": top_budget,
-            "bottom": bottom_budget,
-        }
-    elif tpl_name in ("split_left", "split_right"):
-        current_budget = split_budget or {}
-    elif tpl_name == "step_process_roadmap":
-        current_budget = step_budget
-    elif tpl_name == "grand_opening_banner":
-        current_budget = open_budget
-    elif tpl_name == "recruitment_board":
-        current_budget = recruit_budget
-    elif tpl_name == "menu_price_board":
-        current_budget = menu_budget
-    elif tpl_name == "diagonal_slash":
-        current_budget = diagonal_budget
-    elif tpl_name == "before_after_split":
-        current_budget = before_after_budget
-    elif tpl_name == "l_frame_showcase":
-        current_budget = lframe_budget
-    elif tpl_name == "lifestyle_corner_pod":
-        current_budget = lifestyle_budget
-    elif tpl_name == "customer_feedback_card":
-        current_budget = feedback_budget
-    elif tpl_name == "luxury_centered_card":
-        current_budget = luxury_budget
-    else:
-        current_budget = top_budget
-
     # 7. Render context
     context = {
-        "budget": current_budget,
+        "budget": budget,
         "width": width,
         "height": height,
         "bg_data_uri": bg_data_uri,
@@ -2160,19 +2087,6 @@ def build_template_html(
         "is_freetext_block": is_freetext_block,
         "is_portrait_narrow": is_portrait_narrow,
         "is_landscape_wide": is_landscape_wide,
-        "top_budget": top_budget,
-        "bottom_budget": bottom_budget,
-        "split_budget": split_budget,
-        "step_budget": step_budget,
-        "open_budget": open_budget,
-        "recruit_budget": recruit_budget,
-        "menu_budget": menu_budget,
-        "diagonal_budget": diagonal_budget,
-        "before_after_budget": before_after_budget,
-        "lframe_budget": lframe_budget,
-        "lifestyle_budget": lifestyle_budget,
-        "feedback_budget": feedback_budget,
-        "luxury_budget": luxury_budget,
         "type_scale_ratio": compute_type_scale_ratio(plan.style),
         "cta": plan.cta,
         "cta_icon": cta_icon,

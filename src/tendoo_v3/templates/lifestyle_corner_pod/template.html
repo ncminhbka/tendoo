@@ -357,23 +357,23 @@
 
     <div class="corner-pod">
       <div class="top-section">
-        {{ render_badge(badge, budget=lifestyle_budget.badge, max_w=(zones.pod.width * 0.9) if zones.pod else width * 0.4) }}
-        {{ render_hero_phrase(hero, hero_parts, budget=lifestyle_budget.hero) }}
-        {{ render_subhead(subhead, budget=lifestyle_budget.subhead) }}
+        {{ render_badge(badge, budget=budget.badge, max_w=(zones.pod.width * 0.9) if zones.pod else width * 0.4) }}
+        {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
+        {{ render_subhead(subhead, budget=budget.subhead) }}
       </div>
 
       <!-- FreeText Dual-Mode -->
-      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(lifestyle_budget.freetext_block if is_freetext_block else lifestyle_budget.freetext_pills), bullet_svg=bullet_svg) }}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(budget.freetext_block if is_freetext_block else budget.freetext_pills), bullet_svg=bullet_svg) }}
 
       {% if cta or qr_svg or store_items or store_info %}
       <div class="footer-row">
         <div class="cta-qr-group">
-          {{ render_cta(cta, budget=lifestyle_budget.cta, arrow=('left' if orientation in ('bottom_right', 'right', 'top_right') else 'right')) }}
+          {{ render_cta(cta, budget=budget.cta, arrow=('left' if orientation in ('bottom_right', 'right', 'top_right') else 'right')) }}
           {% if qr_svg %}
           <div class="qr-col">{{ qr_svg }}</div>
           {% endif %}
         </div>
-        {{ render_store(store_items, store_info, budget=lifestyle_budget.store, is_col=true, bare_single=true) }}
+        {{ render_store(store_items, store_info, budget=budget.store, is_col=true, bare_single=true) }}
       </div>
       {% endif %}
     </div>

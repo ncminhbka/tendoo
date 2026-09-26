@@ -426,14 +426,14 @@
     <div class="bg-layer"></div>
 
     <div class="top-header">
-      {{ render_badge(badge, budget=step_budget.badge, max_w=(zones.header.width * 0.85) if zones.header else width * 0.8) }}
-      {{ render_hero_phrase(hero, hero_parts, budget=step_budget.hero) }}
-      {{ render_subhead(subhead, budget=step_budget.subhead) }}
+      {{ render_badge(badge, budget=budget.badge, max_w=(zones.header.width * 0.85) if zones.header else width * 0.8) }}
+      {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
+      {{ render_subhead(subhead, budget=budget.subhead) }}
     </div>
 
     <div class="roadmap-platform">
       {% if is_portrait_narrow %}
-        <div class="steps-grid" data-autofit data-min-font="{{ step_budget.steps.min_font }}" data-max-font="{{ step_budget.steps.max_font }}" data-max-height="{{ step_budget.steps.max_h }}">
+        <div class="steps-grid" data-autofit data-min-font="{{ budget.steps.min_font }}" data-max-font="{{ budget.steps.max_font }}" data-max-height="{{ budget.steps.max_h }}">
           {% if steps %}
             {% for st in steps %}
             <div class="step-card">
@@ -460,9 +460,9 @@
 
         <div class="roadmap-bottom-split">
           <div class="roadmap-split-actions">
-            {{ render_cta(cta, budget=step_budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right'), ui_font=false) }}
+            {{ render_cta(cta, budget=budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right'), ui_font=false) }}
 
-            {{ render_store(store_items, store_info, budget=step_budget.store, is_col=false, bare_single=true) }}
+            {{ render_store(store_items, store_info, budget=budget.store, is_col=false, bare_single=true) }}
           </div>
 
           {% if qr_svg %}
@@ -474,7 +474,7 @@
       {% else %}
         <!-- Bố cục tiêu chuẩn 1:1, 4:5, 16:9 -->
         <div class="platform-flow-col">
-          <div class="steps-grid" data-autofit data-min-font="{{ step_budget.steps.min_font }}" data-max-font="{{ step_budget.steps.max_font }}" data-max-height="{{ step_budget.steps.max_h }}">
+          <div class="steps-grid" data-autofit data-min-font="{{ budget.steps.min_font }}" data-max-font="{{ budget.steps.max_font }}" data-max-height="{{ budget.steps.max_h }}">
             {% if steps %}
               {% for st in steps %}
               <div class="step-card">
@@ -500,9 +500,9 @@
           </div>
 
           <div class="unified-pill-bar">
-            {{ render_cta(cta, budget=step_budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right'), ui_font=false) }}
+            {{ render_cta(cta, budget=budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right'), ui_font=false) }}
 
-            {{ render_store(store_items, store_info, budget=step_budget.store, is_col=false, bare_single=true) }}
+            {{ render_store(store_items, store_info, budget=budget.store, is_col=false, bare_single=true) }}
           </div>
         </div>
 

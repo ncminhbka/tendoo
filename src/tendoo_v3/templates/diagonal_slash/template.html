@@ -498,20 +498,20 @@
 
     <div class="diagonal-content">
       <div class="top-section">
-        {{ render_badge(badge, budget=diagonal_budget.badge, max_w=(zones.content.width * 0.9) if zones.content else width * 0.4, cls='kicker-tag') }}
-        {{ render_hero_phrase(hero, hero_parts, budget=diagonal_budget.hero) }}
-        {{ render_subhead(subhead, budget=diagonal_budget.subhead) }}
+        {{ render_badge(badge, budget=budget.badge, max_w=(zones.content.width * 0.9) if zones.content else width * 0.4, cls='kicker-tag') }}
+        {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
+        {{ render_subhead(subhead, budget=budget.subhead) }}
       </div>
 
       <!-- FreeText Dual-Mode -->
-      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(diagonal_budget.freetext_block if is_freetext_block else diagonal_budget.freetext_pills), bullet_svg=bullet_svg, row_cls='extra-pills-wrap') }}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(budget.freetext_block if is_freetext_block else budget.freetext_pills), bullet_svg=bullet_svg, row_cls='extra-pills-wrap') }}
 
       <div class="conversion-suite">
         {% if is_landscape_wide %}
           {% if orientation in ('right', 'top_right', 'bottom_right') %}
             <div class="bottom-col-actions">
-              {{ render_cta(cta, budget=diagonal_budget.cta, arrow='left') }}
-              {{ render_store(store_items, store_info, budget=diagonal_budget.store, is_col=true, bare_single=true) }}
+              {{ render_cta(cta, budget=budget.cta, arrow='left') }}
+              {{ render_store(store_items, store_info, budget=budget.store, is_col=true, bare_single=true) }}
             </div>
             {% if qr_svg %}
             <div class="bottom-col-qr">{{ qr_svg }}</div>
@@ -521,16 +521,16 @@
             <div class="bottom-col-qr">{{ qr_svg }}</div>
             {% endif %}
             <div class="bottom-col-actions">
-              {{ render_cta(cta, budget=diagonal_budget.cta, arrow='right') }}
-              {{ render_store(store_items, store_info, budget=diagonal_budget.store, is_col=true, bare_single=true) }}
+              {{ render_cta(cta, budget=budget.cta, arrow='right') }}
+              {{ render_store(store_items, store_info, budget=budget.store, is_col=true, bare_single=true) }}
             </div>
           {% endif %}
         {% else %}
           {% if qr_svg %}
           <div style="{% if orientation in ('right', 'top_right', 'bottom_right') %}align-self:flex-end;{% else %}align-self:flex-start;{% endif %} margin-bottom:2px;">{{ qr_svg }}</div>
           {% endif %}
-          {{ render_cta(cta, budget=diagonal_budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right')) }}
-          {{ render_store(store_items, store_info, budget=diagonal_budget.store, is_col=true, bare_single=true) }}
+          {{ render_cta(cta, budget=budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right')) }}
+          {{ render_store(store_items, store_info, budget=budget.store, is_col=true, bare_single=true) }}
         {% endif %}
       </div>
     </div>

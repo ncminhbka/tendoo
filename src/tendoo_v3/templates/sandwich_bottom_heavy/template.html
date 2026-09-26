@@ -204,7 +204,7 @@
     <div class="sandwich-top-bar" style="height:{{ zones.top.height }}px; max-height:{{ zones.top.height }}px; overflow:hidden;">
       <div class="top-left-group">
         {{ render_badge(badge) }}
-        {{ render_store(store_items, store_info, budget=bottom_budget.store, is_col=false, max_w=zones.top.width * 0.78) }}
+        {{ render_store(store_items, store_info, budget=budget.store, is_col=false, max_w=zones.top.width * 0.78) }}
       </div>
 
       <!-- QR Code ở góc trên bên phải (khung QR riêng của template, không dùng render_qr) -->
@@ -217,12 +217,12 @@
 
     <!-- Bệ Đỡ Ở Đáy (Bottom Platform): Hero Title + Subhead + FreeText + CTA -->
     <div class="sandwich-bottom-platform" style="height:{{ zones.bottom.height }}px; max-height:{{ zones.bottom.height }}px; overflow:hidden;">
-      {{ render_hero_phrase(hero, hero_parts, budget=bottom_budget.hero, max_w=zones.bottom.width * 0.96) }}
-      {{ render_subhead(subhead, budget=bottom_budget.subhead, max_w=zones.bottom.width * 0.94) }}
-      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=bottom_budget.extra, bullet_svg=bullet_svg, max_w=zones.bottom.width * 0.92) }}
+      {{ render_hero_phrase(hero, hero_parts, budget=budget.hero, max_w=zones.bottom.width * 0.96) }}
+      {{ render_subhead(subhead, budget=budget.subhead, max_w=zones.bottom.width * 0.94) }}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=budget.extra, bullet_svg=bullet_svg, max_w=zones.bottom.width * 0.92) }}
       {% if cta %}
       <div class="cta-row">
-        {{ render_cta(cta, budget=bottom_budget.cta, max_w=zones.bottom.width * 0.85) }}
+        {{ render_cta(cta, budget=budget.cta, max_w=zones.bottom.width * 0.85) }}
       </div>
       {% endif %}
     </div>

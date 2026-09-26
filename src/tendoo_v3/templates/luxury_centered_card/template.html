@@ -355,7 +355,7 @@
     <div class="bg-layer"></div>
 
     <div class="centered-glass-card">
-      <div class="header-cluster" data-max-height="{{ luxury_budget.header_budget }}">
+      <div class="header-cluster" data-max-height="{{ budget.header_budget }}">
         {% if badge %}
         <div class="badge-capsule">{{ badge }}</div>
         {% endif %}
@@ -364,13 +364,13 @@
         <div class="rating-stars">{{ stars_svg | safe }}</div>
         {% endif %}
 
-        {{ render_hero_phrase(hero, hero_parts, budget=luxury_budget.hero) }}
+        {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
 
-        {{ render_subhead(subhead, budget=luxury_budget.subhead) }}
+        {{ render_subhead(subhead, budget=budget.subhead) }}
       </div>
 
       {% if extra_texts %}
-      <div class="message-container" data-autofit data-min-font="{{ luxury_budget.message.min_font }}" data-max-font="{{ luxury_budget.message.max_font }}" data-max-height="{{ luxury_budget.message.max_h }}">
+      <div class="message-container" data-autofit data-min-font="{{ budget.message.min_font }}" data-max-font="{{ budget.message.max_font }}" data-max-height="{{ budget.message.max_h }}">
         {% for item in extra_texts %}
         <div class="message-line">
           <span class="bullet-gem">{{ bullet_svg }}</span>
@@ -385,7 +385,7 @@
         {% if cta or store_items or store_info %}
         <div class="footer-left">
           {% if cta %}
-          <button class="cta-btn" data-autofit data-min-font="{{ luxury_budget.cta.min_font }}" data-max-font="{{ luxury_budget.cta.max_font }}" data-max-height="{{ luxury_budget.cta.max_h }}">
+          <button class="cta-btn" data-autofit data-min-font="{{ budget.cta.min_font }}" data-max-font="{{ budget.cta.max_font }}" data-max-height="{{ budget.cta.max_h }}">
             {% if orientation in ('right', 'top_right', 'bottom_right') %}
             <span>‹</span>
             {% endif %}
@@ -397,7 +397,7 @@
           {% endif %}
 
           {% if store_items %}
-          <div class="store-info-row" data-autofit data-min-font="{{ luxury_budget.store.min_font }}" data-max-font="{{ luxury_budget.store.max_font }}" data-max-height="{{ luxury_budget.store.max_h }}">
+          <div class="store-info-row" data-autofit data-min-font="{{ budget.store.min_font }}" data-max-font="{{ budget.store.max_font }}" data-max-height="{{ budget.store.max_h }}">
             {% for item in store_items %}
             <span class="store-item">
               {{ item.icon_svg | safe }}
@@ -406,7 +406,7 @@
             {% endfor %}
           </div>
           {% elif store_info %}
-          <div class="store-info-row" data-autofit data-min-font="{{ luxury_budget.store.min_font }}" data-max-font="{{ luxury_budget.store.max_font }}" data-max-height="{{ luxury_budget.store.max_h }}">
+          <div class="store-info-row" data-autofit data-min-font="{{ budget.store.min_font }}" data-max-font="{{ budget.store.max_font }}" data-max-height="{{ budget.store.max_h }}">
             <span class="store-item">{{ store_info }}</span>
           </div>
           {% endif %}

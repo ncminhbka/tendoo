@@ -410,8 +410,8 @@
 
     <div class="top-header-bar">
       <div style="flex: 1;">
-        {{ render_hero_phrase(hero, hero_parts, budget=feedback_budget.hero, cls='hero-top-title') }}
-        {{ render_subhead(subhead, budget=feedback_budget.subhead) }}
+        {{ render_hero_phrase(hero, hero_parts, budget=budget.hero, cls='hero-top-title') }}
+        {{ render_subhead(subhead, budget=budget.subhead) }}
       </div>
       {% if badge %}
       <div class="brand-kicker">{{ badge }}</div>
@@ -427,15 +427,15 @@
         </div>
       </div>
 
-      <div class="testimonial-quote" data-autofit data-min-font="{{ feedback_budget.testimonial.min_font }}" data-max-font="{{ feedback_budget.testimonial.max_font }}" data-max-height="{{ feedback_budget.testimonial.max_h }}">
+      <div class="testimonial-quote" data-autofit data-min-font="{{ budget.testimonial.min_font }}" data-max-font="{{ budget.testimonial.max_font }}" data-max-height="{{ budget.testimonial.max_h }}">
         “{{ testimonial or subhead or hero }}”
       </div>
       {% if reviewer_name %}
-      <div class="reviewer-info" data-autofit data-min-font="{{ feedback_budget.reviewer.min_font }}" data-max-font="{{ feedback_budget.reviewer.max_font }}" data-max-height="{{ feedback_budget.reviewer.max_h }}">— {{ reviewer_name }}</div>
+      <div class="reviewer-info" data-autofit data-min-font="{{ budget.reviewer.min_font }}" data-max-font="{{ budget.reviewer.max_font }}" data-max-height="{{ budget.reviewer.max_h }}">— {{ reviewer_name }}</div>
       {% endif %}
 
       <!-- FreeText Dual-Mode -->
-      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(feedback_budget.freetext_block if is_freetext_block else feedback_budget.freetext_pills), bullet_svg=bullet_svg) }}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(budget.freetext_block if is_freetext_block else budget.freetext_pills), bullet_svg=bullet_svg) }}
 
       {% if qr_svg or cta or store_items or store_info %}
       <div class="footer-action-row">
@@ -443,10 +443,10 @@
         <div class="qr-col">{{ qr_svg }}</div>
         {% endif %}
 
-        {{ render_cta(cta, budget=feedback_budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right')) }}
+        {{ render_cta(cta, budget=budget.cta, arrow=('left' if orientation in ('right', 'top_right', 'bottom_right') else 'right')) }}
 
         {% if store_items %}
-        <div class="store-text" data-autofit data-min-font="{{ feedback_budget.store.min_font }}" data-max-font="{{ feedback_budget.store.max_font }}" data-max-height="{{ feedback_budget.store.max_h }}">
+        <div class="store-text" data-autofit data-min-font="{{ budget.store.min_font }}" data-max-font="{{ budget.store.max_font }}" data-max-height="{{ budget.store.max_h }}">
           {% for item in store_items %}
           <div class="store-item">
             {{ item.icon_svg }}
@@ -455,7 +455,7 @@
           {% endfor %}
         </div>
         {% elif store_info %}
-        <div class="store-text" data-autofit data-min-font="{{ feedback_budget.store.min_font }}" data-max-font="{{ feedback_budget.store.max_font }}" data-max-height="{{ feedback_budget.store.max_h }}">
+        <div class="store-text" data-autofit data-min-font="{{ budget.store.min_font }}" data-max-font="{{ budget.store.max_font }}" data-max-height="{{ budget.store.max_h }}">
           <span>{{ store_info }}</span>
         </div>
         {% endif %}

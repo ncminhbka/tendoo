@@ -363,14 +363,14 @@
 
     <!-- Khối Header Khai Trương Trên Đỉnh -->
     <div class="opening-header-cluster">
-      {{ render_badge(badge, budget=open_budget.badge, max_w=width * 0.85, cls='kicker-capsule') }}
+      {{ render_badge(badge, budget=budget.badge, max_w=width * 0.85, cls='kicker-capsule') }}
 
-      {{ render_hero_phrase(hero, hero_parts, budget=open_budget.hero) }}
+      {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
 
-      {{ render_subhead(subhead, budget=open_budget.subhead, cls='subhead-date') }}
+      {{ render_subhead(subhead, budget=budget.subhead, cls='subhead-date') }}
 
       <!-- FreeText Dual-Mode -->
-      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(open_budget.freetext_block if is_freetext_block else open_budget.freetext_pills), bullet_svg=bullet_svg) }}
+      {{ render_freetext(extra_texts, extra_pills, is_block=is_freetext_block, budget=(budget.freetext_block if is_freetext_block else budget.freetext_pills), bullet_svg=bullet_svg) }}
     </div>
 
     <!-- Dải Đáy Ngang (Bottom Action Bar) -->
@@ -381,7 +381,7 @@
         {% if cta %}
         <div class="bottom-row-upper">
           <div class="cta-cluster">
-            {{ render_cta(cta, budget=open_budget.cta) }}
+            {{ render_cta(cta, budget=budget.cta) }}
           </div>
         </div>
         {% endif %}
@@ -390,7 +390,7 @@
           {% if store_items or store_info %}
           <div class="store-brand-pill">
             {% if store_items %}
-            <div class="store-details-row" data-autofit data-min-font="{{ open_budget.store.min_font }}" data-max-font="{{ open_budget.store.max_font }}" data-max-height="{{ open_budget.store.max_h }}">
+            <div class="store-details-row" data-autofit data-min-font="{{ budget.store.min_font }}" data-max-font="{{ budget.store.max_font }}" data-max-height="{{ budget.store.max_h }}">
               {% for item in store_items %}
               <div class="store-detail-item">
                 {{ item.icon_svg }}
@@ -399,7 +399,7 @@
               {% endfor %}
             </div>
             {% elif store_info %}
-            <div class="store-details-row" data-autofit data-min-font="{{ open_budget.store.min_font }}" data-max-font="{{ open_budget.store.max_font }}" data-max-height="{{ open_budget.store.max_h }}">
+            <div class="store-details-row" data-autofit data-min-font="{{ budget.store.min_font }}" data-max-font="{{ budget.store.max_font }}" data-max-height="{{ budget.store.max_h }}">
               <span>{{ store_info }}</span>
             </div>
             {% endif %}
@@ -417,7 +417,7 @@
         {% if store_items or store_info %}
         <div class="store-brand-pill">
           {% if store_items %}
-          <div class="store-details-row" data-autofit data-min-font="{{ open_budget.store.min_font }}" data-max-font="{{ open_budget.store.max_font }}" data-max-height="{{ open_budget.store.max_h }}">
+          <div class="store-details-row" data-autofit data-min-font="{{ budget.store.min_font }}" data-max-font="{{ budget.store.max_font }}" data-max-height="{{ budget.store.max_h }}">
             {% for item in store_items %}
             <div class="store-detail-item">
               {{ item.icon_svg }}
@@ -426,7 +426,7 @@
             {% endfor %}
           </div>
           {% elif store_info %}
-          <div class="store-details-row" data-autofit data-min-font="{{ open_budget.store.min_font }}" data-max-font="{{ open_budget.store.max_font }}" data-max-height="{{ open_budget.store.max_h }}">
+          <div class="store-details-row" data-autofit data-min-font="{{ budget.store.min_font }}" data-max-font="{{ budget.store.max_font }}" data-max-height="{{ budget.store.max_h }}">
             <span>{{ store_info }}</span>
           </div>
           {% endif %}
@@ -435,7 +435,7 @@
 
         {% if cta %}
         <div class="cta-cluster">
-          {{ render_cta(cta, budget=open_budget.cta) }}
+          {{ render_cta(cta, budget=budget.cta) }}
         </div>
         {% endif %}
 
