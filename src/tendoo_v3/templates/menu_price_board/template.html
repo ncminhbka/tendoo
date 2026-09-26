@@ -5,6 +5,14 @@
   <title>{{ hero }}</title>
   <style>
     {{ font_face_css }}
+    {% include "components/ui_components.css" %}
+    /* Trung hoà thuộc tính component mà CSS riêng template KHÔNG khai báo -- đặt TRƯỚC
+       CSS template để mọi khai báo của template (kể cả có điều kiện Jinja) luôn thắng. */
+    .badge-pill { margin-bottom: unset; }
+    .hero-title { max-width: unset; }
+    .subhead-title { max-width: unset; }
+    .store-info-col { align-items: unset; max-width: unset; flex-shrink: unset; }
+    .cta-btn { white-space: unset; text-shadow: unset; }
 
     :root {
       --headline-font: {{ headline_font_css }};
@@ -324,18 +332,15 @@
     {% endif %}
   </style>
 </head>
+{% from "components/ui_macros.html" import render_badge, render_hero_phrase, render_subhead, render_freetext, render_store, render_cta %}
 <body>
   <div class="poster-canvas">
     <div class="bg-layer"></div>
     <div class="menu-column">
       <div class="top-stack">
-        {% if badge %}
-        <div class="badge-pill" data-autofit data-min-font="{{ menu_budget.badge.min_font }}" data-max-font="{{ menu_budget.badge.max_font }}" data-max-width="{{ (zones.content.width * 0.9) if zones.content else width * 0.4 }}" data-max-height="{{ menu_budget.badge.max_h }}">{{ badge }}</div>
-        {% endif %}
-        <div class="hero-title" data-autofit data-min-font="{{ menu_budget.hero.min_font }}" data-max-font="{{ menu_budget.hero.max_font }}" data-max-height="{{ menu_budget.hero.max_h }}">{{ hero }}</div>
-        {% if subhead %}
-        <div class="subhead-title" data-autofit data-min-font="{{ menu_budget.subhead.min_font }}" data-max-font="{{ menu_budget.subhead.max_font }}" data-max-height="{{ menu_budget.subhead.max_h }}">{{ subhead }}</div>
-        {% endif %}
+        {{ render_badge(badge, budget=menu_budget.badge, max_w=(zones.content.width * 0.9) if zones.content else width * 0.4) }}
+        {{ render_hero_phrase(hero, hero_parts, budget=menu_budget.hero) }}
+        {{ render_subhead(subhead, budget=menu_budget.subhead) }}
       </div>
 
       {% if extra_texts %}
@@ -360,51 +365,15 @@
           <div class="bottom-col-qr">{{ qr_svg }}</div>
           {% endif %}
           <div class="bottom-col-actions">
-            {% if cta %}
-            <div class="cta-btn" data-autofit data-min-font="{{ menu_budget.cta.min_font }}" data-max-font="{{ menu_budget.cta.max_font }}" data-max-height="{{ menu_budget.cta.max_h }}">
-              <span>{{ cta }}</span>
-              <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </div>
-            {% endif %}
-            {% if store_items %}
-            <div class="store-info-col" data-autofit data-min-font="{{ menu_budget.store.min_font }}" data-max-font="{{ menu_budget.store.max_font }}" data-max-height="{{ menu_budget.store.max_h }}">
-              {% for item in store_items %}
-              <div class="store-item">
-                {{ item.icon_svg }}
-                <span>{{ item.text }}</span>
-              </div>
-              {% endfor %}
-            </div>
-            {% elif store_info %}
-            <div class="store-item">
-              <span>{{ store_info }}</span>
-            </div>
-            {% endif %}
+            {{ render_cta(cta, budget=menu_budget.cta) }}
+            {{ render_store(store_items, store_info, budget=menu_budget.store, is_col=true, bare_single=true) }}
           </div>
         {% else %}
           {% if qr_svg %}
           <div style="margin-bottom:2px;">{{ qr_svg }}</div>
           {% endif %}
-          {% if cta %}
-          <div class="cta-btn" data-autofit data-min-font="{{ menu_budget.cta.min_font }}" data-max-font="{{ menu_budget.cta.max_font }}" data-max-height="{{ menu_budget.cta.max_h }}">
-            <span>{{ cta }}</span>
-            <svg width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </div>
-          {% endif %}
-          {% if store_items %}
-          <div class="store-info-col" data-autofit data-min-font="{{ menu_budget.store.min_font }}" data-max-font="{{ menu_budget.store.max_font }}" data-max-height="{{ menu_budget.store.max_h }}">
-            {% for item in store_items %}
-            <div class="store-item">
-              {{ item.icon_svg }}
-              <span>{{ item.text }}</span>
-            </div>
-            {% endfor %}
-          </div>
-          {% elif store_info %}
-          <div class="store-item">
-            <span>{{ store_info }}</span>
-          </div>
-          {% endif %}
+          {{ render_cta(cta, budget=menu_budget.cta) }}
+          {{ render_store(store_items, store_info, budget=menu_budget.store, is_col=true, bare_single=true) }}
         {% endif %}
       </div>
     </div>
