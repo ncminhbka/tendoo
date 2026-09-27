@@ -20,7 +20,7 @@ VAR_TO_FIELD = {
     "cta": "cta", "store_info": "store_info", "store_items": "store_info",
     "qr_svg": "qr_code", "stars_svg": "rating",
     "testimonial": "testimonial", "reviewer_name": "reviewer_name", "steps": "steps",
-    "tag_left": "tag_left", "tag_right": "tag_right",
+    "tag_left": "tag_left", "tag_right": "tag_right", "body": "body",
 }
 KNOWN_FLAGS = {"has_qr", "has_footer", "has_message", "has_freetext", "has_subhead"}
 

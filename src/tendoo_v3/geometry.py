@@ -748,6 +748,21 @@ def _quote_spotlight(w: float, h: float, orientation: str = "left") -> Dict[str,
     return {"column": _frac(0.0, 0.0, frac_w, 1.0, w, h)}
 
 
+def _notice_card(w: float, h: float, has_footer: bool = True) -> Dict[str, Rect]:
+    # Tấm thiệp (thông báo / chúc mừng / thư mời): thẻ giấy đặc ở TÂM khung, nền trang trí xung quanh.
+    # Diện tích sát trần mask 50%, ưu tiên CHIỀU CAO (nội dung xếp dọc; sàn cỡ chữ theo bề ngang cộng lại cao hơn
+    # thẻ thấp -> tiêu đề bị co, đo 27/09): 1:1 70x71%, 4:5 74x66%, 9:16 88x56%, 16:9 72x68% HAI CỘT.
+    aspect = w / h
+    if aspect >= 1.5:
+        cw, ch = 0.72, 0.68
+    elif aspect < 0.7:
+        cw, ch = 0.88, 0.56
+    elif aspect >= 0.95:
+        cw, ch = 0.70, 0.71
+    else:
+        cw, ch = 0.74, 0.66
+    return {"card": _frac((1 - cw) / 2, (1 - ch) / 2, (1 + cw) / 2, (1 + ch) / 2, w, h)}
+
 def _type_showcase(w: float, h: float, has_footer: bool = True) -> Dict[str, Rect]:
     # Type Showcase (R6): cụm chữ ở TÂM khung (8%-92% ngang), dải đáy cho CTA/cửa hàng. Nền là chủ thể phụ
     # (bokeh/hoạ tiết) -- maskless là mặc định hợp lý; nếu có mask, vùng giữa được chừa.
@@ -777,6 +792,7 @@ _GEOMETRY_FUNCS: Dict[str, Callable[..., Dict[str, Rect]]] = {
     "menu_price_board": _menu_price_board,
     "quote_spotlight": _quote_spotlight,
     "type_showcase": _type_showcase,
+    "notice_card": _notice_card,
 }
 
 

@@ -2,8 +2,8 @@
 """
 scripts/build_acceptance_report.py -- trang NGHIỆM THU (HTML tĩnh) từ một lượt run_real_llm --images.
 
-Gom poster theo 6 NHU CẦU người dùng (6 loại form: khuyến mãi, giới thiệu sản phẩm, khai trương, đánh giá,
-tuyển dụng, hướng dẫn/quy trình), kèm điểm squint 5 điều kiện của từng poster và tổng hợp.
+Gom poster theo NHU CẦU người dùng (6 nhu cầu gốc + thông báo, thiệp chúc mừng, thư mời, trước/sau,
+minigame, combo), kèm điểm squint 5 điều kiện của từng poster và tổng hợp.
 
   PYTHONPATH=src python scripts/build_acceptance_report.py --tag gpt-5.4-mini_v5
   -> output_probe/nghiem_thu/index.html (mở bằng trình duyệt; ảnh là đường dẫn tương đối)
@@ -25,6 +25,12 @@ NEEDS = [
     ("feedback", "Đánh giá khách hàng"),
     ("recruitment", "Tuyển dụng"),
     ("guide", "Hướng dẫn / quy trình"),
+    ("announcement", "Thông báo (nghỉ lễ, đổi giờ...)"),
+    ("greeting", "Thiệp chúc mừng / tri ân"),
+    ("event", "Thư mời sự kiện"),
+    ("before_after", "So sánh trước / sau"),
+    ("minigame", "Minigame / giveaway"),
+    ("combo", "Combo / bảng giá"),
 ]
 CONDS = [("c1_anchor", "Tiêu đề nổi bật"), ("c2_no_wall", "Không tường chữ"), ("c3_bg", "Tương phản nền"),
          ("c4_no_loss", "Không mất chữ"), ("c5_phone", "Đọc được trên điện thoại")]
@@ -87,7 +93,7 @@ figcaption {{ padding:10px 12px; font-size:13px; }}
 ul {{ list-style:none; padding:0; margin:6px 0; }} li.ok {{ color:var(--ok); }} li.no {{ color:var(--no); }}
 .summary {{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 16px; }}
 </style></head><body><main>
-<h1>Nghiệm thu Tendoo v3 — 6 nhu cầu người dùng</h1>
+<h1>Nghiệm thu Tendoo v3 — {len(NEEDS)} nhu cầu người dùng</h1>
 <p class="brief">LLM lập plan: {html.escape(args.tag)} · ảnh nền: mô hình ảnh GPT (thay FLUX để kiểm tầng chữ) · chữ: HTML/CSS overlay.</p>
 <div class="summary"><b>Đạt cả 5 điều kiện: {n_pass}/{n_all} poster</b><ul>{summary}</ul></div>
 {"".join(sections)}

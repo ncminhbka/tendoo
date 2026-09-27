@@ -1,0 +1,426 @@
+[
+ {
+  "id": "notice_01_1x1_tet",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THÔNG BÁO",
+   "hero": "LỊCH NGHỈ TẾT NGUYÊN ĐÁN 2027",
+   "body": "Tendoo Coffee xin thông báo lịch nghỉ Tết để quý khách tiện sắp xếp. Chúc quý khách một năm mới an khang, thịnh vượng.",
+   "extra_texts": [
+    "Nghỉ từ 05/02 đến 11/02",
+    "Mở cửa lại 12/02 (mùng 6)"
+   ],
+   "store_info": "Tendoo Coffee | Hotline 1900 6868",
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#B91C1C",
+    "text_effect": "plain_elegant",
+    "background_tone": "cinema_red"
+   }
+  }
+ },
+ {
+  "id": "notice_02_9x16_tet",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THÔNG BÁO",
+   "hero": "LỊCH NGHỈ TẾT NGUYÊN ĐÁN 2027",
+   "body": "Tendoo Coffee xin thông báo lịch nghỉ Tết để quý khách tiện sắp xếp. Chúc quý khách một năm mới an khang, thịnh vượng.",
+   "extra_texts": [
+    "Nghỉ từ 05/02 đến 11/02",
+    "Mở cửa lại 12/02 (mùng 6)"
+   ],
+   "store_info": "Tendoo Coffee | Hotline 1900 6868",
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#B91C1C",
+    "text_effect": "plain_elegant",
+    "background_tone": "cinema_red"
+   }
+  }
+ },
+ {
+  "id": "notice_03_16x9_tet",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THÔNG BÁO",
+   "hero": "LỊCH NGHỈ TẾT NGUYÊN ĐÁN 2027",
+   "body": "Tendoo Coffee xin thông báo lịch nghỉ Tết để quý khách tiện sắp xếp. Chúc quý khách một năm mới an khang, thịnh vượng.",
+   "extra_texts": [
+    "Nghỉ từ 05/02 đến 11/02",
+    "Mở cửa lại 12/02 (mùng 6)"
+   ],
+   "store_info": "Tendoo Coffee | Hotline 1900 6868",
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#B91C1C",
+    "text_effect": "plain_elegant",
+    "background_tone": "cinema_red"
+   }
+  }
+ },
+ {
+  "id": "notice_04_4x5_tet",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THÔNG BÁO",
+   "hero": "LỊCH NGHỈ TẾT NGUYÊN ĐÁN 2027",
+   "body": "Tendoo Coffee xin thông báo lịch nghỉ Tết để quý khách tiện sắp xếp. Chúc quý khách một năm mới an khang, thịnh vượng.",
+   "extra_texts": [
+    "Nghỉ từ 05/02 đến 11/02",
+    "Mở cửa lại 12/02 (mùng 6)"
+   ],
+   "store_info": "Tendoo Coffee | Hotline 1900 6868",
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#B91C1C",
+    "text_effect": "plain_elegant",
+    "background_tone": "cinema_red"
+   }
+  }
+ },
+ {
+  "id": "notice_05_1x1_hours",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THÔNG BÁO",
+   "hero": "THAY ĐỔI GIỜ MỞ CỬA",
+   "body": "Từ ngày 01/11, cửa hàng điều chỉnh giờ phục vụ để chăm sóc quý khách tốt hơn. Rất mong quý khách thông cảm.",
+   "extra_texts": [
+    "Thứ 2 - Thứ 6: 7:00 - 22:00",
+    "Thứ 7 - Chủ nhật: 6:30 - 23:00"
+   ],
+   "cta": "XEM CHI TIẾT",
+   "store_info": "45 Lê Lợi, Quận 1",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#0F766E",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ },
+ {
+  "id": "notice_06_9x16_hours",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THÔNG BÁO",
+   "hero": "THAY ĐỔI GIỜ MỞ CỬA",
+   "body": "Từ ngày 01/11, cửa hàng điều chỉnh giờ phục vụ để chăm sóc quý khách tốt hơn. Rất mong quý khách thông cảm.",
+   "extra_texts": [
+    "Thứ 2 - Thứ 6: 7:00 - 22:00",
+    "Thứ 7 - Chủ nhật: 6:30 - 23:00"
+   ],
+   "cta": "XEM CHI TIẾT",
+   "store_info": "45 Lê Lợi, Quận 1",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#0F766E",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ },
+ {
+  "id": "notice_07_16x9_hours",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THÔNG BÁO",
+   "hero": "THAY ĐỔI GIỜ MỞ CỬA",
+   "body": "Từ ngày 01/11, cửa hàng điều chỉnh giờ phục vụ để chăm sóc quý khách tốt hơn. Rất mong quý khách thông cảm.",
+   "extra_texts": [
+    "Thứ 2 - Thứ 6: 7:00 - 22:00",
+    "Thứ 7 - Chủ nhật: 6:30 - 23:00"
+   ],
+   "cta": "XEM CHI TIẾT",
+   "store_info": "45 Lê Lợi, Quận 1",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#0F766E",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ },
+ {
+  "id": "notice_08_4x5_hours",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THÔNG BÁO",
+   "hero": "THAY ĐỔI GIỜ MỞ CỬA",
+   "body": "Từ ngày 01/11, cửa hàng điều chỉnh giờ phục vụ để chăm sóc quý khách tốt hơn. Rất mong quý khách thông cảm.",
+   "extra_texts": [
+    "Thứ 2 - Thứ 6: 7:00 - 22:00",
+    "Thứ 7 - Chủ nhật: 6:30 - 23:00"
+   ],
+   "cta": "XEM CHI TIẾT",
+   "store_info": "45 Lê Lợi, Quận 1",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#0F766E",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ },
+ {
+  "id": "notice_09_1x1_wish",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "MỪNG NGÀY 20/10",
+   "hero": "Gửi những người phụ nữ tuyệt vời",
+   "hero_parts": [
+    {
+     "t": "Gửi những người",
+     "role": "prefix"
+    },
+    {
+     "t": "phụ nữ tuyệt vời",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "lockup": "script_over_caps",
+   "body": "Cảm ơn bạn đã luôn rạng rỡ và yêu thương. Chúc bạn một ngày thật hạnh phúc, xinh đẹp và ngập tràn niềm vui.",
+   "store_info": "Tendoo Beauty Spa",
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#DB2777",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "notice_10_9x16_wish",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "MỪNG NGÀY 20/10",
+   "hero": "Gửi những người phụ nữ tuyệt vời",
+   "hero_parts": [
+    {
+     "t": "Gửi những người",
+     "role": "prefix"
+    },
+    {
+     "t": "phụ nữ tuyệt vời",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "lockup": "script_over_caps",
+   "body": "Cảm ơn bạn đã luôn rạng rỡ và yêu thương. Chúc bạn một ngày thật hạnh phúc, xinh đẹp và ngập tràn niềm vui.",
+   "store_info": "Tendoo Beauty Spa",
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#DB2777",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "notice_11_16x9_wish",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "MỪNG NGÀY 20/10",
+   "hero": "Gửi những người phụ nữ tuyệt vời",
+   "hero_parts": [
+    {
+     "t": "Gửi những người",
+     "role": "prefix"
+    },
+    {
+     "t": "phụ nữ tuyệt vời",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "lockup": "script_over_caps",
+   "body": "Cảm ơn bạn đã luôn rạng rỡ và yêu thương. Chúc bạn một ngày thật hạnh phúc, xinh đẹp và ngập tràn niềm vui.",
+   "store_info": "Tendoo Beauty Spa",
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#DB2777",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "notice_12_4x5_wish",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "MỪNG NGÀY 20/10",
+   "hero": "Gửi những người phụ nữ tuyệt vời",
+   "hero_parts": [
+    {
+     "t": "Gửi những người",
+     "role": "prefix"
+    },
+    {
+     "t": "phụ nữ tuyệt vời",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "lockup": "script_over_caps",
+   "body": "Cảm ơn bạn đã luôn rạng rỡ và yêu thương. Chúc bạn một ngày thật hạnh phúc, xinh đẹp và ngập tràn niềm vui.",
+   "store_info": "Tendoo Beauty Spa",
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#DB2777",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "notice_13_1x1_event",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THƯ MỜI",
+   "hero": "WORKSHOP PHA CHẾ CÀ PHÊ",
+   "body": "Cùng barista trưởng khám phá bí quyết pha phin và latte art. Số lượng có hạn, đăng ký sớm để giữ chỗ.",
+   "extra_texts": [
+    "19:00 Thứ bảy 25/10",
+    "Tendoo Coffee, 45 Lê Lợi",
+    "Phí tham gia 150.000đ"
+   ],
+   "cta": "ĐĂNG KÝ NGAY",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "anton",
+    "theme_color": "#D97706",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "notice_14_9x16_event",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THƯ MỜI",
+   "hero": "WORKSHOP PHA CHẾ CÀ PHÊ",
+   "body": "Cùng barista trưởng khám phá bí quyết pha phin và latte art. Số lượng có hạn, đăng ký sớm để giữ chỗ.",
+   "extra_texts": [
+    "19:00 Thứ bảy 25/10",
+    "Tendoo Coffee, 45 Lê Lợi",
+    "Phí tham gia 150.000đ"
+   ],
+   "cta": "ĐĂNG KÝ NGAY",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "anton",
+    "theme_color": "#D97706",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "notice_15_16x9_event",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THƯ MỜI",
+   "hero": "WORKSHOP PHA CHẾ CÀ PHÊ",
+   "body": "Cùng barista trưởng khám phá bí quyết pha phin và latte art. Số lượng có hạn, đăng ký sớm để giữ chỗ.",
+   "extra_texts": [
+    "19:00 Thứ bảy 25/10",
+    "Tendoo Coffee, 45 Lê Lợi",
+    "Phí tham gia 150.000đ"
+   ],
+   "cta": "ĐĂNG KÝ NGAY",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "anton",
+    "theme_color": "#D97706",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "notice_16_4x5_event",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "scene_prompt": "Decorative backdrop, zero text",
+   "badge": "THƯ MỜI",
+   "hero": "WORKSHOP PHA CHẾ CÀ PHÊ",
+   "body": "Cùng barista trưởng khám phá bí quyết pha phin và latte art. Số lượng có hạn, đăng ký sớm để giữ chỗ.",
+   "extra_texts": [
+    "19:00 Thứ bảy 25/10",
+    "Tendoo Coffee, 45 Lê Lợi",
+    "Phí tham gia 150.000đ"
+   ],
+   "cta": "ĐĂNG KÝ NGAY",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "anton",
+    "theme_color": "#D97706",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ }
+]

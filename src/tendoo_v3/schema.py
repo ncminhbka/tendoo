@@ -53,6 +53,8 @@ class TendooCreativePlan:
     qr_label: Optional[str] = "QUÉT MÃ NGAY"
     testimonial: Optional[str] = None   # Lời nhận xét thực tế của khách hàng (vd: "97% khách hàng hài lòng...")
     reviewer_name: Optional[str] = None # Tên khách hàng / chức danh (vd: "Ngọc Lan - Hội viên VIP")
+    # Đoạn NỘI DUNG của tấm thiệp (notice_card: thông báo / lời chúc / thư mời) -- 1-3 câu, dài hơn subhead.
+    body: Optional[str] = None
     steps: List[str] = field(default_factory=list) # Quy trình các bước (vd: ["Tư vấn 1:1", "Lên phác đồ", "Bảo hành 1 năm"])
     # CHỈ có ý nghĩa với template "lifestyle_corner_pod": "bottom_left" (mặc định) |
     # "bottom_right" | "top_left" | "top_right" -- vị trí đặt capsule góc;
@@ -192,6 +194,7 @@ class TendooCreativePlan:
             testimonial=data.get("testimonial"),
             reviewer_name=data.get("reviewer_name"),
             steps=steps,
+            body=data.get("body"),
             orientation=data.get("orientation"),
             visual_intent=data.get("visual_intent"),
             badge_style=data.get("badge_style"),

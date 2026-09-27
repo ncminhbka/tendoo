@@ -1374,6 +1374,32 @@ def compute_quote_spotlight_budget(plan: TendooCreativePlan, column_height: floa
     }
 
 
+def compute_notice_card_budget(plan: TendooCreativePlan, card_height: float, width: int, height: int) -> Dict[str, Dict[str, float]]:
+    """`notice_card`: chia chiều cao lòng thẻ theo phần có mặt. Nội dung (`body`) là thứ người xem PHẢI đọc hết
+    -> trần theo px-trên-màn như danh sách (PHONE_LIST_PX); tiêu đề vẫn là điểm neo."""
+    inner = card_height * 0.80  # trừ đệm trên/dưới + khoảng cách giữa các khối
+    head = {"badge": 0.07 if plan.badge else 0, "hero": 0.32, "subhead": 0.10 if plan.subhead else 0}
+    main = {"body": 0.26, "facts": 0.20 if plan.extra_texts else 0,
+            "cta": 0.08 if plan.cta else 0, "store": 0.07 if plan.store_info else 0}
+    if width / height >= 1.5:
+        # 16:9 HAI CỘT: mỗi cột dùng TRỌN chiều cao lòng thẻ (trái: nhãn + tiêu đề; phải: nội dung + thông tin + đáy).
+        h = {key: round(inner * v / sum(grp.values()), 1) for grp in (head, main) for key, v in grp.items()}
+    else:
+        parts = {**head, **main}
+        h = {key: round(inner * v / sum(parts.values()), 1) for key, v in parts.items()}
+    list_max = phone_floor(PHONE_LIST_PX, width)
+    return {
+        "badge": {"max_h": h["badge"], "min_font": 12.0, "max_font": 20.0},
+        "hero": {"max_h": h["hero"], "min_font": 24.0, "max_font": 72.0},
+        "subhead": {"max_h": h["subhead"], "min_font": 14.0, "max_font": 30.0},
+        # Thân thiệp NHỎ hơn hẳn tiêu đề (thực hành thiệp/thông báo): 11-14.5px-trên-màn -- vẫn trên sàn 10px;
+        # 12.5-17 (thử đầu 27/09) cho tiêu đề chỉ ~1.5x thân, C1 8/16.
+        "body": {"max_h": h["body"], "min_font": phone_floor(11.0, width), "max_font": max(18.0, phone_floor(14.5, width))},
+        "facts": {"max_h": h["facts"], "min_font": 13.0, "max_font": max(18.0, list_max)},
+        "cta": {"max_h": max(h["cta"], 40.0), "min_font": 13.0, "max_font": 22.0},
+        "store": {"max_h": max(h["store"], 30.0), "min_font": 12.0, "max_font": 20.0},
+    }
+
 def compute_type_showcase_budget(plan: TendooCreativePlan, center_height: float, width: int, height: int) -> Dict[str, Dict[str, float]]:
     """`type_showcase` (R6): tiêu đề nhận PHẦN LỚN chiều cao vùng giữa (lockup dọc), trần cỡ rất cao --
     đây là poster mà chữ LÀ nhân vật chính. Chữ phụ theo sàn Luật 6."""
@@ -1439,6 +1465,8 @@ _TEMPLATE_BUDGETS = {
         plan=plan, top_cluster_height=_zone_h(z, "top_cluster", h * 0.40), width=w, height=h),
     "lifestyle_corner_pod": lambda plan, z, w, h: compute_lifestyle_corner_pod_budget(
         plan=plan, pod_height=_zone_h(z, "pod", h * 0.48), width=w, height=h),
+    "notice_card": lambda plan, z, w, h: compute_notice_card_budget(
+        plan=plan, card_height=_zone_h(z, "card", h * 0.6), width=w, height=h),
     "type_showcase": lambda plan, z, w, h: compute_type_showcase_budget(
         plan=plan, center_height=_zone_h(z, "center", h * 0.7), width=w, height=h),
     "quote_spotlight": lambda plan, z, w, h: compute_quote_spotlight_budget(
@@ -1449,6 +1477,22 @@ _TEMPLATE_BUDGETS = {
         plan=plan, card_height=_zone_h(z, "card", h * 0.72), width=w, height=h),
 }
 
+
+_DARK_CARD_TONES = ("dark_luxury", "cyber_neon", "cinema_red")
+
+
+def _notice_palette(plan: TendooCreativePlan) -> Dict[str, Any]:
+    """Màu tấm thiệp: giấy kem (mặc định, thông báo trang trọng) hoặc thẻ tối (tông nền tối). Chữ nhấn giữ sắc
+    thương hiệu, chỉnh độ sáng tới đủ tương phản VỚI CHÍNH MÀU THẺ (không phụ thuộc ảnh nền)."""
+    dark = plan.style.background_tone in _DARK_CARD_TONES
+    card = "#16181F" if dark else "#FFFCF5"
+    text = "#F5F1E8" if dark else "#1C1917"
+    theme = plan.style.theme_color or "#D4AF37"
+    return {
+        "dark": dark, "card_bg": card, "text": text, "muted": "#CBD2DC" if dark else "#57534E",
+        "accent": ensure_contrast(theme, card, 3.0), "accent_text": ensure_contrast(theme, card, 4.5),
+        "facts_bg": "rgba(255,255,255,0.06)" if dark else "rgba(28,25,23,0.05)",
+    }
 
 def compute_template_budget(template: str, plan: TendooCreativePlan, zones, width: int, height: int) -> Dict[str, Any]:
     """Ngân sách cỡ chữ cho ĐÚNG template đang render (trước đây tính cả 14 mỗi lần render)."""
@@ -1871,6 +1915,7 @@ HEADER_ZONE_KEY_BY_TEMPLATE: Dict[str, str] = {
     "l_frame_showcase": "top_cluster",
     "quote_spotlight": "column",
     "type_showcase": "center",
+    "notice_card": "card",
 }
 
 # Zone dùng làm mốc đo độ chói nền THẬT cho TOÀN BỘ nội dung bên trong "card" của 5
@@ -2199,6 +2244,7 @@ def build_template_html(
         "bg_data_uri": bg_data_uri,
         "font_face_css": font_face_css,
         "script_font_css": script_font_css,
+        "notice": _notice_palette(plan) if tpl_name == "notice_card" else None,
         "caps_font_css": caps_font_css,
         "headline_font_css": headline_font_css,
         # Thân chữ (các bước, danh sách, chip): theo font tiêu đề nếu đó là font văn bản, còn font trưng bày
@@ -2253,6 +2299,7 @@ def build_template_html(
         "qr_label": plan.qr_label,
         "qr_svg": qr_svg,
         "testimonial": bind_nonbreaking(plan.testimonial),
+        "body": bind_nonbreaking(plan.body),
         "reviewer_name": plan.reviewer_name,
         "steps": steps,
         "orientation": plan.orientation or "bottom_left",

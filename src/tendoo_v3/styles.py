@@ -472,9 +472,9 @@ TIER3_CLASSES = (
     "badge-pill", "badge-capsule", "kicker-tag", "kicker-capsule", "cta-btn",
     "store-info-row", "store-info-col", "store-details-row", "store-text", "store-item",
     "extra-tag-row", "freetext-block", "flexible-stack", "extra-pills-wrap", "showcase-chips",
-    "message-container", "reviewer-info",
+    "message-container", "reviewer-info", "notice-label",
 )
-CONTENT_CLASSES = ("menu-list", "steps-grid", "testimonial-quote")
+CONTENT_CLASSES = ("menu-list", "steps-grid", "testimonial-quote", "notice-body", "notice-facts")
 
 COMMON_AUTOFIT_JS = """
 <script>

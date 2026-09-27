@@ -200,5 +200,94 @@
    "guide_steps": "Tráng bọt tuyết\nRửa tay chi tiết\nSấy khô\nPhủ bóng nano"
   },
   "prompt": "Quy trình rửa xe chuyên nghiệp, tông xanh lạnh"
+ },
+ {
+  "id": "b19_notice_tet_4x5",
+  "aspect": "4:5",
+  "form": {
+   "category": "announcement",
+   "title": "Thông báo lịch nghỉ Tết Nguyên Đán",
+   "notice_detail": "Nghỉ từ 05/02 đến 11/02, mở cửa lại ngày 12/02 (mùng 6)",
+   "store_info": "Tendoo Coffee | Hotline 1900 6868"
+  },
+  "prompt": "Thông báo nghỉ Tết cho khách hàng của quán cà phê, không khí Tết ấm áp"
+ },
+ {
+  "id": "b20_notice_hours_1x1",
+  "aspect": "1:1",
+  "form": {
+   "category": "announcement",
+   "title": "Thay đổi giờ mở cửa",
+   "notice_detail": "Từ 01/11: Thứ 2-6 mở 7:00-22:00, Thứ 7-CN mở 6:30-23:00",
+   "store_info": "Tendoo Bakery, 45 Lê Lợi, Quận 1"
+  },
+  "prompt": "Thông báo đổi giờ mở cửa tiệm bánh, phong cách tối giản hiện đại"
+ },
+ {
+  "id": "b21_greeting_2010_9x16",
+  "aspect": "9:16",
+  "form": {
+   "category": "greeting",
+   "title": "Chúc mừng ngày Phụ nữ Việt Nam 20/10",
+   "message": "Gửi lời chúc tới những người phụ nữ tuyệt vời",
+   "store_info": "Tendoo Beauty Spa"
+  },
+  "prompt": "Thiệp chúc mừng 20/10 gửi khách hàng nữ của spa, hoa hồng nhẹ nhàng, sang trọng"
+ },
+ {
+  "id": "b22_greeting_thanks_1x1",
+  "aspect": "1:1",
+  "form": {
+   "category": "greeting",
+   "title": "Tri ân khách hàng cuối năm",
+   "message": "Cảm ơn quý khách đã đồng hành cùng Tendoo suốt năm 2026",
+   "special_offer": "Tặng voucher 100K cho đơn tiếp theo"
+  },
+  "prompt": "Thiệp tri ân khách hàng dịp cuối năm, tông đỏ vàng ấm cúng"
+ },
+ {
+  "id": "b23_event_workshop_16x9",
+  "aspect": "16:9",
+  "form": {
+   "category": "event",
+   "title": "Workshop pha chế cà phê",
+   "event_time": "19:00 Thứ bảy 25/10",
+   "event_place": "Tendoo Coffee, 45 Lê Lợi",
+   "fee": "150.000đ",
+   "cta": "Đăng ký ngay"
+  },
+  "prompt": "Thư mời workshop pha chế cà phê cho cộng đồng yêu cà phê"
+ },
+ {
+  "id": "b24_before_after_weight_1x1",
+  "aspect": "1:1",
+  "form": {
+   "category": "before_after",
+   "title": "Giảm 10kg sau 3 tháng",
+   "result": "Vòng eo giảm 12cm, cơ thể săn chắc",
+   "store_info": "Tendoo Fitness | 0909 123 456"
+  },
+  "prompt": "So sánh trước và sau khi tập gym giảm cân của học viên"
+ },
+ {
+  "id": "b25_minigame_4x5",
+  "aspect": "4:5",
+  "form": {
+   "category": "minigame",
+   "title": "Minigame tặng 10 voucher 500K",
+   "guide_steps": "Like và theo dõi trang\nBình luận tag 2 người bạn\nChia sẻ bài viết công khai",
+   "deadline": "Kết thúc 20:00 ngày 30/10"
+  },
+  "prompt": "Minigame trên fanpage của shop mỹ phẩm, trẻ trung vui nhộn"
+ },
+ {
+  "id": "b26_combo_deal_9x16",
+  "aspect": "9:16",
+  "form": {
+   "category": "combo",
+   "title": "Combo tiết kiệm cho nhóm",
+   "combos": "Combo 2 người: 199.000đ\nCombo 4 người: 369.000đ\nCombo gia đình: 499.000đ"
+  },
+  "prompt": "Poster combo gà rán cho nhóm bạn và gia đình, năng động"
  }
 ]

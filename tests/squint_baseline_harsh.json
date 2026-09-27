@@ -79,6 +79,16 @@
   "c5": 3,
   "pass5": 2
  },
+ "notice_card": {
+  "n": 4,
+  "c1": 0,
+  "c2": 4,
+  "c3": 4,
+  "c4": 4,
+  "squint": 0,
+  "c5": 0,
+  "pass5": 0
+ },
  "quote_spotlight": {
   "n": 4,
   "c1": 0,

@@ -223,6 +223,7 @@ def parse_case_to_plan(case: Dict[str, Any], default_template: str) -> Tuple[Ten
         testimonial=src.get("testimonial"),
         reviewer_name=src.get("reviewer_name"),
         steps=src.get("steps", []),
+        body=src.get("body"),
         style=style_obj,
         scene_prompt=src.get("scene_prompt", ""),
         corridor_prompt=src.get("corridor_prompt", ""),

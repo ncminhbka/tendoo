@@ -52,6 +52,27 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         },
         "aspect_ratios": ["1:1", "9:16", "16:9", "4:5"],
     },
+    "notice_card": {
+        "name": "Tấm Thiệp Thông Tin (Thông báo / Chúc mừng / Thư mời)",
+        "specialized": True,
+        "llm_hint": "Tấm thiệp giấy ở giữa khung: THÔNG BÁO (nghỉ lễ, đổi giờ, bảo trì), THIỆP CHÚC MỪNG (8/3, 20/10, Tết, tri ân), THƯ MỜI sự kiện -- cần `body` (1-3 câu nội dung).",
+        "hint": "Nhãn nhỏ (badge, vd 'THÔNG BÁO', 'THƯ MỜI'), tiêu đề (hero), subhead tuỳ chọn, `body` = đoạn nội dung 1-3 câu (<= 45 từ), extra_texts = 1-3 thông tin chính (thời gian, địa điểm, ngày làm việc lại...), CTA + cửa hàng/chữ ký ở đáy. Nền là trang trí quanh thiệp.",
+        "has_mask": True,
+        "mask_preset": "center_card",
+        "visual_intents": ["matrix_board", "festive_event", "hook_headline"],
+        "capacity_chars": {"1:1": 154, "9:16": 370, "16:9": 13, "4:5": 154},
+        "capacity_chars_safe": {"1:1": 699, "9:16": 699, "16:9": 370, "4:5": 699},
+        "slots": {
+            "hero": {},
+            "subhead": {},
+            "badge": {},
+            "body": {"required": True},
+            "extra_texts": {},
+            "cta": {"drives_geometry": ('has_footer',)},
+            "store_info": {"drives_geometry": ('has_footer',)},
+        },
+        "aspect_ratios": ["1:1", "9:16", "16:9", "4:5"],
+    },
     "type_showcase": {
         "name": "Chữ Tâm Điểm (Showcase)",
         "llm_hint": "Poster LẤY CHỮ LÀM CHÍNH (sale thuần chữ, chúc mừng, thông báo): con số/từ khoá khổng lồ ở tâm khung, ít chữ; hợp maskless.",
@@ -406,7 +427,8 @@ MASKLESS_INTENTS: Tuple[str, ...] = ("big_number_deal", "hook_headline", "festiv
 
 # Giới hạn số TỪ mỗi field (Luật 6 + thực hành poster: ít chữ, mỗi ý 1 dòng). Chữ đọc được trên điện thoại
 # chiếm chỗ gấp ~2x trước -> nội dung dài làm mọi chữ co về sàn và hero mất nổi bật. Prompt dạy LLM, Cổng 2 báo.
-TEXT_WORD_LIMITS: Dict[str, int] = {"hero": 7, "subhead": 10, "badge": 4, "cta": 4, "extra_item": 6, "extra_count": 3}
+TEXT_WORD_LIMITS: Dict[str, int] = {"hero": 7, "subhead": 10, "badge": 4, "cta": 4, "extra_item": 6, "extra_count": 3,
+                                    "body": 45}
 
 # Linh kiện đồ hoạ GĐ 2 (ROADMAP §4.4) -- danh mục ĐÓNG, mỗi lựa chọn khai báo intent được dùng
 # (Luật 4: tránh "neon rơi vào thiệp mời VIP"). Lựa chọn đầu tiên của mỗi nhóm là mặc định và

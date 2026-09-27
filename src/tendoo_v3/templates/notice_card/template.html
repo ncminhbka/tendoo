@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ hero }}</title>
+  <style>
+    {{ font_face_css }}
+    {% include "components/ui_components.css" %}
+
+    /* NOTICE CARD -- tấm thiệp thông tin: THÔNG BÁO (nghỉ lễ, đổi giờ, bảo trì), THIỆP CHÚC MỪNG, THƯ MỜI sự kiện.
+       Nhu cầu người dùng phổ biến mà 16 template trước chưa phủ: nội dung là 1-3 CÂU phải đọc hết, không phải
+       khẩu hiệu. Theo bộ poster tham chiếu (thiệp/thông báo Canva): thẻ GIẤY đặc ở tâm, khung viền mảnh màu nhấn,
+       nhãn nhỏ giãn nét, tiêu đề, đường phân cách có hạt thoi, đoạn nội dung, hộp thông tin chính, chữ ký.
+       Thẻ đặc -> chữ luôn đọc được bất kể ảnh; ảnh nền là trang trí quanh thẻ. Màu: renderer._notice_palette. */
+    :root { --headline-font: {{ headline_font_css }}; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+    html, body { width: {{ width }}px; height: {{ height }}px; overflow: hidden; background: #0B0F19;
+                 font-family: var(--headline-font, 'Be Vietnam Pro', sans-serif); position: relative; }
+    .poster-canvas { position: relative; width: {{ width }}px; height: {{ height }}px; overflow: hidden; }
+    .bg-layer { position: absolute; inset: 0; background-image: url('{{ bg_data_uri }}'); background-size: cover;
+                background-position: center; z-index: 1; }
+
+    .notice-card {
+      position: absolute;
+      left: {{ zones.card.x1 }}px; top: {{ zones.card.y1 }}px;
+      width: {{ zones.card.width }}px; height: {{ zones.card.height }}px;
+      z-index: 10;
+      background: {{ notice.card_bg }};
+      border-radius: {{ (zones.card.width * 0.03) | round(1) }}px;
+      box-shadow: 0 {{ (height * 0.02) | round(1) }}px {{ (height * 0.06) | round(1) }}px rgba(0, 0, 0, 0.38);
+      padding: {{ (zones.card.height * 0.065) | round(1) }}px {{ (zones.card.width * 0.075) | round(1) }}px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: {{ (zones.card.height * 0.028) | round(1) }}px;
+      text-align: center;
+      color: {{ notice.text }};
+      overflow: hidden;
+    }
+    /* Khung viền mảnh bên trong -- dấu hiệu "thiệp in" của mọi mẫu tham chiếu */
+    .notice-card::before {
+      content: ""; position: absolute;
+      inset: {{ (zones.card.width * 0.022) | round(1) }}px;
+      border: 1.5px solid {{ notice.accent }};
+      border-radius: {{ (zones.card.width * 0.018) | round(1) }}px;
+      opacity: 0.6; pointer-events: none;
+    }
+
+    /* 16:9: 2 CỘT (tiêu đề | nội dung). Dọc/vuông: KHÔNG bọc nhóm (display:contents làm autofit đo bề rộng cha = 0
+       -> tiêu đề co về sàn, đo 27/09). */
+    {% if width / height >= 1.5 %}
+    .notice-card { flex-direction: row; align-items: stretch; text-align: left;
+                   gap: {{ (zones.card.width * 0.05) | round(1) }}px; }
+    .notice-head, .notice-main { display: flex; flex-direction: column; justify-content: center; min-width: 0;
+                                 gap: {{ (zones.card.height * 0.024) | round(1) }}px; }
+    .notice-head { flex: 0.62; align-items: flex-start; }
+    .notice-main { flex: 1.38; align-items: stretch; padding-left: {{ (zones.card.width * 0.04) | round(1) }}px;
+                   border-left: 1.5px solid {{ notice.accent }}55; }
+    .notice-card .notice-divider { width: 38%; }
+    .notice-card .notice-facts { align-items: flex-start; }
+    .notice-card .notice-footer, .notice-card .store-info-row { align-items: flex-start; justify-content: flex-start; }
+    {% endif %}
+
+    .notice-label {
+      font-family: var(--ui-font);
+      font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase;
+      color: {{ notice.accent_text }};
+      max-width: 90%;
+    }
+
+    .hero-title {
+      width: 100%;
+      font-weight: 900;
+      line-height: 1.12;
+      color: {{ notice.text }};
+      text-shadow: none;
+    }
+    .hero-title .hero-seg--accent { color: {{ notice.accent_text }}; -webkit-text-fill-color: {{ notice.accent_text }}; text-shadow: none; }
+
+    /* Đường phân cách: 2 vạch mảnh + hạt thoi màu nhấn */
+    .notice-divider { display: flex; align-items: center; gap: 0.6em; width: 42%; color: {{ notice.accent }};
+                      font-size: {{ (zones.card.height * 0.022) | round(1) }}px; }
+    .notice-divider::before, .notice-divider::after { content: ""; flex: 1; height: 1.5px; background: currentColor; opacity: 0.7; }
+
+    .subhead-title {
+      max-width: 94%;
+      line-height: 1.3;
+      color: {{ notice.accent_text }};
+      text-shadow: none;
+    }
+
+    .notice-body {
+      font-family: var(--body-font, var(--ui-font));
+      font-weight: 500;
+      line-height: 1.5;
+      max-width: 96%;
+      color: {{ notice.text }};
+      text-wrap: pretty;
+    }
+
+    .notice-facts {
+      font-family: var(--ui-font);
+      width: 100%;
+      background: {{ notice.facts_bg }};
+      border-radius: 0.6em;
+      padding: 0.55em 0.9em;
+      display: flex; flex-direction: column; align-items: center; gap: 0.35em;
+    }
+    .notice-fact { display: inline-flex; align-items: center; gap: 0.5em; font-weight: 700; color: {{ notice.text }}; line-height: 1.3; }
+    .notice-fact svg { width: 1.05em; height: 1.05em; flex-shrink: 0; color: {{ notice.accent }}; }
+
+    .notice-footer { display: flex; flex-direction: column; align-items: center; gap: 0.4em; width: 100%; }
+    .cta-btn {
+      font-family: var(--ui-font);
+      display: inline-flex; align-items: center; gap: 0.5em;
+      padding: 0.45em 1.4em;
+      background: {{ notice.accent }};
+      color: {{ '#16181F' if notice.dark else '#FFFFFF' }};
+      font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+      border-radius: 9999px; border: none; text-shadow: none; white-space: normal;
+    }
+    .store-info-row {
+      font-family: var(--ui-font);
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3em 0.9em;
+      color: {{ notice.muted }};
+      max-width: 100%;
+    }
+    /* Trên thẻ giấy: chữ + biểu tượng, KHÔNG viên thuốc tối (kiểu mặc định ui_components dành cho chữ trên ảnh). */
+    .store-item { display: inline-flex; align-items: center; gap: 0.4em; font-size: inherit; font-weight: 600;
+                  background: none !important; box-shadow: none !important; border: none !important; padding: 0 !important;
+                  color: {{ notice.muted }} !important; backdrop-filter: none !important; }
+    .store-item svg { width: 1.05em; height: 1.05em; color: {{ notice.accent }}; flex-shrink: 0; }
+  </style>
+</head>
+{% from "components/ui_macros.html" import render_decor_layer, render_hero_phrase, render_subhead, render_store with context %}
+<body>
+  <div class="poster-canvas">
+    <div class="bg-layer"></div>
+    {{ render_decor_layer() }}
+    {% set wide = width / height >= 1.5 %}
+    <div class="notice-card">
+      {% if wide %}<div class="notice-head">{% endif %}
+      {% if badge %}
+      <div class="notice-label" data-autofit data-min-font="{{ budget.badge.min_font }}" data-max-font="{{ budget.badge.max_font }}" data-max-height="{{ budget.badge.max_h }}">{{ badge }}</div>
+      {% endif %}
+      {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
+      <div class="notice-divider">◆</div>
+      {{ render_subhead(subhead, budget=budget.subhead) }}
+      {% if wide %}</div>
+      <div class="notice-main">{% endif %}
+      {% if body %}
+      <div class="notice-body" data-autofit data-min-font="{{ budget.body.min_font }}" data-max-font="{{ budget.body.max_font }}" data-max-height="{{ budget.body.max_h }}">{{ body }}</div>
+      {% endif %}
+      {% if extra_texts %}
+      <div class="notice-facts" data-autofit data-min-font="{{ budget.facts.min_font }}" data-max-font="{{ budget.facts.max_font }}" data-max-height="{{ budget.facts.max_h }}">
+        {% for pill in (extra_pills or []) %}
+        <div class="notice-fact">{% if pill.icon_svg %}{{ pill.icon_svg }}{% endif %}<span>{{ pill.text }}</span></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if cta or store_items or store_info %}
+      <div class="notice-footer">
+        {% if cta %}
+        <div class="cta-btn" data-autofit data-min-font="{{ budget.cta.min_font }}" data-max-font="{{ budget.cta.max_font }}" data-max-height="{{ budget.cta.max_h }}"><span>{{ cta }}</span></div>
+        {% endif %}
+        {{ render_store(store_items, store_info, budget=budget.store, is_col=false, bare_single=true) }}
+      </div>
+      {% endif %}
+      {% if wide %}</div>{% endif %}
+    </div>
+  </div>
+  {{ autofit_js }}
+</body>
+</html>

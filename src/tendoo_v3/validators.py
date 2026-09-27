@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # Field nội dung người dùng nhìn thấy trên poster (không gồm style/prompt/markup).
 CONTENT_FIELDS = (
     "hero", "subhead", "badge", "tag_left", "tag_right", "rating", "extra_texts",
-    "cta", "store_info", "qr_code", "testimonial", "reviewer_name", "steps",
+    "cta", "store_info", "qr_code", "testimonial", "reviewer_name", "steps", "body",
 )
 
 
