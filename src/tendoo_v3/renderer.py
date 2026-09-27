@@ -36,6 +36,8 @@ from tendoo_v3.icons import (
     render_star_rating_svg,
 )
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
+from dataclasses import replace
+
 from tendoo_v3.styles import (
     COMMON_AUTOFIT_JS,
     HERO_HEIGHT_BOOST,
@@ -46,6 +48,8 @@ from tendoo_v3.styles import (
     PHONE_STAT_MAX_PX,
     PHONE_MIN_PX,
     PHONE_TIER2_PX,
+    SVG_FILTER_EFFECTS,
+    TEXT_EFFECT_ALIASES,
     TIER3_BELOW_SUBHEAD,
     TIER3_FLOOR_PX,
     phone_floor,
@@ -1920,6 +1924,11 @@ def build_template_html(
         font_key=plan.style.font,
         text_content=f"{plan.hero} {plan.subhead or ''} {plan.cta or ''} {plan.badge or ''} {plan.testimonial or ''}",
     )
+    # Hiệu ứng CHẤT LIỆU (glossy_gel/metal_emboss: chiếu sáng theo độ dày nét) trên font viết tay/cọ NÉT MẢNH ->
+    # nét bị tẩy thành vệt xám lấm tấm, không đọc được (27/09, khai trương tiệm bánh GPT thật: holidays + gel).
+    # Designer: hiệu ứng nổi khối chỉ cho font đậm -> rơi về bóng đổ (Cổng 2 báo).
+    if TEXT_EFFECT_ALIASES.get(plan.style.text_effect, plan.style.text_effect) in SVG_FILTER_EFFECTS and canonical_font in SCRIPT_FONTS:
+        plan = replace(plan, style=replace(plan.style, text_effect="shadow"))
 
     # 1.5. Màu Glow "bám" đúng tông ảnh nền THẬT: lấy màu chủ đạo thật từ bg_data_uri
     # (không phải đoán/hard-code) rồi trộn 50/50 với theme_color LLM chọn -- glow chữ

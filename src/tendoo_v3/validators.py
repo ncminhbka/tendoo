@@ -16,11 +16,11 @@ from __future__ import annotations
 import logging
 from typing import List
 
-from tendoo_v3.fonts import FONT_ALIASES, FONT_CATALOG
+from tendoo_v3.fonts import FONT_ALIASES, FONT_CATALOG, SCRIPT_FONTS
 from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, LIST_LIMITS, MASKLESS_INTENTS, TEXT_WORD_LIMITS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import LOCKUP_REQUIRES, SCRIPT_PREFIX_MAX_WORDS, STAMP_FONT_MIN, resolve_lockup, split_stat, stamp_ring
 from tendoo_v3.schema import TendooCreativePlan
-from tendoo_v3.styles import BACKGROUND_TONES, TEXT_EFFECT_ALIASES, TEXT_EFFECT_INTENTS, TEXT_EFFECTS
+from tendoo_v3.styles import BACKGROUND_TONES, SVG_FILTER_EFFECTS, TEXT_EFFECT_ALIASES, TEXT_EFFECT_INTENTS, TEXT_EFFECTS
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +126,10 @@ def _check_components(plan: TendooCreativePlan) -> List[str]:
             issues.append(f"stat_style '{plan.stat_style}': stat {stats} không có dạng số+đơn vị -- không tách đơn vị")
         if plan.stat_style == "burst" and any(len(t) > 5 for t in stats):
             issues.append(f"stat_style 'burst' hợp với stat ngắn (<= 5 ký tự); {stats} sẽ kéo sao thành elip, cắt mép chữ")
+    eff = TEXT_EFFECT_ALIASES.get(plan.style.text_effect, plan.style.text_effect)
+    font = FONT_ALIASES.get(plan.style.font, plan.style.font)
+    if eff in SVG_FILTER_EFFECTS and font in SCRIPT_FONTS:
+        issues.append(f"text_effect '{eff}' (nổi khối/chất liệu) cần font ĐẬM; font '{font}' nét mảnh viết tay -- nét bị tẩy xám, render bằng 'shadow'")
     if plan.lockup not in (None, "none") and plan.lockup in LOCKUP_REQUIRES:
         roles = {p.get("role") for p in plan.hero_parts}
         miss = [r for r in LOCKUP_REQUIRES[plan.lockup] if r not in roles]

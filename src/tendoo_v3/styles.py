@@ -454,7 +454,7 @@ HIERARCHY_MIN_RATIO = 1.6     # hero >= 1.6x subhead dù phải hạ subhead dư
 # định 18-19px = 12px trên màn (menu trà sữa, 3 bước chăm sóc da -- user: "chữ quá nhỏ").
 PHONE_LIST_PX = 15.0
 # Trần hero khi có điểm neo `stat` (renderer._apply_stat_anchor_ceiling): con số ngắn được to hơn dòng tiêu đề.
-PHONE_STAT_MAX_PX = 60.0
+PHONE_STAT_MAX_PX = 90.0
 # Lockup chỉ giữ khi con số đạt >= tỉ lệ này so với xếp ngang (autofit Bước 1 đo cả hai; test_lockup_suite 27/09).
 LOCKUP_KEEP_RATIO = 0.9
 PHONE_HERO_MAX_PX = 40.0      # trần hero (~109px ở khung 1024 -- social 1080: tiêu đề 48-96px, poster lớn hơn)
@@ -1111,8 +1111,8 @@ COMMON_AUTOFIT_JS = """
           // Chữ GRADIENT không nhận được quầng/lớp mờ: nét trong suốt lộ nền gradient của khối cha, mà bóng/nền
           // của chính đoạn chữ vẽ ĐÈ lên nét đó (27/09: "FLASH SALE" lửa thành chữ trắng trên hộp trắng). Không đạt
           // tương phản -> LÀM PHẲNG về màu sáng nhất của gradient (giữ sắc), rồi xử lý như chữ thường.
-          // Gradient NGAY trên phần tử chữ + thiếu ít: quầng (text-shadow vẽ DƯỚI nét cắt theo chữ) giữ được hiệu ứng.
-          if (v.gradient && v.gradOwn && v.worst >= v.need * 0.85) v = {...v, gradient: false, noScrim: true};
+          // Chữ gradient KHÔNG BAO GIỜ nhận quầng: Chromium vẽ text-shadow ĐÈ lên nền cắt theo chữ -> cả tiêu đề
+          // thành vệt đen nhoè (27/09, thiệp VIP 3d_gold -- người duyệt: "chữ đen thui"). Thiếu tương phản -> làm phẳng.
           if (v.gradient) {
             // Chọn màu phẳng: ưu tiên một điểm màu CỦA gradient (giữ sắc) đạt >= 0.85x ngưỡng theo minimax ô tối/sáng
             // nhất; không có thì tốt nhất trong {điểm màu, trắng, navy}. 27/09: làm phẳng luôn về điểm SÁNG nhất ->
