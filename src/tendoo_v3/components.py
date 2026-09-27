@@ -25,6 +25,7 @@ import re
 import zlib
 from typing import Any, Dict, List, Optional, Tuple
 
+from tendoo_v3.fonts import is_all_caps
 from tendoo_v3.colors import calculate_contrast_ratio, get_contrasting_text_color, parse_color_to_rgb, rgb_to_hex
 from tendoo_v3.styles import TIER1_CLASSES
 
@@ -252,9 +253,20 @@ def resolve_lockup(plan: Any) -> str:
             return "none"
     if name == "script_over_caps":
         pre = next(p.get("t", "") for p in plan.hero_parts if p.get("role") == "prefix")
-        if len(pre.split()) > SCRIPT_PREFIX_MAX_WORDS:
+        # prefix IN HOA -> dòng viết tay in hoa (designer không bao giờ làm, xem fonts.script_unfit) -> dòng ngang.
+        if len(pre.split()) > SCRIPT_PREFIX_MAX_WORDS or is_all_caps(pre):
             return "none"
     return name
+
+
+def headline_font_text(plan: Any) -> str:
+    """Đoạn chữ THẬT SỰ hiển thị bằng font tiêu đề: lockup script_over_caps -> dòng viết tay (prefix; dòng in hoa
+    dùng font riêng); có hero_parts -> đoạn stat (chữ dẫn/đuôi dùng font UI -- hero_phrase.css); không -> cả hero."""
+    parts = plan.hero_parts or []
+    if resolve_lockup(plan) == "script_over_caps":
+        return " ".join(p.get("t", "") for p in parts if p.get("role") == "prefix")
+    stats = [p.get("t", "") for p in parts if p.get("role") == "stat"]
+    return " ".join(stats) if stats else (plan.hero or "")
 
 
 def build_components(plan: Any, zones: Dict[str, Any], width: int, height: int) -> Optional[Dict[str, Any]]:

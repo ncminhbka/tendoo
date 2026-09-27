@@ -78,3 +78,13 @@ def test_ornaments_never_touch_text_and_are_deterministic(page, case):
     n, hit, size = runs[0]
     assert hit == 0, f"{case['id']}: {hit}/{n} hoạ tiết chạm chữ/khối"
     assert runs[0] == runs[1], f"{case['id']}: hoạ tiết không tất định {runs}"
+
+
+def test_pack_script_font_is_a_script_font_and_reaches_lockup():
+    from tendoo_v3.fonts import SCRIPT_FONTS, script_font
+    from tendoo_v3.style_packs import pack_script_font
+    for name, pack in STYLE_PACKS.items():
+        assert pack.get("script_font") in SCRIPT_FONTS | {None}, name
+    extra, family = script_font("cormorant", pack_script_font(_plan(style_pack="luxury")))
+    assert "Great Vibes" in family and "Great Vibes" in extra
+    assert script_font("lobster", "greatvibes")[0] == ""  # tiêu đề đã viết tay -> dùng chính nó, không nhúng thêm

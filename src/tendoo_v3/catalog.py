@@ -429,6 +429,10 @@ MASKLESS_INTENTS: Tuple[str, ...] = ("big_number_deal", "hook_headline", "festiv
 # chiếm chỗ gấp ~2x trước -> nội dung dài làm mọi chữ co về sàn và hero mất nổi bật. Prompt dạy LLM, Cổng 2 báo.
 TEXT_WORD_LIMITS: Dict[str, int] = {"hero": 7, "subhead": 10, "badge": 4, "cta": 4, "extra_item": 6, "extra_count": 3,
                                     "body": 45}
+# Khung NGANG 16:9 (ROADMAP §8, đo 27/09): ở 1024x576 sàn điện thoại 10px = 27.5px canvas, MỌI chữ phụ đã nằm ở sàn;
+# cột chữ ~400px ở ~30px chứa ~4-5 từ tiếng Việt/dòng -> subhead 10 từ = 3 dòng, chiếm chỗ tiêu đề (b12 sneaker C1 1.78).
+# Giới hạn chặt hơn = mỗi khối phụ <= 2 dòng. Chỉ đưa vào prompt (Cổng 2 không biết khung hình).
+TEXT_WORD_LIMITS_WIDE: Dict[str, int] = {"subhead": 6, "badge": 3, "extra_item": 5, "extra_count": 2, "body": 25}
 
 # Linh kiện đồ hoạ GĐ 2 (ROADMAP §4.4) -- danh mục ĐÓNG, mỗi lựa chọn khai báo intent được dùng
 # (Luật 4: tránh "neon rơi vào thiệp mời VIP"). Lựa chọn đầu tiên của mỗi nhóm là mặc định và

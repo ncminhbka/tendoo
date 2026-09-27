@@ -16,9 +16,9 @@ from __future__ import annotations
 import logging
 from typing import List
 
-from tendoo_v3.fonts import FONT_ALIASES, FONT_CATALOG, SCRIPT_FONTS
-from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, LIST_LIMITS, MASKLESS_INTENTS, TEXT_WORD_LIMITS, TEMPLATE_CATALOG, resolve_intent
-from tendoo_v3.components import LOCKUP_REQUIRES, SCRIPT_PREFIX_MAX_WORDS, STAMP_FONT_MIN, resolve_lockup, split_stat, stamp_ring
+from tendoo_v3.fonts import FONT_ALIASES, FONT_CATALOG, SCRIPT_FONTS, script_unfit
+from tendoo_v3.catalog import COMPONENT_STYLES, INTENT_PROFILES, LIST_LIMITS, MASKLESS_INTENTS, TEXT_WORD_LIMITS, TEXT_WORD_LIMITS_WIDE, TEMPLATE_CATALOG, resolve_intent
+from tendoo_v3.components import LOCKUP_REQUIRES, headline_font_text, SCRIPT_PREFIX_MAX_WORDS, STAMP_FONT_MIN, resolve_lockup, split_stat, stamp_ring
 from tendoo_v3.schema import TendooCreativePlan
 from tendoo_v3.styles import BACKGROUND_TONES, SVG_FILTER_EFFECTS, TEXT_EFFECT_ALIASES, TEXT_EFFECT_INTENTS, TEXT_EFFECTS
 
@@ -139,10 +139,9 @@ def _check_components(plan: TendooCreativePlan) -> List[str]:
         issues.append("brand_logo phải là data:image/... hoặc https://... -- bỏ qua logo")
     if plan.brand_font and FONT_ALIASES.get(plan.brand_font, plan.brand_font) not in FONT_CATALOG:
         issues.append(f"brand_font '{plan.brand_font}' không có trong danh mục font -- dùng font của plan")
-    stats = [p.get("t", "") for p in plan.hero_parts if p.get("role") == "stat"]
-    n_head = len(" ".join(stats).split()) if stats else len((plan.hero or "").split())
-    if font in SCRIPT_FONTS and n_head > 5:
-        issues.append(f"font viết tay '{font}' chỉ hợp tiêu đề ngắn (<= 5 từ); {n_head} từ dùng font tiêu đề -- render bằng font dễ đọc")
+    unfit = script_unfit(font, headline_font_text(plan))
+    if unfit:
+        issues.append(f"font viết tay '{font}' chỉ hợp tiêu đề ngắn, chữ thường (<= 5 từ, không viết hoa toàn bộ); đoạn dùng font tiêu đề: {unfit} -- render bằng font dễ đọc")
     if eff in SVG_FILTER_EFFECTS and font in SCRIPT_FONTS:
         issues.append(f"text_effect '{eff}' (nổi khối/chất liệu) cần font ĐẬM; font '{font}' nét mảnh viết tay -- nét bị tẩy xám, render bằng 'shadow'")
     if plan.lockup not in (None, "none") and plan.lockup in LOCKUP_REQUIRES:
@@ -195,4 +194,23 @@ def dedupe_plan(plan: TendooCreativePlan) -> TendooCreativePlan:
     return plan
 
 
-__all__ = ["CONTENT_FIELDS", "check_plan", "content_chars", "dedupe_plan", "log_plan_issues"]
+__all__ = ["CONTENT_FIELDS", "check_plan", "content_chars", "dedupe_plan", "length_issues", "log_plan_issues"]
+
+
+def length_issues(plan: TendooCreativePlan, aspect_ratio: str = "1:1") -> List[str]:
+    """Trường chữ VƯỢT giới hạn số từ (Luật 6; khung 16:9 chặt hơn -- catalog.TEXT_WORD_LIMITS_WIDE), viết thành yêu cầu
+    sửa cụ thể cho vòng sửa của LLM (llm_planner). Python KHÔNG tự cắt chữ (Cổng 1: nguyên văn) -- chỉ LLM được rút gọn.
+    GPT thật 27/09: prompt đã ghi giới hạn 16:9 mà vẫn trả subhead 13 từ, badge 7 từ -> cần phản hồi cụ thể."""
+    wide = aspect_ratio == "16:9"
+    L = {**TEXT_WORD_LIMITS, **(TEXT_WORD_LIMITS_WIDE if wide else {})}
+    where = " (khung ngang 16:9)" if wide else ""
+    out = []
+    for f in ("hero", "subhead", "badge", "cta", "body"):
+        n = len(str(getattr(plan, f, "") or "").split())
+        if n > L[f]:
+            out.append(f"`{f}` đang {n} từ, tối đa {L[f]} từ{where}")
+    ex = plan.extra_texts or []
+    if len(ex) > L["extra_count"] or any(len(x.split()) > L["extra_item"] for x in ex):
+        out.append(f"`extra_texts` đang {len(ex)} dòng (dài nhất {max((len(x.split()) for x in ex), default=0)} từ), "
+                   f"tối đa {L['extra_count']} dòng x {L['extra_item']} từ{where}")
+    return out

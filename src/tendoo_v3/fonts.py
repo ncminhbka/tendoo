@@ -3,7 +3,7 @@ src/tendoo/core/fonts.py
 
 Central Typography Font Engine for Tendoo Studio:
 =================================================
-- Quản lý 19 họ font chữ Unicode tiếng Việt chuẩn (Việt hóa 100% dấu thanh) qua 6 phong cách thẩm mỹ.
+- Quản lý 28 họ font chữ Unicode tiếng Việt chuẩn (Việt hóa 100% dấu thanh) qua 6 phong cách thẩm mỹ.
 - Tự động sinh khối CSS `@font-face` nhúng trực tiếp chuỗi Base64 Data URI (cached trong RAM bằng lru_cache).
 - Khuyến nghị font thông minh theo ngành nghề, phong cách thị giác và từ khóa nội dung (Auto mode).
 - Cam kết độ trung thực hiển thị 100% offline cho Chromium Playwright trên server nội bộ.
@@ -52,7 +52,7 @@ if not FONTS_DIR.exists():
     FONTS_DIR = Path("fonts")
 
 
-# Bảng tra cứu 19 họ font tiếng Việt chuẩn đã kiểm thử chất lượng (QA Verified)
+# Bảng tra cứu 28 họ font (19 gốc + 9 OFL mở rộng 27/09: scripts/fetch_fonts.py) tiếng Việt chuẩn đã kiểm thử chất lượng (QA Verified)
 
 FONT_CATALOG: Dict[str, Dict[str, Any]] = {
     # Nhóm 1: Hiện đại & Chuẩn mực (Modern Clean)
@@ -93,6 +93,17 @@ FONT_CATALOG: Dict[str, Dict[str, Any]] = {
         "format": "truetype",
         "fallback": "'Plus Jakarta Sans', sans-serif",
         "description": "Bo tròn góc nhẹ, năng động cho ứng dụng, thiết bị thông minh, startup.",
+    },
+
+    "montserrat": {
+        "file": "Montserrat.ttf",
+        "weights": {"100 900": "Montserrat.woff2"},
+        "css_family": "Montserrat",
+        "display_name": "Montserrat (Hình học / Nhiều độ đậm)",
+        "archetype": "Hiện đại & Chuẩn mực",
+        "format": "truetype",
+        "fallback": "'Be Vietnam Pro', sans-serif",
+        "description": "Sans hình học đủ độ đậm 100-900 (variable), gọn gàng cho tuyển dụng, doanh nghiệp, giáo dục.",
     },
 
     # Nhóm 2: Mạnh mẽ & Giảm giá sốc (Impact & Sport)
@@ -142,6 +153,17 @@ FONT_CATALOG: Dict[str, Dict[str, Any]] = {
         "description": "Gothic cao ráo, chuyên nghiệp cho thông số kỹ thuật, thời trang nam.",
     },
 
+    "barlowcond": {
+        "file": "BarlowCondensed-Black.ttf",
+        "weights": {"100 900": "BarlowCondensed-Black.woff2"},
+        "css_family": "Barlow Condensed",
+        "display_name": "Barlow Condensed Black (Chữ hẹp / Con số lớn)",
+        "archetype": "Mạnh mẽ & Flash Sale",
+        "format": "truetype",
+        "fallback": "'Anton', 'Oswald', sans-serif",
+        "description": "Chữ hẹp đen dày, con số khổng lồ vẫn vừa khung -- flash sale, giá, thể thao.",
+    },
+
     # Nhóm 3: Sang trọng & Thẩm mỹ (Luxury & Editorial)
     "playfair": {
         "file": "PlayfairDisplay.ttf",
@@ -169,6 +191,37 @@ FONT_CATALOG: Dict[str, Dict[str, Any]] = {
         "format": "truetype",
         "fallback": "'Playfair Display', cursive",
         "description": "Thư pháp hoàng gia thanh tao cho thiệp mừng, quà tặng cao cấp, tiệc cưới.",
+    },
+
+    "greatvibes": {
+        "file": "GreatVibes-Regular.ttf",
+        "weights": {"100 900": "GreatVibes-Regular.woff2"},
+        "css_family": "Great Vibes",
+        "display_name": "Great Vibes (Thư pháp trang trọng / Thiệp cưới)",
+        "archetype": "Sang trọng & Thẩm mỹ",
+        "format": "truetype",
+        "fallback": "'Playfair Display', cursive",
+        "description": "Thư pháp nét thanh nét đậm trang trọng cho thiệp mời, tiệc cưới, trang sức, spa cao cấp.",
+    },
+    "alexbrush": {
+        "file": "AlexBrush-Regular.ttf",
+        "weights": {"100 900": "AlexBrush-Regular.woff2"},
+        "css_family": "Alex Brush",
+        "display_name": "Alex Brush (Cọ mềm nghiêng / Mỹ phẩm)",
+        "archetype": "Sang trọng & Thẩm mỹ",
+        "format": "truetype",
+        "fallback": "'Playfair Display', cursive",
+        "description": "Cọ mềm nghiêng thanh lịch cho mỹ phẩm, nail, hoa, quà tặng.",
+    },
+    "cormorant": {
+        "file": "Cormorant.ttf",
+        "weights": {"100 900": "Cormorant.woff2"},
+        "css_family": "Cormorant",
+        "display_name": "Cormorant (Serif thanh mảnh / Nhiều độ đậm)",
+        "archetype": "Sang trọng & Thẩm mỹ",
+        "format": "truetype",
+        "fallback": "'Playfair Display', serif",
+        "description": "Serif Garamond thanh mảnh đủ độ đậm (variable) cho nước hoa, khách sạn, bất động sản cao cấp.",
     },
 
     # Nhóm 4: Ẩm thực & Bánh kẹo (F&B & Playful)
@@ -207,6 +260,37 @@ FONT_CATALOG: Dict[str, Dict[str, Any]] = {
         "format": "truetype",
         "fallback": "'Plus Jakarta Sans', sans-serif",
         "description": "Chữ viết bảng phấn mộc mạc cho siêu thị hữu cơ, nông trại sạch, cafe vintage.",
+    },
+
+    "lobster": {
+        "file": "Lobster-Regular.ttf",
+        "weights": {"100 900": "Lobster-Regular.woff2"},
+        "css_family": "Lobster",
+        "display_name": "Lobster (Script đậm Retro / Tiệm bánh)",
+        "archetype": "F&B, Cafe & Bánh kẹo",
+        "format": "truetype",
+        "fallback": "'Pacifico', cursive",
+        "description": "Script đậm nối nét kiểu biển hiệu retro cho tiệm bánh, burger, quán ăn gia đình.",
+    },
+    "charm": {
+        "file": "Charm-Bold.ttf",
+        "weights": {"100 900": "Charm-Bold.woff2"},
+        "css_family": "Charm",
+        "display_name": "Charm (Viết tay bút mực / Cafe thủ công)",
+        "archetype": "F&B, Cafe & Bánh kẹo",
+        "format": "truetype",
+        "fallback": "'Dancing Script', cursive",
+        "description": "Viết tay bút mực mềm mại cho cafe thủ công, trà, đồ handmade, Trung thu.",
+    },
+    "sriracha": {
+        "file": "Sriracha-Regular.ttf",
+        "weights": {"100 900": "Sriracha-Regular.woff2"},
+        "css_family": "Sriracha",
+        "display_name": "Sriracha (Viết tay thân thiện / Trà sữa)",
+        "archetype": "F&B, Cafe & Bánh kẹo",
+        "format": "truetype",
+        "fallback": "'Plus Jakarta Sans', cursive",
+        "description": "Viết tay tròn trịa thân thiện cho trà sữa, đồ uống giới trẻ, lớp học, mẹ & bé.",
     },
 
     # Nhóm 5: Đường phố & Thể thao (Street Art & Action)
@@ -248,34 +332,70 @@ FONT_CATALOG: Dict[str, Dict[str, Any]] = {
         "fallback": "'Playfair Display', cursive",
         "description": "Chữ rộn ràng phong vị Tết cổ truyền, tiệc Giáng sinh, Gala tri ân, đón lộc xuân.",
     },
+    "pattaya": {
+        "file": "Pattaya-Regular.ttf",
+        "weights": {"100 900": "Pattaya-Regular.woff2"},
+        "css_family": "Pattaya",
+        "display_name": "Pattaya (Cọ đậm / Tết & Sale lễ hội)",
+        "archetype": "Lễ hội & Tết",
+        "format": "truetype",
+        "fallback": "'Lobster', cursive",
+        "description": "Nét cọ đậm rộn ràng cho Tết, lễ hội, khai trương, sale mùa lễ.",
+    },
 }
 
 # Alias dictionary for convenience
 # Font ĐỌC ĐƯỢC ở cỡ nhỏ, dòng dài (sans/serif văn bản). Còn lại là font TRƯNG BÀY (script, cọ, graffiti,
 # condensed/ultra-black): chỉ cho tiêu đề -- quy tắc ghép font của designer "display cho headline, sans cho
 # thân chữ". Đo thật GĐ 3R: Pacifico cho bảng giá / các bước chăm sóc da -> danh sách khó đọc.
-BODY_SAFE_FONTS = frozenset({"bevietnam", "harabaras", "playfair", "oswald"})
+BODY_SAFE_FONTS = frozenset({"bevietnam", "harabaras", "playfair", "oswald", "montserrat"})
 # LINE-HEIGHT TỐI THIỂU để dấu tiếng Việt chồng (Ấ Ầ Ự...) dòng dưới KHÔNG chạm nét dòng trên -- ĐO bằng điểm ảnh
 # Chromium, chữ 900 in hoa, 3 câu mẫu (tests/test_diacritics.py, 27/09). Font không có ở đây: 1.05 là đủ.
-MIN_STACK_LINE_HEIGHT: Dict[str, float] = {"anton": 1.2, "gretoon": 1.3, "oswald": 1.1, "pacifico": 1.4}
+MIN_STACK_LINE_HEIGHT: Dict[str, float] = {"anton": 1.2, "gretoon": 1.3, "oswald": 1.1, "pacifico": 1.4,
+                                           "greatvibes": 1.25, "charm": 1.15}
 DEFAULT_STACK_LINE_HEIGHT = 1.05
 
 # Font VIẾT TAY / cọ mềm (lockup script_over_caps dùng làm dòng viết tay; đồng thời không dùng làm dòng in hoa).
-SCRIPT_FONTS = frozenset({"dancing", "clementine", "pacifico", "cookies", "holidays"})
+SCRIPT_FONTS = frozenset({"dancing", "clementine", "pacifico", "cookies", "holidays",
+                          "greatvibes", "alexbrush", "lobster", "charm", "sriracha", "pattaya"})
 DEFAULT_SCRIPT_FONT = "dancing"
 
 
-def script_font(headline_key: str) -> Tuple[str, str]:
+SCRIPT_HERO_MAX_WORDS = 5
+
+
+def script_unfit(font_key: str, headline_text: str) -> Optional[str]:
+    """Lý do font viết tay KHÔNG hợp đoạn chữ hiển thị bằng font tiêu đề (None = hợp). Thực hành designer:
+    (1) script chỉ cho 1 cụm ngắn <= 5 từ (27/09, thông báo nghỉ Tết 8 từ SVN-Holidays khó đọc);
+    (2) KHÔNG BAO GIỜ viết hoa toàn bộ chữ viết tay -- chữ hoa script nối nét rối, mất nhịp (27/09, pack cafe
+    Lobster "CÀ PHÊ PHIN": đo bằng mắt kém hẳn Playfair + dòng viết tay thường)."""
+    if font_key not in SCRIPT_FONTS:
+        return None
+    words = headline_text.split()
+    if len(words) > SCRIPT_HERO_MAX_WORDS:
+        return f"{len(words)} từ (> {SCRIPT_HERO_MAX_WORDS})"
+    if is_all_caps(headline_text):
+        return "viết hoa toàn bộ"
+    return None
+
+
+def is_all_caps(text: str) -> bool:
+    """Đoạn chữ viết hoa toàn bộ (>= 80% chữ cái hoa, >= 4 chữ cái -- '50%' hay 'Tết' không tính)."""
+    letters = [c for c in text if c.isalpha()]
+    return len(letters) >= 4 and sum(c.isupper() for c in letters) >= 0.8 * len(letters)
+
+
+def script_font(headline_key: str, preferred: Optional[str] = None) -> Tuple[str, str]:
     """(font_face_css cần nhúng THÊM, chuỗi font-family) cho dòng viết tay của lockup: font tiêu đề nếu nó
-    đã là viết tay (không nhúng thêm), ngược lại Dancing Script (hỗ trợ đủ dấu tiếng Việt)."""
+    đã là viết tay (không nhúng thêm), ngược lại font viết tay của style pack (`preferred`, vd luxury -> Great Vibes)
+    hoặc Dancing Script (hỗ trợ đủ dấu tiếng Việt)."""
     if headline_key in SCRIPT_FONTS:
         meta = FONT_CATALOG[headline_key]
         return "", f"'{meta['css_family']}', {meta['fallback']}"
-    meta = FONT_CATALOG[DEFAULT_SCRIPT_FONT]
+    meta = FONT_CATALOG[preferred if preferred in SCRIPT_FONTS else DEFAULT_SCRIPT_FONT]
     return "\n\n".join(_font_faces(meta)), f"'{meta['css_family']}', {meta['fallback']}"
 
 FONT_ALIASES: Dict[str, str] = {
-    "montserrat": "bevietnam",
     "be_vietnam_pro": "bevietnam",
     "bevietnampro": "bevietnam",
     "be_vietnam": "bevietnam",
@@ -464,6 +584,9 @@ __all__ = [
     "DEFAULT_SCRIPT_FONT",
     "SCRIPT_FONTS",
     "script_font",
+    "script_unfit",
+    "is_all_caps",
+    "SCRIPT_HERO_MAX_WORDS",
     "FONT_ALIASES",
     "FONT_CATALOG",
     "FONTS_DIR",

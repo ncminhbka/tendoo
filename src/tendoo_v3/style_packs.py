@@ -19,40 +19,41 @@ import zlib
 from dataclasses import replace
 from typing import Any, Dict, List, Optional
 
-# Mỗi pack: style (ghi đè plan.style trừ background_tone -- tông nền theo cảnh), linh kiện mặc định (chỉ điền khi
+# Mỗi pack: style (ghi đè plan.style trừ background_tone -- tông nền theo cảnh), script_font (dòng viết tay của
+# lockup script_over_caps khi font tiêu đề không phải viết tay; font OFL 27/09, fonts.SCRIPT_FONTS), linh kiện mặc định (chỉ điền khi
 # LLM bỏ trống), hoạ tiết, intent phù hợp (Cổng 2), gợi ý cảnh (prompt).
 STYLE_PACKS: Dict[str, Dict[str, Any]] = {
     "tet": {
         "name": "Tết Nguyên Đán", "intents": ("festive_event", "big_number_deal", "hook_headline"),
-        "style": {"font": "playfair", "theme_color": "#C8102E", "text_effect": "3d_gold"},
+        "style": {"font": "playfair", "theme_color": "#C8102E", "text_effect": "3d_gold"}, "script_font": "pattaya",
         "components": {"badge_style": "ribbon", "decor": "sparkles"},
         "ornaments": ["blossom", "lantern", "corner_frame"],
         "scene": "hoa mai vàng, đèn lồng đỏ, bokeh vàng ấm",
     },
     "trung_thu": {
         "name": "Trung Thu", "intents": ("festive_event", "hook_headline", "big_number_deal"),
-        "style": {"font": "playfair", "theme_color": "#F59E0B", "text_effect": "shadow"},
+        "style": {"font": "playfair", "theme_color": "#F59E0B", "text_effect": "shadow"}, "script_font": "charm",
         "components": {"decor": "sparkles"},
         "ornaments": ["lantern", "dots", "corner_frame"],
         "scene": "trăng tròn, đèn lồng cam, trời xanh đêm",
     },
     "fnb_sale": {
         "name": "Sale đồ ăn / đồ uống", "intents": ("big_number_deal", "hook_headline", "product_showcase"),
-        "style": {"font": "anton", "theme_color": "#E11D48", "text_effect": "shadow"},
+        "style": {"font": "anton", "theme_color": "#E11D48", "text_effect": "shadow"}, "script_font": "lobster",
         "components": {"badge_style": "ribbon", "stat_style": "unit"},
         "ornaments": ["dots", "flank_lines"],
         "scene": "món ăn cận cảnh, màu rực, ánh sáng studio",
     },
     "cafe": {
         "name": "Cà phê / trà sữa", "intents": ("hook_headline", "product_showcase", "big_number_deal", "matrix_board"),
-        "style": {"font": "playfair", "theme_color": "#A16207", "text_effect": "plain_elegant"},
+        "style": {"font": "playfair", "theme_color": "#A16207", "text_effect": "plain_elegant"}, "script_font": "charm",
         "components": {},
         "ornaments": ["leaf", "flank_lines"],
         "scene": "gỗ ấm, hạt cà phê, nắng sớm",
     },
     "spa_beauty": {
         "name": "Spa / làm đẹp", "intents": ("product_showcase", "testimonial_trust", "hook_headline", "festive_event"),
-        "style": {"font": "playfair", "theme_color": "#DB2777", "text_effect": "plain_elegant"},
+        "style": {"font": "cormorant", "theme_color": "#DB2777", "text_effect": "plain_elegant"}, "script_font": "alexbrush",
         "components": {},
         "ornaments": ["leaf", "corner_frame"],
         "scene": "hồng pastel, hoa, lụa mềm",
@@ -66,14 +67,14 @@ STYLE_PACKS: Dict[str, Dict[str, Any]] = {
     },
     "luxury": {
         "name": "Sang trọng", "intents": ("product_showcase", "hook_headline", "festive_event"),
-        "style": {"font": "playfair", "theme_color": "#D4AF37", "text_effect": "plain_elegant"},
+        "style": {"font": "cormorant", "theme_color": "#D4AF37", "text_effect": "plain_elegant"}, "script_font": "greatvibes",
         "components": {},
         "ornaments": ["corner_frame", "flank_lines"],
         "scene": "đen, vàng kim, ánh sáng dịu",
     },
     "recruit": {
         "name": "Tuyển dụng", "intents": ("matrix_board", "hook_headline"),
-        "style": {"font": "bevietnam", "theme_color": "#2563EB", "text_effect": "plain_elegant"},
+        "style": {"font": "montserrat", "theme_color": "#2563EB", "text_effect": "plain_elegant"},
         "components": {},
         "ornaments": ["dots", "corner_frame"],
         "scene": "văn phòng sáng, hiện đại",
@@ -95,6 +96,11 @@ def apply_style_pack(plan: Any) -> Any:
     if getattr(plan, "brand_font", None):
         style = replace(style, font=plan.brand_font)
     return replace(plan, style=style) if style is not plan.style else plan
+
+
+def pack_script_font(plan: Any) -> Optional[str]:
+    """Font viết tay pack chọn cho dòng script của lockup (None -> mặc định Dancing Script)."""
+    return (STYLE_PACKS.get(getattr(plan, "style_pack", None) or "") or {}).get("script_font")
 
 
 # ---- Hoạ tiết ------------------------------------------------------------------------------------------------

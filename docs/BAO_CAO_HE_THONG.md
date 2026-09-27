@@ -21,7 +21,7 @@ sắc nét, đúng thứ bậc, đủ tương phản, đọc được trên đi�
 | **Trình duyệt Chromium** | Sắp chữ bằng HTML/CSS, đo thật, chụp ảnh | — |
 
 **Hiện trạng đo được (27/09):**
-- 17 mẫu (template) phủ **12 nhu cầu** người dùng; 19 font tiếng Việt; 8 bộ phong cách theo dịp; 5 kiểu cụm tiêu đề.
+- 17 mẫu (template) phủ **12 nhu cầu** người dùng; 28 font tiếng Việt (9 font miễn phí thương mại mới); 8 bộ phong cách theo dịp; 5 kiểu cụm tiêu đề.
 - Bộ kiểm thử tự động: **491 poster mẫu**, 174 đạt cả 5 điều kiện thẩm mỹ; **440 test** tự động đều xanh.
 - Poster sinh từ **GPT thật + ảnh nền thật** (26 đề bài thực tế): **21/26 đạt cả 5 điều kiện**, 0 poster mất chữ.
 
@@ -167,12 +167,17 @@ hướng dẫn · thông báo · thiệp chúc mừng · thư mời · trước/
 
 ## 4. CÁC "VIÊN GẠCH" TẠO NÊN THẨM MỸ
 
-### 4.1. Font (19 font tiếng Việt, `fonts.py`)
+### 4.1. Font (28 font tiếng Việt, `fonts.py`)
 - Đủ 134 ký tự có dấu; nhúng sẵn vào poster; độ đậm thật (không tô đậm giả).
 - **Ghép font theo thực hành designer**: font cá tính chỉ cho điểm neo (tiêu đề/con số); chữ phụ, danh sách, các bước
-  luôn dùng font dễ đọc (Be Vietnam Pro). Font viết tay chỉ cho tiêu đề ≤ 5 từ.
+  luôn dùng font dễ đọc (Be Vietnam Pro). Font viết tay chỉ cho tiêu đề ≤ 5 từ và **không bao giờ viết hoa toàn bộ**
+  (tiêu đề IN HOA → tự đổi sang font in).
+- **9 font mới (27/09 tối)** tải từ kho Google Fonts, giấy phép OFL (được dùng thương mại): 6 font thư pháp/viết tay
+  (Great Vibes, Alex Brush, Lobster, Charm, Sriracha, Pattaya) + 3 font nhiều độ đậm (Montserrat, Cormorant, Barlow
+  Condensed). Bộ phong cách spa/sang trọng dùng Cormorant + dòng viết tay Alex Brush/Great Vibes; tuyển dụng dùng Montserrat.
+- 13 font SVN-* cũ **chưa rõ giấy phép thương mại** — cần người hỏi nhà phát hành.
 - **Khoảng cách dòng tối thiểu theo font** (đo bằng điểm ảnh): 4 font để dấu tiếng Việt dòng dưới đè lên dòng trên ở
-  khoảng cách hẹp (anton, gretoon, oswald, pacifico) → được giữ khoảng cách lớn hơn.
+  khoảng cách hẹp (anton, gretoon, oswald, pacifico, greatvibes, charm) → được giữ khoảng cách lớn hơn.
 
 ### 4.2. Kiểu cụm tiêu đề — lockup (5 kiểu, rút từ bộ poster tham chiếu)
 | Kiểu | Trông như | Cần |
@@ -257,7 +262,7 @@ nhìn" tự động (squint test) · (6) đọc được trên điện thoại.
 **Tự động (chạy mỗi lần sửa):** 440 test (`pytest tests/`), gồm:
 - 4 **"bánh cóc"** chất lượng — số poster đạt từng điều kiện **không được giảm** so với mốc: bộ chính (491 poster),
   bộ "LLM lý tưởng" (80), nền khắc nghiệt (123, có vệt sáng/mảng tối), nền không mask (18).
-- Kiểm dấu tiếng Việt 19 font, hoạ tiết không chạm chữ, logo, bản in, sửa chữ, hợp đồng LLM, sức chứa, mask ≤ 50%…
+- Kiểm dấu tiếng Việt 28 font, hoạ tiết không chạm chữ, logo, bản in, sửa chữ, hợp đồng LLM, sức chứa, mask ≤ 50%…
 
 **Số đo bộ chính (491 poster, 27/09):**
 
@@ -333,7 +338,8 @@ PYTHONPATH=src python src/tendoo_v3/demo_server.py --model distill
 
 **Giới hạn đo được**
 - **Khung ngang 16:9** là khó nhất: banner ngang xem trên điện thoại buộc mọi chữ phải to, chữ phụ lấn chỗ tiêu đề →
-  một số poster tiêu đề chưa đủ nổi (C1). Đã thử nới cột chữ, gây hồi quy nên hoàn tác.
+  một số poster tiêu đề chưa đủ nổi (C1). Đã thử nới cột chữ (sneaker) và dời đoạn nội dung sang cột phải (thiệp) — cả
+  hai gây hồi quy nên hoàn tác. Ở khung 1024×576 mọi chữ phụ đã ở cỡ tối thiểu: đây là giới hạn **lượng chữ**, không phải bố cục.
 - Tấm thiệp 16:9 với đoạn nội dung dài: chữ về gần sàn.
 - 6 poster mẫu nội dung cực dày (chủ yếu 16:9) vẫn mất chữ ở mức chữ nhỏ nhất cho phép.
 - Máy đo **không chấm được cái đẹp** — chỉ chấm được "đọc được, đúng thứ bậc". Mắt người vẫn là thước đo cuối.
@@ -343,9 +349,9 @@ PYTHONPATH=src python src/tendoo_v3/demo_server.py --model distill
 | Việc | Cần |
 | :--- | :--- |
 | Nghiệm thu với nền **FLUX thật**, đo tốc độ chế độ không mask, chạy Qwen trên máy chủ | GPU (máy chủ 2×A30) |
-| Đánh giá bằng mắt so với bộ poster tham chiếu | Người duyệt |
-| Thêm font thư pháp tiếng Việt | Quyết định giấy phép thương mại |
-| Cải thiện khung 16:9 (ép LLM viết chữ phụ ngắn hơn) | Máy local |
+| **Chấm mù** poster hệ thống vs poster designer: công cụ đã sẵn — mở `references/blind_review/index.html`, chấm 26 cặp, tải phiếu, chạy `scripts/score_blind_review.py` | Người chấm (3–5 người) |
+| Kiểm giấy phép 13 font SVN-* (nếu không được phép → thay bằng font OFL) | Người liên hệ nhà phát hành |
+| Khung 16:9: hạ sức chứa (ít dòng phụ hơn) hoặc khuyên khung dọc khi nội dung dày | Máy local |
 
 ---
 

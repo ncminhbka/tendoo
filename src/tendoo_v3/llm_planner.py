@@ -37,7 +37,7 @@ from tendoo_v3.hero_markup import suggest_hero_parts
 from tendoo_v3.routing import route_template
 from tendoo_v3.llm_prompts import MULTI_VARIANT_INSTRUCTION_TEMPLATE, SYSTEM_PROMPT
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
-from tendoo_v3.validators import dedupe_plan, log_plan_issues
+from tendoo_v3.validators import CONTENT_FIELDS, dedupe_plan, length_issues, log_plan_issues
 
 logger = logging.getLogger("TendooV3.LLMPlanner")
 
@@ -923,6 +923,7 @@ def _try_run_local_qwen(
 
         plans = _finalize_plans_from_response(extracted_dict, form_data, num_variants)
         debug_trace["status"] = "success"
+        plans = _revise_lengths(plans, messages, content, request_body, _post, form_data, num_variants, aspect_ratio, debug_trace)
         debug_trace["output"]["final_plan"] = plans[0].to_dict()
         debug_trace["output"]["final_plans"] = [p.to_dict() for p in plans]
         debug_trace["latency_seconds"] = round(time.time() - t_start, 4)
@@ -932,6 +933,44 @@ def _try_run_local_qwen(
         logger.warning(f"[LLM Planner] Không thể chạy Local Qwen3 ({e})")
         return None
 
+
+
+def _revise_lengths(plans, messages, content, request_body, post, form_data, num_variants, aspect_ratio, debug_trace):
+    """VÒNG SỬA (1 lần) khi chữ vượt giới hạn số từ: gửi lại LLM đúng trường nào dài bao nhiêu (validators.length_issues)
+    và xin bản rút gọn -- Python không tự cắt chữ (Cổng 1: nguyên văn). Chỉ nhận bản sửa khi nó ÍT vi phạm hơn; lỗi bất kỳ
+    -> giữ bản đầu. Tắt bằng TENDOO_V3_LLM_REVISE=0. Lý do: GPT thật 27/09 bỏ qua giới hạn khung 16:9 trong prompt
+    (subhead 13 từ, badge 7 từ) -> chữ phụ chiếm chỗ tiêu đề (C1)."""
+    if os.environ.get("TENDOO_V3_LLM_REVISE", "1") == "0":
+        return plans
+    before = [length_issues(p, aspect_ratio) for p in plans]
+    if not any(before):
+        return plans
+    lines = "\n".join(f"- Phương án {i + 1}: " + "; ".join(iss) for i, iss in enumerate(before) if iss)
+    ask = ("Một số trường chữ VƯỢT giới hạn số từ -- chữ phụ dài sẽ bị thu nhỏ và lấn chỗ tiêu đề:\n" + lines +
+           "\nViết lại NGẮN hơn đúng giới hạn: giữ con số, tên riêng, hạn chót, hotline; bỏ tính từ thừa và ý phụ. "
+           "Nếu rút `hero` thì sửa `hero_parts` cho khớp nguyên văn. KHÔNG xoá trường nào (cta, badge, store_info... vẫn giữ, chỉ rút ngắn). Giữ nguyên mọi trường khác. Trả về JSON đầy đủ như trước.")
+    body = {**request_body, "messages": messages + [{"role": "assistant", "content": content}, {"role": "user", "content": ask}]}
+    rec: Dict[str, Any] = {"issues_before": before, "adopted": False}
+    try:
+        r = post(body)
+        r.raise_for_status()
+        c2 = r.json()["choices"][0]["message"]["content"]
+        d2 = extract_balanced_json(c2)
+        if d2:
+            revised = _finalize_plans_from_response(d2, form_data, num_variants)
+            after = [length_issues(p, aspect_ratio) for p in revised]
+            rec["issues_after"] = after
+            # Rút gọn KHÔNG được làm mất trường đã có (GPT thật 27/09: bản sửa b12 bỏ luôn nút "MUA NGAY").
+            lost = [f for a, b in zip(plans, revised) for f in CONTENT_FIELDS if getattr(a, f, None) and not getattr(b, f, None)]
+            rec["lost_fields"] = lost
+            if len(revised) == len(plans) and not lost and sum(map(len, after)) < sum(map(len, before)):
+                rec["adopted"] = True
+                plans = revised
+    except Exception as e:  # vòng sửa là tuỳ chọn: lỗi không được làm hỏng plan đã có
+        rec["error"] = f"{type(e).__name__}: {str(e)[:200]}"
+    debug_trace["revision"] = rec
+    logger.info(f"[LLM Planner] Vòng sửa độ dài: {sum(map(len, before))} vi phạm -> nhận bản sửa: {rec['adopted']}")
+    return plans
 
 
 def generate_creative_plan(
@@ -1099,23 +1138,22 @@ def generate_creative_plan(
         logger.info(f"[LLM Planner] Gọi {model_name} tại {url}...")
         # Thử lại 1 lần với lỗi TẠM THỜI (timeout, mất kết nối, 429/5xx) -- GĐ 3R: 2/16 brief rơi về
         # dự phòng vì lỗi thoáng qua, gọi lại ngay thì thành công.
-        for attempt in range(2):
-            try:
-                resp = requests.post(
-                    url,
-                    json=request_body,
-                    headers=headers,
-                    timeout=(LLM_CONNECT_TIMEOUT_S, LLM_TIMEOUT_S),
-                )
-                if resp.status_code in (429, 500, 502, 503, 504) and attempt == 0:
-                    logger.warning(f"[LLM Planner] HTTP {resp.status_code} -> thử lại 1 lần")
-                    time.sleep(2)
-                    continue
-                break
-            except (requests.Timeout, requests.ConnectionError) as net_err:
-                if attempt == 1:
-                    raise
-                logger.warning(f"[LLM Planner] Lỗi mạng tạm thời ({net_err}) -> thử lại 1 lần")
+        def _post(body: Dict[str, Any]) -> requests.Response:
+            for attempt in range(2):
+                try:
+                    r = requests.post(url, json=body, headers=headers, timeout=(LLM_CONNECT_TIMEOUT_S, LLM_TIMEOUT_S))
+                    if r.status_code in (429, 500, 502, 503, 504) and attempt == 0:
+                        logger.warning(f"[LLM Planner] HTTP {r.status_code} -> thử lại 1 lần")
+                        time.sleep(2)
+                        continue
+                    return r
+                except (requests.Timeout, requests.ConnectionError) as net_err:
+                    if attempt == 1:
+                        raise
+                    logger.warning(f"[LLM Planner] Lỗi mạng tạm thời ({net_err}) -> thử lại 1 lần")
+            return r
+
+        resp = _post(request_body)
         debug_trace["output"]["http_status_code"] = resp.status_code
         resp.raise_for_status()
         resp_data = resp.json()
@@ -1136,6 +1174,7 @@ def generate_creative_plan(
 
         plans = _finalize_plans_from_response(extracted_dict, form_data, num_variants)
         debug_trace["status"] = "success"
+        plans = _revise_lengths(plans, messages, content, request_body, _post, form_data, num_variants, aspect_ratio, debug_trace)
         logger.info(f"[LLM Planner] ✅ Kế hoạch sáng tạo API thành công ({len(plans)} phương án, Template chính: {plans[0].template}, Latency: {round(time.time() - t_start, 4)}s)")
         return _pack(plans)
 

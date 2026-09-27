@@ -63,7 +63,7 @@ IDEAL_RESPONSES = [
      "hero_parts": [{"t": "TƯNG BỪNG", "role": "prefix"}, {"t": "KHAI TRƯƠNG", "role": "stat", "emphasis": "accent"}, {"t": "TENDOO COFFEE", "role": "suffix"}],
      "subhead": "Tặng quà cho 100 khách đầu tiên", "badge": "KHAI TRƯƠNG", "badge_style": "stamp", "decor": "sparkles",
      "cta": "GHÉ NGAY", "scene_prompt": "Warm coffee shop interior, zero text", "corridor_prompt": "soft bokeh",
-     "style": {"font": "holidays", "theme_color": "#E11D48", "text_effect": "3d_gold", "background_tone": "cinema_red"}},
+     "style": {"font": "playfair", "theme_color": "#E11D48", "text_effect": "3d_gold", "background_tone": "cinema_red"}},
     {"template": "split_right", "visual_intent": "product_showcase", "hero": "CHỈ TỪ 12 TRIỆU",
      "hero_parts": [{"t": "CHỈ TỪ", "role": "prefix"}, {"t": "12 TRIỆU", "role": "stat", "emphasis": "accent"}],
      "badge": "TRẢ GÓP | 0%", "badge_style": "capsule", "stat_style": "unit", "subhead": "Laptop mỏng nhẹ",

@@ -21,11 +21,11 @@ import numpy as np
 from PIL import Image
 
 from tendoo_v3.colors import ensure_contrast
-from tendoo_v3.fonts import BODY_SAFE_FONTS, DEFAULT_STACK_LINE_HEIGHT, MIN_STACK_LINE_HEIGHT, SCRIPT_FONTS, resolve_font, script_font
+from tendoo_v3.fonts import FONT_ALIASES, BODY_SAFE_FONTS, DEFAULT_STACK_LINE_HEIGHT, MIN_STACK_LINE_HEIGHT, SCRIPT_FONTS, resolve_font, script_font, script_unfit
 from tendoo_v3.poster_renderer import PosterRenderer
 from tendoo_v3.catalog import INTENT_PROFILES, LIST_LIMITS, TEMPLATE_CATALOG, resolve_intent
-from tendoo_v3.components import accessible_fill, build_components, enrich_hero_parts
-from tendoo_v3.style_packs import apply_style_pack, brand_logo_html, ornaments_html
+from tendoo_v3.components import headline_font_text, accessible_fill, build_components, enrich_hero_parts
+from tendoo_v3.style_packs import apply_style_pack, brand_logo_html, ornaments_html, pack_script_font
 from tendoo_v3.hero_markup import bind_nonbreaking
 from tendoo_v3.geometry import compute_density_score, geometry_drivers, get_zones
 from tendoo_v3.icons import (
@@ -1384,7 +1384,9 @@ def compute_notice_card_budget(plan: TendooCreativePlan, card_height: float, wid
             "cta": 0.08 if plan.cta else 0, "store": 0.07 if plan.store_info else 0}
     if width / height >= 1.5:
         # 16:9 HAI CỘT, mỗi cột dùng TRỌN chiều cao lòng thẻ. Trái: nhãn + tiêu đề + đoạn nội dung (đọc liền mạch);
-        # phải: thông tin + CTA + chữ ký. (Bản đầu dồn cả nội dung sang phải -> cột phải tràn mép thẻ, GPT thật 27/09.)
+        # phải: thông tin + CTA + chữ ký. (Bản đầu dồn cả nội dung sang phải -> cột phải tràn mép thẻ, GPT thật 27/09;
+        # thử lại 27/09 tối: C1 17 -> 17 nhưng C4 mất chữ + C5 19 -> 16 -- khung 1024x576 mọi chữ phụ đã nằm ở sàn điện
+        # thoại 27.5px, không cột nào còn chỗ. Giới hạn nội dung, không phải bố cục -- ROADMAP §8.)
         left = {"badge": 0.07 if plan.badge else 0, "hero": 0.34, "subhead": 0.10 if plan.subhead else 0, "body": 0.36}
         right = {"facts": 0.50 if plan.extra_texts else 0, "cta": 0.16 if plan.cta else 0, "store": 0.12 if plan.store_info else 0}
         h = {key: round(inner * v / max(sum(grp.values()), 1e-6), 1) for grp in (left, right) for key, v in grp.items()}
@@ -1485,16 +1487,6 @@ _TEMPLATE_BUDGETS = {
 
 
 _DARK_CARD_TONES = ("dark_luxury", "cyber_neon", "cinema_red")
-SCRIPT_HERO_MAX_WORDS = 5
-
-
-def headline_font_words(plan: TendooCreativePlan) -> int:
-    """Số từ THẬT SỰ hiển thị bằng font tiêu đề: có hero_parts thì chỉ đoạn stat (chữ dẫn/đuôi dùng font UI --
-    hero_phrase.css), không thì cả hero."""
-    stats = [p.get("t", "") for p in (plan.hero_parts or []) if p.get("role") == "stat"]
-    return len(" ".join(stats).split()) if stats else len((plan.hero or "").split())
-
-
 def _notice_palette(plan: TendooCreativePlan) -> Dict[str, Any]:
     """Màu tấm thiệp: giấy kem (mặc định, thông báo trang trọng) hoặc thẻ tối (tông nền tối). Chữ nhấn giữ sắc
     thương hiệu, chỉnh độ sáng tới đủ tương phản VỚI CHÍNH MÀU THẺ (không phụ thuộc ảnh nền)."""
@@ -1988,13 +1980,16 @@ def build_template_html(
     # Font viết tay/cọ chỉ cho tiêu đề NGẮN (thực hành designer: script 1 cụm <= 4-5 từ). Tiêu đề dài bằng font
     # viết tay = khó đọc (27/09, thông báo nghỉ Tết GPT thật: 8 từ SVN-Holidays). Đổi sang serif trang trọng cho
     # lễ hội/sang trọng, sans sạch cho phần còn lại; dòng viết tay vẫn còn qua lockup script_over_caps.
-    if canonical_font in SCRIPT_FONTS and headline_font_words(plan) > SCRIPT_HERO_MAX_WORDS:
+    if script_unfit(canonical_font, headline_font_text(plan)):
         fallback_key = "playfair" if resolve_intent(tpl_name, plan.visual_intent) in ("festive_event", "hook_headline") else "bevietnam"
         canonical_font, font_face_css, headline_font_css = resolve_font(font_key=fallback_key)
     # Hiệu ứng CHẤT LIỆU (glossy_gel/metal_emboss: chiếu sáng theo độ dày nét) trên font viết tay/cọ NÉT MẢNH ->
     # nét bị tẩy thành vệt xám lấm tấm, không đọc được (27/09, khai trương tiệm bánh GPT thật: holidays + gel).
     # Designer: hiệu ứng nổi khối chỉ cho font đậm -> rơi về bóng đổ (Cổng 2 báo).
-    if TEXT_EFFECT_ALIASES.get(plan.style.text_effect, plan.style.text_effect) in SVG_FILTER_EFFECTS and canonical_font in SCRIPT_FONTS:
+    # Xét theo font LLM CHỌN (plan.style.font), không theo font thay thế: tổ hợp script + chất liệu đã sai từ đầu; đổi
+    # font rồi vẫn giữ chất liệu -> Playfair gel vàng nhoè trên nền bánh (27/09, b10 GPT thật sau luật "không script in hoa").
+    if TEXT_EFFECT_ALIASES.get(plan.style.text_effect, plan.style.text_effect) in SVG_FILTER_EFFECTS and (
+            canonical_font in SCRIPT_FONTS or FONT_ALIASES.get(plan.style.font, plan.style.font) in SCRIPT_FONTS):
         plan = replace(plan, style=replace(plan.style, text_effect="shadow"))
 
     # 1.5. Màu Glow "bám" đúng tông ảnh nền THẬT: lấy màu chủ đạo thật từ bg_data_uri
@@ -2250,7 +2245,7 @@ def build_template_html(
     # dùng font tiêu đề trừ khi đó là font viết tay (chữ viết tay in hoa khó đọc) -> Be Vietnam Pro Black.
     script_font_css = caps_font_css = headline_font_css
     if components and components.get("lockup") == "script_over_caps":
-        extra_face, script_font_css = script_font(canonical_font)
+        extra_face, script_font_css = script_font(canonical_font, pack_script_font(plan))
         if extra_face:
             font_face_css = font_face_css + "\n\n" + extra_face
     if canonical_font in SCRIPT_FONTS:

@@ -48,6 +48,9 @@
   font-size: 1em;
   font-weight: 900;
   letter-spacing: -0.02em;
+  /* Bù khoảng trắng bị tracking âm ăn mất: Playfair 900 có dấu cách 0.25em, chân serif chữ I/T gần chạm nhau
+     -> "KHAI TRƯƠNG" đọc thành "KHAITRƯƠNG" (27/09, b10 GPT thật). */
+  word-spacing: 0.08em;
 }
 
 /* Màu nhấn 10% theo quy tắc 60-30-10 (DESIGN_PRINCIPLES mục 1.6).

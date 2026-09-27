@@ -18,6 +18,7 @@ from tendoo_v3.catalog import (
     build_llm_intent_prompt,
     MASKLESS_INTENTS,
     TEXT_WORD_LIMITS,
+    TEXT_WORD_LIMITS_WIDE,
 )
 from tendoo_v3.styles import BACKGROUND_TONES
 
@@ -154,6 +155,7 @@ Nhiệm vụ của bạn là tiếp nhận thông tin từ form người dùng +
 
 6. ĐIỀU PHỐI PHONG CÁCH (Style, Font, Text Effect):
    - Chọn phông chữ (`style.font`) phù hợp với ngành hàng.
+     + Font VIẾT TAY / CỌ (Nhóm thư pháp, script: dancing, greatvibes, alexbrush, lobster, charm, sriracha, pattaya, pacifico, cookies, clementine, holidays) CHỈ khi phần chữ dùng font tiêu đề <= 5 từ VÀ viết thường hoặc hoa đầu từ ("Cà phê sáng"). Tiêu đề IN HOA TOÀN BỘ -> chọn font in (sans/serif/chữ hẹp). Muốn có nét viết tay cho tiêu đề in hoa: dùng `lockup: "script_over_caps"` với prefix viết thường.
    - Chọn hiệu ứng chữ (`style.text_effect`) phù hợp với chất liệu và ánh sáng.
 
 7. BẢNG ÁNH XẠ TRƯỜNG DỮ LIỆU TỪ FORM (Form Fields Semantic Mapping):
@@ -193,6 +195,7 @@ DANH MỤC TÔNG NỀN (style.background_tone -- CHỈ chọn 1 trong các giá 
 10. POSTER ÍT CHỮ -- ĐỌC ĐƯỢC TRÊN ĐIỆN THOẠI (poster xem vừa màn ~375px: chữ phải to, nên MỖI chữ thêm vào làm mọi chữ khác nhỏ đi):
    - `hero` <= {TEXT_WORD_LIMITS["hero"]} từ (lý tưởng 2-5). `subhead` 1 câu <= {TEXT_WORD_LIMITS["subhead"]} từ. `badge` <= {TEXT_WORD_LIMITS["badge"]} từ. `cta` <= {TEXT_WORD_LIMITS["cta"]} từ (động từ mạnh: "ĐẶT NGAY", "MUA NGAY").
    - `extra_texts` tối đa {TEXT_WORD_LIMITS["extra_count"]} dòng, mỗi dòng <= {TEXT_WORD_LIMITS["extra_item"]} từ -- chọn ý MẠNH nhất, bỏ ý phụ; KHÔNG liệt kê mọi thứ trong brief.
+   - KHUNG NGANG 16:9 (aspect_ratio "16:9"): banner ngang xem trên điện thoại bị thu nhỏ, chữ phụ buộc phải to -> viết ÍT hơn nữa: `subhead` <= {TEXT_WORD_LIMITS_WIDE["subhead"]} từ, `badge` <= {TEXT_WORD_LIMITS_WIDE["badge"]} từ, `extra_texts` <= {TEXT_WORD_LIMITS_WIDE["extra_count"]} dòng x {TEXT_WORD_LIMITS_WIDE["extra_item"]} từ, `body` <= {TEXT_WORD_LIMITS_WIDE["body"]} từ. Thông tin phụ không quan trọng -> BỎ, để tiêu đề áp đảo.
    - Rút gọn chứ không bỏ sự thật: giữ con số, tên riêng, hạn chót, hotline; bỏ tính từ thừa.
    - KHÔNG LẶP: badge/subhead/extra_texts không nhắc lại con số hay cụm đã có trong hero (vd hero đã có "30%" thì badge không ghi "30%").
    - Điểm neo `stat`: nếu hero có con số/%/giá thì stat LÀ con số đó (vd "MỪNG XUÂN SALE 50%" -> stat "50%", KHÔNG phải "SALE").

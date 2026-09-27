@@ -34,3 +34,4 @@ Thumbs.db
 # 124/132 script nằm ngoài quản lý phiên bản -- trong đó có TOÀN BỘ tầng nghiệm thu
 # 14 template. Repo này theo dõi mọi script; script dùng một lần thì xoá đi, đừng ignore.
 references/posters/
+references/blind_review/

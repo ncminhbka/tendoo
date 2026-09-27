@@ -34,8 +34,8 @@ from tendoo_v3.poster_renderer import PosterRenderer
 # 1. Font catalog integrity
 # ---------------------------------------------------------------------------
 
-def test_font_catalog_has_19_fonts():
-    assert len(FONT_CATALOG) == 19, f"Expected 19 curated fonts, found {len(FONT_CATALOG)}"
+def test_font_catalog_has_28_fonts():
+    assert len(FONT_CATALOG) == 28, f"Expected 28 curated fonts, found {len(FONT_CATALOG)}"
     print(f"[PASSED] FONT_CATALOG holds {len(FONT_CATALOG)} entries")
 
 
@@ -244,3 +244,13 @@ def test_every_embedded_face_skips_nbsp():
         faces = _font_faces(meta)
         assert faces, key
         assert all("unicode-range: U+0-9F, U+A1-10FFFF;" in f for f in faces), key
+
+
+def test_script_font_never_used_for_all_caps_or_long_headline():
+    """Designer: chữ viết tay chỉ cho cụm ngắn, KHÔNG viết hoa toàn bộ (27/09, pack cafe Lobster 'CÀ PHÊ PHIN')."""
+    from tendoo_v3.fonts import script_unfit
+    assert script_unfit("lobster", "CÀ PHÊ PHIN") == "viết hoa toàn bộ"
+    assert script_unfit("lobster", "Cà phê phin") is None
+    assert script_unfit("greatvibes", "Chào mừng quý khách đến với tiệm") is not None  # 7 từ
+    assert script_unfit("anton", "CÀ PHÊ PHIN") is None  # không phải font viết tay
+    assert script_unfit("pacifico", "50%") is None  # quá ít chữ cái để gọi là "viết hoa"
