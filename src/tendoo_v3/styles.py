@@ -494,6 +494,11 @@ COMMON_AUTOFIT_JS = """
     el.style.fontSize = size + 'px';
     // Chữ nhỏ / nhiều dòng tự động nén line-height để không chiếm diện tích dọc
     el.style.lineHeight = size < 26 ? '1.15' : (size < 36 ? '1.2' : '1.3');
+    // Tiêu đề: không thấp hơn sàn của font (dấu tiếng Việt chồng -- fonts.MIN_STACK_LINE_HEIGHT).
+    if (el.matches('__TENDOO_TIER1_SELECTOR__')) {
+      const minLh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hero-min-lh')) || 0;
+      if (minLh > parseFloat(el.style.lineHeight)) el.style.lineHeight = String(minLh);
+    }
     // Chữ co về gần sàn (<= 32px): co nhẹ kerning; lớn hơn thì trả về giá trị CSS.
     el.style.letterSpacing = size <= 32 ? '-0.5px' : '';
   }

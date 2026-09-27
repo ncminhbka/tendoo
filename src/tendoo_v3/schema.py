@@ -76,6 +76,7 @@ class TendooCreativePlan:
     # Brand kit của người dùng -- GHI ĐÈ style pack (§10.5): màu thương hiệu, font thương hiệu (khoá FONT_CATALOG).
     brand_color: Optional[str] = None
     brand_font: Optional[str] = None
+    brand_logo: Optional[str] = None  # data:image/... hoặc https://... -- đặt vào góc trống (style_packs.brand_logo_html)
     # Maskless Mode (GĐ 5, ROADMAP §5.3): bỏ luồng corridor -- chỉ cho poster lấy chữ làm nhân vật
     # chính trên nền ÍT CHI TIẾT (catalog.MASKLESS_INTENTS, Cổng 2 kiểm).
     maskless: bool = False
@@ -209,6 +210,7 @@ class TendooCreativePlan:
             style_pack=data.get("style_pack"),
             brand_color=data.get("brand_color"),
             brand_font=data.get("brand_font"),
+            brand_logo=data.get("brand_logo"),
             maskless=bool(data.get("maskless", False)),
             style=style,
             # "background_prompt" chấp nhận thêm làm alias: hệ thống prompt LLM từng

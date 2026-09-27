@@ -255,6 +255,11 @@ FONT_CATALOG: Dict[str, Dict[str, Any]] = {
 # condensed/ultra-black): chỉ cho tiêu đề -- quy tắc ghép font của designer "display cho headline, sans cho
 # thân chữ". Đo thật GĐ 3R: Pacifico cho bảng giá / các bước chăm sóc da -> danh sách khó đọc.
 BODY_SAFE_FONTS = frozenset({"bevietnam", "harabaras", "playfair", "oswald"})
+# LINE-HEIGHT TỐI THIỂU để dấu tiếng Việt chồng (Ấ Ầ Ự...) dòng dưới KHÔNG chạm nét dòng trên -- ĐO bằng điểm ảnh
+# Chromium, chữ 900 in hoa, 3 câu mẫu (tests/test_diacritics.py, 27/09). Font không có ở đây: 1.05 là đủ.
+MIN_STACK_LINE_HEIGHT: Dict[str, float] = {"anton": 1.2, "gretoon": 1.3, "oswald": 1.1, "pacifico": 1.4}
+DEFAULT_STACK_LINE_HEIGHT = 1.05
+
 # Font VIẾT TAY / cọ mềm (lockup script_over_caps dùng làm dòng viết tay; đồng thời không dùng làm dòng in hoa).
 SCRIPT_FONTS = frozenset({"dancing", "clementine", "pacifico", "cookies", "holidays"})
 DEFAULT_SCRIPT_FONT = "dancing"
@@ -454,6 +459,8 @@ def list_font_options() -> List[Dict[str, Any]]:
 
 __all__ = [
     "BODY_SAFE_FONTS",
+    "DEFAULT_STACK_LINE_HEIGHT",
+    "MIN_STACK_LINE_HEIGHT",
     "DEFAULT_SCRIPT_FONT",
     "SCRIPT_FONTS",
     "script_font",

@@ -21,11 +21,11 @@ import numpy as np
 from PIL import Image
 
 from tendoo_v3.colors import ensure_contrast
-from tendoo_v3.fonts import BODY_SAFE_FONTS, SCRIPT_FONTS, resolve_font, script_font
+from tendoo_v3.fonts import BODY_SAFE_FONTS, DEFAULT_STACK_LINE_HEIGHT, MIN_STACK_LINE_HEIGHT, SCRIPT_FONTS, resolve_font, script_font
 from tendoo_v3.poster_renderer import PosterRenderer
 from tendoo_v3.catalog import INTENT_PROFILES, LIST_LIMITS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import accessible_fill, build_components, enrich_hero_parts
-from tendoo_v3.style_packs import apply_style_pack, ornaments_html
+from tendoo_v3.style_packs import apply_style_pack, brand_logo_html, ornaments_html
 from tendoo_v3.hero_markup import bind_nonbreaking
 from tendoo_v3.geometry import compute_density_score, geometry_drivers, get_zones
 from tendoo_v3.icons import (
@@ -2261,8 +2261,12 @@ def build_template_html(
         "bg_data_uri": bg_data_uri,
         "font_face_css": font_face_css,
         "script_font_css": script_font_css,
-        "ornaments_html": ornaments_html(plan.style_pack, plan.style.theme_color, f"{plan.hero}|{plan.style_pack}",
-                                         [[z["x1"], z["y1"], z["x2"], z["y2"]] for z in zones.values()]),
+        # Sàn line-height của tiêu đề theo font (dấu tiếng Việt chồng không chạm dòng trên -- test_diacritics).
+        "hero_min_lh": MIN_STACK_LINE_HEIGHT.get(canonical_font, DEFAULT_STACK_LINE_HEIGHT),
+        # Logo (thương hiệu) đặt TRƯỚC hoạ tiết (trang trí) -- hoạ tiết né logo, không ngược lại.
+        "ornaments_html": brand_logo_html(plan.brand_logo or "")
+                          + ornaments_html(plan.style_pack, plan.style.theme_color, f"{plan.hero}|{plan.style_pack}",
+                                           [[z["x1"], z["y1"], z["x2"], z["y2"]] for z in zones.values()]),
         "notice": _notice_palette(plan) if tpl_name == "notice_card" else None,
         "caps_font_css": caps_font_css,
         "headline_font_css": headline_font_css,
@@ -2337,8 +2341,10 @@ def render_plan_to_poster(
     height: int,
     palette_override: Optional[Dict[str, str]] = None,
     overflow_report: Optional[list] = None,
+    scale: float = 1.0,
 ) -> Tuple[Path, str]:
-    """Render plan thành ảnh poster PNG qua Playwright Chromium.
+    """Render plan thành ảnh poster PNG qua Playwright Chromium. `scale` > 1: chụp ở mật độ điểm ảnh cao (chữ vector
+    sắc nét; bố cục/autofit y hệt vì đo theo px CSS) -- dùng cho xuất in (`export_print`).
     Trả về (output_path, html_content).
 
     `overflow_report` (tuỳ chọn): list được điền kết quả Cổng 4 (styles.py, Bước 4 của
@@ -2363,6 +2369,7 @@ def render_plan_to_poster(
         output_image_path=out_file,
         width=width,
         height=height,
+        device_scale_factor=scale,
         overflow_report=report,
     )
     for item in report:
@@ -2373,3 +2380,24 @@ def render_plan_to_poster(
             )
 
     return out_file, html_content
+
+
+def export_print(
+    plan: TendooCreativePlan,
+    bg_data_uri: str,
+    output_image_path: Path | str,
+    width: int,
+    height: int,
+    paper_long_mm: float = 297.0,
+    dpi: int = 300,
+) -> Tuple[Path, Tuple[int, int]]:
+    """Xuất bản IN (GĐ 10, §10.9): cạnh dài = `paper_long_mm` ở `dpi` (mặc định A4 300dpi = 3508px). Cùng HTML,
+    cùng bố cục với bản màn hình -- chỉ tăng mật độ điểm ảnh; ghi metadata DPI vào PNG để máy in đúng kích thước.
+    Ảnh nền raster được nội suy -- muốn nét hơn thì truyền nền độ phân giải cao hơn."""
+    target_long = paper_long_mm / 25.4 * dpi
+    scale = target_long / max(width, height)
+    out, _ = render_plan_to_poster(plan, bg_data_uri, output_image_path, width, height, scale=scale)
+    with Image.open(out) as im:
+        size = im.size
+        im.save(out, dpi=(dpi, dpi))
+    return out, size

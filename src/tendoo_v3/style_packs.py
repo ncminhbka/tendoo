@@ -167,7 +167,7 @@ def ornaments_html(pack_name: Optional[str], theme: str, seed_text: str, zones: 
   // Hộp từng DÒNG chữ đã chốt (cùng cách Cổng 4 đo) + hộp linh kiện đồ hoạ đã đặt.
   const busy = [];
   // + hộp KHỐI đồ hoạ (nhãn, nút, viên thông tin, hộp nội dung): hoạ tiết không đè cả nền của chúng.
-  for (const el of document.querySelectorAll('.badge-pill, .badge-capsule, .kicker-tag, .notice-label, .cta-btn, .store-item, .extra-pill, .notice-facts, .step-card, .qr-col, .qr-kiosk'))
+  for (const el of document.querySelectorAll('.badge-pill, .badge-capsule, .kicker-tag, .notice-label, .cta-btn, .store-item, .extra-pill, .notice-facts, .step-card, .qr-col, .qr-kiosk, .tk-brand-logo[data-tendoo-placed]'))
     if (el.getBoundingClientRect().width > 0) busy.push(el.getBoundingClientRect());
   for (const el of document.querySelectorAll('[data-autofit], .tk-stamp, .tk-sparkles path')) {{
     if (!el.hasAttribute('data-autofit')) {{ busy.push(el.getBoundingClientRect()); continue; }}
@@ -241,4 +241,43 @@ def ornaments_html(pack_name: Optional[str], theme: str, seed_text: str, zones: 
 </script>"""
 
 
-__all__ = ["STYLE_PACKS", "apply_style_pack", "ornaments_html"]
+def brand_logo_html(logo_src: str) -> str:
+    """Logo thương hiệu (brand kit, §10.5): đặt vào GÓC POSTER trống đầu tiên (trên-trái, trên-phải, dưới-trái,
+    dưới-phải), cao ~9% cạnh ngắn (không quá 24% bề ngang), KHÔNG chạm chữ/khối đồ hoạ/hoạ tiết; không góc nào
+    trống -> thử cỡ 6%, vẫn không -> bỏ (poster vẫn đúng, không bao giờ ép logo đè chữ)."""
+    if not logo_src:
+        return ""
+    return f"""<img class="tk-brand-logo" alt="" src={json.dumps(logo_src)} style="position:absolute;visibility:hidden;z-index:13;pointer-events:none;">
+<script>
+(window.__tendooAfterFitHooks = window.__tendooAfterFitHooks || []).push(function() {{
+  const img = document.querySelector('.tk-brand-logo');
+  if (!img || !img.naturalWidth) return;
+  const canvas = img.closest('.poster-canvas') || document.body;
+  canvas.appendChild(img);
+  const c = canvas.getBoundingClientRect();
+  const busy = [];
+  for (const el of document.querySelectorAll('.badge-pill, .badge-capsule, .kicker-tag, .notice-label, .notice-card, .cta-btn, .store-item, .extra-pill, .tk-ornaments > *, .tk-stamp, .qr-col'))
+    if (el.getBoundingClientRect().width > 0) busy.push(el.getBoundingClientRect());
+  for (const el of document.querySelectorAll('[data-autofit]')) {{
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    while (w.nextNode()) {{ if (!w.currentNode.textContent.trim()) continue;
+      const rg = document.createRange(); rg.selectNodeContents(w.currentNode);
+      for (const b of rg.getClientRects()) if (b.width > 1) busy.push(b); }}
+  }}
+  const m = Math.min(c.width, c.height), ar = img.naturalWidth / img.naturalHeight, pad = m * 0.035;
+  for (const k of [0.09, 0.06]) {{
+    let h = m * k, w = h * ar;
+    if (w > c.width * 0.24) {{ w = c.width * 0.24; h = w / ar; }}
+    for (const [x, y] of [[pad, pad], [c.width - pad - w, pad], [pad, c.height - pad - h], [c.width - pad - w, c.height - pad - h]]) {{
+      const hit = busy.some(b => x + w + 6 > b.left - c.left && x - 6 < b.right - c.left && y + h + 6 > b.top - c.top && y - 6 < b.bottom - c.top);
+      if (hit) continue;
+      Object.assign(img.style, {{left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px', visibility: 'visible'}});
+      img.dataset.tendooPlaced = '1';
+      return;
+    }}
+  }}
+}});
+</script>"""
+
+
+__all__ = ["STYLE_PACKS", "apply_style_pack", "brand_logo_html", "ornaments_html"]

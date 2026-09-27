@@ -156,7 +156,7 @@ class PosterRenderer:
         output_image_path: str | Path,
         width: int,
         height: int,
-        device_scale_factor: int = 1,
+        device_scale_factor: float = 1,
         overflow_report: List[Dict[str, Any]] | None = None,
     ) -> Path:
         """
@@ -211,7 +211,7 @@ class PosterRenderer:
         output_image_path: str | Path,
         width: int,
         height: int,
-        device_scale_factor: int = 1,
+        device_scale_factor: float = 1,
         overflow_report: List[Dict[str, Any]] | None = None,
     ) -> Path:
         """
