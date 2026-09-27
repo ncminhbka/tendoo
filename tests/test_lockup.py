@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from tendoo_v3.components import resolve_lockup
+from tendoo_v3.components import resolve_lockup, suggest_lockup
 from tendoo_v3.renderer import build_template_html
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
 from tendoo_v3.validators import check_plan
@@ -48,7 +48,7 @@ def test_lockup_markup_and_fonts():
     assert "font-family: 'Dancing Script'" not in html2
     stack = build_template_html(_plan("stat_stack", STACK, "GIẢM GIÁ LÊN ĐẾN 70%"), BG, 1024, 1024)
     assert "hero-phrase lockup lockup--stat_stack" in stack and 'class="stat-num"' in stack  # con số tự tách đơn vị
-    flat = build_template_html(_plan(None, STACK, "GIẢM GIÁ LÊN ĐẾN 70%"), BG, 1024, 1024)
+    flat = build_template_html(_plan("none", STACK, "GIẢM GIÁ LÊN ĐẾN 70%"), BG, 1024, 1024)
     assert "hero-phrase lockup" not in flat
 
 
@@ -70,3 +70,13 @@ def test_autofit_keeps_or_drops_lockup_by_measurement(page):
         page.set_content(build_template_html(plan, BG, w, h), wait_until="load")
         page.wait_for_function("window.__tendooAutofitDone === true", timeout=8000)
         assert page.evaluate("document.querySelector('.hero-title').dataset.tendooLockup") == expect
+
+
+def test_python_suggests_lockup_when_llm_leaves_it_empty():
+    # GĐ 3R v7: LLM thật bỏ trống lockup 18/18 -> Python đề xuất; 'none' tường minh được tôn trọng.
+    assert suggest_lockup(STACK) == "stat_stack"
+    assert suggest_lockup(BAND) == "band"
+    assert suggest_lockup(SCRIPT) == "none"  # script_over_caps cần phán đoán -- để LLM
+    assert suggest_lockup([{"t": "TUYỂN DỤNG", "role": "stat"}, {"t": "KỸ SƯ AI CAO CẤP CHO DỰ ÁN MỚI", "role": "suffix"}]) == "none"
+    assert resolve_lockup(_plan(None, STACK, "GIẢM GIÁ LÊN ĐẾN 70%")) == "stat_stack"
+    assert resolve_lockup(_plan("none", STACK, "GIẢM GIÁ LÊN ĐẾN 70%")) == "none"

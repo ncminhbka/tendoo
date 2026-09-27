@@ -584,6 +584,7 @@ COMMON_AUTOFIT_JS = """
         const lkCls = Array.from(el.classList).filter(c => c === 'lockup' || c.startsWith('lockup--'));
         lkCls.forEach(c => el.classList.remove(c));
         const flatSize = tendooSearch();
+        el.dataset.tendooLockupRatio = (bestSize / flatSize).toFixed(3);
         if (bestSize >= flatSize * __LOCKUP_KEEP__) {
           lkCls.forEach(c => el.classList.add(c));
           el.dataset.tendooLockup = 'kept';

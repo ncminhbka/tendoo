@@ -58,9 +58,12 @@ def test_enrich_marks_word_units_and_never_changes_text():
 
 
 def test_default_plan_builds_no_components():
-    """Mặc định -> None -> template render y hệt trước GĐ 2 (visual_diff 379 case giống từng điểm ảnh)."""
-    assert build_components(_plan(), _zones("sandwich_top_heavy"), 1024, 1024) is None
-    assert build_components(_plan(badge_style="ribbon"), _zones("sandwich_top_heavy"), 1024, 1024) is None  # không có badge
+    """Không linh kiện nào (lockup tắt tường minh) -> None -> template render y hệt trước GĐ 2."""
+    assert build_components(_plan(lockup="none"), _zones("sandwich_top_heavy"), 1024, 1024) is None
+    assert build_components(_plan(badge_style="ribbon", lockup="none"), _zones("sandwich_top_heavy"), 1024, 1024) is None  # không có badge
+    # Lockup để trống: Python đề xuất theo hero_parts (GĐ 7c) -- hero_parts có stat số -> stat_stack.
+    comp = build_components(_plan(), _zones("sandwich_top_heavy"), 1024, 1024)
+    assert comp["lockup"] == "stat_stack"
 
 
 @pytest.mark.parametrize("template", sorted(TEMPLATE_CATALOG))

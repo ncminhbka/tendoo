@@ -212,9 +212,28 @@ LOCKUP_REQUIRES: Dict[str, Tuple[str, ...]] = {
 SCRIPT_PREFIX_MAX_WORDS = 4  # chữ viết tay dài thành một dòng nghiêng khó đọc (Luật 6)
 
 
+def suggest_lockup(hero_parts: List[Dict[str, Any]]) -> str:
+    """Lockup mặc định khi LLM không chọn (GĐ 3R v7: gpt-5.4-mini bỏ trống 18/18 dù prompt khuyên). Quy tắc rút từ
+    bộ tham chiếu + đo trên 49 case oracle (squint trung tính): con số -> stat_stack; cụm móc + đuôi ngắn -> band.
+    script_over_caps KHÔNG tự chọn: cần phán đoán "cụm cảm xúc" -- để LLM quyết."""
+    stats = [p for p in hero_parts if p.get("role") == "stat"]
+    if not stats:
+        return "none"
+    if split_stat(stats[0].get("t", "")):
+        return "stat_stack"
+    suffix = next((p for p in hero_parts if p.get("role") == "suffix"), None)
+    if suffix and len(suffix.get("t", "").split()) <= 5:
+        return "band"
+    return "none"
+
+
 def resolve_lockup(plan: Any) -> str:
-    """Lockup THẬT SỰ áp: tên trong danh mục + hero_parts có đủ vai trò; không thì 'none'."""
-    name = getattr(plan, "lockup", None) or "none"
+    """Lockup THẬT SỰ áp: tên trong danh mục + hero_parts có đủ vai trò; không thì 'none'.
+    LLM bỏ trống (None) -> Python đề xuất (`suggest_lockup`); LLM ghi 'none' -> tôn trọng dòng ngang."""
+    name = getattr(plan, "lockup", None)
+    if name is None:
+        name = suggest_lockup(plan.hero_parts or [])
+    name = name or "none"
     need = LOCKUP_REQUIRES.get(name)
     if need is None:
         return "none"
@@ -291,4 +310,4 @@ def enrich_hero_parts(hero_parts: List[Dict[str, Any]], stat_style: str) -> List
     return out
 
 
-__all__ = ["LOCKUP_REQUIRES", "STAMP_FONT_MIN", "resolve_lockup", "build_components", "enrich_hero_parts", "find_stamp_box", "sparkles_html", "split_stat", "stamp_ring", "star_polygon"]
+__all__ = ["LOCKUP_REQUIRES", "STAMP_FONT_MIN", "resolve_lockup", "suggest_lockup", "build_components", "enrich_hero_parts", "find_stamp_box", "sparkles_html", "split_stat", "stamp_ring", "star_polygon"]
