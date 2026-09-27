@@ -22,7 +22,7 @@ sắc nét, đúng thứ bậc, đủ tương phản, đọc được trên đi�
 
 **Hiện trạng đo được (27/09):**
 - 17 mẫu (template) phủ **12 nhu cầu** người dùng; 28 font tiếng Việt (9 font miễn phí thương mại mới); 8 bộ phong cách theo dịp; 5 kiểu cụm tiêu đề.
-- Bộ kiểm thử tự động: **491 poster mẫu**, 174 đạt cả 5 điều kiện thẩm mỹ; **440 test** tự động đều xanh.
+- Bộ kiểm thử tự động: **491 poster mẫu**, 179 đạt cả 5 điều kiện thẩm mỹ, 172 đạt cả 6; **476 test** tự động đều xanh.
 - Poster sinh từ **GPT thật + ảnh nền thật** (26 đề bài thực tế): **21/26 đạt cả 5 điều kiện**, 0 poster mất chữ.
 
 ---
@@ -233,7 +233,7 @@ Mỗi linh kiện/hiệu ứng khai báo intent được dùng (tránh "chữ ne
 `hero_parts` · (3) màu 60-30-10 và tương phản nền đo thật · (4) danh mục hiệu ứng đóng, gắn ý đồ · (5) "nheo mắt
 nhìn" tự động (squint test) · (6) đọc được trên điện thoại.
 
-**5 điều kiện** chấm mọi poster (`scripts/probe_type_hierarchy.py`):
+**6 điều kiện** chấm mọi poster (`scripts/probe_type_hierarchy.py`):
 
 | # | Điều kiện | Nghĩa dễ hiểu |
 | :-- | :--- | :--- |
@@ -242,6 +242,7 @@ nhìn" tự động (squint test) · (6) đọc được trên điện thoại.
 | C3 | Tương phản nền | Mọi dòng chữ đạt chuẩn WCAG ở ô nền xấu nhất (đo trên ảnh chụp thật) |
 | C4 | Không mất chữ | Không chữ nào bị cắt/đè |
 | C5 | Đọc được trên điện thoại | Chữ ≥ 10px trên màn 375px, tiêu đề ≥ 20px |
+| C6 | Không phí chỗ | Tiêu đề / nội dung chính không bị trần cỡ chữ giữ nhỏ khi còn ≥ 40% chỗ (thêm 27/09 — bắt lỗi "chữ nhỏ giữa khoảng trống" ở khung dọc mà C1–C5 bỏ sót) |
 
 ---
 
@@ -259,16 +260,16 @@ nhìn" tự động (squint test) · (6) đọc được trên điện thoại.
 
 ## 8. KIỂM THỬ VÀ SỐ ĐO
 
-**Tự động (chạy mỗi lần sửa):** 440 test (`pytest tests/`), gồm:
+**Tự động (chạy mỗi lần sửa):** 476 test (`pytest tests/`), gồm:
 - 4 **"bánh cóc"** chất lượng — số poster đạt từng điều kiện **không được giảm** so với mốc: bộ chính (491 poster),
   bộ "LLM lý tưởng" (80), nền khắc nghiệt (123, có vệt sáng/mảng tối), nền không mask (18).
 - Kiểm dấu tiếng Việt 28 font, hoạ tiết không chạm chữ, logo, bản in, sửa chữ, hợp đồng LLM, sức chứa, mask ≤ 50%…
 
 **Số đo bộ chính (491 poster, 27/09):**
 
-| C1 neo | C2 không tường | C3 tương phản | C4 không mất chữ | Đạt 4 | C5 điện thoại | **Đạt cả 5** |
-| :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| 214 | 428 | 484 | 485 | 212 | 265 | **174** |
+| C1 neo | C2 không tường | C3 tương phản | C4 không mất chữ | Đạt 4 | C5 điện thoại | **Đạt cả 5** | C6 không phí chỗ | **Đạt cả 6** |
+| :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| 217 | 428 | 485 | 485 | 216 | 265 | **179** | 482 | **172** |
 
 **Với LLM + ảnh nền thật** (`scripts/run_real_llm.py`, 26 đề bài, lượt v8): **21/26 đạt cả 5**, 0 mất chữ. Trang xem:
 `output_probe/nghiem_thu_v8/index.html` (gom theo 12 nhu cầu).

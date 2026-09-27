@@ -51,7 +51,7 @@ from playwright.sync_api import sync_playwright
 from run_template_test import generate_harsh_backdrop_data_uri, generate_lowdetail_backdrop_data_uri, generate_mock_backdrop_data_uri, parse_case_to_plan
 from tendoo_v3.catalog import INTENT_PROFILES, resolve_intent
 from tendoo_v3.renderer import build_template_html
-from tendoo_v3.styles import CONTENT_CLASSES, TIER1_CLASSES, TIER2_CLASSES, TIER3_CLASSES
+from tendoo_v3.styles import HERO_PRESENT_PCT, CONTENT_CLASSES, TIER1_CLASSES, TIER2_CLASSES, TIER3_CLASSES
 
 TESTS_DIR = PROJECT_ROOT / "tests"
 
@@ -264,6 +264,37 @@ def _phone_legible(elements: List[Dict[str, Any]], hero: float, w: int) -> bool:
     return True
 
 
+# §4.7 ĐIỀU KIỆN 6 -- CHỮ CHÍNH KHÔNG BỊ TRẦN GIỮ NHỎ KHI CÒN CHỖ (27/09, 26 poster GPT thật): khung dọc 9:16 menu /
+# flash sale nhìn "chữ nhỏ giữa khoảng trống" nhưng vẫn đạt C1-C5 -- tiêu đề / danh sách món CHẠM TRẦN cỡ chữ (trần tính
+# theo BỀ NGANG khung) khi mới dùng 29-54% chiều cao được cấp. Trượt: tiêu đề hoặc nội dung chính chạm trần mà dùng
+# < SLACK_UTIL chiều cao ngân sách. KHÔNG xét subhead/Cấp 3: trần của chúng là trần THỨ BẬC có chủ đích (C1) -- bản đầu
+# xét cả subhead báo 139/491, đa số là subhead cố ý nhỏ. Tiêu đề >= HERO_PRESENT_PCT % cạnh tương đương sqrt(w*h) coi là
+# đủ to (= trần 40px-trên-màn ở khung vuông 1024: 109.5px = 10.7%) -- khung dọc phải đạt cùng độ to TƯƠNG ĐỐI.
+SLACK_UTIL = 0.6
+
+
+def _cap_starved(elements: List[Dict[str, Any]], w: int, h: int) -> List[str]:
+    side = (w * h) ** 0.5
+    return [e["cls"] for e in elements
+            if (e["tier"] == "content" or (e["tier"] == 1 and 100 * e["size"] / side < HERO_PRESENT_PCT))
+            and e["pinned"] and e["max_h"] == e["max_h"] and e["max_h"] > 0 and e["scroll_h"] < SLACK_UTIL * e["max_h"]]
+
+
+COVERAGE_JS = r"""() => {
+  const W = innerWidth, H = innerHeight; let area = 0;
+  const root = document.querySelector('.poster-canvas') || document.body;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  while (w.nextNode()) { const t = w.currentNode; if (!t.textContent.trim()) continue;
+    const host = t.parentElement, cs = getComputedStyle(host);
+    if (cs.visibility === 'hidden' || cs.display === 'none' || host.closest('svg')) continue;
+    const rg = document.createRange(); rg.selectNodeContents(t);
+    for (const b of rg.getClientRects()) {
+      const x1 = Math.max(0, b.left), y1 = Math.max(0, b.top), x2 = Math.min(W, b.right), y2 = Math.min(H, b.bottom);
+      if (x2 > x1 && y2 > y1) area += (x2 - x1) * (y2 - y1); } }
+  return area / (W * H);
+}"""
+
+
 def measure_plan(page, plan, w: int, h: int, with_bg: bool = False, harsh_seed: Optional[str] = None,
                  lowdetail_seed: Optional[str] = None, bg_override: Optional[str] = None) -> Dict[str, Any]:
     if bg_override is not None:  # GĐ 3R: ảnh nền THẬT (sinh bằng mô hình ảnh) thay nền giả
@@ -331,7 +362,12 @@ def measure_plan(page, plan, w: int, h: int, with_bg: bool = False, harsh_seed: 
         # poster xem vừa bề ngang màn hình ~375px -> mọi chữ >= 10px, hero >= 20px trên màn.
         "c5_phone": _phone_legible(elements, hero, w),
         "phone_min": round(min((e["size"] for e in elements if e["size"] > 0), default=0) * PHONE_W / w, 1),
+        # §4.7 C6 + 2 chỉ số tham khảo (không chấm): cỡ hero / cạnh tương đương sqrt(w*h), % diện tích khung là chữ.
+        "starved": _cap_starved(elements, w, h),
+        "hero_pct": round(100 * hero / (w * h) ** 0.5, 1),
+        "text_cover": round(100 * page.evaluate(COVERAGE_JS), 1),
     }
+    result["c6_room"] = not result["starved"]
     if with_bg:
         bgc = measure_bg_contrast(page)
         fails = [b for b in bgc if b.get("ratio") is not None and b["ratio"] < b["need"]]
@@ -341,6 +377,7 @@ def measure_plan(page, plan, w: int, h: int, with_bg: bool = False, harsh_seed: 
         })
     result["squint_pass"] = result["c1_anchor"] and result["c2_no_wall"] and result["c4_no_loss"] and result.get("c3_bg", True)
     result["pass5"] = result["squint_pass"] and result["c5_phone"]
+    result["pass6"] = result["pass5"] and result["c6_room"]
     return result
 
 
@@ -388,12 +425,13 @@ def summarize(results: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
             "c3": sum(r["c3_bg"] for r in rs) if "c3_bg" in rs[0] else None, "c4": sum(r["c4_no_loss"] for r in rs),
             "squint": sum(r["squint_pass"] for r in rs),
             "c5": sum(r["c5_phone"] for r in rs), "pass5": sum(r["pass5"] for r in rs),
+            "c6": sum(r["c6_room"] for r in rs), "pass6": sum(r["pass6"] for r in rs),
             "top_secondary": ", ".join(f"{k}:{v}" for k, v in sorted(tops.items(), key=lambda kv: -kv[1])[:2]),
         }
     return summ
 
 
-SQUINT_KEYS = ("c1", "c2", "c3", "c4", "squint", "c5", "pass5")
+SQUINT_KEYS = ("c1", "c2", "c3", "c4", "squint", "c5", "pass5", "c6", "pass6")
 
 
 def squint_baseline(summ: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
@@ -409,12 +447,13 @@ def print_table(summ, base=None):
         return f" ({fmt.format(round(delta, 2))})" if delta else ""
 
     hdr = (f"{'template':<24}{'n':>4} {'intent':<18}{'ngưỡng':>6} {'contrast TB':>13} {'đảo':>5}"
-           f" {'C1 neo':>9} {'C2 tường':>9} {'C3 nền':>8} {'C4 chữ':>8} {'ĐẠT CẢ 4':>12} {'C5 đ.thoại':>11} {'ĐẠT CẢ 5':>10}")
+           f" {'C1 neo':>9} {'C2 tường':>9} {'C3 nền':>8} {'C4 chữ':>8} {'ĐẠT CẢ 4':>12} {'C5 đ.thoại':>11} {'ĐẠT CẢ 5':>10}"
+           f" {'C6 chỗ':>9} {'ĐẠT CẢ 6':>10}")
     print(hdr)
     print("-" * len(hdr))
     tot = defaultdict(int)
     for tpl, s in summ.items():
-        for k in ("n", "inversions", "c1", "c2", "c3", "c4", "squint", "c5", "pass5"):
+        for k in ("n", "inversions", "c1", "c2", "c3", "c4", "squint", "c5", "pass5", "c6", "pass6"):
             tot[k] += s.get(k) or 0
         c3 = "-" if s.get("c3") is None else str(s["c3"])
         print(
@@ -422,10 +461,11 @@ def print_table(summ, base=None):
             f" {s['inversions']:>5} {str(s.get('c1')) + d('c1', tpl):>9} {str(s.get('c2')) + d('c2', tpl):>9} {c3:>8}"
             f" {str(s.get('c4')) + d('c4', tpl):>8} {str(s.get('squint')) + d('squint', tpl):>12}"
             f" {str(s.get('c5')) + d('c5', tpl):>11} {str(s.get('pass5')) + d('pass5', tpl):>10}"
+            f" {str(s.get('c6')) + d('c6', tpl):>9} {str(s.get('pass6')) + d('pass6', tpl):>10}"
         )
     print("-" * len(hdr))
     print(f"{'TỔNG':<24}{tot['n']:>4} {'':<18}{'':>6} {'':>13} {tot['inversions']:>5} {tot['c1']:>9} {tot['c2']:>9}"
-          f" {tot['c3']:>8} {tot['c4']:>8} {tot['squint']:>12} {tot['c5']:>11} {tot['pass5']:>10}")
+          f" {tot['c3']:>8} {tot['c4']:>8} {tot['squint']:>12} {tot['c5']:>11} {tot['pass5']:>10} {tot['c6']:>9} {tot['pass6']:>10}")
 
 
 def with_oracle_hero_parts(cases: List[tuple], only_changed: bool = False) -> List[tuple]:
@@ -452,7 +492,7 @@ def main():
     ap.add_argument("--template", default=None)
     ap.add_argument("--out", default=str(PROJECT_ROOT / "output_probe" / "latest"))
     ap.add_argument("--compare", default=None, help="Thư mục kết quả cũ để so sánh (chứa summary.json)")
-    ap.add_argument("--show", choices=["inversions", "overflows", "unknown", "squint"], default=None, help="In chi tiết case vi phạm")
+    ap.add_argument("--show", choices=["inversions", "overflows", "unknown", "squint", "starved"], default=None, help="In chi tiết case vi phạm")
     ap.add_argument("--bg", action="store_true", help="Đo thêm §4.5 điều kiện 3 (tương phản nền thật, chậm ~2x)")
     ap.add_argument("--harsh", action="store_true", help="GĐ 4: nền giả có vệt sáng / mảng tối cục bộ (cần --bg)")
     ap.add_argument("--maskless", action="store_true", help="GĐ 5: chỉ case có intent cho phép maskless, trên nền ít chi tiết phủ cả khung")
@@ -505,6 +545,8 @@ def main():
             elif args.show == "squint" and not r["squint_pass"]:
                 why = [k for k in ("c1_anchor", "c2_no_wall", "c3_bg", "c4_no_loss") if r.get(k) is False]
                 print(f"  {r['id']:<34} trượt {why}  contrast {r['contrast']} / {r['contrast_target']}  nền yếu {r.get('bg_fail', [])}")
+            elif args.show == "starved" and r["starved"]:
+                print(f"  {r['id']:<34} chạm trần khi còn chỗ: {r['starved']}  hero {r['hero_pct']}%  chữ phủ {r['text_cover']}%")
             elif args.show == "unknown" and r["unknown"]:
                 print(f"  {r['id']:<34} class chưa phân cấp: {r['unknown']}")
 

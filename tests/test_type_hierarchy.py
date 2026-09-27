@@ -117,7 +117,7 @@ def test_squint_does_not_regress(measured):
     now = squint_baseline(summarize(measured))
     worse = [
         f"{tpl}.{k}: {now[tpl][k]} < mốc {b[k]}"
-        for tpl, b in base.items() for k in SQUINT_KEYS if now.get(tpl, {}).get(k, 0) < b[k]
+        for tpl, b in base.items() for k in SQUINT_KEYS if k in b and now.get(tpl, {}).get(k, 0) < b[k]
     ]
     assert not worse, "Squint test tệ đi so với mốc: " + "; ".join(worse)
 
@@ -142,7 +142,7 @@ def test_squint_with_hero_parts_does_not_regress(measured_oracle):
     now = squint_baseline(summarize(measured_oracle))
     worse = [
         f"{tpl}.{k}: {now[tpl][k]} < mốc {b[k]}"
-        for tpl, b in base.items() for k in SQUINT_KEYS if now.get(tpl, {}).get(k, 0) < b[k]
+        for tpl, b in base.items() for k in SQUINT_KEYS if k in b and now.get(tpl, {}).get(k, 0) < b[k]
     ]
     assert not worse, "Squint (hero_parts) tệ đi so với mốc: " + "; ".join(worse)
     # Luật 6: master_03 -- dải đáy grand_opening, CTA to đè dòng cửa hàng; cứu chữ chỉ co phần tử bị đè (§8).
@@ -172,7 +172,7 @@ def test_squint_on_harsh_background_does_not_regress(measured_harsh):
     now = squint_baseline(summarize(measured_harsh))
     worse = [
         f"{tpl}.{k}: {now[tpl][k]} < mốc {b[k]}"
-        for tpl, b in base.items() for k in SQUINT_KEYS if now.get(tpl, {}).get(k, 0) < b[k]
+        for tpl, b in base.items() for k in SQUINT_KEYS if k in b and now.get(tpl, {}).get(k, 0) < b[k]
     ]
     assert not worse, "Squint (nền khắc nghiệt) tệ đi so với mốc: " + "; ".join(worse)
 
@@ -217,6 +217,6 @@ def test_squint_maskless_does_not_regress(measured_maskless):
     now = squint_baseline(summarize(measured_maskless))
     worse = [
         f"{tpl}.{k}: {now[tpl][k]} < mốc {b[k]}"
-        for tpl, b in base.items() for k in SQUINT_KEYS if now.get(tpl, {}).get(k, 0) < b[k]
+        for tpl, b in base.items() for k in SQUINT_KEYS if k in b and now.get(tpl, {}).get(k, 0) < b[k]
     ]
     assert not worse, "Squint (maskless) tệ đi so với mốc: " + "; ".join(worse)

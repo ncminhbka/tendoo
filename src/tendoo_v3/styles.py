@@ -459,6 +459,9 @@ PHONE_STAT_MAX_PX = 90.0
 LOCKUP_KEEP_RATIO = 0.9
 PHONE_HERO_MAX_PX = 40.0      # trần hero (~109px ở khung 1024 -- social 1080: tiêu đề 48-96px, poster lớn hơn)
 HERO_HEIGHT_BOOST = 1.6       # nới chiều cao ngân sách hero (tiêu đề trước) -- đo trên suite + 16 poster LLM thật
+# Tiêu đề "đủ to" = % cạnh tương đương sqrt(w*h) (= trần PHONE_HERO_MAX_PX ở khung vuông 1024: 109.5px = 10.7%).
+# Dùng chung cho squint C6 (§4.7, probe_type_hierarchy) và trần nới khung dọc (renderer._apply_portrait_room).
+HERO_PRESENT_PCT = 10.0
 PHONE_HERO_FLOOR_PX = 16.0    # sàn CỨNG hero trong ngân sách: tiêu đề dài co xuống được, không bị cắt
 
 
@@ -521,6 +524,23 @@ COMMON_AUTOFIT_JS = """
       delete n.dataset.tendooAntiClipDone;
     });
 
+    // Chữ ký cách ngắt dòng: số ký tự trên mỗi dòng (theo thứ tự đọc). Hai cỡ cùng chữ ký = cùng chỗ ngắt.
+    function tendooLineSig(el) {
+      const lines = [];
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const t = walker.currentNode, s = t.textContent;
+        for (let i = 0; i < s.length; i++) {
+          if (!s[i].trim()) continue;
+          const rg = document.createRange(); rg.setStart(t, i); rg.setEnd(t, i + 1);
+          const r = rg.getClientRects()[0];
+          if (!r) continue;
+          const last = lines[lines.length - 1];
+          if (last && Math.abs(last.top - r.top) < r.height * 0.5) last.n++; else lines.push({top: r.top, n: 1});
+        }
+      }
+      return lines.map(l => l.n).join(',');
+    }
     // 1. Tự động co giãn kích cỡ 2 chiều bằng thuật toán Binary Search Fill-to-Bounds
     const autofitEls = document.querySelectorAll('[data-autofit]');
     autofitEls.forEach(el => {
@@ -602,6 +622,23 @@ COMMON_AUTOFIT_JS = """
       // Áp dụng cỡ chữ tối ưu cuối cùng (làm tròn 0.5px)
       let finalFont = Math.floor(bestSize * 2) / 2;
       tendooApplyTypo(el, finalFont);
+      // 1a. Khung dọc: trần tiêu đề được nới (renderer._apply_portrait_room) -- chỉ GIỮ cỡ lớn khi cách ngắt dòng Y HỆT
+      // ở trần cũ (phóng nguyên khối, không xếp lại chữ). Đo probe_line_breaks 27/09: không chốt -> "LIỆU / TRÌNH /
+      // THƯ GIÃN"; chốt theo SỐ dòng vẫn lọt "BỨT / PHÁ GIỚI / HẠN THỂ / CHẤT" (cùng 4 dòng, ngắt khác chỗ).
+      // So với kết quả dò bằng ĐÚNG trần cũ (không phải cỡ = trần cũ): đổi trần làm dò nhị phân dừng lệch 0.5px, đủ để
+      // "BỨT PHÁ / GIỚI HẠN / THỂ CHẤT" thành "BỨT / PHÁ GIỚI / HẠN THỂ / CHẤT" dù tiêu đề không hề to lên (diag gym 4:5).
+      // Khác chỗ ngắt -> dùng lại y kết quả cũ: poster không hưởng lợi từ trần mới giống hệt trước.
+      const baseMax = window.__tendooHeroBaseMax;
+      if (baseMax && maxSize > baseMax && el.matches('__TENDOO_TIER1_SELECTOR__')) {
+        const sigNew = tendooLineSig(el), grownMax = maxSize;
+        maxSize = Math.max(minSize, baseMax);
+        const oldFont = Math.floor(tendooSearch() * 2) / 2;
+        maxSize = grownMax;
+        tendooApplyTypo(el, oldFont);
+        // To hơn không đáng kể (< 3%) cũng dùng kết quả cũ: 72.5 -> 73px cùng chỗ ngắt, nhưng các bước co sau đưa về
+        // 60 thay vì 59.5px -- đúng ngưỡng ngắt khác chỗ (diag gym 4:5). Chênh 0.5px không lợi gì cho người xem.
+        if (tendooLineSig(el) !== sigNew || finalFont < oldFont * 1.03) { finalFont = oldFont; } else { tendooApplyTypo(el, finalFont); }
+      }
 
       // 1b. CỨU CHỮ SỚM (Luật 6): phần tử kẹt ở sàn mà chữ đã bị khung của CHÍNH nó cắt -> tìm lại cỡ trong
       // [__RESCUE_MIN__, sàn]. Trường hợp chỉ lộ ra khi mọi phần tử đã chốt vị trí (đè chữ khác) do Bước 3c lo.
@@ -723,6 +760,15 @@ COMMON_AUTOFIT_JS = """
         const k = tgt / eff;
         const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
         el.style.fontSize = Math.max(hardFloor, Math.floor(cur * k * 2) / 2) + 'px';  // làm tròn không được xuyên sàn cứng
+      });
+    }
+    // 3a'. Khung dọc matrix_board (renderer._content_ratio_script): nội dung chính <= tiêu đề / ngưỡng intent.
+    if (heroFont > 0 && window.__tendooContentMaxRatio) {
+      document.querySelectorAll('__TENDOO_CONTENT_SELECTOR__').forEach(el => {
+        const eff = tendooEffFont(el), tgt = Math.max(hardFloor, heroFont / window.__tendooContentMaxRatio);
+        if (eff <= tgt) return;
+        const cur = parseFloat(getComputedStyle(el).fontSize) || 0;
+        el.style.fontSize = Math.max(hardFloor, Math.floor(cur * tgt / eff * 2) / 2) + 'px';
       });
     }
     let tier2Font = 0;
@@ -1223,6 +1269,6 @@ COMMON_AUTOFIT_JS = """
   }, 150);
 })();
 </script>
-""".replace("__RESCUE_MIN__", str(RESCUE_MIN_PX)).replace("__LOCKUP_KEEP__", str(LOCKUP_KEEP_RATIO)).replace("__HIER_MIN__", str(HIERARCHY_MIN_RATIO)).replace("__TENDOO_TIER1_SELECTOR__", ", ".join("." + c for c in TIER1_CLASSES)).replace("__PHONE_MIN_RATIO__", str(round(PHONE_MIN_PX / PHONE_VIEW_W, 5))).replace("__TIER3_FLOOR_PX__", str(TIER3_FLOOR_PX)).replace("__TIER3_BELOW_SUBHEAD__", str(TIER3_BELOW_SUBHEAD)).replace("__TENDOO_TIER2_SELECTOR__", ", ".join("." + c for c in TIER2_CLASSES)).replace(
+""".replace("__RESCUE_MIN__", str(RESCUE_MIN_PX)).replace("__LOCKUP_KEEP__", str(LOCKUP_KEEP_RATIO)).replace("__HIER_MIN__", str(HIERARCHY_MIN_RATIO)).replace("__TENDOO_TIER1_SELECTOR__", ", ".join("." + c for c in TIER1_CLASSES)).replace("__TENDOO_CONTENT_SELECTOR__", ", ".join("." + c for c in CONTENT_CLASSES)).replace("__PHONE_MIN_RATIO__", str(round(PHONE_MIN_PX / PHONE_VIEW_W, 5))).replace("__TIER3_FLOOR_PX__", str(TIER3_FLOOR_PX)).replace("__TIER3_BELOW_SUBHEAD__", str(TIER3_BELOW_SUBHEAD)).replace("__TENDOO_TIER2_SELECTOR__", ", ".join("." + c for c in TIER2_CLASSES)).replace(
     "__TENDOO_TIER3_SELECTOR__", ", ".join("." + c for c in TIER3_CLASSES)
 )

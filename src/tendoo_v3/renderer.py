@@ -13,6 +13,7 @@ from __future__ import annotations
 import base64
 import colorsys
 import logging
+import math
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -40,6 +41,7 @@ from tendoo_v3.schema import StyleConfig, TendooCreativePlan
 from dataclasses import replace
 
 from tendoo_v3.styles import (
+    HERO_PRESENT_PCT,
     COMMON_AUTOFIT_JS,
     HERO_HEIGHT_BOOST,
     PHONE_HERO_FLOOR_PX,
@@ -1504,7 +1506,54 @@ def compute_template_budget(template: str, plan: TendooCreativePlan, zones, widt
     """Ngân sách cỡ chữ cho ĐÚNG template đang render (trước đây tính cả 14 mỗi lần render)."""
     budget = _TEMPLATE_BUDGETS[template](plan, zones, width, height)
     budget = _apply_phone_floors(_apply_intent_subhead_cap(budget, template, plan), width)
-    return _apply_stat_anchor_ceiling(budget, plan, width)
+    return _apply_portrait_room(_apply_stat_anchor_ceiling(budget, plan, width), width, height)
+
+
+# Tiêu đề + NỘI DUNG CHÍNH (danh sách món, các bước, lời chứng thực, đoạn thiệp) -- khối nên to hết mức chỗ cho phép.
+# Subhead / Cấp 3 KHÔNG nới: trần của chúng là trần thứ bậc (C1).
+_PORTRAIT_GROW_KEYS = ("hero", "menu_list", "steps", "testimonial", "body", "facts")
+
+
+def _portrait_script(template: str, plan: TendooCreativePlan, width: int, height: int, budget: Dict[str, Any]) -> str:
+    """Tham số cho autofit khi khung dọc được nới trần (_apply_portrait_room):
+    - __tendooHeroBaseMax: trần tiêu đề CŨ -- Bước 1a chỉ giữ cỡ lớn hơn khi không làm tiêu đề xuống thêm dòng;
+    - __tendooContentMaxRatio (matrix_board): nội dung chính được nới nhưng tiêu đề có thể bị CHIỀU CAO khoá, không to
+      theo -> danh sách to gần bằng tiêu đề (menu 4:5: tiêu đề/danh sách 2.17 -> 1.99 < 2.0, đo 27/09). Bước 3a' co nội
+      dung chính về tiêu đề / ngưỡng intent (chỉ co, không phóng)."""
+    # LUÔN đặt lại: Playwright set_content giữ nguyên window -> giá trị của poster dọc trước sẽ dính sang poster sau.
+    parts = ["window.__tendooHeroBaseMax = null; window.__tendooContentMaxRatio = null;"]
+    if height <= width * 1.05:
+        return f"<script>{parts[0]}</script>"
+    base = (budget.get("hero") or {}).get("base_max_font")
+    if base:
+        parts.append(f"window.__tendooHeroBaseMax = {base};")
+    intent = resolve_intent(template, plan.visual_intent)
+    if intent == "matrix_board":
+        parts.append(f"window.__tendooContentMaxRatio = {INTENT_PROFILES[intent]['contrast_target']};")
+    return f"<script>{' '.join(parts)}</script>"
+
+
+def _apply_portrait_room(budget: Dict[str, Any], width: int, height: int) -> Dict[str, Any]:
+    """Khung DỌC: nới trần cỡ tiêu đề + nội dung chính theo sqrt(cao/rộng) (9:16 x1.33, 4:5 x1.12). Trần Luật 6 tính theo
+    BỀ NGANG (px trên màn 375px) -> khung dọc hẹp mà cao bị trần thấp dù dư chiều cao: 27/09 menu trà sữa 9:16 tiêu đề +
+    danh sách món chạm trần khi mới dùng 51-54% chỗ (squint C6, §4.7). Nới theo cạnh tương đương sqrt(w*h) = cùng độ to
+    TƯƠNG ĐỐI như khung vuông. Sàn giữ nguyên; autofit vẫn chỉ phóng tới mức VỪA hộp, và Bước 1a bỏ cỡ lớn của tiêu đề
+    nếu nó làm tiêu đề xuống thêm dòng (thử nới không kèm chốt này: mồ côi 143 -> 148, từ ghép bị tách 131 -> 135 --
+    "CĂN / HỘ VEN / SÔNG CHỈ"; có chốt: 143 / 131 như cũ). Suite 491: C1 213 -> 219, đạt-cả-5 174 -> 180, C6 465 -> 485."""
+    if height <= width * 1.05:
+        return budget
+    k = math.sqrt(height / width)
+    for key in _PORTRAIT_GROW_KEYS:
+        entry = budget.get(key)
+        if isinstance(entry, dict) and entry.get("max_font"):
+            grown = math.floor(entry["max_font"] * k * 2) / 2
+            if key == "hero":
+                # Tiêu đề chỉ nới tới mức "đủ to" của C6 (HERO_PRESENT_PCT), không hơn: tiêu đề đã đủ to mà phóng tiếp
+                # thì chạm vệt sáng nền (27/09 split_right 4:5 nền khắc nghiệt 95 -> 107px: C3 3.07 -> 2.89).
+                entry["base_max_font"] = entry["max_font"]
+                grown = min(grown, max(entry["max_font"], math.floor(HERO_PRESENT_PCT / 100 * math.sqrt(width * height) * 2) / 2))
+            entry["max_font"] = grown
+    return budget
 
 
 def _apply_stat_anchor_ceiling(budget: Dict[str, Any], plan: TendooCreativePlan, width: int) -> Dict[str, Any]:
@@ -2327,7 +2376,7 @@ def build_template_html(
         "steps": steps,
         "orientation": plan.orientation or "bottom_left",
         "zones": zones,
-        "autofit_js": COMMON_AUTOFIT_JS,
+        "autofit_js": _portrait_script(tpl_name, plan, width, height, budget) + COMMON_AUTOFIT_JS,
     }
 
     return jinja_tpl.render(**context)

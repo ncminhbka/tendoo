@@ -496,6 +496,35 @@ Squint điều kiện 5 (`c5_phone`), "đạt cả 5" = 4 điều kiện cũ + C
 đạt cả 5 19/395**. Hệ quả tất yếu: poster chứa ÍT chữ hơn — nội dung dày phải viết ngắn / đổi template;
 sức chứa (§3.4) và ngưỡng tương phản điểm neo (§3.3, đặt khi chữ phụ còn 13–15px) phải đo/hiệu chỉnh lại.
 
+### 4.7. ĐIỀU KIỆN 6 — CHỮ CHÍNH KHÔNG BỊ TRẦN GIỮ NHỎ KHI CÒN CHỖ (27/09)
+
+**Lỗ hổng của C1–C5:** poster khung dọc 9:16 (menu trà sữa, combo gà, flash sale) nhìn "chữ nhỏ giữa khoảng trống"
+nhưng vẫn đạt đủ 5 điều kiện. Đo DOM: tiêu đề / danh sách món **chạm trần cỡ chữ khi mới dùng 29–54% chiều cao được
+cấp** — trần Luật 6 tính theo BỀ NGANG (px trên màn 375px) nên khung hẹp-mà-cao bị trần thấp dù dư chiều cao.
+(Lưu ý thật thà: ở cỡ thật các chữ đó 23px vẫn đọc được — cảm giác "li ti" một phần do xem ảnh thu nhỏ; lỗi thật là PHÍ CHỖ.)
+
+- **C6** (`probe_type_hierarchy._cap_starved`, `c6_room`, "đạt cả 6" = `pass6`): trượt khi tiêu đề hoặc nội dung chính
+  (danh sách, các bước, trích dẫn, đoạn thiệp) chạm trần mà dùng < 60% chiều cao ngân sách. Tiêu đề ≥ 10% cạnh tương
+  đương sqrt(w·h) coi là đủ to (= trần 40px-trên-màn ở khung vuông 1024). KHÔNG xét subhead/Cấp 3 — trần của chúng là
+  trần thứ bậc có chủ đích; bản đầu xét cả subhead báo 139/491, đa số báo nhầm. Chỉ số tham khảo (không chấm):
+  `hero_pct`, `text_cover` (% diện tích khung là chữ).
+- **Sửa** (`renderer._apply_portrait_room`): khung dọc nới trần nội dung chính × sqrt(cao/rộng) (9:16 ×1.33, 4:5 ×1.12);
+  tiêu đề nới tới mức "đủ to" của C6 (`styles.HERO_PRESENT_PCT`), không hơn; subhead không nới. Bốn chốt, mỗi chốt rút từ một
+  lần đo tệ đi:
+  1. autofit Bước 1a so với kết quả dò bằng TRẦN CŨ: khác chỗ ngắt dòng hoặc to hơn < 3% → dùng y kết quả cũ. Không chốt:
+     `probe_line_breaks` mồ côi 143 → 148, từ ghép bị tách 131 → 135 ("CĂN / HỘ VEN / SÔNG CHỈ"); chốt theo SỐ dòng vẫn
+     lọt "BỨT / PHÁ GIỚI / HẠN THỂ / CHẤT" (dò nhị phân dừng lệch 0.5px vì trần đổi, tiêu đề không hề to lên).
+  2. tiêu đề không vượt mức "đủ to": split_right 4:5 nền khắc nghiệt 95 → 107px chạm vệt sáng, C3 3.07 → 2.89.
+  3. matrix_board: nội dung chính ≤ tiêu đề / ngưỡng intent (menu 4:5 từng rơi 2.17 → 1.99).
+  4. biến `window` luôn đặt lại mỗi lần dựng (Playwright set_content giữ window).
+- **Suite 491:** C1 213 → 217, **đạt-cả-5 174 → 179**, C6 465 → 482, **đạt-cả-6 155 → 172**; không case nào mất điều kiện
+  nào (cả bộ nền khắc nghiệt); ngắt dòng mồ côi 143 → 143, từ ghép bị tách 131 → 130. GPT thật 26 poster: menu trà sữa,
+  combo gà, flash sale chữ to rõ hơn; căn hộ giữ nguyên.
+- **Còn lệch đã biết:** Bước 5 (tương phản) ước tính nền bằng ô vuông cạnh = chiều cao dòng; chữ to (≥ 100px) → ô 120px
+  trung bình lẫn vệt sáng với nền tối → JS tưởng 4.09 trong khi ảnh chụp 2.89. Chưa sửa (tách việc).
+- **Chưa giải quyết:** tuyển dụng 9:16 — dòng quyền lợi (Cấp 3) kẹt trong hộp quá thấp giữa khoảng trống lớn: lỗi HÌNH
+  HỌC vùng chữ, không phải trần; C6 không bắt (không xét Cấp 3).
+
 ---
 
 ## 5. CÂU HỎI 4 — DÙNG CÁC LAYOUT CƠ BẢN NÀO

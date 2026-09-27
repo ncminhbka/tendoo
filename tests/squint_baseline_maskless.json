@@ -7,7 +7,9 @@
   "c4": 3,
   "squint": 2,
   "c5": 2,
-  "pass5": 2
+  "pass5": 2,
+  "c6": 3,
+  "pass6": 2
  },
  "grand_opening_banner": {
   "n": 9,
@@ -17,7 +19,9 @@
   "c4": 8,
   "squint": 3,
   "c5": 7,
-  "pass5": 2
+  "pass5": 2,
+  "c6": 9,
+  "pass6": 2
  },
  "sandwich_bottom_heavy": {
   "n": 5,
@@ -27,7 +31,9 @@
   "c4": 4,
   "squint": 2,
   "c5": 1,
-  "pass5": 1
+  "pass5": 1,
+  "c6": 5,
+  "pass6": 1
  },
  "sandwich_top_heavy": {
   "n": 1,
@@ -37,6 +43,8 @@
   "c4": 1,
   "squint": 1,
   "c5": 1,
-  "pass5": 1
+  "pass5": 1,
+  "c6": 1,
+  "pass6": 1
  }
 }
