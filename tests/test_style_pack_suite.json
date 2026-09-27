@@ -1,0 +1,962 @@
+[
+ {
+  "id": "pack_01_tet_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "style_pack": "tet",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "MỪNG XUÂN SALE 50%",
+   "hero_parts": [
+    {
+     "t": "MỪNG XUÂN SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "subhead": "Quà Tết cho cả gia đình",
+   "badge": "XUÂN 2027",
+   "cta": "ĐẶT QUÀ NGAY",
+   "maskless": true,
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "cinema_red"
+   }
+  }
+ },
+ {
+  "id": "pack_01_tet_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "style_pack": "tet",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "MỪNG XUÂN SALE 50%",
+   "hero_parts": [
+    {
+     "t": "MỪNG XUÂN SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "subhead": "Quà Tết cho cả gia đình",
+   "badge": "XUÂN 2027",
+   "cta": "ĐẶT QUÀ NGAY",
+   "maskless": true,
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "cinema_red"
+   }
+  }
+ },
+ {
+  "id": "pack_01_tet_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "type_showcase",
+   "style_pack": "tet",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "MỪNG XUÂN SALE 50%",
+   "hero_parts": [
+    {
+     "t": "MỪNG XUÂN SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "subhead": "Quà Tết cho cả gia đình",
+   "badge": "XUÂN 2027",
+   "cta": "ĐẶT QUÀ NGAY",
+   "maskless": true,
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "cinema_red"
+   }
+  }
+ },
+ {
+  "id": "pack_01_tet_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "type_showcase",
+   "style_pack": "tet",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "MỪNG XUÂN SALE 50%",
+   "hero_parts": [
+    {
+     "t": "MỪNG XUÂN SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    }
+   ],
+   "subhead": "Quà Tết cho cả gia đình",
+   "badge": "XUÂN 2027",
+   "cta": "ĐẶT QUÀ NGAY",
+   "maskless": true,
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "cinema_red"
+   }
+  }
+ },
+ {
+  "id": "pack_02_trung_thu_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "style_pack": "trung_thu",
+   "scene_prompt": "backdrop, zero text",
+   "badge": "THƯ MỜI",
+   "hero": "ĐÊM HỘI TRĂNG RẰM",
+   "body": "Mời bé và gia đình cùng rước đèn, phá cỗ và xem múa lân tại sảnh chính.",
+   "extra_texts": [
+    "18:30 Thứ bảy 04/10",
+    "Sảnh chính Tendoo Mall"
+   ],
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "pack_02_trung_thu_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "style_pack": "trung_thu",
+   "scene_prompt": "backdrop, zero text",
+   "badge": "THƯ MỜI",
+   "hero": "ĐÊM HỘI TRĂNG RẰM",
+   "body": "Mời bé và gia đình cùng rước đèn, phá cỗ và xem múa lân tại sảnh chính.",
+   "extra_texts": [
+    "18:30 Thứ bảy 04/10",
+    "Sảnh chính Tendoo Mall"
+   ],
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "pack_02_trung_thu_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "notice_card",
+   "style_pack": "trung_thu",
+   "scene_prompt": "backdrop, zero text",
+   "badge": "THƯ MỜI",
+   "hero": "ĐÊM HỘI TRĂNG RẰM",
+   "body": "Mời bé và gia đình cùng rước đèn, phá cỗ và xem múa lân tại sảnh chính.",
+   "extra_texts": [
+    "18:30 Thứ bảy 04/10",
+    "Sảnh chính Tendoo Mall"
+   ],
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "pack_02_trung_thu_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "notice_card",
+   "style_pack": "trung_thu",
+   "scene_prompt": "backdrop, zero text",
+   "badge": "THƯ MỜI",
+   "hero": "ĐÊM HỘI TRĂNG RẰM",
+   "body": "Mời bé và gia đình cùng rước đèn, phá cỗ và xem múa lân tại sảnh chính.",
+   "extra_texts": [
+    "18:30 Thứ bảy 04/10",
+    "Sảnh chính Tendoo Mall"
+   ],
+   "visual_intent": "festive_event",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "pack_03_fnb_sale_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "style_pack": "fnb_sale",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "GIẢM 30% TOÀN BỘ MENU",
+   "hero_parts": [
+    {
+     "t": "GIẢM",
+     "role": "prefix"
+    },
+    {
+     "t": "30%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "TOÀN BỘ MENU",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Áp dụng đến hết chủ nhật",
+   "badge": "SIÊU SALE",
+   "cta": "ĐẶT NGAY",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "vibrant"
+   }
+  }
+ },
+ {
+  "id": "pack_03_fnb_sale_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "style_pack": "fnb_sale",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "GIẢM 30% TOÀN BỘ MENU",
+   "hero_parts": [
+    {
+     "t": "GIẢM",
+     "role": "prefix"
+    },
+    {
+     "t": "30%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "TOÀN BỘ MENU",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Áp dụng đến hết chủ nhật",
+   "badge": "SIÊU SALE",
+   "cta": "ĐẶT NGAY",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "vibrant"
+   }
+  }
+ },
+ {
+  "id": "pack_03_fnb_sale_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "style_pack": "fnb_sale",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "GIẢM 30% TOÀN BỘ MENU",
+   "hero_parts": [
+    {
+     "t": "GIẢM",
+     "role": "prefix"
+    },
+    {
+     "t": "30%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "TOÀN BỘ MENU",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Áp dụng đến hết chủ nhật",
+   "badge": "SIÊU SALE",
+   "cta": "ĐẶT NGAY",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "vibrant"
+   }
+  }
+ },
+ {
+  "id": "pack_03_fnb_sale_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "style_pack": "fnb_sale",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "GIẢM 30% TOÀN BỘ MENU",
+   "hero_parts": [
+    {
+     "t": "GIẢM",
+     "role": "prefix"
+    },
+    {
+     "t": "30%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "TOÀN BỘ MENU",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Áp dụng đến hết chủ nhật",
+   "badge": "SIÊU SALE",
+   "cta": "ĐẶT NGAY",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "vibrant"
+   }
+  }
+ },
+ {
+  "id": "pack_04_cafe_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "split_left",
+   "style_pack": "cafe",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "Sáng nay CÀ PHÊ PHIN",
+   "hero_parts": [
+    {
+     "t": "Sáng nay",
+     "role": "prefix"
+    },
+    {
+     "t": "CÀ PHÊ PHIN",
+     "role": "stat"
+    }
+   ],
+   "lockup": "script_over_caps",
+   "subhead": "Robusta rang mộc Buôn Ma Thuột",
+   "badge": "MỚI",
+   "cta": "THƯỞNG THỨC",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   }
+  }
+ },
+ {
+  "id": "pack_04_cafe_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "split_left",
+   "style_pack": "cafe",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "Sáng nay CÀ PHÊ PHIN",
+   "hero_parts": [
+    {
+     "t": "Sáng nay",
+     "role": "prefix"
+    },
+    {
+     "t": "CÀ PHÊ PHIN",
+     "role": "stat"
+    }
+   ],
+   "lockup": "script_over_caps",
+   "subhead": "Robusta rang mộc Buôn Ma Thuột",
+   "badge": "MỚI",
+   "cta": "THƯỞNG THỨC",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   }
+  }
+ },
+ {
+  "id": "pack_04_cafe_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "split_left",
+   "style_pack": "cafe",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "Sáng nay CÀ PHÊ PHIN",
+   "hero_parts": [
+    {
+     "t": "Sáng nay",
+     "role": "prefix"
+    },
+    {
+     "t": "CÀ PHÊ PHIN",
+     "role": "stat"
+    }
+   ],
+   "lockup": "script_over_caps",
+   "subhead": "Robusta rang mộc Buôn Ma Thuột",
+   "badge": "MỚI",
+   "cta": "THƯỞNG THỨC",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   }
+  }
+ },
+ {
+  "id": "pack_04_cafe_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "split_left",
+   "style_pack": "cafe",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "Sáng nay CÀ PHÊ PHIN",
+   "hero_parts": [
+    {
+     "t": "Sáng nay",
+     "role": "prefix"
+    },
+    {
+     "t": "CÀ PHÊ PHIN",
+     "role": "stat"
+    }
+   ],
+   "lockup": "script_over_caps",
+   "subhead": "Robusta rang mộc Buôn Ma Thuột",
+   "badge": "MỚI",
+   "cta": "THƯỞNG THỨC",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "warm_rustic"
+   }
+  }
+ },
+ {
+  "id": "pack_05_spa_beauty_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "luxury_centered_card",
+   "style_pack": "spa_beauty",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "LIỆU TRÌNH THƯ GIÃN",
+   "subhead": "Massage đá nóng 90 phút",
+   "badge": "ƯU ĐÃI THÁNG 10",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "pack_05_spa_beauty_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "luxury_centered_card",
+   "style_pack": "spa_beauty",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "LIỆU TRÌNH THƯ GIÃN",
+   "subhead": "Massage đá nóng 90 phút",
+   "badge": "ƯU ĐÃI THÁNG 10",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "pack_05_spa_beauty_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "luxury_centered_card",
+   "style_pack": "spa_beauty",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "LIỆU TRÌNH THƯ GIÃN",
+   "subhead": "Massage đá nóng 90 phút",
+   "badge": "ƯU ĐÃI THÁNG 10",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "pack_05_spa_beauty_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "luxury_centered_card",
+   "style_pack": "spa_beauty",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "LIỆU TRÌNH THƯ GIÃN",
+   "subhead": "Massage đá nóng 90 phút",
+   "badge": "ƯU ĐÃI THÁNG 10",
+   "visual_intent": "hook_headline",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "pastel"
+   }
+  }
+ },
+ {
+  "id": "pack_06_tech_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "split_right",
+   "style_pack": "tech",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "TAI NGHE NITRO X",
+   "hero_parts": [
+    {
+     "t": "TAI NGHE",
+     "role": "prefix"
+    },
+    {
+     "t": "NITRO X",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Chống ồn chủ động, pin 40 giờ",
+   "badge": "MỚI | 2027",
+   "cta": "ĐẶT TRƯỚC",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "cyber_neon"
+   }
+  }
+ },
+ {
+  "id": "pack_06_tech_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "split_right",
+   "style_pack": "tech",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "TAI NGHE NITRO X",
+   "hero_parts": [
+    {
+     "t": "TAI NGHE",
+     "role": "prefix"
+    },
+    {
+     "t": "NITRO X",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Chống ồn chủ động, pin 40 giờ",
+   "badge": "MỚI | 2027",
+   "cta": "ĐẶT TRƯỚC",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "cyber_neon"
+   }
+  }
+ },
+ {
+  "id": "pack_06_tech_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "split_right",
+   "style_pack": "tech",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "TAI NGHE NITRO X",
+   "hero_parts": [
+    {
+     "t": "TAI NGHE",
+     "role": "prefix"
+    },
+    {
+     "t": "NITRO X",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Chống ồn chủ động, pin 40 giờ",
+   "badge": "MỚI | 2027",
+   "cta": "ĐẶT TRƯỚC",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "cyber_neon"
+   }
+  }
+ },
+ {
+  "id": "pack_06_tech_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "split_right",
+   "style_pack": "tech",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "TAI NGHE NITRO X",
+   "hero_parts": [
+    {
+     "t": "TAI NGHE",
+     "role": "prefix"
+    },
+    {
+     "t": "NITRO X",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Chống ồn chủ động, pin 40 giờ",
+   "badge": "MỚI | 2027",
+   "cta": "ĐẶT TRƯỚC",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "cyber_neon"
+   }
+  }
+ },
+ {
+  "id": "pack_07_luxury_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "l_frame_showcase",
+   "style_pack": "luxury",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "ĐỒNG HỒ TITAN S7",
+   "hero_parts": [
+    {
+     "t": "ĐỒNG HỒ",
+     "role": "prefix"
+    },
+    {
+     "t": "TITAN S7",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Mặt kính sapphire, vỏ titan",
+   "badge": "CHỈ TỪ 12 TRIỆU",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "pack_07_luxury_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "l_frame_showcase",
+   "style_pack": "luxury",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "ĐỒNG HỒ TITAN S7",
+   "hero_parts": [
+    {
+     "t": "ĐỒNG HỒ",
+     "role": "prefix"
+    },
+    {
+     "t": "TITAN S7",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Mặt kính sapphire, vỏ titan",
+   "badge": "CHỈ TỪ 12 TRIỆU",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "pack_07_luxury_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "l_frame_showcase",
+   "style_pack": "luxury",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "ĐỒNG HỒ TITAN S7",
+   "hero_parts": [
+    {
+     "t": "ĐỒNG HỒ",
+     "role": "prefix"
+    },
+    {
+     "t": "TITAN S7",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Mặt kính sapphire, vỏ titan",
+   "badge": "CHỈ TỪ 12 TRIỆU",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "pack_07_luxury_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "l_frame_showcase",
+   "style_pack": "luxury",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "ĐỒNG HỒ TITAN S7",
+   "hero_parts": [
+    {
+     "t": "ĐỒNG HỒ",
+     "role": "prefix"
+    },
+    {
+     "t": "TITAN S7",
+     "role": "stat"
+    }
+   ],
+   "subhead": "Mặt kính sapphire, vỏ titan",
+   "badge": "CHỈ TỪ 12 TRIỆU",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "pack_08_recruit_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "recruitment_board",
+   "style_pack": "recruit",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "TUYỂN DỤNG NHÂN VIÊN KINH DOANH",
+   "hero_parts": [
+    {
+     "t": "TUYỂN DỤNG",
+     "role": "stat"
+    },
+    {
+     "t": "NHÂN VIÊN KINH DOANH",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Thu nhập 15-18 triệu",
+   "extra_texts": [
+    "Hạn nộp 30/10",
+    "hr@tendoo.vn"
+   ],
+   "cta": "ỨNG TUYỂN",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ },
+ {
+  "id": "pack_08_recruit_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "recruitment_board",
+   "style_pack": "recruit",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "TUYỂN DỤNG NHÂN VIÊN KINH DOANH",
+   "hero_parts": [
+    {
+     "t": "TUYỂN DỤNG",
+     "role": "stat"
+    },
+    {
+     "t": "NHÂN VIÊN KINH DOANH",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Thu nhập 15-18 triệu",
+   "extra_texts": [
+    "Hạn nộp 30/10",
+    "hr@tendoo.vn"
+   ],
+   "cta": "ỨNG TUYỂN",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ },
+ {
+  "id": "pack_08_recruit_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "recruitment_board",
+   "style_pack": "recruit",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "TUYỂN DỤNG NHÂN VIÊN KINH DOANH",
+   "hero_parts": [
+    {
+     "t": "TUYỂN DỤNG",
+     "role": "stat"
+    },
+    {
+     "t": "NHÂN VIÊN KINH DOANH",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Thu nhập 15-18 triệu",
+   "extra_texts": [
+    "Hạn nộp 30/10",
+    "hr@tendoo.vn"
+   ],
+   "cta": "ỨNG TUYỂN",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ },
+ {
+  "id": "pack_08_recruit_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "recruitment_board",
+   "style_pack": "recruit",
+   "scene_prompt": "backdrop, zero text",
+   "hero": "TUYỂN DỤNG NHÂN VIÊN KINH DOANH",
+   "hero_parts": [
+    {
+     "t": "TUYỂN DỤNG",
+     "role": "stat"
+    },
+    {
+     "t": "NHÂN VIÊN KINH DOANH",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Thu nhập 15-18 triệu",
+   "extra_texts": [
+    "Hạn nộp 30/10",
+    "hr@tendoo.vn"
+   ],
+   "cta": "ỨNG TUYỂN",
+   "visual_intent": "matrix_board",
+   "style": {
+    "font": "bevietnam",
+    "theme_color": "#64748B",
+    "text_effect": "plain_elegant",
+    "background_tone": "light_clean"
+   }
+  }
+ }
+]

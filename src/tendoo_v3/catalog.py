@@ -501,6 +501,16 @@ _COMPONENT_DESC = {
 }
 
 
+def build_llm_style_pack_prompt() -> str:
+    """Danh mục style pack GĐ 8 (sinh từ style_packs.STYLE_PACKS -- không lệch khỏi code)."""
+    from tendoo_v3.style_packs import STYLE_PACKS
+
+    lines = ["STYLE PACK (tuỳ chọn, `style_pack`): tổ hợp font/màu/hoạ tiết phối sẵn theo dịp -- NÊN chọn khi brief hợp; pack GHI ĐÈ style.font/theme_color/text_effect:"]
+    for key, p in STYLE_PACKS.items():
+        lines.append(f"  - '{key}': {p['name']} (intent: {', '.join(p['intents'])}; nền gợi ý: {p['scene']})")
+    return "\n".join(lines)
+
+
 def build_llm_component_prompt() -> str:
     """Danh mục linh kiện đồ hoạ GĐ 2 kèm intent được dùng -- sinh từ COMPONENT_STYLES để prompt
     không bao giờ lệch khỏi code."""

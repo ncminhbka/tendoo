@@ -12,6 +12,7 @@ from __future__ import annotations
 from tendoo_v3.catalog import (
     build_llm_catalog_prompt,
     build_llm_component_prompt,
+    build_llm_style_pack_prompt,
     build_llm_effect_prompt,
     build_llm_font_prompt,
     build_llm_intent_prompt,
@@ -199,6 +200,8 @@ DANH MỤC TÔNG NỀN (style.background_tone -- CHỈ chọn 1 trong các giá 
 {build_llm_intent_prompt()}
 
 {build_llm_component_prompt()}
+
+{build_llm_style_pack_prompt()}
 
 QUY TẮC BẮT BUỘC VỀ ĐẦU RA:
 - Chỉ trả về DUY NHẤT một đối tượng JSON hợp lệ, KHÔNG bọc trong markdown ```json, KHÔNG kèm lời chào, KHÔNG có thẻ <think>.

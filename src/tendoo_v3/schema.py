@@ -71,6 +71,11 @@ class TendooCreativePlan:
     # Lockup GĐ 7c (ROADMAP §10.4, R4): cách XẾP cụm hero_parts (stat_stack / script_over_caps / band).
     # None = dòng hero_parts nằm ngang như trước.
     lockup: Optional[str] = None
+    # Style pack GĐ 8 (style_packs.STYLE_PACKS): tổ hợp font/màu/hiệu ứng/hoạ tiết phối sẵn theo dịp/ngành.
+    style_pack: Optional[str] = None
+    # Brand kit của người dùng -- GHI ĐÈ style pack (§10.5): màu thương hiệu, font thương hiệu (khoá FONT_CATALOG).
+    brand_color: Optional[str] = None
+    brand_font: Optional[str] = None
     # Maskless Mode (GĐ 5, ROADMAP §5.3): bỏ luồng corridor -- chỉ cho poster lấy chữ làm nhân vật
     # chính trên nền ÍT CHI TIẾT (catalog.MASKLESS_INTENTS, Cổng 2 kiểm).
     maskless: bool = False
@@ -201,6 +206,9 @@ class TendooCreativePlan:
             stat_style=data.get("stat_style"),
             decor=data.get("decor"),
             lockup=data.get("lockup"),
+            style_pack=data.get("style_pack"),
+            brand_color=data.get("brand_color"),
+            brand_font=data.get("brand_font"),
             maskless=bool(data.get("maskless", False)),
             style=style,
             # "background_prompt" chấp nhận thêm làm alias: hệ thống prompt LLM từng

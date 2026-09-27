@@ -200,5 +200,5 @@
     (z-index 1) và lớp chữ (z-index 10). GĐ 2: chứa con dấu + hạt lấp lánh (components.decor_html). Style inline vì 8 template
     migrate kiểu markup-only không include ui_components.css. -#}
 {% macro render_decor_layer() -%}
-<div class="decor-layer" aria-hidden="true" style="position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;">{% if components %}{{ components.decor_html }}{% endif %}{{ svg_filter_defs or '' }}</div>
+<div class="decor-layer" aria-hidden="true" style="position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;">{% if components %}{{ components.decor_html }}{% endif %}{{ svg_filter_defs or '' }}{{ ornaments_html or '' }}</div>
 {%- endmacro %}

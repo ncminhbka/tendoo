@@ -1208,6 +1208,9 @@ COMMON_AUTOFIT_JS = """
       // "xong" nên ảnh chụp luôn có nó; linh kiện không đổi kích thước chữ -> không cần fit lại.
       if (typeof window.__tendooAfterFit === 'function') window.__tendooAfterFit();
       window.__tendooAfterFit = undefined;  // không để poster sau (cùng window) chạy nhầm móc cũ
+      // Hoạ tiết style pack (GĐ 8) chạy SAU hạt lấp lánh để né cả chúng.
+      (window.__tendooAfterFitHooks || []).forEach(f => { try { f(); } catch (e) {} });
+      window.__tendooAfterFitHooks = undefined;
       return tendooHalo();
     }).then(function() {
       window.__tendooAutofitDone = true;

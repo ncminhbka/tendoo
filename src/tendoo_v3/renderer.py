@@ -25,6 +25,7 @@ from tendoo_v3.fonts import BODY_SAFE_FONTS, SCRIPT_FONTS, resolve_font, script_
 from tendoo_v3.poster_renderer import PosterRenderer
 from tendoo_v3.catalog import INTENT_PROFILES, LIST_LIMITS, TEMPLATE_CATALOG, resolve_intent
 from tendoo_v3.components import accessible_fill, build_components, enrich_hero_parts
+from tendoo_v3.style_packs import apply_style_pack, ornaments_html
 from tendoo_v3.hero_markup import bind_nonbreaking
 from tendoo_v3.geometry import compute_density_score, geometry_drivers, get_zones
 from tendoo_v3.icons import (
@@ -1971,6 +1972,8 @@ def build_template_html(
 ) -> str:
     """Biên dịch TendooCreativePlan thành chuỗi HTML5/CSS3 tự chứa 100%."""
     tpl_name = plan.template if plan.template in TEMPLATE_CATALOG else "sandwich_top_heavy"
+    # Style pack (GĐ 8) + brand kit: áp TRƯỚC mọi bước dùng style (font, màu, hiệu ứng, linh kiện).
+    plan = apply_style_pack(plan)
     
     # 1. Resolve Font Unicode Tiếng Việt
     canonical_font, font_face_css, headline_font_css = resolve_font(
@@ -2258,6 +2261,8 @@ def build_template_html(
         "bg_data_uri": bg_data_uri,
         "font_face_css": font_face_css,
         "script_font_css": script_font_css,
+        "ornaments_html": ornaments_html(plan.style_pack, plan.style.theme_color, f"{plan.hero}|{plan.style_pack}",
+                                         [[z["x1"], z["y1"], z["x2"], z["y2"]] for z in zones.values()]),
         "notice": _notice_palette(plan) if tpl_name == "notice_card" else None,
         "caps_font_css": caps_font_css,
         "headline_font_css": headline_font_css,

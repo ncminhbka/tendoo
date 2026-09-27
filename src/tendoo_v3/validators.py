@@ -128,6 +128,15 @@ def _check_components(plan: TendooCreativePlan) -> List[str]:
             issues.append(f"stat_style 'burst' hợp với stat ngắn (<= 5 ký tự); {stats} sẽ kéo sao thành elip, cắt mép chữ")
     eff = TEXT_EFFECT_ALIASES.get(plan.style.text_effect, plan.style.text_effect)
     font = FONT_ALIASES.get(plan.style.font, plan.style.font)
+    if plan.style_pack:
+        from tendoo_v3.style_packs import STYLE_PACKS
+        pk = STYLE_PACKS.get(plan.style_pack)
+        if pk is None:
+            issues.append(f"style_pack '{plan.style_pack}' không có trong danh mục {sorted(STYLE_PACKS)} -- bỏ qua")
+        elif intent not in pk["intents"]:
+            issues.append(f"style_pack '{plan.style_pack}' không hợp intent '{intent}' (dùng cho {list(pk['intents'])})")
+    if plan.brand_font and FONT_ALIASES.get(plan.brand_font, plan.brand_font) not in FONT_CATALOG:
+        issues.append(f"brand_font '{plan.brand_font}' không có trong danh mục font -- dùng font của plan")
     stats = [p.get("t", "") for p in plan.hero_parts if p.get("role") == "stat"]
     n_head = len(" ".join(stats).split()) if stats else len((plan.hero or "").split())
     if font in SCRIPT_FONTS and n_head > 5:

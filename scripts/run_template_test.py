@@ -232,6 +232,9 @@ def parse_case_to_plan(case: Dict[str, Any], default_template: str) -> Tuple[Ten
         stat_style=src.get("stat_style"),
         decor=src.get("decor"),
         lockup=src.get("lockup"),
+        style_pack=src.get("style_pack"),
+        brand_color=src.get("brand_color"),
+        brand_font=src.get("brand_font"),
     )
     if src.get("hero_parts"):
         # Qua đúng chốt nguyên văn (Cổng 1) của đường LLM thật -- lệch chữ thì markup bị vứt.
