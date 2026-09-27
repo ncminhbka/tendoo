@@ -328,7 +328,11 @@ def _font_faces(meta: Dict[str, Any]) -> List[str]:
       font-weight: {weight};
       font-style: normal;
       font-display: swap;
+      unicode-range: U+0-9F, U+A1-10FFFF;
     }}""")
+    # unicode-range bỏ U+00A0 (khoảng trắng không ngắt -- hero_markup.bind_nonbreaking chèn giữa số và đơn vị):
+    # SVN-Days VẼ một chữ ở vị trí NBSP -> "12 tuần" hiện "12Atuần" (27/09, poster gym GPT thật). NBSP lấy từ font
+    # dự phòng = khoảng trắng thật, vẫn không ngắt dòng.
     return faces
 
 

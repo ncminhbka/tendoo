@@ -233,3 +233,14 @@ if __name__ == "__main__":
         test_render_poster_with_explicit_font(fk, cat)
     test_render_poster_with_auto_font_family()
     print("=== ALL FONT ENGINE TESTS PASSED PERFECTLY ===")
+
+
+def test_every_embedded_face_skips_nbsp():
+    """SVN-Days vẽ một chữ ở vị trí U+00A0 -> "12 tuần" (NBSP từ hero_markup.bind_nonbreaking) hiện "12Atuần"
+    (27/09). Mọi @font-face bỏ U+00A0 khỏi unicode-range -> khoảng trắng lấy từ font dự phòng."""
+    from tendoo_v3.fonts import FONT_CATALOG, _font_faces
+
+    for key, meta in FONT_CATALOG.items():
+        faces = _font_faces(meta)
+        assert faces, key
+        assert all("unicode-range: U+0-9F, U+A1-10FFFF;" in f for f in faces), key
