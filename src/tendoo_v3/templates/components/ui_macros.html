@@ -50,7 +50,7 @@
 {% macro render_hero_phrase(hero, hero_parts, budget=none, extra_cls='', max_w=none, cls='hero-title') %}
   {% if hero_parts %}
     {%- set lk = components.lockup if (components and components.lockup and components.lockup != 'none') else '' -%}
-    <div class="{{ cls }} hero-phrase{{ ' lockup lockup--' ~ lk if lk else '' }} {{ extra_cls }}"
+    <div class="{{ cls }} hero-phrase{{ ' lockup lockup--' ~ lk if lk else '' }} {{ extra_cls }}"{% if lk and components.lockup_keep %} data-lockup-keep="{{ components.lockup_keep }}"{% endif %}
          data-autofit
          data-min-font="{{ budget.min_font if (budget and budget.min_font) else 20 }}"
          data-max-font="{{ budget.max_font if (budget and budget.max_font) else 80 }}"
@@ -61,6 +61,7 @@
         <span class="hero-seg hero-seg--{{ seg.role }}{{ ' hero-seg--accent' if (seg.emphasis == 'accent' or (lk == 'script_over_caps' and seg.role == 'prefix')) else '' }}{{ ' hero-seg--burst' if (seg.role == 'stat' and sst == 'burst') else '' }}">
           {%- if seg.unit %}<span class="stat-num">{{ seg.num }}</span><span class="stat-unit{{ ' stat-unit--word' if seg.unit_word else '' }}">{{ seg.unit }}</span>{% else %}{{ seg.t }}{% endif -%}
         </span>
+        {%- if lk in ('stat_seal', 'bracket_title') and seg.role == 'stat' %}<br class="lockup-br">{% endif -%}
       {%- endfor -%}
     </div>
   {% else %}

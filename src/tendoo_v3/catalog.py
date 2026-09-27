@@ -458,6 +458,8 @@ COMPONENT_STYLES: Dict[str, Dict[str, Tuple[str, ...]]] = {
         "stat_stack": ("big_number_deal", "hook_headline", "festive_event", "product_showcase"),
         "script_over_caps": ("hook_headline", "festive_event", "product_showcase", "big_number_deal"),
         "band": ("big_number_deal", "hook_headline", "festive_event", "product_showcase", "matrix_board"),
+        "bracket_title": ("hook_headline", "product_showcase", "festive_event", "matrix_board", "testimonial_trust"),
+        "stat_seal": ("big_number_deal", "festive_event"),
     },
 }
 
@@ -497,7 +499,9 @@ _COMPONENT_DESC = {
     "lockup": {"none": "mặc định (hero_parts nằm ngang)",
                "stat_stack": "xếp chồng: chữ dẫn nhỏ / CON SỐ khổng lồ / chữ đuôi nhỏ -- cần stat (vd 'GIẢM GIÁ LÊN ĐẾN' + '70%')",
                "script_over_caps": "prefix viết tay nghiêng đè lên stat IN HOA đậm -- prefix 1-3 từ cảm xúc (vd 'Tháng của Nàng' + 'NGÀN ƯU ĐÃI', 'Mua' + 'TẶNG 1')",
-               "band": "stat to + suffix nằm trong dải màu đặc bên dưới -- cần suffix ngắn (vd 'TUYỂN DỤNG' + 'NHÂN VIÊN KINH DOANH')"},
+               "band": "stat to + suffix nằm trong dải màu đặc bên dưới -- cần suffix ngắn (vd 'TUYỂN DỤNG' + 'NHÂN VIÊN KINH DOANH')",
+               "bracket_title": "stat đặt giữa 4 góc ngoặc khung mảnh màu nhấn, prefix/suffix nhỏ -- tiêu đề trang trọng/biên tập (vd 'BỘ SƯU TẬP' + 'THU ĐÔNG 2027')",
+               "stat_seal": "con số NGẮN (<= 4 ký tự: '50%', '1+1') trong vòng tròn viền, suffix trên dải băng bên dưới -- sale/lễ hội"},
 }
 
 

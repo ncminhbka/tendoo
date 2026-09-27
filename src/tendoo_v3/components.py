@@ -208,7 +208,13 @@ LOCKUP_REQUIRES: Dict[str, Tuple[str, ...]] = {
     "stat_stack": ("stat",),
     "script_over_caps": ("prefix", "stat"),
     "band": ("stat", "suffix"),
+    "bracket_title": ("stat",),
+    "stat_seal": ("stat", "suffix"),
 }
+# Ngưỡng giữ lockup (autofit: cỡ con số khi xếp lockup / khi xếp ngang). Mặc định styles.LOCKUP_KEEP_RATIO 0.9;
+# 2 kiểu TRANG TRÍ cố ý đổi cỡ lấy khung (ngoặc, vòng tròn) -- đo 27/09 trên test_lockup_suite: 0.84-0.9.
+LOCKUP_KEEP = {"bracket_title": 0.85, "stat_seal": 0.8}
+SEAL_STAT_MAX_CHARS = 4  # vòng tròn chỉ đẹp với con số ngắn; dài hơn -> elip bẹt, chữ sát viền
 SCRIPT_PREFIX_MAX_WORDS = 4  # chữ viết tay dài thành một dòng nghiêng khó đọc (Luật 6)
 
 
@@ -240,6 +246,10 @@ def resolve_lockup(plan: Any) -> str:
     roles = {p.get("role") for p in (plan.hero_parts or [])}
     if not set(need) <= roles:
         return "none"
+    if name == "stat_seal":
+        st = next(p.get("t", "") for p in plan.hero_parts if p.get("role") == "stat")
+        if len(st.replace(" ", "")) > SEAL_STAT_MAX_CHARS:
+            return "none"
     if name == "script_over_caps":
         pre = next(p.get("t", "") for p in plan.hero_parts if p.get("role") == "prefix")
         if len(pre.split()) > SCRIPT_PREFIX_MAX_WORDS:
@@ -287,7 +297,7 @@ def build_components(plan: Any, zones: Dict[str, Any], width: int, height: int) 
     if stat_style in ("unit", "burst"):
         comp["burst_polygon"] = star_polygon() if stat_style == "burst" else None
 
-    comp.update(badge_style=badge_style, stat_style=stat_style, decor=decor, lockup=lockup)
+    comp.update(badge_style=badge_style, stat_style=stat_style, decor=decor, lockup=lockup, lockup_keep=LOCKUP_KEEP.get(lockup))
     return comp
 
 

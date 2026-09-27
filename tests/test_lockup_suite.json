@@ -770,5 +770,281 @@
     "background_tone": "dark_luxury"
    }
   }
+ },
+ {
+  "id": "lock_07_bracket_split_left_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "split_left",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "BỘ SƯU TẬP THU ĐÔNG 2027",
+   "hero_parts": [
+    {
+     "t": "BỘ SƯU TẬP",
+     "role": "prefix"
+    },
+    {
+     "t": "THU ĐÔNG",
+     "role": "stat"
+    },
+    {
+     "t": "2027",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Len lông cừu, dáng oversize",
+   "cta": "KHÁM PHÁ",
+   "lockup": "bracket_title",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#D4AF37",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_07_bracket_split_left_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "split_left",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "BỘ SƯU TẬP THU ĐÔNG 2027",
+   "hero_parts": [
+    {
+     "t": "BỘ SƯU TẬP",
+     "role": "prefix"
+    },
+    {
+     "t": "THU ĐÔNG",
+     "role": "stat"
+    },
+    {
+     "t": "2027",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Len lông cừu, dáng oversize",
+   "cta": "KHÁM PHÁ",
+   "lockup": "bracket_title",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#D4AF37",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_07_bracket_split_left_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "split_left",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "BỘ SƯU TẬP THU ĐÔNG 2027",
+   "hero_parts": [
+    {
+     "t": "BỘ SƯU TẬP",
+     "role": "prefix"
+    },
+    {
+     "t": "THU ĐÔNG",
+     "role": "stat"
+    },
+    {
+     "t": "2027",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Len lông cừu, dáng oversize",
+   "cta": "KHÁM PHÁ",
+   "lockup": "bracket_title",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#D4AF37",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_07_bracket_split_left_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "split_left",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "BỘ SƯU TẬP THU ĐÔNG 2027",
+   "hero_parts": [
+    {
+     "t": "BỘ SƯU TẬP",
+     "role": "prefix"
+    },
+    {
+     "t": "THU ĐÔNG",
+     "role": "stat"
+    },
+    {
+     "t": "2027",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Len lông cừu, dáng oversize",
+   "cta": "KHÁM PHÁ",
+   "lockup": "bracket_title",
+   "visual_intent": "product_showcase",
+   "style": {
+    "font": "playfair",
+    "theme_color": "#D4AF37",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_08_seal_sandwich_top_heavy_1x1",
+  "width": 1024,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "SIÊU SALE 50% CUỐI TUẦN",
+   "hero_parts": [
+    {
+     "t": "SIÊU SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "CUỐI TUẦN",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Toàn bộ giày thể thao chính hãng",
+   "cta": "MUA NGAY",
+   "lockup": "stat_seal",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_08_seal_sandwich_top_heavy_9x16",
+  "width": 576,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "SIÊU SALE 50% CUỐI TUẦN",
+   "hero_parts": [
+    {
+     "t": "SIÊU SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "CUỐI TUẦN",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Toàn bộ giày thể thao chính hãng",
+   "cta": "MUA NGAY",
+   "lockup": "stat_seal",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_08_seal_sandwich_top_heavy_16x9",
+  "width": 1024,
+  "height": 576,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "SIÊU SALE 50% CUỐI TUẦN",
+   "hero_parts": [
+    {
+     "t": "SIÊU SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "CUỐI TUẦN",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Toàn bộ giày thể thao chính hãng",
+   "cta": "MUA NGAY",
+   "lockup": "stat_seal",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
+ },
+ {
+  "id": "lock_08_seal_sandwich_top_heavy_4x5",
+  "width": 816,
+  "height": 1024,
+  "plan": {
+   "template": "sandwich_top_heavy",
+   "scene_prompt": "Soft studio backdrop, zero text",
+   "hero": "SIÊU SALE 50% CUỐI TUẦN",
+   "hero_parts": [
+    {
+     "t": "SIÊU SALE",
+     "role": "prefix"
+    },
+    {
+     "t": "50%",
+     "role": "stat",
+     "emphasis": "accent"
+    },
+    {
+     "t": "CUỐI TUẦN",
+     "role": "suffix"
+    }
+   ],
+   "subhead": "Toàn bộ giày thể thao chính hãng",
+   "cta": "MUA NGAY",
+   "lockup": "stat_seal",
+   "visual_intent": "big_number_deal",
+   "style": {
+    "font": "anton",
+    "theme_color": "#F59E0B",
+    "text_effect": "plain_elegant",
+    "background_tone": "dark_luxury"
+   }
+  }
  }
 ]
