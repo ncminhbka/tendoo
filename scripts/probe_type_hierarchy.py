@@ -51,7 +51,7 @@ from playwright.sync_api import sync_playwright
 from run_template_test import generate_harsh_backdrop_data_uri, generate_lowdetail_backdrop_data_uri, generate_mock_backdrop_data_uri, parse_case_to_plan
 from tendoo_v3.catalog import INTENT_PROFILES, resolve_intent
 from tendoo_v3.renderer import build_template_html
-from tendoo_v3.styles import HERO_PRESENT_PCT, CONTENT_CLASSES, TIER1_CLASSES, TIER2_CLASSES, TIER3_CLASSES
+from tendoo_v3.styles import CONTENT_PRESENT_PCT, HERO_PRESENT_PCT, CONTENT_CLASSES, TIER1_CLASSES, TIER2_CLASSES, TIER3_CLASSES
 
 TESTS_DIR = PROJECT_ROOT / "tests"
 
@@ -269,14 +269,18 @@ def _phone_legible(elements: List[Dict[str, Any]], hero: float, w: int) -> bool:
 # theo BỀ NGANG khung) khi mới dùng 29-54% chiều cao được cấp. Trượt: tiêu đề hoặc nội dung chính chạm trần mà dùng
 # < SLACK_UTIL chiều cao ngân sách. KHÔNG xét subhead/Cấp 3: trần của chúng là trần THỨ BẬC có chủ đích (C1) -- bản đầu
 # xét cả subhead báo 139/491, đa số là subhead cố ý nhỏ. Tiêu đề >= HERO_PRESENT_PCT % cạnh tương đương sqrt(w*h) coi là
-# đủ to (= trần 40px-trên-màn ở khung vuông 1024: 109.5px = 10.7%) -- khung dọc phải đạt cùng độ to TƯƠNG ĐỐI.
+# đủ to (= trần 40px-trên-màn ở khung vuông 1024: 109.5px = 10.7%) -- khung dọc phải đạt cùng độ to TƯƠNG ĐỐI. Nội dung chính
+# >= CONTENT_PRESENT_PCT cũng đủ to (danh sách 2 dòng trong hộp rộng không bị báo oan -- tuyển dụng 9:16, 27/09).
 SLACK_UTIL = 0.6
 
 
 def _cap_starved(elements: List[Dict[str, Any]], w: int, h: int) -> List[str]:
     side = (w * h) ** 0.5
     return [e["cls"] for e in elements
-            if (e["tier"] == "content" or (e["tier"] == 1 and 100 * e["size"] / side < HERO_PRESENT_PCT))
+            # Xét TRẦN (phần tử đã chạm trần): trần đạt mức "đủ to" thì không phải "bị giữ nhỏ". +0.5px: trần làm tròn
+            # XUỐNG bậc 0.5px (30.5 vs mốc 30.72 không phải "thiếu").
+            if ((e["tier"] == "content" and 100 * (e["max_font"] + 0.5) / side < CONTENT_PRESENT_PCT)
+                or (e["tier"] == 1 and 100 * (e["max_font"] + 0.5) / side < HERO_PRESENT_PCT))
             and e["pinned"] and e["max_h"] == e["max_h"] and e["max_h"] > 0 and e["scroll_h"] < SLACK_UTIL * e["max_h"]]
 
 

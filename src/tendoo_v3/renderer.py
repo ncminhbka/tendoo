@@ -41,6 +41,7 @@ from tendoo_v3.schema import StyleConfig, TendooCreativePlan
 from dataclasses import replace
 
 from tendoo_v3.styles import (
+    CONTENT_PRESENT_PCT,
     HERO_PRESENT_PCT,
     COMMON_AUTOFIT_JS,
     HERO_HEIGHT_BOOST,
@@ -105,7 +106,7 @@ _TIER3_BUDGET_KEYS = ("cta", "extra", "freetext_block", "freetext_pills", "messa
 
 
 def _apply_tier_caps(
-    budget: Dict[str, Any], plan: TendooCreativePlan, subhead_max_f: Optional[float] = None
+    budget: Dict[str, Any], plan: TendooCreativePlan, subhead_max_f: Optional[float] = None, content_keys: tuple = ()
 ) -> Dict[str, Any]:
     """Chặn `max_font` của mọi phần tử Cấp 3 không vượt trần subhead -- CHỈ hạ, không bao
     giờ nâng. Không có subhead thì không có Cấp 2 để giữ thứ bậc -> giữ nguyên.
@@ -119,7 +120,7 @@ def _apply_tier_caps(
     cap = max(TIER3_FLOOR_PX, cap * TIER3_BELOW_SUBHEAD)  # cùng quy tắc với Bước 3 autofit JS
     for key in _TIER3_BUDGET_KEYS:
         entry = budget.get(key)
-        if not isinstance(entry, dict) or "max_font" not in entry:
+        if key in content_keys or not isinstance(entry, dict) or "max_font" not in entry:
             continue
         entry["max_font"] = min(entry["max_font"], cap)
         entry["min_font"] = min(entry["min_font"], entry["max_font"])
@@ -771,10 +772,14 @@ def compute_recruitment_board_budget(
     # "thông tin thêm"/"thông tin cửa hàng" nhìn nhỏ so với hero).
     if is_narrow:
         pad_gap = 20.0 + 8.0       # padding dọc (10+10) + 1 gap giữa col-left/bottom-split
-        qr_reserve = 115.0         # QR kiosk cố định (~108px) + border-top(1) + padding-top(6)
+        # QR kiosk cố định (~108px) + border-top(1) + padding-top(6) -- CHỈ khi có QR. Trước 27/09 trừ cả khi không QR:
+        # bảng 9:16 không QR cao 200px còn 31px -> sàn 40px cho 2-3 dòng quyền lợi (tuyển dụng barista GPT thật: chữ
+        # về sàn 15px và vẫn tràn, giữa khoảng trống lớn).
+        qr_reserve = 115.0 if plan.qr_code else 0.0
         title_reserve = 26.0       # .col-title (~20px) + gap nội bộ board-col-left (6px)
         extra_h = max(40.0, board_height - pad_gap - qr_reserve - title_reserve)
-        extra_min_f, extra_max_f = 14.0, 18.0
+        # Nội dung chính (board-list): trần đọc thoải mái như danh sách món (PHONE_LIST_PX), không phải trần Cấp 3 18px.
+        extra_min_f, extra_max_f = 14.0, max(18.0, phone_floor(PHONE_LIST_PX, width))
         cta_h, cta_min_f, cta_max_f = 34.0, 13.0, 17.0
         store_h, store_min_f, store_max_f = 38.0, 14.0, 18.0
     else:
@@ -790,7 +795,7 @@ def compute_recruitment_board_budget(
         "extra": {"max_h": round(extra_h, 1), "min_font": extra_min_f, "max_font": extra_max_f},
         "cta": {"max_h": cta_h, "min_font": cta_min_f, "max_font": cta_max_f},
         "store": {"max_h": store_h, "min_font": store_min_f, "max_font": store_max_f},
-    }, plan)
+    }, plan, content_keys=_TEMPLATE_CONTENT_KEYS["recruitment_board"])
 
 
 def compute_menu_price_board_budget(
@@ -1506,12 +1511,15 @@ def compute_template_budget(template: str, plan: TendooCreativePlan, zones, widt
     """Ngân sách cỡ chữ cho ĐÚNG template đang render (trước đây tính cả 14 mỗi lần render)."""
     budget = _TEMPLATE_BUDGETS[template](plan, zones, width, height)
     budget = _apply_phone_floors(_apply_intent_subhead_cap(budget, template, plan), width)
-    return _apply_portrait_room(_apply_stat_anchor_ceiling(budget, plan, width), width, height)
+    return _apply_portrait_room(_apply_stat_anchor_ceiling(budget, plan, width), width, height,
+                                _PORTRAIT_GROW_KEYS + _TEMPLATE_CONTENT_KEYS.get(template, ()))
 
 
 # Tiêu đề + NỘI DUNG CHÍNH (danh sách món, các bước, lời chứng thực, đoạn thiệp) -- khối nên to hết mức chỗ cho phép.
 # Subhead / Cấp 3 KHÔNG nới: trần của chúng là trần thứ bậc (C1).
 _PORTRAIT_GROW_KEYS = ("hero", "menu_list", "steps", "testimonial", "body", "facts")
+# Khoá ngân sách là nội dung chính CHỈ ở template đó ("extra" ở template khác là Cấp 3).
+_TEMPLATE_CONTENT_KEYS = {"recruitment_board": ("extra",)}
 
 
 def _portrait_script(template: str, plan: TendooCreativePlan, width: int, height: int, budget: Dict[str, Any]) -> str:
@@ -1533,7 +1541,7 @@ def _portrait_script(template: str, plan: TendooCreativePlan, width: int, height
     return f"<script>{' '.join(parts)}</script>"
 
 
-def _apply_portrait_room(budget: Dict[str, Any], width: int, height: int) -> Dict[str, Any]:
+def _apply_portrait_room(budget: Dict[str, Any], width: int, height: int, keys: tuple = _PORTRAIT_GROW_KEYS) -> Dict[str, Any]:
     """Khung DỌC: nới trần cỡ tiêu đề + nội dung chính theo sqrt(cao/rộng) (9:16 x1.33, 4:5 x1.12). Trần Luật 6 tính theo
     BỀ NGANG (px trên màn 375px) -> khung dọc hẹp mà cao bị trần thấp dù dư chiều cao: 27/09 menu trà sữa 9:16 tiêu đề +
     danh sách món chạm trần khi mới dùng 51-54% chỗ (squint C6, §4.7). Nới theo cạnh tương đương sqrt(w*h) = cùng độ to
@@ -1543,10 +1551,12 @@ def _apply_portrait_room(budget: Dict[str, Any], width: int, height: int) -> Dic
     if height <= width * 1.05:
         return budget
     k = math.sqrt(height / width)
-    for key in _PORTRAIT_GROW_KEYS:
+    for key in keys:
         entry = budget.get(key)
         if isinstance(entry, dict) and entry.get("max_font"):
             grown = math.floor(entry["max_font"] * k * 2) / 2
+            if key != "hero":
+                grown = min(grown, max(entry["max_font"], math.floor(CONTENT_PRESENT_PCT / 100 * math.sqrt(width * height) * 2) / 2))
             if key == "hero":
                 # Tiêu đề chỉ nới tới mức "đủ to" của C6 (HERO_PRESENT_PCT), không hơn: tiêu đề đã đủ to mà phóng tiếp
                 # thì chạm vệt sáng nền (27/09 split_right 4:5 nền khắc nghiệt 95 -> 107px: C3 3.07 -> 2.89).
@@ -1614,7 +1624,7 @@ def _apply_intent_subhead_cap(budget: Dict[str, Any], template: str, plan: Tendo
     # subhead co còn 15.5px vì hết chỗ (trần tính ra 20.8px chưa chạm) -- ROADMAP §8.
     sub["max_font"] = min(sub["max_font"], round(hero_max / target, 1))
     sub["min_font"] = min(sub["min_font"], sub["max_font"])
-    return _apply_tier_caps(budget, plan, subhead_max_f=sub["max_font"])
+    return _apply_tier_caps(budget, plan, subhead_max_f=sub["max_font"], content_keys=_TEMPLATE_CONTENT_KEYS.get(template, ()))
 
 
 def compute_plan_content_density(plan: TendooCreativePlan, store_items: Optional[list] = None) -> float:

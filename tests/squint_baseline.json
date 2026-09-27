@@ -80,8 +80,8 @@
   "squint": 4,
   "c5": 20,
   "pass5": 4,
-  "c6": 24,
-  "pass6": 3
+  "c6": 25,
+  "pass6": 4
  },
  "menu_price_board": {
   "n": 25,
@@ -92,8 +92,8 @@
   "squint": 18,
   "c5": 22,
   "pass5": 18,
-  "c6": 23,
-  "pass6": 16
+  "c6": 25,
+  "pass6": 18
  },
  "notice_card": {
   "n": 20,
@@ -104,8 +104,8 @@
   "squint": 17,
   "c5": 19,
   "pass5": 17,
-  "c6": 16,
-  "pass6": 13
+  "c6": 17,
+  "pass6": 14
  },
  "quote_spotlight": {
   "n": 16,
@@ -121,15 +121,15 @@
  },
  "recruitment_board": {
   "n": 30,
-  "c1": 17,
+  "c1": 18,
   "c2": 24,
   "c3": 30,
   "c4": 30,
-  "squint": 17,
-  "c5": 11,
-  "pass5": 10,
+  "squint": 18,
+  "c5": 14,
+  "pass5": 13,
   "c6": 30,
-  "pass6": 10
+  "pass6": 13
  },
  "sandwich_bottom_heavy": {
   "n": 24,

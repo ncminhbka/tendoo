@@ -462,6 +462,9 @@ HERO_HEIGHT_BOOST = 1.6       # nới chiều cao ngân sách hero (tiêu đề 
 # Tiêu đề "đủ to" = % cạnh tương đương sqrt(w*h) (= trần PHONE_HERO_MAX_PX ở khung vuông 1024: 109.5px = 10.7%).
 # Dùng chung cho squint C6 (§4.7, probe_type_hierarchy) và trần nới khung dọc (renderer._apply_portrait_room).
 HERO_PRESENT_PCT = 10.0
+# Nội dung chính (danh sách món, quyền lợi, các bước...) "đủ to" = trần PHONE_LIST_PX ở khung vuông 1024 (41px = 4.0%);
+# khung dọc 9:16 sau khi nới (23 x 1.33 = 30.5px / 768) cũng = 4.0%.
+CONTENT_PRESENT_PCT = 4.0
 PHONE_HERO_FLOOR_PX = 16.0    # sàn CỨNG hero trong ngân sách: tiêu đề dài co xuống được, không bị cắt
 
 
@@ -477,7 +480,7 @@ TIER3_CLASSES = (
     "extra-tag-row", "freetext-block", "flexible-stack", "extra-pills-wrap", "showcase-chips",
     "message-container", "reviewer-info", "notice-label",
 )
-CONTENT_CLASSES = ("menu-list", "steps-grid", "testimonial-quote", "notice-body", "notice-facts")
+CONTENT_CLASSES = ("menu-list", "steps-grid", "testimonial-quote", "notice-body", "notice-facts", "board-list")
 
 COMMON_AUTOFIT_JS = """
 <script>
@@ -1061,9 +1064,14 @@ COMMON_AUTOFIT_JS = """
           let worst = Infinity, worstBg = null, lMin = Infinity, lMax = -Infinity;
           for (const r of rg.getClientRects()) {
             if (r.width < 2 || r.height < 2) continue;
+            // Ô vuông cạnh = chiều cao dòng, GỒM CẢ Ô CUỐI HỤT -- đúng như squint C3 (probe _box_ratios). Trước 27/09 bỏ
+            // ô cuối hẹp hơn nửa ô: chữ >= 100px có ô 120px -> dòng "BỘ" 170px chỉ xét 120px trái, bỏ 50px phải đúng chỗ
+            // vệt mây sáng -> ước tính 4.09 trong khi ảnh chụp 2.89 (split_right 4:5 nền khắc nghiệt).
             const side = Math.max(4, r.height);
-            for (let xs = r.left; xs < r.right - side * 0.5; xs += side) {
-              let bg = mean(xs, r.top, Math.min(r.right, xs + side), r.bottom);
+            for (let xs = r.left; xs < r.right - 1; xs += side) {
+              const xe = Math.min(r.right, xs + side);
+              if ((xe - xs) * r.height < side) continue;  // mẩu quá hẹp (cùng ngưỡng với probe)
+              let bg = mean(xs, r.top, xe, r.bottom);
               if (!bg) continue;
               for (let k = backs.length - 1; k >= 0; k--) {  // khối ngoài cùng trước, trong cùng sau
                 const b = backs[k];

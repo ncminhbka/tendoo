@@ -22,8 +22,8 @@ sắc nét, đúng thứ bậc, đủ tương phản, đọc được trên đi�
 
 **Hiện trạng đo được (27/09):**
 - 17 mẫu (template) phủ **12 nhu cầu** người dùng; 28 font tiếng Việt (9 font miễn phí thương mại mới); 8 bộ phong cách theo dịp; 5 kiểu cụm tiêu đề.
-- Bộ kiểm thử tự động: **491 poster mẫu**, 179 đạt cả 5 điều kiện thẩm mỹ, 172 đạt cả 6; **476 test** tự động đều xanh.
-- Poster sinh từ **GPT thật + ảnh nền thật** (26 đề bài thực tế): **21/26 đạt cả 5 điều kiện**, 0 poster mất chữ.
+- Bộ kiểm thử tự động: **491 poster mẫu**, 182 đạt cả 5 điều kiện thẩm mỹ, 179 đạt cả 6; **476 test** tự động đều xanh.
+- Poster sinh từ **GPT thật + ảnh nền thật** (26 đề bài thực tế): **22/26 đạt cả 5 điều kiện**, 0 poster mất chữ.
 
 ---
 
@@ -269,7 +269,7 @@ nhìn" tự động (squint test) · (6) đọc được trên điện thoại.
 
 | C1 neo | C2 không tường | C3 tương phản | C4 không mất chữ | Đạt 4 | C5 điện thoại | **Đạt cả 5** | C6 không phí chỗ | **Đạt cả 6** |
 | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| 217 | 428 | 485 | 485 | 216 | 265 | **179** | 482 | **172** |
+| 218 | 428 | 485 | 485 | 217 | 268 | **182** | 486 | **179** |
 
 **Với LLM + ảnh nền thật** (`scripts/run_real_llm.py`, 26 đề bài, lượt v8): **21/26 đạt cả 5**, 0 mất chữ. Trang xem:
 `output_probe/nghiem_thu_v8/index.html` (gom theo 12 nhu cầu).

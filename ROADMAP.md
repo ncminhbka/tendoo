@@ -520,10 +520,18 @@ cấp** — trần Luật 6 tính theo BỀ NGANG (px trên màn 375px) nên khu
 - **Suite 491:** C1 213 → 217, **đạt-cả-5 174 → 179**, C6 465 → 482, **đạt-cả-6 155 → 172**; không case nào mất điều kiện
   nào (cả bộ nền khắc nghiệt); ngắt dòng mồ côi 143 → 143, từ ghép bị tách 131 → 130. GPT thật 26 poster: menu trà sữa,
   combo gà, flash sale chữ to rõ hơn; căn hộ giữ nguyên.
-- **Còn lệch đã biết:** Bước 5 (tương phản) ước tính nền bằng ô vuông cạnh = chiều cao dòng; chữ to (≥ 100px) → ô 120px
-  trung bình lẫn vệt sáng với nền tối → JS tưởng 4.09 trong khi ảnh chụp 2.89. Chưa sửa (tách việc).
-- **Chưa giải quyết:** tuyển dụng 9:16 — dòng quyền lợi (Cấp 3) kẹt trong hộp quá thấp giữa khoảng trống lớn: lỗi HÌNH
-  HỌC vùng chữ, không phải trần; C6 không bắt (không xét Cấp 3).
+- ✅ **Lệch đo tương phản chữ to (sửa 27/09 tối):** Bước 5 lấy mẫu nền theo ô vuông cạnh = chiều cao dòng nhưng BỎ ô cuối
+  hẹp hơn nửa ô; probe C3 tính cả ô cuối. Chữ ≥ 100px (ô 120px): dòng "BỘ" 170px chỉ xét 120px trái, bỏ 50px phải đúng
+  chỗ vệt mây sáng → JS ước tính 4.09, ảnh chụp 2.89. Nay JS lấy ô y như probe; ép lại ca cũ 107px: JS 2.91 (khớp) → tự
+  thêm quầng → ảnh chụp 17.7. Nền khắc nghiệt C3 114 → 115.
+- ✅ **Tuyển dụng 9:16 (sửa 27/09 tối):** (1) LỖI CODE — ngân sách dòng quyền lợi trừ 115px "chỗ QR" cả khi KHÔNG có QR:
+  bảng 200px còn 31px → sàn 40px cho 2–3 dòng → chữ về sàn 15px mà vẫn tràn (barista GPT thật); (2) danh sách quyền lợi
+  là NỘI DUNG CHÍNH (như danh sách món): lớp `board-list` ∈ `CONTENT_CLASSES`, miễn trần Cấp 3 (`_apply_tier_caps(...,
+  content_keys)`), trần `PHONE_LIST_PX`, nới khung dọc (`_TEMPLATE_CONTENT_KEYS`); tiêu đề cột co theo. C6 thêm mốc
+  "đủ to" cho nội dung chính (`styles.CONTENT_PRESENT_PCT` = 4% = trần danh sách ở khung vuông; so theo TRẦN của phần tử
+  đã chạm trần) — danh sách 2 dòng trong hộp rộng không bị báo oan. recruitment_board: đạt-cả-5 10 → 13, đạt-cả-6 10 → 13.
+- **Tổng sau 2 sửa (suite 491):** đạt-cả-5 174 → 182, đạt-cả-6 156 → 179 (theo định nghĩa C6 cuối); không case nào mất
+  điều kiện nào (suite + nền khắc nghiệt); ngắt dòng 143 / 130.
 
 ---
 
