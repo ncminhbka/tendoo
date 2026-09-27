@@ -750,17 +750,17 @@ def _quote_spotlight(w: float, h: float, orientation: str = "left") -> Dict[str,
 
 def _notice_card(w: float, h: float, has_footer: bool = True) -> Dict[str, Rect]:
     # Tấm thiệp (thông báo / chúc mừng / thư mời): thẻ giấy đặc ở TÂM khung, nền trang trí xung quanh.
-    # Diện tích sát trần mask 50%, ưu tiên CHIỀU CAO (nội dung xếp dọc; sàn cỡ chữ theo bề ngang cộng lại cao hơn
-    # thẻ thấp -> tiêu đề bị co, đo 27/09): 1:1 70x71%, 4:5 74x66%, 9:16 88x56%, 16:9 72x68% HAI CỘT.
+    # KHÔNG mask (thẻ đặc, catalog has_mask False) -> không bị trần 50%: thẻ chiếm phần lớn khung, chừa viền
+    # cho nền trang trí. 16:9 thẻ nhỏ + hai cột hẹp làm chữ đè nhau / nhỏ (GPT thật 27/09) -> 16:9 90x86%.
     aspect = w / h
     if aspect >= 1.5:
-        cw, ch = 0.72, 0.68
+        cw, ch = 0.94, 0.92
     elif aspect < 0.7:
-        cw, ch = 0.88, 0.56
+        cw, ch = 0.90, 0.84
     elif aspect >= 0.95:
-        cw, ch = 0.70, 0.71
+        cw, ch = 0.86, 0.86
     else:
-        cw, ch = 0.74, 0.66
+        cw, ch = 0.88, 0.84
     return {"card": _frac((1 - cw) / 2, (1 - ch) / 2, (1 + cw) / 2, (1 + ch) / 2, w, h)}
 
 def _type_showcase(w: float, h: float, has_footer: bool = True) -> Dict[str, Rect]:

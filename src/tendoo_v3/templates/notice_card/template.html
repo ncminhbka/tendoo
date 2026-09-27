@@ -28,11 +28,17 @@
       background: {{ notice.card_bg }};
       border-radius: {{ (zones.card.width * 0.03) | round(1) }}px;
       box-shadow: 0 {{ (height * 0.02) | round(1) }}px {{ (height * 0.06) | round(1) }}px rgba(0, 0, 0, 0.38);
-      padding: {{ (zones.card.height * 0.065) | round(1) }}px {{ (zones.card.width * 0.075) | round(1) }}px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: {{ (zones.card.height * 0.028) | round(1) }}px;
-      text-align: center;
       color: {{ notice.text }};
+      overflow: hidden;
+    }
+    /* Lòng thẻ: nằm GỌN trong khung viền trang trí, overflow:hidden -> chữ quá tải bị Bước 3d phát hiện và co
+       (27/09: nhãn/chữ ký từng đè lên khung viền mà không bị báo -- chúng vẫn nằm trong thẻ). */
+    .notice-inner {
+      position: absolute;
+      inset: {{ (zones.card.height * 0.065) | round(1) }}px {{ (zones.card.width * 0.07) | round(1) }}px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: {{ (zones.card.height * 0.026) | round(1) }}px;
+      text-align: center;
       overflow: hidden;
     }
     /* Khung viền mảnh bên trong -- dấu hiệu "thiệp in" của mọi mẫu tham chiếu */
@@ -47,12 +53,16 @@
     /* 16:9: 2 CỘT (tiêu đề | nội dung). Dọc/vuông: KHÔNG bọc nhóm (display:contents làm autofit đo bề rộng cha = 0
        -> tiêu đề co về sàn, đo 27/09). */
     {% if width / height >= 1.5 %}
-    .notice-card { flex-direction: row; align-items: stretch; text-align: left;
+    /* 16:9: đệm thẻ mỏng hơn (khung thấp), nút một dòng. */
+    .notice-inner { inset: {{ (zones.card.height * 0.075) | round(1) }}px {{ (zones.card.width * 0.05) | round(1) }}px; }
+    .notice-card .cta-btn { white-space: nowrap; }
+    .notice-inner { flex-direction: row; align-items: stretch; text-align: left;
                    gap: {{ (zones.card.width * 0.05) | round(1) }}px; }
-    .notice-head, .notice-main { display: flex; flex-direction: column; justify-content: center; min-width: 0;
+    /* overflow:hidden -> cột quá tải bị Bước 3d (co chữ trong vùng bị cắt) phát hiện và co đúng cột đó. */
+    .notice-head, .notice-main { display: flex; flex-direction: column; justify-content: center; min-width: 0; overflow: hidden;
                                  gap: {{ (zones.card.height * 0.024) | round(1) }}px; }
-    .notice-head { flex: 0.62; align-items: flex-start; }
-    .notice-main { flex: 1.38; align-items: stretch; padding-left: {{ (zones.card.width * 0.04) | round(1) }}px;
+    .notice-head { flex: 1.2; align-items: flex-start; }
+    .notice-main { flex: 1; align-items: stretch; padding-left: {{ (zones.card.width * 0.04) | round(1) }}px;
                    border-left: 1.5px solid {{ notice.accent }}55; }
     .notice-card .notice-divider { width: 38%; }
     .notice-card .notice-facts { align-items: flex-start; }
@@ -143,7 +153,7 @@
     <div class="bg-layer"></div>
     {{ render_decor_layer() }}
     {% set wide = width / height >= 1.5 %}
-    <div class="notice-card">
+    <div class="notice-card"><div class="notice-inner">
       {% if wide %}<div class="notice-head">{% endif %}
       {% if badge %}
       <div class="notice-label" data-autofit data-min-font="{{ budget.badge.min_font }}" data-max-font="{{ budget.badge.max_font }}" data-max-height="{{ budget.badge.max_h }}">{{ badge }}</div>
@@ -151,11 +161,11 @@
       {{ render_hero_phrase(hero, hero_parts, budget=budget.hero) }}
       <div class="notice-divider">◆</div>
       {{ render_subhead(subhead, budget=budget.subhead) }}
-      {% if wide %}</div>
-      <div class="notice-main">{% endif %}
       {% if body %}
       <div class="notice-body" data-autofit data-min-font="{{ budget.body.min_font }}" data-max-font="{{ budget.body.max_font }}" data-max-height="{{ budget.body.max_h }}">{{ body }}</div>
       {% endif %}
+      {% if wide %}</div>
+      <div class="notice-main">{% endif %}
       {% if extra_texts %}
       <div class="notice-facts" data-autofit data-min-font="{{ budget.facts.min_font }}" data-max-font="{{ budget.facts.max_font }}" data-max-height="{{ budget.facts.max_h }}">
         {% for pill in (extra_pills or []) %}
@@ -172,7 +182,7 @@
       </div>
       {% endif %}
       {% if wide %}</div>{% endif %}
-    </div>
+    </div></div>
   </div>
   {{ autofit_js }}
 </body>

@@ -22,6 +22,7 @@ import base64
 import gc
 import io
 import json
+import re
 import logging
 import os
 import shutil
@@ -990,6 +991,60 @@ async def generate_poster(req: GenerateRequest):
             "output_url": f"outputs/{run_id}/llm_output.json",
         },
     }
+
+
+# GĐ 10 (ROADMAP §10.9): SỬA CHỮ / ĐỔI KIỂU CHỮ KHÔNG CHẠY LẠI DIFFUSION -- nền đã sinh giữ nguyên, chỉ render lại
+# lớp HTML. Chỉ cho phép thay đổi KHÔNG đổi vùng chữ (template, orientation, cờ hình học) -- vì nền được sinh theo
+# mask của đúng vùng đó; đổi vùng -> 422, cần sinh lại nền.
+RETEXT_FIELDS = ("hero", "hero_parts", "subhead", "badge", "body", "extra_texts", "cta", "store_info", "testimonial",
+                 "reviewer_name", "steps", "tag_left", "tag_right", "rating", "lockup", "style_pack", "brand_color",
+                 "brand_font", "brand_logo", "badge_style", "stat_style", "decor")
+
+
+class RetextRequest(BaseModel):
+    run_id: str
+    variant_idx: int = 0
+    edits: Dict[str, Any] = {}
+    typography_variants: int = 1  # > 1: trả thêm N-1 kiểu chữ (variants.generate_variants)
+
+
+@app.post("/api/v3/retext")
+async def retext_poster(req: RetextRequest):
+    from dataclasses import replace as _replace
+
+    from tendoo_v3.renderer import compute_geometry_flags
+    from tendoo_v3.validators import check_plan
+    from tendoo_v3.variants import generate_variants
+
+    if not re.fullmatch(r"run_[0-9_]+", req.run_id or ""):
+        raise HTTPException(status_code=400, detail="run_id không hợp lệ")
+    vdir = OUTPUT_RUNS_DIR / req.run_id / f"variant_{int(req.variant_idx)}"
+    plan_file, bg_file = vdir / "plan.json", vdir / "background.png"
+    if not plan_file.exists() or not bg_file.exists():
+        raise HTTPException(status_code=404, detail="không tìm thấy phương án (plan.json/background.png)")
+    bad = sorted(set(req.edits) - set(RETEXT_FIELDS))
+    if bad:
+        raise HTTPException(status_code=422, detail={"error": "field_not_editable", "fields": bad,
+                                                     "hint": "đổi template/orientation cần sinh lại nền"})
+    base = TendooCreativePlan.from_dict(json.loads(plan_file.read_text(encoding="utf-8")))
+    edits = dict(req.edits)
+    if "hero" in edits and "hero_parts" not in edits:
+        edits["hero_parts"] = []  # markup cũ không còn khớp nguyên văn tiêu đề mới (Cổng 1)
+    plan = TendooCreativePlan.from_dict({**base.to_dict(), **edits})
+    if compute_geometry_flags(plan) != compute_geometry_flags(base):
+        raise HTTPException(status_code=422, detail={"error": "text_zone_changed",
+                                                     "hint": "thêm/bớt trường làm đổi vùng chữ (mask) -- cần sinh lại nền"})
+    width, height = Image.open(bg_file).size
+    bg_uri = pil_to_base64_data_uri(Image.open(bg_file))
+    k = len(list(vdir.glob("retext_*.png")))
+    out = []
+    for i, v in enumerate(generate_variants(plan, max(1, min(6, req.typography_variants)))):
+        path = vdir / f"retext_{k + i}.png"
+        report: List[Dict[str, Any]] = []
+        render_plan_to_poster(plan=v, bg_data_uri=bg_uri, output_image_path=path, width=width, height=height, overflow_report=report)
+        out.append({"url": f"outputs/{req.run_id}/variant_{int(req.variant_idx)}/{path.name}", "plan": v.to_dict(),
+                    "gate2": check_plan(v), "text_lost": any(o.get("verdict") in ("clipped", "overlap") for o in report)})
+    return {"status": "success", "posters": out}
 
 
 @app.get("/api/v3/llm-debug/latest")

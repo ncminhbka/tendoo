@@ -57,7 +57,7 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "specialized": True,
         "llm_hint": "Tấm thiệp giấy ở giữa khung: THÔNG BÁO (nghỉ lễ, đổi giờ, bảo trì), THIỆP CHÚC MỪNG (8/3, 20/10, Tết, tri ân), THƯ MỜI sự kiện -- cần `body` (1-3 câu nội dung).",
         "hint": "Nhãn nhỏ (badge, vd 'THÔNG BÁO', 'THƯ MỜI'), tiêu đề (hero), subhead tuỳ chọn, `body` = đoạn nội dung 1-3 câu (<= 45 từ), extra_texts = 1-3 thông tin chính (thời gian, địa điểm, ngày làm việc lại...), CTA + cửa hàng/chữ ký ở đáy. Nền là trang trí quanh thiệp.",
-        "has_mask": True,
+        "has_mask": False,  # thẻ giấy đặc -> không cần corridor, thẻ to thoải mái
         "mask_preset": "center_card",
         "visual_intents": ["matrix_board", "festive_event", "hook_headline"],
         "capacity_chars": {"1:1": 154, "9:16": 370, "16:9": 13, "4:5": 154},

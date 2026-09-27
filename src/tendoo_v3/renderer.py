@@ -1383,8 +1383,11 @@ def compute_notice_card_budget(plan: TendooCreativePlan, card_height: float, wid
     main = {"body": 0.26, "facts": 0.20 if plan.extra_texts else 0,
             "cta": 0.08 if plan.cta else 0, "store": 0.07 if plan.store_info else 0}
     if width / height >= 1.5:
-        # 16:9 HAI CỘT: mỗi cột dùng TRỌN chiều cao lòng thẻ (trái: nhãn + tiêu đề; phải: nội dung + thông tin + đáy).
-        h = {key: round(inner * v / sum(grp.values()), 1) for grp in (head, main) for key, v in grp.items()}
+        # 16:9 HAI CỘT, mỗi cột dùng TRỌN chiều cao lòng thẻ. Trái: nhãn + tiêu đề + đoạn nội dung (đọc liền mạch);
+        # phải: thông tin + CTA + chữ ký. (Bản đầu dồn cả nội dung sang phải -> cột phải tràn mép thẻ, GPT thật 27/09.)
+        left = {"badge": 0.07 if plan.badge else 0, "hero": 0.34, "subhead": 0.10 if plan.subhead else 0, "body": 0.36}
+        right = {"facts": 0.50 if plan.extra_texts else 0, "cta": 0.16 if plan.cta else 0, "store": 0.12 if plan.store_info else 0}
+        h = {key: round(inner * v / max(sum(grp.values()), 1e-6), 1) for grp in (left, right) for key, v in grp.items()}
     else:
         parts = {**head, **main}
         h = {key: round(inner * v / sum(parts.values()), 1) for key, v in parts.items()}
@@ -1395,7 +1398,9 @@ def compute_notice_card_budget(plan: TendooCreativePlan, card_height: float, wid
         "subhead": {"max_h": h["subhead"], "min_font": 14.0, "max_font": 30.0},
         # Thân thiệp NHỎ hơn hẳn tiêu đề (thực hành thiệp/thông báo): 11-14.5px-trên-màn -- vẫn trên sàn 10px;
         # 12.5-17 (thử đầu 27/09) cho tiêu đề chỉ ~1.5x thân, C1 8/16.
-        "body": {"max_h": h["body"], "min_font": phone_floor(11.0, width), "max_font": max(18.0, phone_floor(14.5, width))},
+        # 16:9: sàn thân = sàn chung 10px-trên-màn (khung thấp, cột hẹp -- đoạn 3 câu cần chỗ).
+        "body": {"max_h": h["body"], "min_font": phone_floor(10.0 if width / height >= 1.5 else 11.0, width),
+                 "max_font": max(18.0, phone_floor(14.5, width))},
         "facts": {"max_h": h["facts"], "min_font": 13.0, "max_font": max(18.0, list_max)},
         "cta": {"max_h": max(h["cta"], 40.0), "min_font": 13.0, "max_font": 22.0},
         "store": {"max_h": max(h["store"], 30.0), "min_font": 12.0, "max_font": 20.0},

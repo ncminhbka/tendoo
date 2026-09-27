@@ -107,6 +107,12 @@ def generate_template_mask(
     khi render CSS; truyền `**renderer.compute_geometry_flags(plan)` (cùng hàm
     build_template_html dùng), nếu không mask sẽ lệch kích thước với box CSS thật.
     """
+    from tendoo_v3.catalog import TEMPLATE_CATALOG
+
+    if not TEMPLATE_CATALOG.get(template, {}).get("has_mask", True):
+        # Template tự vẽ NỀN ĐẶC dưới chữ (notice_card: tấm thiệp giấy) -- nền diffusion là trang trí quanh thẻ,
+        # không cần corridor: mask rỗng (người duyệt 27/09: "tấm card không cần mask").
+        return np.zeros((height, width), dtype=np.float32)
     if template == "diagonal_slash":
         mask_img = Image.new("L", (width, height), 0)
         draw = ImageDraw.Draw(mask_img)

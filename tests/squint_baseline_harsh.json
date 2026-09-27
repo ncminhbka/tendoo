@@ -81,13 +81,13 @@
  },
  "notice_card": {
   "n": 5,
-  "c1": 1,
+  "c1": 3,
   "c2": 5,
   "c3": 5,
   "c4": 5,
-  "squint": 1,
-  "c5": 1,
-  "pass5": 1
+  "squint": 3,
+  "c5": 4,
+  "pass5": 3
  },
  "quote_spotlight": {
   "n": 4,
