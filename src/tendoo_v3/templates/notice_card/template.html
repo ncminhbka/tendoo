@@ -66,12 +66,19 @@
       max-width: 90%;
     }
 
-    .hero-title {
+    /* Tiêu đề trên THẺ GIẤY: phẳng, sạch -- bỏ hiệu ứng chữ dùng chung (ui_components.css chèn header_effect_css:
+       gradient kim loại / filter chiếu sáng dành cho chữ trên ảnh; trên giấy kem thành bóng nhoè + vàng chìm, 27/09). */
+    .notice-card .hero-title {
       width: 100%;
       font-weight: 900;
       line-height: 1.12;
-      color: {{ notice.text }};
-      text-shadow: none;
+      color: {{ notice.text }} !important;
+      -webkit-text-fill-color: {{ notice.text }} !important;
+      background: none !important;
+      -webkit-background-clip: border-box !important;
+      background-clip: border-box !important;
+      filter: none !important;
+      text-shadow: none !important;
     }
     .hero-title .hero-seg--accent { color: {{ notice.accent_text }}; -webkit-text-fill-color: {{ notice.accent_text }}; text-shadow: none; }
 

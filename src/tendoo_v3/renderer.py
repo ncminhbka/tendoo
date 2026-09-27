@@ -1479,6 +1479,14 @@ _TEMPLATE_BUDGETS = {
 
 
 _DARK_CARD_TONES = ("dark_luxury", "cyber_neon", "cinema_red")
+SCRIPT_HERO_MAX_WORDS = 5
+
+
+def headline_font_words(plan: TendooCreativePlan) -> int:
+    """Số từ THẬT SỰ hiển thị bằng font tiêu đề: có hero_parts thì chỉ đoạn stat (chữ dẫn/đuôi dùng font UI --
+    hero_phrase.css), không thì cả hero."""
+    stats = [p.get("t", "") for p in (plan.hero_parts or []) if p.get("role") == "stat"]
+    return len(" ".join(stats).split()) if stats else len((plan.hero or "").split())
 
 
 def _notice_palette(plan: TendooCreativePlan) -> Dict[str, Any]:
@@ -1969,6 +1977,12 @@ def build_template_html(
         font_key=plan.style.font,
         text_content=f"{plan.hero} {plan.subhead or ''} {plan.cta or ''} {plan.badge or ''} {plan.testimonial or ''}",
     )
+    # Font viết tay/cọ chỉ cho tiêu đề NGẮN (thực hành designer: script 1 cụm <= 4-5 từ). Tiêu đề dài bằng font
+    # viết tay = khó đọc (27/09, thông báo nghỉ Tết GPT thật: 8 từ SVN-Holidays). Đổi sang serif trang trọng cho
+    # lễ hội/sang trọng, sans sạch cho phần còn lại; dòng viết tay vẫn còn qua lockup script_over_caps.
+    if canonical_font in SCRIPT_FONTS and headline_font_words(plan) > SCRIPT_HERO_MAX_WORDS:
+        fallback_key = "playfair" if resolve_intent(tpl_name, plan.visual_intent) in ("festive_event", "hook_headline") else "bevietnam"
+        canonical_font, font_face_css, headline_font_css = resolve_font(font_key=fallback_key)
     # Hiệu ứng CHẤT LIỆU (glossy_gel/metal_emboss: chiếu sáng theo độ dày nét) trên font viết tay/cọ NÉT MẢNH ->
     # nét bị tẩy thành vệt xám lấm tấm, không đọc được (27/09, khai trương tiệm bánh GPT thật: holidays + gel).
     # Designer: hiệu ứng nổi khối chỉ cho font đậm -> rơi về bóng đổ (Cổng 2 báo).

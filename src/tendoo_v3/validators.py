@@ -128,6 +128,10 @@ def _check_components(plan: TendooCreativePlan) -> List[str]:
             issues.append(f"stat_style 'burst' hợp với stat ngắn (<= 5 ký tự); {stats} sẽ kéo sao thành elip, cắt mép chữ")
     eff = TEXT_EFFECT_ALIASES.get(plan.style.text_effect, plan.style.text_effect)
     font = FONT_ALIASES.get(plan.style.font, plan.style.font)
+    stats = [p.get("t", "") for p in plan.hero_parts if p.get("role") == "stat"]
+    n_head = len(" ".join(stats).split()) if stats else len((plan.hero or "").split())
+    if font in SCRIPT_FONTS and n_head > 5:
+        issues.append(f"font viết tay '{font}' chỉ hợp tiêu đề ngắn (<= 5 từ); {n_head} từ dùng font tiêu đề -- render bằng font dễ đọc")
     if eff in SVG_FILTER_EFFECTS and font in SCRIPT_FONTS:
         issues.append(f"text_effect '{eff}' (nổi khối/chất liệu) cần font ĐẬM; font '{font}' nét mảnh viết tay -- nét bị tẩy xám, render bằng 'shadow'")
     if plan.lockup not in (None, "none") and plan.lockup in LOCKUP_REQUIRES:
