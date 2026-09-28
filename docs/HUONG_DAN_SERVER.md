@@ -149,6 +149,11 @@ Trên giao diện: chọn loại poster, điền thông tin, chọn khung hình 
 `~/work/tendoo-v3/output_tendoo_v3/demo_runs/run_<thời-gian>/variant_<n>/` gồm `poster.png`, `background.png`,
 `mask.png`, `plan.json`.
 
+**Sửa chữ không vẽ lại nền:** dưới poster có ô **"Sửa chữ trên nền này"** hiện các dòng chữ poster đang có. Sửa
+rồi bấm **Cập nhật chữ** (khoảng 1–2 giây, không dùng GPU vẽ nền), hoặc **Thêm 3 kiểu chữ** để xem 3 cách trình bày khác
+trên cùng nền — bấm vào ảnh nhỏ để xem và tải. Xoá hẳn hoặc thêm một dòng làm đổi vùng chữ thì giao diện báo cần tạo lại
+poster. Chữ mới quá dài bị cắt thì giao diện báo đỏ — rút ngắn lại.
+
 Xem LLM đã trả gì cho lần sinh gần nhất: `https://.../proxy/8088/api/v3/llm-debug/latest`.
 
 ## Bước 7 — Test tự động 20 mẫu (thay cho bấm tay)
@@ -162,11 +167,12 @@ python scripts/run_e2e_server.py                 # 20 mẫu trong tests/e2e_serv
 
 Script gửi lần lượt 20 mẫu tới `/api/generate` **đúng như giao diện gửi** (14 mẫu tái hiện 6 loại poster trên giao
 diện × 4 khung hình, 6 mẫu nhu cầu khác qua trường `prompt`: thông báo, thiệp chúc, thư mời, menu, combo, Tết thuần
-chữ), rồi với mỗi mẫu: tải poster + ảnh nền, đọc LLM có chạy thật không, chấm 6 điều kiện thẩm mỹ trên nền thật.
+chữ), rồi với mỗi mẫu: tải poster + ảnh nền, đọc LLM có chạy thật không, chấm 6 điều kiện thẩm mỹ trên nền thật, và
+thử **sửa chữ trên nền cũ** (như nút "Cập nhật chữ").
 In mỗi mẫu một dòng, cuối cùng tổng kết:
 
 ```
-20/20 mẫu ra poster | LLM thật 20/20 | trung bình 6.5s/mẫu | đạt cả 6 điều kiện 15/20
+20/20 mẫu ra poster | LLM thật 20/20 | trung bình 6.5s/mẫu | đạt cả 6 điều kiện 15/20 | sửa chữ trên nền cũ 20/20
 Xem: output_probe/e2e_0928_0930/index.html
 ```
 

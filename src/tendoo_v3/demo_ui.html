@@ -979,6 +979,19 @@
     .btn-download:hover {
       background: #10B981;
     }
+
+    /* SỬA CHỮ TRÊN NỀN ĐÃ SINH (POST /api/v3/retext) -- không vẽ lại ảnh nền */
+    .retext-box { margin-top: 16px; padding: 14px; border: 1px solid var(--input-border); border-radius: var(--radius-md); }
+    .retext-head { font-weight: 700; font-size: 14px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
+    .retext-head .hint { font-weight: 400; font-size: 12px; color: var(--text-dim); }
+    .retext-fields { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .retext-fields .form-label { margin-bottom: 3px; }
+    .retext-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .retext-msg { font-size: 12.5px; margin-top: 8px; line-height: 1.45; }
+    .retext-msg.warn { color: var(--accent-amber); }
+    .retext-msg.err { color: #F87171; }
+    .retext-msg.ok { color: var(--accent-emerald); }
+    #retext-cards { margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -1502,6 +1515,18 @@
           <button class="btn-action" onclick="openFullscreen()">
             <span style="display:inline-flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>Xem Lớn</span>
           </button>
+        </div>
+
+        <!-- Sửa chữ trên nền đã sinh: POST /api/v3/retext (không chạy lại FLUX) -->
+        <div class="retext-box" id="retext-box" style="display: none;">
+          <div class="retext-head">Sửa chữ trên nền này <span class="hint">giữ nguyên ảnh nền, không vẽ lại -- khoảng 1-2 giây</span></div>
+          <div class="retext-fields" id="retext-fields"></div>
+          <div class="retext-btns">
+            <button type="button" class="btn-action" id="btn-retext" onclick="doRetext(1)">Cập nhật chữ</button>
+            <button type="button" class="btn-action" id="btn-retext-var" onclick="doRetext(3)">Thêm 3 kiểu chữ</button>
+          </div>
+          <div class="retext-msg" id="retext-msg"></div>
+          <div class="gallery-cards" id="retext-cards"></div>
         </div>
       </div>
 
@@ -2336,6 +2361,9 @@
         // Reflects the server's actual Phase B auto-match decision, not a client guess.
         updateLayoutIndicator(data.resolved_layout);
 
+        currentRunId = data.run_id;
+        showRetext((data.posters && data.posters[0]) || {index: 0, plan: data.plan});
+
       } catch (err) {
         alert("Lỗi khi sinh ảnh: " + err.message);
       } finally {
@@ -2428,6 +2456,118 @@
 
       document.getElementById('btn-download').href = currentImages.poster;
       document.getElementById('btn-download').download = `tendoo_poster_var${idx + 1}_seed${selected.seed}.png`;
+      showRetext(selected);
+    }
+
+    // ---- SỬA CHỮ TRÊN NỀN ĐÃ SINH (POST /api/v3/retext) ----------------------------------------------------
+    // Chỉ hiện các trường poster ĐANG CÓ: thêm/xoá hẳn một trường làm đổi vùng chữ -> nền cũ không còn khớp.
+    // Mỗi lần gửi = khác biệt so với plan GỐC của phương án (máy chủ luôn dựng lại từ plan.json gốc).
+    let currentRunId = null;
+    let retextState = null;
+    const RETEXT_UI_FIELDS = [
+      ["hero", "Tiêu đề", "area", "sửa tiêu đề thì cụm tiêu đề nhiều cỡ trở về một kiểu chữ"],
+      ["subhead", "Dòng phụ", "text"], ["badge", "Nhãn", "text"], ["cta", "Nút kêu gọi", "text"],
+      ["body", "Đoạn nội dung", "area"], ["extra_texts", "Thông tin thêm (mỗi dòng một ý)", "list"],
+      ["store_info", "Thông tin cửa hàng", "text"], ["testimonial", "Câu đánh giá", "area"], ["reviewer_name", "Người đánh giá", "text"],
+    ];
+    const escHtml = t => String(t).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+
+    function showRetext(poster) {
+      const box = document.getElementById('retext-box');
+      if (!currentRunId || !poster || !poster.plan) { box.style.display = 'none'; return; }
+      retextState = {variantIdx: poster.index || 0, plan: poster.plan};
+      const wrap = document.getElementById('retext-fields');
+      wrap.innerHTML = '';
+      RETEXT_UI_FIELDS.forEach(([key, label, kind, hint]) => {
+        const v = poster.plan[key];
+        if (v == null || v === '' || (Array.isArray(v) && !v.length)) return;
+        const val = Array.isArray(v) ? v.join('\n') : String(v);
+        const rows = Math.min(4, Math.max(2, val.split('\n').length));
+        const g = document.createElement('div');
+        g.innerHTML = `<label class="form-label" for="rt-${key}">${label}${hint ? ` <span class="hint">(${hint})</span>` : ''}</label>` +
+          (kind === 'text' ? `<input class="form-input" id="rt-${key}" data-key="${key}" value="${escHtml(val)}">`
+                           : `<textarea class="form-textarea" id="rt-${key}" data-key="${key}" data-kind="${kind}" rows="${rows}">${escHtml(val)}</textarea>`);
+        wrap.appendChild(g);
+      });
+      setRetextMsg('', '');
+      document.getElementById('retext-cards').innerHTML = '';
+      box.style.display = wrap.children.length ? 'block' : 'none';
+    }
+
+    function collectRetextEdits() {
+      const edits = {};
+      document.querySelectorAll('#retext-fields [data-key]').forEach(el => {
+        const key = el.dataset.key, orig = retextState.plan[key];
+        if (el.dataset.kind === 'list') {
+          const lines = el.value.split('\n').map(x => x.trim()).filter(Boolean);
+          if (JSON.stringify(lines) !== JSON.stringify(orig || [])) edits[key] = lines;
+        } else if (el.value.trim() !== String(orig).trim()) {
+          edits[key] = el.value.trim();
+        }
+      });
+      return edits;
+    }
+
+    function setRetextMsg(text, cls) {
+      const m = document.getElementById('retext-msg');
+      m.textContent = text;
+      m.className = 'retext-msg ' + (cls || '');
+    }
+
+    function previewRetext(item) {
+      currentImages.poster = resolveUrl(item.url);
+      document.getElementById('preview-image').src = currentImages.poster;
+      document.querySelectorAll('#view-tabs .tab-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+      const dl = document.getElementById('btn-download');
+      dl.href = currentImages.poster;
+      dl.download = item.url.split('/').pop();
+    }
+
+    async function doRetext(n) {
+      if (!retextState || !currentRunId) return;
+      const edits = collectRetextEdits();
+      if (n === 1 && !Object.keys(edits).length) { setRetextMsg('Chưa có thay đổi nào.', 'warn'); return; }
+      const btns = [document.getElementById('btn-retext'), document.getElementById('btn-retext-var')];
+      btns.forEach(b => b.disabled = true);
+      setRetextMsg('Đang dựng lại chữ trên nền cũ...', '');
+      try {
+        const resp = await fetch(`${BASE_URL}/api/v3/retext`, {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({run_id: currentRunId, variant_idx: retextState.variantIdx, edits, typography_variants: n})
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          const d = data.detail || {};
+          if (d.error === 'text_zone_changed' || d.error === 'field_not_editable')
+            throw new Error('Thay đổi này làm đổi vùng chữ (xoá hẳn hoặc thêm một dòng) nên nền cũ không còn khớp. Hãy giữ lại dòng đó, hoặc bấm "Tạo Poster" để sinh nền mới.');
+          throw new Error(typeof d === 'string' ? d : JSON.stringify(d));
+        }
+        const posters = data.posters || [];
+        const cards = document.getElementById('retext-cards');
+        cards.innerHTML = '';
+        posters.forEach((item, i) => {
+          const card = document.createElement('div');
+          card.className = 'gallery-card' + (i === 0 ? ' active' : '');
+          card.title = i === 0 ? 'Bản đã sửa' : `Kiểu chữ #${i + 1}`;
+          card.onclick = () => {
+            cards.querySelectorAll('.gallery-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            previewRetext(item);
+          };
+          card.innerHTML = `<img src="${resolveUrl(item.url)}" alt="Phương án ${i + 1}"><div class="gallery-card-badge">${i === 0 ? 'Sửa' : '#' + (i + 1)}</div>`;
+          cards.appendChild(card);
+        });
+        if (posters[0]) previewRetext(posters[0]);
+        const lost = posters.filter(p => p.text_lost).length;
+        const warns = [...new Set(posters.flatMap(p => p.gate2 || []))].filter(w => / từ > /.test(w)).slice(0, 2);
+        if (lost) setRetextMsg(`Có ${lost} phương án bị cắt chữ vì chữ mới quá dài cho vùng trống -- hãy rút ngắn.`, 'err');
+        else if (warns.length) setRetextMsg('Xong. Lưu ý: ' + warns.join('; '), 'warn');
+        else setRetextMsg(n > 1 ? `Xong -- ${posters.length} phương án, bấm vào ảnh để xem.` : 'Xong -- đã cập nhật chữ trên nền cũ.', 'ok');
+      } catch (err) {
+        setRetextMsg(err.message, 'err');
+      } finally {
+        btns.forEach(b => b.disabled = false);
+      }
     }
 
     // Health check poll on page load
