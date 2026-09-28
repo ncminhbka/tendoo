@@ -7,7 +7,7 @@ Mọi lệnh gõ trong **Terminal của JupyterLab** (File → New → Terminal)
 
 ---
 
-## Tóm tắt 6 bước
+## Tóm tắt 7 bước
 
 ```bash
 cd ~/work && (git -C tendoo-v3 pull || git clone https://github.com/ncminhbka/tendoo.git tendoo-v3)   # 1. lấy mã
@@ -16,6 +16,7 @@ python scripts/check_server.py                                                  
 cp -n src/tendoo_v3/.env.example .env && nano .env                                               # 4. chọn LLM
 nohup python src/tendoo_v3/demo_server.py --model distill --port 8088 > demo.log 2>&1 &           # 5. chạy demo
 # 6. mở trình duyệt:  https://<địa-chỉ-jupyter>/user/<tên-bạn>/proxy/8088/
+python scripts/run_e2e_server.py                                                                 # 7. test tự động 20 mẫu
 ```
 
 Chi tiết từng bước và cách xử lý sự cố ở dưới.
@@ -149,6 +150,32 @@ Trên giao diện: chọn loại poster, điền thông tin, chọn khung hình 
 `mask.png`, `plan.json`.
 
 Xem LLM đã trả gì cho lần sinh gần nhất: `https://.../proxy/8088/api/v3/llm-debug/latest`.
+
+## Bước 7 — Test tự động 20 mẫu (thay cho bấm tay)
+
+Khi máy chủ demo đang chạy (Bước 5), mở **terminal khác**:
+
+```bash
+cd ~/work/tendoo-v3
+python scripts/run_e2e_server.py                 # 20 mẫu trong tests/e2e_server_cases.json
+```
+
+Script gửi lần lượt 20 mẫu tới `/api/generate` **đúng như giao diện gửi** (14 mẫu tái hiện 6 loại poster trên giao
+diện × 4 khung hình, 6 mẫu nhu cầu khác qua trường `prompt`: thông báo, thiệp chúc, thư mời, menu, combo, Tết thuần
+chữ), rồi với mỗi mẫu: tải poster + ảnh nền, đọc LLM có chạy thật không, chấm 6 điều kiện thẩm mỹ trên nền thật.
+In mỗi mẫu một dòng, cuối cùng tổng kết:
+
+```
+20/20 mẫu ra poster | LLM thật 20/20 | trung bình 6.5s/mẫu | đạt cả 6 điều kiện 15/20
+Xem: output_probe/e2e_0928_0930/index.html
+```
+
+- Mở `index.html` trong JupyterLab (chuột phải → Open in New Browser Tab) để xem cả 20 poster cạnh nhau.
+- Dòng `!` = mẫu đó LLM không chạy thật (dùng plan dự phòng) — xem lý do in kèm, và Bước 4.
+- Dòng `✗` = mẫu lỗi hẳn — xem `demo.log`.
+- Chỉ chạy vài mẫu: `--only e02,e18`. Máy chủ ở cổng khác: `--url http://127.0.0.1:8090`. Thêm/sửa mẫu: sửa
+  `tests/e2e_server_cases.json` (mỗi mẫu = JSON giao diện gửi).
+- Gửi kết quả về: `zip -r e2e.zip output_probe/e2e_*` rồi tải về.
 
 ---
 
