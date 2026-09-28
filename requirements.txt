@@ -1,11 +1,12 @@
 # Python Environment Dependencies for FLUX.2 + Qwen3 on NVIDIA A30
-# Run on server: pip install -r requirements.txt
+# Run on server: pip install -r requirements.txt   (hướng dẫn đầy đủ: docs/HUONG_DAN_SERVER.md)
+# Máy chủ đã có torch bản CUDA: pip giữ nguyên torch đó vì đã thoả >=2.4 (không cài đè bản CPU).
 
 torch>=2.4.0
 torchvision>=0.19.0
 torchaudio
 einops>=0.8.0
-transformers>=4.45.0
+transformers>=4.51.0   # flux2/text_encoder.py import Mistral3 + Qwen3 ở mức module (4.45 không có)
 safetensors>=0.4.5
 accelerate>=0.34.0
 fire>=0.6.0
@@ -23,3 +24,5 @@ pydantic>=2.6.0
 requests>=2.31.0
 jinja2>=3.1.0
 python-dotenv>=1.0.0
+# Chỉ cho test (pytest tests/): pytest, httpx (TestClient của FastAPI)
+# Chỉ cho scripts/fetch_fonts.py (font đã commit sẵn, máy chủ không cần): fonttools, brotli

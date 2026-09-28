@@ -13,7 +13,6 @@ import math
 from typing import Any, Dict, Optional
 
 from tendoo_v3.colors import ensure_contrast, get_contrasting_text_color
-from tendoo_v3.fonts import resolve_font
 
 # Danh mục đóng hiệu ứng chữ -- đúng các nhánh get_effect_css() bên dưới xử lý. Tên lạ rơi
 # về "plain_elegant" (nhánh else). Dùng chung với validators.py (Cổng 2).
@@ -430,7 +429,6 @@ def palette_from_color_harmony(cp: Any, theme_color: Optional[str] = None) -> Di
         }
 
 
-from tendoo_v3.icons import render_qr_code_svg, render_star_rating_svg
 
 
 # Class autofit theo cấp thị giác (DESIGN_PRINCIPLES §1.1) -- nguồn DUY NHẤT, dùng cho

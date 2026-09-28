@@ -12,11 +12,7 @@ Tạo các ảnh nền Mock thẩm mỹ cao (High-Aesthetic Mock Backdrops) cho 
 
 from __future__ import annotations
 
-import math
-from pathlib import Path
-from typing import Tuple
 
-import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 

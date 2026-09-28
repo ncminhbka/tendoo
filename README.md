@@ -88,6 +88,9 @@ PYTHONPATH=src python -m pytest tests/ -q
 PYTHONPATH=src python src/tendoo_v3/demo_server.py --model distill
 ```
 
+**Chạy trên máy chủ GPU (2× A30, JupyterLab):** xem [docs/HUONG_DAN_SERVER.md](docs/HUONG_DAN_SERVER.md) — pull, cài,
+`python scripts/check_server.py` (tự kiểm tra trọng số / Chromium / LLM), chạy và mở giao diện qua proxy JupyterLab.
+
 ---
 
 ## Nguyên tắc bất biến

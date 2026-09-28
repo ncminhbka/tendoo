@@ -40,10 +40,17 @@ def denoise_regional_velocity_blended(
     num_canvas_tokens: Optional[int] = None,
     mask_gamma: float = 1.0,
     corridor_guidance_boost: float = 0.0,
+    txt_uncond: Optional[torch.Tensor] = None,
+    txt_uncond_ids: Optional[torch.Tensor] = None,
+    cfg_scale: float = 1.0,
 ) -> torch.Tensor:
     """Đồng tiến hóa trường vận tốc Scene và Corridor từ nhiễu hạt theo công thức:
       v_blend = (1.0 - M') * v_scene + M' * v_corridor,  M' = M ** mask_gamma
     Hỗ trợ In-Context Reference Product Conditioning tại mốc RoPE chuẩn BFL.
+
+    CFG (bản BASE, `guidance_distilled=False` trong flux2.util): truyền `txt_uncond` (prompt rỗng) + `cfg_scale` (~4.0)
+    -> batch 3 [scene, corridor, rỗng], v_x = v_rỗng + cfg * (v_x - v_rỗng) -- đúng công thức `flux2.sampling.denoise_cfg`,
+    hai luồng dùng CHUNG một nhánh rỗng. Bản distill: bỏ trống (guidance đã chưng cất; model 4B bỏ qua `guidance`).
     """
     orig_dtype = img.dtype
     device = img.device
@@ -52,11 +59,13 @@ def denoise_regional_velocity_blended(
         mask = mask.clamp(0.0, 1.0).pow(mask_gamma)
     L_canvas = num_canvas_tokens if num_canvas_tokens is not None else mask.shape[1]
 
-    # Batch 2 conditioning branches dọc theo dim 0 (Batch Amortization)
-    img_b = torch.cat([img, img], dim=0)
-    img_ids_b = torch.cat([img_ids, img_ids], dim=0)
-    txt_b = torch.cat([txt_scene, txt_corridor], dim=0)
-    txt_ids_b = torch.cat([txt_scene_ids, txt_corridor_ids], dim=0)
+    # Batch 2 conditioning branches dọc theo dim 0 (Batch Amortization); +1 nhánh prompt rỗng khi CFG.
+    use_cfg = txt_uncond is not None and cfg_scale != 1.0
+    nb = 3 if use_cfg else 2
+    img_b = torch.cat([img] * nb, dim=0)
+    img_ids_b = torch.cat([img_ids] * nb, dim=0)
+    txt_b = torch.cat([txt_scene, txt_corridor] + ([txt_uncond] if use_cfg else []), dim=0)
+    txt_ids_b = torch.cat([txt_scene_ids, txt_corridor_ids] + ([txt_uncond_ids] if use_cfg else []), dim=0)
 
     for step_idx in range(len(timesteps) - 1):
         t_curr = timesteps[step_idx]
@@ -64,7 +73,7 @@ def denoise_regional_velocity_blended(
 
         t_vec = torch.full((img_b.shape[0],), t_curr, dtype=orig_dtype, device=device)
         guidance_vec = torch.tensor(
-            [guidance, guidance + corridor_guidance_boost], dtype=orig_dtype, device=device
+            [guidance, guidance + corridor_guidance_boost] + ([guidance] if use_cfg else []), dtype=orig_dtype, device=device
         )
 
         # Single batched forward pass tính đồng thời scene và corridor velocity
@@ -77,6 +86,10 @@ def denoise_regional_velocity_blended(
             guidance=guidance_vec,
         )
         pred_scene, pred_corridor = pred_b[0:1], pred_b[1:2]
+        if use_cfg:
+            pred_u = pred_b[2:3]
+            pred_scene = pred_u + cfg_scale * (pred_scene - pred_u)
+            pred_corridor = pred_u + cfg_scale * (pred_corridor - pred_u)
 
         # Regional Flow Matching velocity blending trên Canvas tokens
         v_scene_canvas = pred_scene[:, :L_canvas, :]
@@ -89,7 +102,7 @@ def denoise_regional_velocity_blended(
             new_img = torch.cat([canvas_tokens, img_b[0:1, L_canvas:, :]], dim=1).to(orig_dtype)
         else:
             new_img = canvas_tokens.to(orig_dtype)
-        img_b = torch.cat([new_img, new_img], dim=0)
+        img_b = torch.cat([new_img] * nb, dim=0)
 
     return img_b[0:1, :L_canvas, :]
 
@@ -104,6 +117,9 @@ def denoise_scene_only(
     timesteps: List[float],
     guidance: float = 4.0,
     num_canvas_tokens: Optional[int] = None,
+    txt_uncond: Optional[torch.Tensor] = None,
+    txt_uncond_ids: Optional[torch.Tensor] = None,
+    cfg_scale: float = 1.0,
 ) -> torch.Tensor:
     """MASKLESS MODE (ROADMAP §5.3, GĐ 5): Euler ODE chỉ luồng Scene, batch 1 -- không corridor.
 
@@ -117,17 +133,23 @@ def denoise_scene_only(
     device = img.device
     L_canvas = num_canvas_tokens if num_canvas_tokens is not None else img.shape[1]
     x = img
+    use_cfg = txt_uncond is not None and cfg_scale != 1.0  # bản base: batch 2 [scene, rỗng] (xem hàm trên)
+    nb = 2 if use_cfg else 1
+    ctx = torch.cat([txt_scene, txt_uncond], dim=0) if use_cfg else txt_scene
+    ctx_ids = torch.cat([txt_scene_ids, txt_uncond_ids], dim=0) if use_cfg else txt_scene_ids
     for step_idx in range(len(timesteps) - 1):
         t_curr = timesteps[step_idx]
         t_prev = timesteps[step_idx + 1]
         pred = model(
-            x=x,
-            x_ids=img_ids,
-            timesteps=torch.full((1,), t_curr, dtype=orig_dtype, device=device),
-            ctx=txt_scene,
-            ctx_ids=txt_scene_ids,
-            guidance=torch.tensor([guidance], dtype=orig_dtype, device=device),
+            x=torch.cat([x] * nb, dim=0) if use_cfg else x,
+            x_ids=torch.cat([img_ids] * nb, dim=0) if use_cfg else img_ids,
+            timesteps=torch.full((nb,), t_curr, dtype=orig_dtype, device=device),
+            ctx=ctx,
+            ctx_ids=ctx_ids,
+            guidance=torch.tensor([guidance] * nb, dtype=orig_dtype, device=device),
         )
+        if use_cfg:
+            pred = pred[1:2] + cfg_scale * (pred[0:1] - pred[1:2])
         canvas = x[:, :L_canvas, :] + (t_prev - t_curr) * pred[:, :L_canvas, :]
         x = (torch.cat([canvas, x[:, L_canvas:, :]], dim=1) if x.shape[1] > L_canvas else canvas).to(orig_dtype)
     return x[:, :L_canvas, :]

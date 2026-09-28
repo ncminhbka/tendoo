@@ -923,7 +923,8 @@ def _try_run_local_qwen(
 
         plans = _finalize_plans_from_response(extracted_dict, form_data, num_variants)
         debug_trace["status"] = "success"
-        plans = _revise_lengths(plans, messages, content, request_body, _post, form_data, num_variants, aspect_ratio, debug_trace)
+        # (Vòng sửa độ dài `_revise_lengths` chỉ ở nhánh API: nhánh này không có request/HTTP. 27/09 lời gọi từng bị
+        # chèn nhầm vào đây -> NameError -> Qwen cục bộ luôn rơi về dự phòng; test_llm_revision giữ nhánh này.)
         debug_trace["output"]["final_plan"] = plans[0].to_dict()
         debug_trace["output"]["final_plans"] = [p.to_dict() for p in plans]
         debug_trace["latency_seconds"] = round(time.time() - t_start, 4)

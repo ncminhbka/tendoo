@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import os
 import sys
 import time
 from contextlib import asynccontextmanager

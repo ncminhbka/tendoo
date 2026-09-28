@@ -54,3 +54,35 @@ def test_scene_only_keeps_reference_tokens_frozen():
 
     denoise_scene_only(Spy(), img, ids, scene, sids, [1.0, 0.5, 0.0], num_canvas_tokens=L)
     assert all(torch.equal(s, img[:, L:, :]) for s in seen)
+
+
+def test_cfg_matches_bfl_formula_and_is_off_by_default():
+    """Bản BASE cần CFG (flux2.util guidance_distilled=False): v = v_rỗng + g (v_prompt - v_rỗng), batch thêm 1 nhánh
+    rỗng dùng chung. cfg_scale=1 hoặc không truyền prompt rỗng -> y hệt bản distill (không đổi đường cũ)."""
+    img, ids, scene, corridor, sids, L = _inputs()
+    empty = torch.zeros_like(scene)
+    ts = [1.0, 0.5, 0.0]
+    mask = torch.rand(1, L, 1)
+    base = denoise_regional_velocity_blended(FakeDiT(), img, ids, scene, sids, corridor, sids, mask, ts, num_canvas_tokens=L)
+    same = denoise_regional_velocity_blended(FakeDiT(), img, ids, scene, sids, corridor, sids, mask, ts, num_canvas_tokens=L,
+                                             txt_uncond=empty, txt_uncond_ids=sids, cfg_scale=1.0)
+    assert torch.equal(base, same)
+    fake = FakeDiT()
+    cfg = denoise_regional_velocity_blended(fake, img, ids, scene, sids, corridor, sids, mask, ts, num_canvas_tokens=L,
+                                            txt_uncond=empty, txt_uncond_ids=sids, cfg_scale=4.0)
+    assert fake.calls == [3, 3] and not torch.allclose(cfg, base)
+    # Tự tính 1 bước tay theo công thức BFL rồi so
+    m = FakeDiT()
+    t = torch.tensor([1.0])
+    def v(ctx):
+        return m(img, ids, t, ctx, sids, torch.tensor([4.0]))[:, :L]
+    u = v(empty)
+    vs, vc = u + 4.0 * (v(scene) - u), u + 4.0 * (v(corridor) - u)
+    step1 = img[:, :L] + (0.5 - 1.0) * ((1 - mask) * vs + mask * vc)
+    one = denoise_regional_velocity_blended(FakeDiT(), img, ids, scene, sids, corridor, sids, mask, [1.0, 0.5], num_canvas_tokens=L,
+                                            txt_uncond=empty, txt_uncond_ids=sids, cfg_scale=4.0)
+    assert torch.allclose(one, step1, atol=1e-5)
+    # maskless: cùng công thức, batch 2
+    f2 = FakeDiT()
+    only = denoise_scene_only(f2, img, ids, scene, sids, [1.0, 0.5], num_canvas_tokens=L, txt_uncond=empty, txt_uncond_ids=sids, cfg_scale=4.0)
+    assert f2.calls == [2] and torch.allclose(only, img[:, :L] + (0.5 - 1.0) * vs, atol=1e-5)

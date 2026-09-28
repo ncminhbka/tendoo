@@ -15,7 +15,7 @@ import colorsys
 import logging
 import math
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import jinja2
 import numpy as np
@@ -34,7 +34,6 @@ from tendoo_v3.icons import (
     get_icon_svg,
     infer_semantic_icon,
     parse_store_info_items,
-    render_qr_code_svg,
     render_star_rating_svg,
 )
 from tendoo_v3.schema import StyleConfig, TendooCreativePlan
@@ -47,7 +46,6 @@ from tendoo_v3.styles import (
     HERO_HEIGHT_BOOST,
     PHONE_HERO_FLOOR_PX,
     PHONE_HERO_MAX_PX,
-    PHONE_HERO_PX,
     PHONE_LIST_PX,
     PHONE_STAT_MAX_PX,
     PHONE_MIN_PX,

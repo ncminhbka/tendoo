@@ -73,3 +73,14 @@ def test_revision_rejected_when_it_drops_a_field(monkeypatch):
     no_cta = {k: v for k, v in SHORT.items() if k != "cta"}
     plan, trace, _ = _run(monkeypatch, [LONG, no_cta])
     assert plan.cta == "MUA NGAY" and trace["revision"]["adopted"] is False and trace["revision"]["lost_fields"] == ["cta"]
+
+
+def test_local_qwen_branch_returns_llm_plan(monkeypatch):
+    """Nhánh Qwen CỤC BỘ (máy chủ GPU) phải trả plan của LLM, không âm thầm rơi về dự phòng (27/09: NameError)."""
+    monkeypatch.setenv("TENDOO_V3_LLM_BACKEND", "local")
+    monkeypatch.setattr(lp, "load_local_qwen3", lambda: (object(), object()))
+    monkeypatch.setattr(lp, "generate_local_qwen_response", lambda m, t, msgs, **k: json.dumps(SHORT, ensure_ascii=False))
+    monkeypatch.setattr(lp, "_save_debug_trace", lambda *a, **k: None)
+    plan, trace = lp.generate_creative_plan({"title": "x"}, prompt="giày chạy", aspect_ratio="16:9", return_debug=True)
+    assert trace["status"] == "success" and trace["mode"] == "local_qwen3_4b", trace.get("error")
+    assert plan.hero == "NITRO RUN"

@@ -222,16 +222,13 @@ def _pil_to_data_uri(img: Image.Image) -> str:
 
 if __name__ == "__main__":
     print("=== STARTING FONT ENGINE VALIDATION SUITE ===")
-    test_font_catalog_has_19_fonts()
+    test_font_catalog_has_28_fonts()
     for k in FONT_CATALOG:
         test_font_file_exists_and_loads(k)
         test_resolve_font_generates_valid_font_face_css(k)
     test_list_font_options_covers_all_archetypes()
     test_font_alias_resolution()
     test_resolve_font_auto_uses_recommendation()
-    for fk, cat in [("anton", "promo"), ("playfair", "feedback"), ("pacifico", "opening")]:
-        test_render_poster_with_explicit_font(fk, cat)
-    test_render_poster_with_auto_font_family()
     print("=== ALL FONT ENGINE TESTS PASSED PERFECTLY ===")
 
 

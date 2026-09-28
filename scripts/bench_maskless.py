@@ -32,8 +32,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-PDATA = [Path(os.path.expanduser("~/persistent-data/FLUX.2-klein-base-4B")), Path(os.path.expanduser("~/persistent-data/FLUX.2-klein-4B")),
-         Path("/home/jovyan/persistent-data/FLUX.2-klein-base-4B")]
+PDATA = [Path(os.path.expanduser(f"~/persistent-data/{d}")) for d in ("FLUX.2-klein-4B", "FLUX.2-klein-base-4B")] +         [Path(f"{root}/persistent-data/{d}") for root in ("/home/jovyan", "") for d in ("FLUX.2-klein-4B", "FLUX.2-klein-base-4B")]
 SCENE = "Soft golden bokeh and fine glitter dust drifting over a smooth deep red gradient, cinematic lighting, zero text"
 CORRIDOR = "Smooth deep red gradient in extreme soft focus, clean negative space without objects, matching scene color"
 
@@ -98,6 +97,11 @@ def main() -> None:
         ctx, ids = prc_txt(ctx[0])
         return ctx.unsqueeze(0).to(dev_dit), ids.unsqueeze(0).to(dev_dit)
 
+    # Bản base cần CFG (flux2.util guidance_distilled=False) -- cùng cách demo_server làm.
+    use_cfg = not util.FLUX2_MODEL_INFO[name]["guidance_distilled"]
+    cu, cu_ids = encode("") if use_cfg else (None, None)
+    cfg = {"txt_uncond": cu, "txt_uncond_ids": cu_ids, "cfg_scale": guidance if use_cfg else 1.0}
+
     def run(mode: str, seed: int, out_dir: Path) -> dict:
         t = {}
         with torch.no_grad():
@@ -114,9 +118,9 @@ def main() -> None:
             ts = get_schedule(num_steps=steps, image_seq_len=tok.shape[1])
             _sync(); t0 = time.perf_counter()
             if mode == "masked":
-                out = denoise_regional_velocity_blended(dit, tok, ids, cs, cs_ids, cc, cc_ids, mask_flat, ts, guidance=guidance, num_canvas_tokens=tok.shape[1])
+                out = denoise_regional_velocity_blended(dit, tok, ids, cs, cs_ids, cc, cc_ids, mask_flat, ts, guidance=guidance, num_canvas_tokens=tok.shape[1], **cfg)
             else:
-                out = denoise_scene_only(dit, tok, ids, cs, cs_ids, ts, guidance=guidance, num_canvas_tokens=tok.shape[1])
+                out = denoise_scene_only(dit, tok, ids, cs, cs_ids, ts, guidance=guidance, num_canvas_tokens=tok.shape[1], **cfg)
             _sync(); t["dit"] = time.perf_counter() - t0
 
             t0 = time.perf_counter()

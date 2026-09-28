@@ -20,7 +20,6 @@ import argparse
 import asyncio
 import base64
 import gc
-import io
 import json
 import re
 import logging
@@ -60,9 +59,8 @@ from tendoo_v3.llm_planner import (
     LLM_API_KEY,
     LLM_BACKEND,
 )
-from tendoo_v3.qr import generate_qr_base64
 from tendoo_v3.renderer import build_template_html, compute_geometry_flags, compute_plan_content_density, pil_to_base64_data_uri, render_plan_to_poster
-from tendoo_v3.schema import StyleConfig, TendooCreativePlan
+from tendoo_v3.schema import TendooCreativePlan
 from tendoo_v3.styles import palette_from_color_harmony
 from tendoo_v3.velocity_blending import (
     denoise_regional_velocity_blended,
@@ -97,7 +95,7 @@ ASPECT_RATIOS = {
     "9:16": (576, 1024),
     "16:9": (1024, 576),
     "4:5": (816, 1024),
-    "2:3": (680, 1024),
+    "2:3": (688, 1024),  # bội số 16 (latent 16x): 680 cho nền giải mã 672px lệch khung chữ
     "4:3": (1024, 768),
 }
 
@@ -232,6 +230,9 @@ async def lifespan(app: FastAPI):
         logger.info(f"   Local LLM:        Qwen3-4B on GPU (persistent-data)")
     logger.info("=" * 70)
 
+    # --mock đặt MOCK_MODE SAU khi module đã tính IS_MOCK_MODE lúc import -> đọc lại ở đây (trước 27/09 cờ vô tác dụng).
+    if os.environ.get("MOCK_MODE", "").lower() in ["1", "true"]:
+        IS_MOCK_MODE = True
     if not IS_MOCK_MODE and torch.cuda.is_available():
         num_gpus = torch.cuda.device_count()
         if num_gpus > 1:
@@ -242,9 +243,16 @@ async def lifespan(app: FastAPI):
             DEVICE_DIT = DEVICE_AUX = os.environ.get("TENDOO_V3_DEVICE_DIT", "cuda:0")
             logger.info(f"  [Device Setup] Single GPU: All models on {DEVICE_DIT}")
 
-        from flux2 import util
+        try:
+            from flux2 import util
+        except BaseException as e:  # vd transformers quá cũ -> vẫn chạy được chế độ mock thay vì chết
+            logger.error(f"❌ Không import được flux2 ({e!r}) -> Mock Mode.", exc_info=True)
+            IS_MOCK_MODE = True
+            yield
+            return
 
-        pdata_candidates = [
+        ckpt_dir = os.environ.get("FLUX_CHECKPOINT_DIR")
+        pdata_candidates = ([Path(ckpt_dir)] if ckpt_dir and Path(ckpt_dir).is_dir() else []) + [
             Path(os.path.expanduser("~/persistent-data/FLUX.2-klein-4B")),
             Path("/home/jovyan/persistent-data/FLUX.2-klein-4B"),
             Path("/persistent-data/FLUX.2-klein-4B"),
@@ -257,7 +265,13 @@ async def lifespan(app: FastAPI):
         force_base = os.environ.get("TENDOO_USE_BASE_MODEL", "").lower() in ["1", "true"]
         model_name = None
 
-        if not force_base:
+        # Đường dẫn đặt sẵn (--model_path trỏ thẳng file, hoặc biến môi trường) thắng dò thư mục (trước 27/09 bị lờ).
+        if not force_base and Path(os.environ.get("KLEIN_4B_MODEL_PATH", "")).is_file():
+            model_name = "flux.2-klein-4b"
+        elif Path(os.environ.get("KLEIN_4B_BASE_MODEL_PATH", "")).is_file():
+            model_name = "flux.2-klein-base-4b"
+
+        if not force_base and model_name is None:
             for pdata in pdata_candidates:
                 distill_cand = pdata / "flux-2-klein-4b.safetensors"
                 if distill_cand.exists():
@@ -276,6 +290,9 @@ async def lifespan(app: FastAPI):
                     break
 
         if model_name is None:
+            # Không thấy file DiT nào: flux2.util sẽ thử tải từ HuggingFace (máy chủ offline -> sys.exit, bắt ở dưới).
+            logger.warning("⚠️ Không tìm thấy flux-2-klein-4b.safetensors lẫn flux-2-klein-base-4b.safetensors trong "
+                           f"{[str(p) for p in pdata_candidates]} -- đặt --model_path hoặc KLEIN_4B_*_MODEL_PATH.")
             model_name = "flux.2-klein-4b"
 
         # Tự động tìm VAE và TextEncoder qua các thư mục persistent-data nếu chưa được gán
@@ -328,8 +345,10 @@ async def lifespan(app: FastAPI):
                 res = torch.cuda.memory_reserved(dev_id) / (1024 ** 2)
                 logger.info(f"  [GPU {dev_id}] Occupied: {alloc:.1f} MB (Reserved: {res:.1f} MB)")
             logger.info("=" * 80)
-        except Exception as e:
-            logger.error(f"❌ Failed to load GPU models ({e}). Falling back to Mock Mode.", exc_info=True)
+        except BaseException as e:  # gồm SystemExit: flux2.util gọi sys.exit(1) khi thiếu file + không tải được HF
+            if isinstance(e, KeyboardInterrupt):
+                raise
+            logger.error(f"❌ Failed to load GPU models ({e!r}). Falling back to Mock Mode.", exc_info=True)
             free_all_gpu_memory()
             IS_MOCK_MODE = True
 
@@ -680,6 +699,18 @@ async def _run_variant_pipeline(
                     ctx_scene = ctx_scene.unsqueeze(0).to(DEVICE_DIT)
                     ctx_scene_ids = ctx_scene_ids.unsqueeze(0).to(DEVICE_DIT)
 
+                    # Bản BASE (guidance_distilled=False) cần CFG: mã hoá prompt RỖNG như flux2.sampling.denoise_cfg. Thiếu
+                    # CFG, base 50 bước cho nền nhoè/bệt màu (27/09 rà soát: máy chủ có thể chỉ có bản base).
+                    from flux2.util import FLUX2_MODEL_INFO
+                    ctx_uncond = ctx_uncond_ids = None
+                    cfg_scale = 1.0
+                    if not FLUX2_MODEL_INFO.get(ACTIVE_MODEL_NAME, {}).get("guidance_distilled", True):
+                        ctx_uncond = TEXT_ENCODER([""]).to(torch.bfloat16)
+                        ctx_uncond, ctx_uncond_ids = prc_txt(ctx_uncond[0])
+                        ctx_uncond = ctx_uncond.unsqueeze(0).to(DEVICE_DIT)
+                        ctx_uncond_ids = ctx_uncond_ids.unsqueeze(0).to(DEVICE_DIT)
+                        cfg_scale = guidance
+
                     # Maskless Mode (GĐ 5, ROADMAP §5.3): bỏ hẳn luồng corridor -- không mã hoá prompt corridor.
                     use_maskless = bool(getattr(plan, "maskless", False))
                     if not use_maskless:
@@ -748,6 +779,9 @@ async def _run_variant_pipeline(
                             timesteps=timesteps,
                             guidance=guidance,
                             num_canvas_tokens=img_tokens.shape[1],
+                            txt_uncond=ctx_uncond,
+                            txt_uncond_ids=ctx_uncond_ids,
+                            cfg_scale=cfg_scale,
                         )
                     else:
                         out_blended = denoise_regional_velocity_blended(
@@ -762,9 +796,12 @@ async def _run_variant_pipeline(
                             timesteps=timesteps,
                             guidance=guidance,
                             num_canvas_tokens=img_tokens.shape[1],
+                            txt_uncond=ctx_uncond,
+                            txt_uncond_ids=ctx_uncond_ids,
+                            cfg_scale=cfg_scale,
                         )
                     dur_dit = time.time() - t0_dit
-                    logger.info(f"  [DiT Finished] Variant #{variant_idx} Euler ODE {num_steps} steps in {dur_dit:.2f}s")
+                    logger.info(f"  [DiT Finished] Variant #{variant_idx} Euler ODE {num_steps} steps (CFG {cfg_scale}) in {dur_dit:.2f}s")
 
                     target_ae_dtype = AE_DTYPE if AE_DTYPE is not None else torch.bfloat16
                     z_dec = out_blended[0].transpose(0, 1).reshape(1, 128, h_lat, w_lat).to(
@@ -1010,7 +1047,6 @@ class RetextRequest(BaseModel):
 
 @app.post("/api/v3/retext")
 async def retext_poster(req: RetextRequest):
-    from dataclasses import replace as _replace
 
     from tendoo_v3.renderer import compute_geometry_flags
     from tendoo_v3.validators import check_plan
@@ -1101,9 +1137,11 @@ def main():
         os.environ["TENDOO_USE_BASE_MODEL"] = "0"
 
     if args.model_path:
-        os.environ["FLUX_CHECKPOINT_DIR"] = args.model_path
-        p = Path(args.model_path)
+        p = Path(os.path.expanduser(args.model_path))
+        if not p.exists():
+            logger.warning(f"⚠️ --model_path {p} không tồn tại -- bỏ qua, dò thư mục persistent-data mặc định")
         if p.is_dir():
+            os.environ["FLUX_CHECKPOINT_DIR"] = str(p)  # CHỈ thư mục (flux2.util coi đây là gốc trọng số)
             distill_cand = p / "flux-2-klein-4b.safetensors"
             if distill_cand.exists():
                 os.environ["KLEIN_4B_MODEL_PATH"] = str(distill_cand)
