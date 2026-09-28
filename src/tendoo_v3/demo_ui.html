@@ -2245,60 +2245,57 @@
 
       const payload = {
         category: currentCategory,
-        // Common Store Info
-        store_name: document.getElementById('inp-store-name').value,
-        phone: document.getElementById('inp-phone').value,
-        address: document.getElementById('inp-address').value,
-        website_link: document.getElementById('inp-website').value,
-        enable_qr: document.getElementById('inp-enable-qr').checked,
+        // Common Store / Brand Info
+        store_name: document.getElementById('inp-store-name')?.value || '',
+        phone: document.getElementById('inp-phone')?.value || '',
+        address: document.getElementById('inp-address')?.value || '',
+        website_link: document.getElementById('inp-website')?.value || '',
+        enable_qr: !!document.getElementById('inp-enable-qr')?.checked,
         
-        // Category Fields (Promo)
+        // Common Content & Visual Controls
         title: document.getElementById('inp-title')?.value || '',
         image_base64: uploadedImageBase64,
-        discount: document.getElementById('inp-discount')?.value || '',
-        applied_product: document.getElementById('inp-applied')?.value || '',
-        date_start: document.getElementById('inp-date-start')?.value || '',
-        date_end: document.getElementById('inp-date-end')?.value || '',
         image_description: document.getElementById('inp-scene-desc')?.value || '',
-
-        // Product Intro
-        product_name: document.getElementById('inp-product-name')?.value || '',
-        price: document.getElementById('inp-price')?.value || '',
-        product_desc: document.getElementById('inp-product-desc')?.value || '',
-        highlights: document.getElementById('inp-highlights')?.value || '',
-
-        // Grand Opening
-        opening_date: document.getElementById('inp-opening-date')?.value || '',
-        opening_promo: document.getElementById('inp-opening-promo')?.value || '',
-        booking_contact: document.getElementById('inp-booking-contact')?.value || '',
-
-        // Customer Feedback
-        feedback_target: document.getElementById('inp-feedback-target')?.value || '',
-        feedback_quote: document.getElementById('inp-feedback-quote')?.value || '',
-        feedback_highlights: document.getElementById('inp-feedback-highlights')?.value || '',
-        special_offer: document.getElementById('inp-special-offer')?.value || '',
-
-        // Recruitment
-        job_position: document.getElementById('inp-job-position')?.value || '',
-        job_desc: document.getElementById('inp-job-desc')?.value || '',
-        apply_deadline: document.getElementById('inp-apply-deadline')?.value || '',
-        apply_method: document.getElementById('inp-apply-method')?.value || '',
-
-        // Usage Guide
-        guide_steps: getGuideSteps(),
-
-        // Visual / Design Controls -- layout/style_hint/font_family are no longer sent:
-        // the server auto-matches all three from category + style_pref (Phase B).
-        style_pref: document.getElementById('sel-style-pref').value,
-        primary_color: document.getElementById('inp-color-auto').checked
+        style_pref: document.getElementById('sel-style-pref')?.value || 'auto',
+        primary_color: document.getElementById('inp-color-auto')?.checked
           ? null
-          : document.getElementById('inp-primary-color').value,
-        aspect_ratio: document.getElementById('sel-aspect-ratio').value,
-        num_images: parseInt(document.getElementById('sel-num-images').value) || 1,
-        seed: parseInt(document.getElementById('inp-seed').value) || 42,
-        steps: parseInt(document.getElementById('inp-steps').value) || 8,
-        guidance: parseFloat(document.getElementById('inp-guidance').value) || 1.5
+          : document.getElementById('inp-primary-color')?.value,
+        aspect_ratio: document.getElementById('sel-aspect-ratio')?.value || '1:1',
+        num_images: parseInt(document.getElementById('sel-num-images')?.value) || 1,
+        seed: parseInt(document.getElementById('inp-seed')?.value) || 42,
+        steps: parseInt(document.getElementById('inp-steps')?.value) || 8,
+        guidance: parseFloat(document.getElementById('inp-guidance')?.value) || 1.5
       };
+
+      // Chỉ thu thập & gửi các trường nội dung thuộc category đang chọn.
+      // Tuyệt đối không gửi giá trị sót lại trong các ô nhập bị ẩn của category khác.
+      if (currentCategory === 'promo') {
+        payload.discount = document.getElementById('inp-discount')?.value || '';
+        payload.applied_product = document.getElementById('inp-applied')?.value || '';
+        payload.date_start = document.getElementById('inp-date-start')?.value || '';
+        payload.date_end = document.getElementById('inp-date-end')?.value || '';
+      } else if (currentCategory === 'product_intro') {
+        payload.product_name = document.getElementById('inp-product-name')?.value || '';
+        payload.price = document.getElementById('inp-price')?.value || '';
+        payload.product_desc = document.getElementById('inp-product-desc')?.value || '';
+        payload.highlights = document.getElementById('inp-highlights')?.value || '';
+      } else if (currentCategory === 'opening') {
+        payload.opening_date = document.getElementById('inp-opening-date')?.value || '';
+        payload.opening_promo = document.getElementById('inp-opening-promo')?.value || '';
+        payload.booking_contact = document.getElementById('inp-booking-contact')?.value || '';
+      } else if (currentCategory === 'feedback') {
+        payload.feedback_target = document.getElementById('inp-feedback-target')?.value || '';
+        payload.feedback_quote = document.getElementById('inp-feedback-quote')?.value || '';
+        payload.feedback_highlights = document.getElementById('inp-feedback-highlights')?.value || '';
+        payload.special_offer = document.getElementById('inp-special-offer')?.value || '';
+      } else if (currentCategory === 'recruitment') {
+        payload.job_position = document.getElementById('inp-job-position')?.value || '';
+        payload.job_desc = document.getElementById('inp-job-desc')?.value || '';
+        payload.apply_deadline = document.getElementById('inp-apply-deadline')?.value || '';
+        payload.apply_method = document.getElementById('inp-apply-method')?.value || '';
+      } else if (currentCategory === 'guide') {
+        payload.guide_steps = getGuideSteps();
+      }
 
       const t0 = performance.now();
 
