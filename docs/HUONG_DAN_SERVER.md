@@ -209,6 +209,23 @@ cd ~/work/tendoo-v3 && zip -r ket_qua_$(date +%m%d).zip output_tendoo_v3/demo_ru
 
 Tải file ZIP về máy cá nhân (chuột phải → Download trong JupyterLab) để phân tích.
 
+## Tuỳ chọn — đối chứng 4 cách chừa chỗ cho chữ (28/09)
+
+So sánh: trộn 2 luồng mọi bước (hiện tại) · trộn chỉ vài bước đầu · không mask + câu bố cục · một luồng làm mờ vùng chữ.
+Cùng seed, cùng ca; đo tốc độ, độ yên vùng chữ, dấu hiệu đường cắt, số poster phải bật lớp mờ. **Tắt demo_server trước**
+(cùng chiếm GPU).
+
+```bash
+pkill -f demo_server.py
+cd ~/work/tendoo-v3 && git pull
+PYTHONPATH=src python scripts/bench_saliency_modes.py --tag lan1 2>&1 | tee saliency_lan1.log
+#   12 ca × 3 seed × 4 chế độ = 144 ảnh; bản distill ~15-25 phút (ước lượng, chưa đo)
+#   chạy thử nhanh 1 ca trước:  --cases watch_pov_split_left --seeds 42 --tag thu
+zip -r saliency_lan1.zip output_probe/saliency_bench/lan1 saliency_lan1.log
+```
+
+Kết quả: `output_probe/saliency_bench/lan1/index.html` (mở trong JupyterLab hoặc tải ZIP về). Gửi lại file ZIP.
+
 ## Ghi chú kỹ thuật (cho người bảo trì)
 
 - Model mặc định: **distill** (`flux-2-klein-4b.safetensors`, 8 bước, không CFG). `--model base` vẫn chạy được — từ
